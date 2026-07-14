@@ -15,6 +15,27 @@ const jsonRequest = (url: string, body: unknown): Request =>
     body: JSON.stringify(body),
   });
 
+const registeredRunRequest = (demo: {
+  overlay: unknown;
+  snapshot: unknown;
+  registeredRehearsal: {
+    draftFixtureId: string;
+    styleProfileId: string;
+    taskType: string;
+    brief: string;
+    participantIntents: unknown[];
+  };
+}) => ({
+  modelMode: "fixture" as const,
+  draftFixtureId: demo.registeredRehearsal.draftFixtureId,
+  overlay: demo.overlay,
+  snapshot: demo.snapshot,
+  styleProfileId: demo.registeredRehearsal.styleProfileId,
+  taskType: demo.registeredRehearsal.taskType,
+  brief: demo.registeredRehearsal.brief,
+  participantIntents: demo.registeredRehearsal.participantIntents,
+});
+
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
@@ -70,29 +91,62 @@ describe("fixture API vertical slice", () => {
     expect(demo.proofs.conflict.violationCodes).toContain(
       "tradition_conflict_unresolved",
     );
-
-    const participantIntents = demo.participantSlots.map(
-      (slot: {
-        intentId: string;
-        participantId: string;
-        controlledEntityId: string;
-        defaultIntent: string;
-      }) => ({
-        intentId: slot.intentId,
-        participantId: slot.participantId,
-        controlledEntityIds: [slot.controlledEntityId],
-        intent: slot.defaultIntent,
-      }),
+    expect(demo.registeredRehearsal).toMatchObject({
+      replayCaseId: "replay.red_sail_proposal",
+      stageId: "stage.red_sail_proposal",
+      draftFixtureId: "draft.red_sail_proposal",
+      styleProfileId: "style.table_ready_mythic",
+      taskType: "expand",
+      brief: "Propose a red-sail signal, but do not treat it as canon before approval.",
+      frozen: true,
+    });
+    expect(demo.registeredRehearsal.participantIntents).toHaveLength(2);
+    expect(demo.participantSlots).toEqual(
+      demo.registeredRehearsal.participantIntents.map(
+        (intent: {
+          intentId: string;
+          participantId: string;
+          controlledEntityIds: string[];
+          intent: string;
+        }) => ({
+          intentId: intent.intentId,
+          participantId: intent.participantId,
+          controlledEntityId: intent.controlledEntityIds[0],
+          characterLabel: intent.controlledEntityIds[0] === "penelope" ? "Penelope" : "Telemachus",
+          defaultIntent: intent.intent,
+          frozen: true,
+        }),
+      ),
     );
+    expect(demo.knowledgeBoundary).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          perspectiveId: "narrator",
+          evidenceId: "claim.odyssey.odysseus_at_ogygia",
+          status: "visible",
+        }),
+        expect.objectContaining({
+          perspectiveId: "penelope",
+          evidenceId: "claim.odyssey.odysseus_at_ogygia",
+          status: "withheld",
+        }),
+        expect.objectContaining({
+          perspectiveId: "penelope",
+          evidenceId: "claim.odyssey.penelope_uncertain_fate",
+          status: "uncertain",
+        }),
+      ]),
+    );
+
     const runRequest = {
         modelMode: "fixture",
-        draftFixtureId: "draft.red_sail_proposal",
+        draftFixtureId: demo.registeredRehearsal.draftFixtureId,
         overlay: demo.overlay,
         snapshot: demo.snapshot,
-        styleProfileId: demo.selectedStyleProfileId,
-        taskType: "expand",
-        brief: "Propose a red-sail signal without treating it as canon.",
-        participantIntents,
+        styleProfileId: demo.registeredRehearsal.styleProfileId,
+        taskType: demo.registeredRehearsal.taskType,
+        brief: demo.registeredRehearsal.brief,
+        participantIntents: demo.registeredRehearsal.participantIntents,
       } as const;
     const runResponse = await postRun(
       jsonRequest("http://local.test/api/runs", runRequest),
@@ -101,6 +155,20 @@ describe("fixture API vertical slice", () => {
     const run = await runResponse.json();
     expect(run.status).toBe("needs_creator_decision");
     expect(run.proposals).toHaveLength(1);
+    expect(run.modelOutcome.draft.utterances).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          speakerId: "penelope",
+          authorizingIntentId: "intent.penelope",
+          contributingIntentIds: ["intent.telemachus"],
+        }),
+        expect.objectContaining({
+          speakerId: "telemachus",
+          authorizingIntentId: "intent.telemachus",
+          contributingIntentIds: ["intent.penelope"],
+        }),
+      ]),
+    );
     const proposal = run.proposals[0];
 
     const creatorDecision = {
@@ -189,29 +257,7 @@ describe("fixture API vertical slice", () => {
 
   it("rejects a forged self-hashed overlay at the transition authority boundary", async () => {
     const demo = await (await getDemo()).json();
-    const participantIntents = demo.participantSlots.map(
-      (slot: {
-        intentId: string;
-        participantId: string;
-        controlledEntityId: string;
-        defaultIntent: string;
-      }) => ({
-        intentId: slot.intentId,
-        participantId: slot.participantId,
-        controlledEntityIds: [slot.controlledEntityId],
-        intent: slot.defaultIntent,
-      }),
-    );
-    const runRequest = {
-      modelMode: "fixture" as const,
-      draftFixtureId: "draft.red_sail_proposal",
-      overlay: demo.overlay,
-      snapshot: demo.snapshot,
-      styleProfileId: demo.selectedStyleProfileId,
-      taskType: "expand" as const,
-      brief: "Propose a red-sail signal without treating it as canon.",
-      participantIntents,
-    };
+    const runRequest = registeredRunRequest(demo);
     const run = await (
       await postRun(jsonRequest("http://local.test/api/runs", runRequest))
     ).json();
@@ -255,29 +301,7 @@ describe("fixture API vertical slice", () => {
 
   it("recomputes decision authority and refuses a fabricated proposal", async () => {
     const demo = await (await getDemo()).json();
-    const participantIntents = demo.participantSlots.map(
-      (slot: {
-        intentId: string;
-        participantId: string;
-        controlledEntityId: string;
-        defaultIntent: string;
-      }) => ({
-        intentId: slot.intentId,
-        participantId: slot.participantId,
-        controlledEntityIds: [slot.controlledEntityId],
-        intent: slot.defaultIntent,
-      }),
-    );
-    const legitimateRequest = {
-      modelMode: "fixture" as const,
-      draftFixtureId: "draft.red_sail_proposal",
-      overlay: demo.overlay,
-      snapshot: demo.snapshot,
-      styleProfileId: demo.selectedStyleProfileId,
-      taskType: "expand" as const,
-      brief: "Propose a red-sail signal without treating it as canon.",
-      participantIntents,
-    };
+    const legitimateRequest = registeredRunRequest(demo);
     const run = await (
       await postRun(jsonRequest("http://local.test/api/runs", legitimateRequest))
     ).json();
@@ -304,8 +328,13 @@ describe("fixture API vertical slice", () => {
     expect((await response.json()).error.code).toBe("creator_decision_authority_invalid");
   });
 
-  it("rejects a self-hashed overlay that did not originate from the registered creator gate", async () => {
+  it("rejects a self-hashed overlay that is outside the registered frozen rehearsal", async () => {
     const demo = await (await getDemo()).json();
+    const canonicalRunRequest = registeredRunRequest(demo);
+    const canonicalRun = await (
+      await postRun(jsonRequest("http://local.test/api/runs", canonicalRunRequest))
+    ).json();
+    const proposal = canonicalRun.proposals[0];
     const injectedOverlay = buildCanonOverlay({
       ...overlayPayload(demo.overlay),
       version: demo.overlay.version + 1,
@@ -321,35 +350,11 @@ describe("fixture API vertical slice", () => {
       ],
     });
     const injectedSnapshot = rebaseSnapshot(demo.snapshot, injectedOverlay);
-    const participantIntents = demo.participantSlots.map(
-      (slot: {
-        intentId: string;
-        participantId: string;
-        controlledEntityId: string;
-        defaultIntent: string;
-      }) => ({
-        intentId: slot.intentId,
-        participantId: slot.participantId,
-        controlledEntityIds: [slot.controlledEntityId],
-        intent: slot.defaultIntent,
-      }),
-    );
     const runRequest = {
-      modelMode: "fixture" as const,
-      draftFixtureId: "draft.red_sail_proposal",
+      ...canonicalRunRequest,
       overlay: injectedOverlay,
       snapshot: injectedSnapshot,
-      styleProfileId: demo.selectedStyleProfileId,
-      taskType: "expand" as const,
-      brief: "Try to approve a proposal on top of unregistered canon.",
-      participantIntents,
     };
-    const runResponse = await postRun(
-      jsonRequest("http://local.test/api/runs", runRequest),
-    );
-    expect(runResponse.status).toBe(200);
-    const run = await runResponse.json();
-    const proposal = run.proposals[0];
 
     const response = await postDecision(
       jsonRequest("http://local.test/api/decisions", {
@@ -368,7 +373,7 @@ describe("fixture API vertical slice", () => {
     expect(response.status).toBe(409);
     expect((await response.json()).error).toMatchObject({
       code: "creator_decision_authority_invalid",
-      message: "The public fixture decision must start from its registered base authority.",
+      message: "The public fixture request must match the registered frozen rehearsal.",
     });
   });
 
@@ -415,29 +420,7 @@ describe("fixture API vertical slice", () => {
             }
           : originalGenerate(request, evidence),
     );
-    const participantIntents = demo.participantSlots.map(
-      (slot: {
-        intentId: string;
-        participantId: string;
-        controlledEntityId: string;
-        defaultIntent: string;
-      }) => ({
-        intentId: slot.intentId,
-        participantId: slot.participantId,
-        controlledEntityIds: [slot.controlledEntityId],
-        intent: slot.defaultIntent,
-      }),
-    );
-    const runRequest = {
-      modelMode: "fixture" as const,
-      draftFixtureId: "draft.red_sail_proposal",
-      overlay: demo.overlay,
-      snapshot: demo.snapshot,
-      styleProfileId: demo.selectedStyleProfileId,
-      taskType: "expand" as const,
-      brief: "Propose two signals without treating either as canon.",
-      participantIntents,
-    };
+    const runRequest = registeredRunRequest(demo);
     const run = await (
       await postRun(jsonRequest("http://local.test/api/runs", runRequest))
     ).json();
@@ -480,29 +463,7 @@ describe("fixture API vertical slice", () => {
 
   it("does not return applied canon when the fresh overlay replay fails", async () => {
     const demo = await (await getDemo()).json();
-    const participantIntents = demo.participantSlots.map(
-      (slot: {
-        intentId: string;
-        participantId: string;
-        controlledEntityId: string;
-        defaultIntent: string;
-      }) => ({
-        intentId: slot.intentId,
-        participantId: slot.participantId,
-        controlledEntityIds: [slot.controlledEntityId],
-        intent: slot.defaultIntent,
-      }),
-    );
-    const runRequest = {
-      modelMode: "fixture" as const,
-      draftFixtureId: "draft.red_sail_proposal",
-      overlay: demo.overlay,
-      snapshot: demo.snapshot,
-      styleProfileId: demo.selectedStyleProfileId,
-      taskType: "expand" as const,
-      brief: "Propose a red-sail signal without treating it as canon.",
-      participantIntents,
-    };
+    const runRequest = registeredRunRequest(demo);
     const run = await (
       await postRun(jsonRequest("http://local.test/api/runs", runRequest))
     ).json();

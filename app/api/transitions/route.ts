@@ -9,6 +9,7 @@ import {
 import { fixtureNarrativeModel } from "@/src/adapters/fixtures/narrative-model";
 import {
   FixtureCreatorAuthorityError,
+  PublicFixtureRunAuthorityError,
   verifyFixtureCreatorDecision,
 } from "@/src/application/fixture-creator-authority";
 import { runApprovedOverlayReplay } from "@/src/application/replay-runner";
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
     ]);
     const authority = await verifyFixtureCreatorDecision({
       worldPack,
+      replayCases,
       registeredOverlay,
       registeredSnapshot,
       runRequest: body.runRequest,
@@ -150,7 +152,11 @@ export async function POST(request: Request) {
       }),
     );
   } catch (error) {
-    if (error instanceof FixtureCreatorAuthorityError || error instanceof RunInputError) {
+    if (
+      error instanceof FixtureCreatorAuthorityError ||
+      error instanceof PublicFixtureRunAuthorityError ||
+      error instanceof RunInputError
+    ) {
       return authorityFailure();
     }
     if (error instanceof ZodError) {

@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { loadDemoWorldPack } from "@/src/adapters/filesystem/demo-data";
+import {
+  loadDemoBundle,
+  loadOverlayFixture,
+  loadSnapshotFixture,
+} from "@/src/adapters/filesystem/demo-data";
 import { fixtureNarrativeModel } from "@/src/adapters/fixtures/narrative-model";
 import {
   RunInputError,
   createRunOrchestrator,
 } from "@/src/application/run-orchestrator";
+import {
+  PublicFixtureRunAuthorityError,
+  assertRegisteredPublicFixtureRunRequest,
+} from "@/src/application/fixture-creator-authority";
+import { FixtureRunRequestSchema } from "@/src/contracts/run";
 
 export const runtime = "nodejs";
 
@@ -31,7 +40,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const worldPack = await loadDemoWorldPack();
+    const [{ worldPack, replayCases }, registeredOverlay, registeredSnapshot] =
+      await Promise.all([
+        loadDemoBundle(),
+        loadOverlayFixture("overlay.v0"),
+        loadSnapshotFixture("snapshot.s0"),
+      ]);
+    const runRequest = assertRegisteredPublicFixtureRunRequest({
+      replayCases,
+      registeredOverlay,
+      registeredSnapshot,
+      runRequest: FixtureRunRequestSchema.parse(body),
+    });
     const run = createRunOrchestrator({
       worldPack,
       fixtureModel: fixtureNarrativeModel,
@@ -39,8 +59,19 @@ export async function POST(request: Request) {
       // modelMode guard above rejects live requests before orchestration.
       liveModel: fixtureNarrativeModel,
     });
-    return NextResponse.json(await run(body));
+    return NextResponse.json(await run(runRequest));
   } catch (error) {
+    if (error instanceof PublicFixtureRunAuthorityError) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "public_fixture_authority_invalid",
+            message: error.message,
+          },
+        },
+        { status: 409 },
+      );
+    }
     if (error instanceof ZodError || error instanceof RunInputError) {
       return NextResponse.json(
         {

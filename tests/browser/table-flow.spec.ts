@@ -9,17 +9,52 @@ test("fixture Table completes proposal, approval, rebase, and exactly two transi
   await expect(page.getByTestId("participant-intent-0")).toBeVisible();
   await expect(page.getByTestId("participant-intent-1")).toBeVisible();
   await expect(page.locator("[data-testid^='participant-intent-']")).toHaveCount(2);
-  await expect(page.getByTestId("style-profile")).not.toHaveValue("");
+  await expect(page.getByTestId("participant-intent-0")).toHaveAttribute("data-frozen", "true");
+  await expect(page.getByTestId("participant-intent-1")).toHaveAttribute("data-frozen", "true");
+  await expect(page.locator(".participant-card textarea")).toHaveCount(0);
+  await expect(page.locator(".participant-card [contenteditable='true']")).toHaveCount(0);
+  await expect(page.getByTestId("style-profile")).toHaveAttribute("data-frozen", "true");
+  await expect(page.getByTestId("run-candidate")).toHaveText(/Run frozen rehearsal/);
+  await expect(page.getByTestId("responsibility-contract")).toContainText(
+    "Model proposes · Harness verifies · Creator decides",
+  );
+  await expect(page.getByTestId("responsibility-contract")).toContainText(
+    "The creator owns the style profile, canon changes, and every final release decision.",
+  );
   await expect(page.getByTestId("replay-panel")).toBeVisible();
   await expect(page.getByTestId("replay-panel").locator(".status-chip.pass")).toHaveCount(5);
   await expect(page.getByTestId("grounded-proof")).toContainText("GROUNDED SCENE");
   await expect(page.getByTestId("grounded-proof")).toContainText("claim.odyssey.penelope_uncertain_fate");
+  await expect(page.getByTestId("knowledge-boundary")).toContainText("Who can know this?");
+  await expect(page.getByTestId("knowledge-narrator-visible")).toContainText("Odysseus is on Ogygia");
+  await expect(page.getByTestId("knowledge-penelope-withheld")).toContainText(
+    "Odysseus's exact Ogygia location",
+  );
+  await expect(page.getByTestId("knowledge-penelope-uncertain")).toContainText(
+    "Odysseus's fate",
+  );
   await expect(page.getByTestId("conflict-graph")).toContainText("blocked assertion");
   await expect(page.getByTestId("overlay-version")).toHaveText("v0");
   await expect(page.getByTestId("state-value")).toHaveText("idle");
   const initialCanonHash = await page.getByTestId("canon-hash").textContent();
 
+  const frozenRunRequest = page.waitForRequest(
+    (request) => request.url().endsWith("/api/runs") && request.method() === "POST",
+  );
   await page.getByTestId("run-candidate").click();
+  const runPayload = (await frozenRunRequest).postDataJSON() as {
+    draftFixtureId: string;
+    brief: string;
+    participantIntents: Array<{ intentId: string; intent: string }>;
+  };
+  expect(runPayload).toMatchObject({
+    draftFixtureId: "draft.red_sail_proposal",
+    brief: "Propose a red-sail signal, but do not treat it as canon before approval.",
+  });
+  expect(runPayload.participantIntents.map(({ intentId }) => intentId)).toEqual([
+    "intent.penelope",
+    "intent.telemachus",
+  ]);
 
   await expect(page.getByTestId("run-status")).toHaveText("Creator decision required");
   await expect(page.getByTestId("proposal")).toContainText("GHOST PROPOSAL");
@@ -27,19 +62,58 @@ test("fixture Table completes proposal, approval, rebase, and exactly two transi
   const semanticDescription = page.getByTestId("proposal-semantic-description");
   await expect(semanticDescription).toHaveText(/\S/);
   const lockedSemanticDescription = (await semanticDescription.textContent())?.trim() ?? "";
+  const lineage = page.locator(".lineage-card");
+  await expect(lineage).toContainText("penelope");
+  await expect(lineage).toContainText("telemachus");
+  await expect(lineage).toContainText("authorizing intent · intent.penelope");
+  await expect(lineage).toContainText("contributing intent · intent.telemachus");
+  await expect(lineage).toContainText("authorizing intent · intent.telemachus");
+  await expect(lineage).toContainText("contributing intent · intent.penelope");
+  await expect(lineage).toContainText(
+    "A signal is not a return; let the watch look before the hall believes.",
+  );
+  await expect(lineage).toContainText(
+    "Then let a red sail call the harbor watch, and nothing more.",
+  );
+  await expect(page.getByTestId("intent-coverage")).toContainText(
+    "2/2 intents authorize a playable line",
+  );
+  await expect(page.getByTestId("style-receipt")).toContainText("MAX_WORDS");
+  await expect(page.getByTestId("style-receipt")).toContainText("180");
+  await expect(page.getByTestId("style-receipt")).toContainText("PASS");
+  await expect(page.getByTestId("style-receipt")).toContainText("creator review required");
+  await expect(page.getByTestId("style-receipt")).toContainText(
+    "style.table_ready_mythic.cadence",
+  );
+  await expect(page.getByTestId("style-receipt")).toContainText("Referenced ≠ verified");
+  await expect(page.getByTestId("style-receipt")).toContainText("Live AB/BA not measured.");
+  const fixtureWordCount = Number(await page.getByTestId("style-word-count").textContent());
+  expect(fixtureWordCount).toBeGreaterThan(0);
+  expect(fixtureWordCount).toBeLessThanOrEqual(180);
   await expect(page.getByRole("img", { name: "Narrative evidence and proposal graph" })).toBeVisible();
   await expect(page.getByTestId("graph").getByText("Graph as text")).toBeVisible();
+  expect(
+    await page
+      .getByTestId("graph")
+      .locator("details")
+      .evaluate((details) => (details as HTMLDetailsElement).open),
+  ).toBe(false);
+  expect(
+    await page.evaluate(() => {
+      const gate = document.querySelector("[data-testid='proposal']");
+      const graph = document.querySelector("[data-testid='graph']");
+      return Boolean(
+        gate &&
+          graph &&
+          (gate.compareDocumentPosition(graph) & Node.DOCUMENT_POSITION_FOLLOWING),
+      );
+    }),
+  ).toBe(true);
   await expect(page.getByTestId("decision-reject")).toBeVisible();
   await expect(page.getByTestId("decision-edit")).toBeVisible();
   await expect(page.getByTestId("decision-accept")).toBeVisible();
 
-  await page.getByTestId("decision-edit").click();
-  const editedRule = page.getByLabel("Edit display wording");
-  await expect(editedRule).toBeVisible();
-  await editedRule.fill(
-    "A red sail asks the Ithacan watch to observe before declaring a return.",
-  );
-  await page.getByTestId("decision-apply-edit").click();
+  await page.getByTestId("decision-accept").click();
 
   await expect(page.getByTestId("run-status")).toHaveText("Canon approved · state rebased");
   await expect(page.getByTestId("overlay-version")).toHaveText("v1");
@@ -50,11 +124,7 @@ test("fixture Table completes proposal, approval, rebase, and exactly two transi
   await expect(page.getByTestId("proposal-semantic-description")).toHaveText(
     lockedSemanticDescription,
   );
-  await expect(page.getByTestId("proposal-display-wording")).toContainText(
-    "A red sail asks the Ithacan watch to observe before declaring a return.",
-  );
   await expect(page.getByTestId("graph")).toContainText(lockedSemanticDescription);
-  await expect(page.getByTestId("graph")).toContainText("Display wording (non-authoritative)");
   await expect(page.getByTestId("replay-panel")).toContainText("APPROVED-OVERLAY REPLAY");
   await expect(page.getByTestId("replay-authority")).toContainText("overlay v1");
   await expect(page.getByTestId("replay-panel").locator(".status-chip.pass")).toHaveCount(5);
@@ -74,6 +144,19 @@ test("fixture Table completes proposal, approval, rebase, and exactly two transi
   await expect(page.getByTestId("completion-summary")).toContainText("fixture only");
   await expect(page.getByTestId("completion-summary")).toContainText("overlay v1");
   await expect(page.getByTestId("completion-summary")).toContainText("4/4 controls pass");
+  await expect(page.getByTestId("completion-summary")).toContainText(
+    "1 deterministic pass · 6 creator review",
+  );
+  const reviewPacket = page.getByTestId("production-review-packet");
+  expect(await reviewPacket.evaluate((details) => (details as HTMLDetailsElement).open)).toBe(false);
+  await reviewPacket.locator("summary").click();
+  await expect(reviewPacket).toContainText("Intent lineage");
+  await expect(reviewPacket).toContainText("intent.penelope");
+  await expect(reviewPacket).toContainText("Creator canon delta");
+  await expect(reviewPacket).toContainText("idle → idle → watching → signal_seen");
+  await expect(reviewPacket).toContainText("Knowledge boundary · 1 withheld · 1 uncertain");
+  await expect(reviewPacket).toContainText("Conflict control · needs creator decision");
+  await expect(reviewPacket).toContainText("not production-readiness evidence");
   await expect(page.getByTestId("advance-step-1")).toHaveCount(0);
   await expect(page.getByTestId("advance-step-2")).toHaveCount(0);
 
@@ -88,17 +171,37 @@ test("fixture Table completes proposal, approval, rebase, and exactly two transi
   await expect(page.getByTestId("state-value")).toHaveText("idle");
 });
 
-test("intent validation is keyboard reachable and does not send an empty intent", async ({ page }) => {
+test("creator edits display wording without changing locked semantics", async ({ page }) => {
   await page.goto("/");
+  await page.getByTestId("run-candidate").click();
 
-  const firstIntent = page.getByTestId("participant-intent-0");
-  await firstIntent.fill("");
-  await page.getByTestId("run-candidate").focus();
-  await expect(page.getByTestId("run-candidate")).toBeFocused();
-  await page.keyboard.press("Enter");
+  const semanticDescription = page.getByTestId("proposal-semantic-description");
+  const lockedSemanticDescription = (await semanticDescription.textContent())?.trim() ?? "";
+  expect(lockedSemanticDescription).not.toBe("");
 
-  await expect(page.locator(".inline-error")).toContainText("Participant 1 needs an intent");
-  await expect(page.getByTestId("run-status")).toHaveText("Ready for rehearsal");
+  await page.getByTestId("decision-edit").click();
+  const editedRule = page.getByLabel("Edit display wording");
+  await expect(editedRule).toBeVisible();
+  await editedRule.fill(
+    "A red sail asks the Ithacan watch to observe before declaring a return.",
+  );
+  await page.getByTestId("decision-apply-edit").click();
+
+  await expect(page.getByTestId("run-status")).toHaveText("Canon approved · state rebased");
+  await expect(page.getByTestId("proposal-semantic-description")).toHaveText(
+    lockedSemanticDescription,
+  );
+  await expect(page.getByTestId("proposal-display-wording")).toContainText(
+    "A red sail asks the Ithacan watch to observe before declaring a return.",
+  );
+  const graphText = page.getByTestId("graph").locator("details");
+  expect(await graphText.evaluate((details) => (details as HTMLDetailsElement).open)).toBe(false);
+  await graphText.locator("summary").click();
+  await expect(graphText).toContainText(lockedSemanticDescription);
+  await expect(graphText).toContainText("Display wording (non-authoritative)");
+  await expect(graphText).toContainText(
+    "A red sail asks the Ithacan watch to observe before declaring a return.",
+  );
 });
 
 test("reject preserves the initial overlay and state", async ({ page }) => {
@@ -156,7 +259,14 @@ test("a transition error can restart from the registered base without stale deci
       }),
     });
   });
-  await page.getByTestId("advance-step-1").click();
+  const advanceButton = page.getByTestId("advance-step-1");
+  await expect(advanceButton).toBeVisible();
+  await expect(advanceButton).toBeEnabled();
+  const interceptedTransition = page.waitForRequest(
+    (request) => request.url().endsWith("/api/transitions") && request.method() === "POST",
+  );
+  await advanceButton.click();
+  await interceptedTransition;
   await expect(page.getByTestId("api-error")).toContainText("Injected transition failure");
   await page.unroute("**/api/transitions");
 
@@ -164,9 +274,11 @@ test("a transition error can restart from the registered base without stale deci
   await expect(page.getByTestId("overlay-version")).toHaveText("v0");
   await expect(page.getByTestId("state-value")).toHaveText("idle");
   await expect(page.getByTestId("decision-accept")).toBeVisible();
+  const graphText = page.getByTestId("graph").locator("details");
+  expect(await graphText.evaluate((details) => (details as HTMLDetailsElement).open)).toBe(false);
+  await graphText.locator("summary").click();
   await expect(
-    page
-      .getByTestId("graph")
+    graphText
       .locator("li")
       .filter({ hasText: "In this creator canon" })
       .filter({ hasText: "unapproved proposal" })

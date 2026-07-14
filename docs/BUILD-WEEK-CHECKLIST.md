@@ -16,8 +16,10 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Core product problem and MVP fixed
 - [x] Public-safe demo direction selected
 - [x] Vertical slice implemented
-- [x] Participant/character ownership and authorizing/contributing intent lineage verified
-- [x] Original creator-owned style profile applied and visibly separated from canon/knowledge
+- [x] Registered frozen two-intent rehearsal preserves participant/character ownership and reciprocal authorizing/contributing lineage
+- [ ] Arbitrary facilitator-collected intent composition verified through a sanitized live run
+- [x] Original creator-owned style profile carried as a registered harness input and referenced through stable IDs; the visible receipt separates one deterministic check from six creator-reviewed constraints
+- [x] Compact narrator/character knowledge boundary and collapsed production review packet added to the judge path
 - [x] Same-model style-ablation protocol, no-retry capture path, masked rubric, and fail-closed evaluator implemented
 - [ ] Four GPT-5.6 style-ablation calls and creator ratings captured
 - [x] Canon/knowledge graph perspective and stable descriptor verified
@@ -36,19 +38,23 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Sample data and source policy added
 - [x] Technical setup draft available in `docs/START-HERE.md`
 - [x] Local evidence generation, lint, typecheck, the full unit/API suite, privacy scan, production build, vulnerability audit, and both browser projects passed
-- [x] Fresh-copy install and full release gate verified
+- [ ] Final candidate fresh-copy install and full identified release gate verified (prior implementation proof passed historically)
 - [x] Node 22.x pinned consistently for local, CI, and hosted runtime selection
 - [x] Identified build gate requires exact HEAD plus a clean tracked/untracked worktree; hosted Git provider SHA outranks manual labels
 - [x] Browser CI configured to exercise `next start` after the production build
 - [x] Credential-free deployment smoke gate added for exact build identity, fixture boundary, all declared security headers, health, frozen proof, transition hash continuity, and public live denial
 - [x] Applied or edited overlays trigger a fresh 4/4 server replay bound to their exact hash
+- [x] Public run, decision, and transition routes reject any brief, intent, draft, style, task, overlay, or snapshot that differs from the registered frozen rehearsal
 - [x] Transition authority is rederived from the registered run and creator decision; a forged self-hashed overlay returns 409
 - [x] Creator display edits cannot mutate or conceal locked rule/claim semantics; proposal and graph surfaces show both authorities separately
-- [x] Judge run guide and release-gated English narration script added
-- [x] Clean implementation commit `fbb1b50497bff67eb6e83467cbdabc579a1c87c2` passed identified build plus production smoke for identity, boundary, headers, health, fixture flow, approved-overlay replay, exact transition hash chain, and live-route denial
+- [x] Judge run guide and 358-word release-gated English narration script added
+- [x] Prior clean implementation commit `fbb1b50497bff67eb6e83467cbdabc579a1c87c2` passed identified build plus production smoke; final candidate recertification remains unchecked until its own commit exists
 - [x] Fixture Evidence Packet completed from executable fixtures and source checks; browser smoke is verified separately
+- [x] Current-tree gate passes: seven evidence files, 30 Vitest files / 156 tests, privacy 155, production build, desktop/mobile browser 10/10, and fresh desktop/mobile visual inspection
 - [ ] Sanitized real GPT-5.6 evidence added to the packet
 - [x] Style-ablation readiness is public and explicitly marked `not_executed`
+- [x] Live capture uses a pre-dispatch recovery sentinel, exclusive lock, prose-free receipts, atomic no-clobber publication, target-race preservation, rollback, explicit retry, and injected receipt-write-failure tests
+- [x] Evidence generation and health derive live verification from a bound completed-capture receipt plus the full authority/privacy shape rather than a status string
 - [ ] Write-once style-ablation report finalized from live capture and creator ratings
 - [ ] Public README derived after evidence and write-mode preflight pass
 - [ ] Public GitHub remote created and pushed
@@ -73,6 +79,7 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] No keys or secret-bearing files
 - [x] No private world, private knowledge-base content, raw chat, or personal path
 - [x] Fixture and live results visually distinct; public UI says `FIXTURE MODE · NO LIVE CALL`
+- [x] Public fixture inputs are visibly registered, frozen, and non-editable; the UI states that prompt prose does not branch fixture output
 - [ ] Actual response model and sanitized request metadata captured
 - [x] Public sanitized fixture evidence written under `artifacts/evidence/`; raw live material remains ignored
 - [ ] Claims in Devpost, README, video, and repository match the same evidence ledger

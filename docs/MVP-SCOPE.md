@@ -4,7 +4,7 @@ The user approved the attack-balanced A scope on **2026-07-15 KST**. The schedul
 
 ## Approved submission scope
 
-- facilitator-collected `ParticipantIntent[]`, with participant, controlled character, and generated speaker identities kept separate
+- a registered frozen two-intent public rehearsal plus a gated facilitator-collected `ParticipantIntent[]` live boundary, with participant, controlled character, and generated speaker identities kept separate
 - an original creator-owned `StyleProfile` supplied alongside character-scoped evidence
 - deterministic character-scoped retrieval and hard validation
 - GPT-5.6 Responses Structured Output
@@ -13,6 +13,8 @@ The user approved the attack-balanced A scope on **2026-07-15 KST**. The schedul
 - a real deterministic two-step finite-state simulation (`idle → watching → signal_seen`) with chained snapshots and hashes
 - frozen replay before and after an approved change
 - fixture-only public demo plus a separate, still-open live GPT-5.6 evidence gate
+
+The fixture proves lineage and control flow for its registered pair; it does not prove arbitrary free-text composition. That claim opens only after a sanitized live run.
 
 Actual remote multiplayer, graph databases, embeddings, and long-running autonomous simulation are not submission features.
 

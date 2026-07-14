@@ -7,12 +7,13 @@ This project is a fixture-first Work & Productivity web tool for professional GM
 When a verified hosted URL is supplied, no account or credentials are required. Until then, use the local fixture path below; hosting remains a release gate.
 
 1. Confirm the header says `FIXTURE MODE · NO LIVE CALL`.
-2. Review the two participant intents and the selected creator style profile.
-3. Compare the character-scoped evidence views. Penelope must not receive the hidden Ogygia claim.
-4. Run the red-sail scene. The candidate should stop at `Creator decision required`; it must not silently extend canon.
-5. Accept or edit the proposal. Editing changes display wording only; the proposal card and graph continue to show the locked semantic rule beside that non-authoritative wording. The overlay advances from v0 to v1 while the turn remains at zero.
-6. Apply both registered state steps: `idle → watching → signal_seen`.
-7. Confirm the state-hash chain is continuous. The server should also show a fresh 4/4 safety-control replay bound to the exact approved overlay hash.
+2. Review the two registered, frozen, non-editable participant intents and the frozen creator style profile. The fixture explicitly says prompt prose does not branch its output.
+3. Use `Who can know this?` to confirm the narrator sees Ogygia, Penelope does not, and Penelope's belief about Odysseus remains uncertain.
+4. Run the frozen red-sail rehearsal. Confirm both intents authorize a playable line and appear in reciprocal lineage.
+5. Read the style receipt: `max_words` is machine-checked; the other six constraints remain `creator review required`; `Referenced ≠ verified` and `Live AB/BA not measured` stay visible.
+6. The candidate should stop at `Creator decision required`; it must not silently extend canon. Accept or edit the proposal. Editing changes display wording only; the proposal card and graph continue to show the locked semantic rule beside that non-authoritative wording. The overlay advances from v0 to v1 while the turn remains at zero.
+7. Apply both registered state steps: `idle → watching → signal_seen`.
+8. Confirm the state-hash chain is continuous and the server shows a fresh 4/4 safety-control replay bound to the exact approved overlay hash. Open the collapsed production review packet to inspect the human-handoff summary; it is explicitly not production-readiness evidence.
 
 Rejecting a proposal must leave canon and state unchanged. A third transition must be blocked.
 
@@ -66,6 +67,7 @@ Codex was used as the engineering partner. The project starts from a familiar sk
 ## Evidence boundary
 
 - Public UI and hosted APIs are fixture-only.
+- The public fixture is one registered frozen two-intent replay, not an arbitrary participant-text composer.
 - Fixture output must not be described as a live GPT-5.6 response.
 - A live call requires both `ENABLE_OPENAI_LIVE=true` and `OPENAI_API_KEY` through the separate evidence command.
 - Raw model prose and response IDs stay out of the public repository.

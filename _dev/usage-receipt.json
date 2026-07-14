@@ -99,27 +99,27 @@
     "evidence": [
       {
         "check": "clean-implementation-commit",
-        "result": "pass-fbb1b50497bff67eb6e83467cbdabc579a1c87c2",
+        "result": "historical-pass-fbb1b50497bff67eb6e83467cbdabc579a1c87c2-final-candidate-pending",
         "ref": "_dev/RETURN-core-vertical-slice.md"
       },
       {
-        "check": "identified-release-gate",
-        "result": "pass-139-tests-10-browser-150-privacy-0-vulnerabilities",
+        "check": "current-tree-release-gate",
+        "result": "pass-156-tests-10-production-browser-155-privacy-production-build",
         "ref": "_dev/BUILD-NOTES.md"
       },
       {
         "check": "exact-sha-deployment-smoke",
-        "result": "pass-build-identity-and-s0r-s1-s2-hash-chain",
+        "result": "historical-pass-final-candidate-post-commit-record-pending",
         "ref": "docs/JUDGE-GUIDE.md"
       },
       {
         "check": "public-evidence-manifest",
-        "result": "pass-1c6bea39ca5c173b13b8af42a260ce3f08f84d832d40ad134380d586542af3ad",
+        "result": "pass-5d1d725860a45967c83fc3d6b0b20f58f58b483397e76a821d95d8dbd92b5f18",
         "ref": "artifacts/evidence/manifest.json"
       },
       {
         "check": "claim-parity",
-        "result": "pass-zero-drift-outside-refreshed-return-and-receipt",
+        "result": "pass-zero-drift-before-post-commit-release-record",
         "ref": "docs/EVIDENCE-LEDGER.md"
       },
       {

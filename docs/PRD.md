@@ -21,7 +21,7 @@ This is a testable hypothesis, not a claim that the product guarantees coherent 
 ## Core workflow
 
 1. The facilitator selects a World Pack, canon profile, fixed state, and an original creator-owned `StyleProfile` describing viewpoint, tense, cadence goals, dialogue mode, explicit avoidances, and output bounds.
-2. The facilitator records one or more `ParticipantIntent` values, each separating the human participant from the fictional entities they control.
+2. The live product boundary accepts one or more facilitator-collected `ParticipantIntent` values, each separating the human participant from the fictional entities they control. The public fixture instead loads one registered, frozen two-intent rehearsal so its fixed output cannot be mistaken for free-text composition.
 3. Deterministic retrieval creates character-scoped `agent_view` bundles containing only active, relevant entities, claims, events, rules, and knowledge.
 4. The fixture path and GPT-5.6 adapter share one strict draft contract for prose, speakers, assertions, actions, proposed changes, and referenced style-constraint IDs. A real model invocation remains a separate local evidence gate.
 5. Hard validators check entity existence, state, timeline, location, knowledge, active traditions, support, and expansion approval.
@@ -37,7 +37,7 @@ One web page must demonstrate all of the following with the same small World Pac
 
 - one grounded scene passes with visible evidence
 - one original style profile is visible in the run and referenced through stable registered constraint IDs by the structured draft; this demonstrates an inspectable control mechanism, not improved or superior prose quality
-- two or three participant intents are composed without conflating participant IDs and character speaker IDs
+- one registered, frozen two-intent fixture preserves participant, controlled-character, authorizing-intent, contributing-intent, and generated-speaker lineage; arbitrary free-text composition remains a gated live-path claim
 - one dead/out-of-place character is blocked
 - one character knowledge leak is blocked
 - one new rule becomes a proposal rather than canon
@@ -47,6 +47,9 @@ One web page must demonstrate all of the following with the same small World Pac
 - the accepted rule can be used in the second deterministic step
 - unchanged control cases keep their expected outcomes, while the red-sail case has explicit pre-approval and post-approval expectations
 - the UI clearly labels fixture output and never presents it as a live GPT-5.6 run
+- a visible style receipt separates the deterministic output-bound check from creator-reviewed voice and cadence constraints
+- a compact knowledge-boundary table shows narrator-visible, character-withheld, and character-uncertain facts without requiring graph interpretation
+- a collapsed production review packet organizes intent lineage, evidence, canon delta, state, conflict, and replay for human handoff without claiming production readiness
 
 The hosted demo exposes fixture mode only. Live GPT-5.6 mode is a controlled local/server evidence path, not an unauthenticated public endpoint.
 

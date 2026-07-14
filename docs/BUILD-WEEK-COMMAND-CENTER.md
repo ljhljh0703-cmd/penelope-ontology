@@ -1,7 +1,7 @@
 # Build Week command center
 
 Status snapshot: **2026-07-15 KST**
-Current state: **Core fixture vertical slice, authority hardening, clean-clone identified release gate, and exact-SHA local production smoke verified; live-model and external submission gates remain.**
+Current state: **Core fixture vertical slice, frozen-input truthfulness, registered-request authority, creator/style/knowledge audit surfaces, live-capture transaction, current-tree release gate, and production visual inspection verified; final committed-SHA rehearsal plus live-model and external submission gates remain.**
 
 Official submission deadline: **2026-07-22 09:00 KST** (2026-07-21 17:00 PDT).
 Internal submission freeze: **2026-07-21 23:00 KST**. The final ten hours are emergency buffer, not feature time.
@@ -11,7 +11,8 @@ Internal submission freeze: **2026-07-21 23:00 KST**. The final ten hours are em
 The Work & Productivity product serves professional GMs, narrative production teams, and game scene or quest designers. It succeeds only if this vertical slice works end to end:
 
 ```text
-facilitator-collected ParticipantIntent[] + creator-owned StyleProfile
+registered frozen ParticipantIntent[2] fixture / gated facilitator-collected live intents
++ creator-owned StyleProfile
 + World Pack / SimulationSnapshot
 → character-scoped retrieval and agent views
 → fixture-verified structured candidate / gated GPT-5.6 candidate
@@ -24,13 +25,13 @@ facilitator-collected ParticipantIntent[] + creator-owned StyleProfile
 
 The primary demo is not “AI writes mythology” and not four unrelated error cards. It is one professional rehearsal flow:
 
-1. Two locally labeled participants provide intents for Penelope and Telemachus while the facilitator selects an original table-ready mythic style profile. Penelope and Eurycleia remain a separate grounded replay control.
+1. The public workbench loads a registered, frozen pair of synthetic intents for Penelope and Telemachus plus an original table-ready mythic style profile. It does not pretend the fixture reacts to arbitrary prompt prose. Penelope and Eurycleia remain a separate grounded replay control.
 2. The tool builds separate character views; Penelope does not receive the hidden Ogygia edge.
-3. The verified fixture returns attributed candidate utterances/actions and a red-sail rule proposal through the same strict draft contract used by the gated GPT-5.6 adapter. A real model result remains a separate gate.
-4. The audit graph exposes evidence, a blocked knowledge leak, and the proposal as a ghost relation.
+3. The verified fixture returns a playable line for each intent, reciprocal contributing lineage, and a red-sail rule proposal through the same strict draft contract used by the gated GPT-5.6 adapter. A real arbitrary-intent model result remains a separate gate.
+4. The workbench exposes a style receipt, a compact knowledge-boundary table, evidence, a blocked leak, and the proposal as a ghost relation before the detailed graph.
 5. The facilitator accepts or edits the rule; only then does the overlay hash change.
 6. Two validated steps advance the registered `harbor_watch` variable from `idle` to `watching` to `signal_seen`.
-7. The chained snapshots and state hashes change, while frozen Hector, knowledge-leak, and tradition-conflict cases retain their expected outcomes.
+7. The chained snapshots and state hashes change, while frozen Hector, knowledge-leak, and tradition-conflict cases retain their expected outcomes; a collapsed production review packet organizes the fixture evidence for human handoff.
 
 ## Current truth
 
@@ -40,13 +41,14 @@ The primary demo is not “AI writes mythology” and not four unrelated error c
 | Devpost project page | verified, not submitted | public in-progress page exists; final submission remains incomplete |
 | Codex credit request | resubmitted, pending | optional; the build assumes no credit |
 | Scope decision | verified | user approved A scope, Work & Productivity audience expansion, and remote-multiplayer No-Go on 2026-07-15 |
-| Local repository | verified working tree | core work is implemented on `codex/core-vertical-slice`; final commit/public remote remain |
-| Core contracts and deterministic engine | verified | eight demo-critical contract groups plus retrieval, validation, overlay, graph, simulation, exact-overlay replay, and transition-authority tests |
-| Table product surface | verified fixture-only | two local intents, style profile, graph, accept/edit/reject, fresh 4/4 approved-overlay replay, S0r, and two steps are visible without JSON editing |
-| Local release gate | verified | evidence generation and manifest, lint, typecheck, 139 unit/API tests, privacy scan over 150 public candidates, production build, and 10 browser checks pass |
-| Fresh-copy rehearsal | verified | clean clone of implementation proof commit `fbb1b50497bff67eb6e83467cbdabc579a1c87c2` installed 395 packages, reported 0 vulnerabilities, passed `BUILD_SOURCE_OK`, 139 tests, privacy 150, production build, and 10 browser checks |
-| Deployment smoke | verified locally for implementation proof commit | cache-busted exact SHA, root boundary, all declared security headers, health, fixture flow, exact-overlay replay, S0r→S1→S2 hash/canon continuity, and public-live denial passed against `next start`; hosted origin remains pending |
-| Live GPT-5.6 | adapter verified; real call blocked | strict Responses adapter and typed errors are mock-tested; no API key/live response evidence exists |
+| Local repository | verified working tree | core work is implemented on `codex/core-vertical-slice`; final candidate commit/public remote remain |
+| Core contracts and deterministic engine | verified | eight demo-critical contract groups plus retrieval, validation, registered public-fixture authority, overlay, graph, simulation, exact-overlay replay, and transition-authority tests |
+| Table product surface | verified fixture-only | registered frozen two-intent lineage, visible style receipt and knowledge boundary, creator gate before the collapsed graph, production review packet, fresh 4/4 approved-overlay replay, S0r, and two steps are visible without JSON editing |
+| Current-tree release gate | verified before final commit | seven-file evidence manifest, lint, non-incremental typecheck, 30 Vitest files / 156 tests, privacy scan over 155 public candidates, production build, and 10 production-browser checks pass |
+| Production visual inspection | verified before final commit | desktop candidate, mobile candidate, and desktop completed flow show frozen inputs, knowledge table, style receipt, creator gate before graph, two-step chain, and opened review packet without overlap or clipped controls |
+| Fresh-copy rehearsal | historical verified; current recertification pending | clean clone of prior implementation proof `fbb1b50497bff67eb6e83467cbdabc579a1c87c2` passed; the final candidate must receive its own identified clean-copy record |
+| Deployment smoke | historical verified; current recertification pending | the prior implementation proof passed exact-SHA local production smoke; the final candidate must repeat it before release, and hosted origin remains pending |
+| Live GPT-5.6 | adapter and capture transaction verified; real call blocked | strict Responses adapter, typed errors, `.env.local` loading, pre-dispatch recovery sentinel, exclusive lock, append-only receipts, atomic raw/public writes, completed-receipt readiness binding, rollback, and explicit retry are tested; no API key/live response evidence exists |
 | Style controllability probe | protocol verified; live result blocked | same-model AB/BA schedule, no-retry capture, masked rubric, integrity hashes, and the focused style-evaluation suite pass; four live calls and creator ratings do not exist |
 | Quest production extension | target only | no `QuestSpec`, linter, generator, evaluation, or user proof exists |
 | Release evidence | fixture packet verified; external release pending | seven sanitized evidence artifacts plus manifest exist; README write/derive preflights are `SERVING_CANDIDATE` and require explicit approval; public remote, CI, deployment, video, `/feedback`, and final submission remain |
@@ -86,9 +88,9 @@ Implement accept/edit/reject, stale-decision rejection, additive overlay, same-t
 
 ### Gate 3 — Live GPT-5.6 and Table product surface
 
-**Status: PARTIAL.** Table surface, 10 desktop/mobile browser checks, and local production deployment smoke pass; the live adapter is mock-tested, but the required real GPT-5.6 trace is blocked by missing credentials.
+**Status: PARTIAL.** The frozen Table surface, 10 desktop/mobile production-browser checks, and current-tree production build pass; the live adapter and capture transaction are tested, but the required real GPT-5.6 trace is blocked by missing credentials.
 
-Connect the Responses API using strict `text.format` Structured Outputs, keep refusals distinct from schema errors, expose the run path, and build the single-page Table flow with multi-intent input, selected style profile, graph view, creator decision, state timeline, and replay panel.
+Connect the Responses API using strict `text.format` Structured Outputs, keep refusals distinct from schema errors, expose the gated live run path, and build the single-page Table flow around a registered frozen two-intent fixture, selected style profile, visible style and knowledge receipts, graph view, creator decision, state timeline, review packet, and replay panel. Arbitrary free-text inputs are not exposed by the fixture surface.
 
 The public route and reviewer deployment are fixture-only. Every public `modelMode: live` request is rejected before orchestration. A real model call is available only through an explicitly invoked local evidence command with `OPENAI_API_KEY` and an enable flag. Live model text is nondeterministic; only selected structured-output processing, validators, graph descriptors, transitions, and fixture replay carry deterministic claims.
 
@@ -97,7 +99,7 @@ The public route and reviewer deployment are fixture-only. Every public `modelMo
 
 ### Gate 4 — Evidence and release
 
-**Status: PARTIAL.** Source/privacy checks, fixture Evidence Packet, production build, and fresh-copy rehearsal pass. README candidate-mode approval, public remote/CI/deploy, video, `/feedback`, and final Devpost confirmation remain.
+**Status: PARTIAL.** Current source/privacy checks, fixture Evidence Packet, production build, browser checks, and visual inspection pass. The prior implementation proof passed fresh-copy rehearsal; final-candidate identified recertification, README approval, public remote/CI/deploy, video, `/feedback`, and Devpost confirmation remain.
 
 Run frozen evaluation, publish sanitized evidence, build the Evidence Packet, and derive README, Devpost copy, video claims, and later portfolio copy from the same claim ledger.
 
@@ -121,8 +123,8 @@ Run frozen evaluation, publish sanitized evidence, build the Evidence Packet, an
 
 Included now:
 
-- local facilitator-collected multi-intent composition
-- original creator-owned style profile applied as an explicit harness layer
+- registered frozen two-intent fixture with explicit lineage; arbitrary facilitator-collected composition remains at the gated live boundary
+- original creator-owned style profile carried as a registered harness input and referenced through stable IDs; one deterministic bound is checked while six constraints remain creator-reviewed
 - derived canon/knowledge graph view
 - deterministic two-step state simulation
 

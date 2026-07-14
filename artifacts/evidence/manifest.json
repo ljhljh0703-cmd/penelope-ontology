@@ -1,9 +1,9 @@
 {
   "files": [
     {
-      "bytes": 3701,
+      "bytes": 3784,
       "path": "artifacts/evidence/evidence-packet.json",
-      "sha256": "44f916291e974302636be12a54d02daa2b437959419001db1d73aada06e7e244"
+      "sha256": "2ced2af557633322fbf3973223e992a6c114341b317ad4d1c7a813e1be9d6271"
     },
     {
       "bytes": 4675,
@@ -31,9 +31,9 @@
       "sha256": "3db1ec51ec69924df674a981d5cdee7e4deceef759d87c1a0a8dd99ec2db811e"
     },
     {
-      "bytes": 2588,
+      "bytes": 2671,
       "path": "artifacts/evidence/style-harness.json",
-      "sha256": "b8acc3ab2c44b84382c56a5cd915f017c4b8aeb390c594c26ec6b96e1aa40436"
+      "sha256": "eda901fd1888b1f47d3b2ae442c8d3058cf03a5c247cb19b1984411052e2e3c2"
     }
   ],
   "schemaVersion": 1

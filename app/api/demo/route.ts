@@ -47,6 +47,19 @@ export async function GET() {
       fixtureModel: fixtureNarrativeModel,
       liveModel: disabledLiveModel,
     });
+    const redSailReplay = replayCases.find(({ id }) => id === "replay.red_sail_proposal");
+    const registeredStage = redSailReplay?.stages.find(
+      (stage) => stage.kind === "run" && stage.stageId === "stage.red_sail_proposal",
+    );
+    if (
+      !redSailReplay ||
+      registeredStage?.kind !== "run" ||
+      registeredStage.draftFixtureId !== "draft.red_sail_proposal" ||
+      registeredStage.taskType !== "expand"
+    ) {
+      throw new Error("The registered red-sail rehearsal is missing or changed shape.");
+    }
+    const registeredRun = registeredStage;
     const [replay, grounded, conflict] = await Promise.all([
       runFrozenReplay({
         worldPack,
@@ -102,6 +115,44 @@ export async function GET() {
       throw new Error("The public proof fixtures do not match their frozen outcomes.");
     }
 
+    const ogygiaClaim = worldPack.claims.find(
+      ({ id }) => id === "claim.odyssey.odysseus_at_ogygia",
+    );
+    const uncertainFateClaim = worldPack.claims.find(
+      ({ id }) => id === "claim.odyssey.penelope_uncertain_fate",
+    );
+    const penelopeView = grounded.evidence.characterViews.find(
+      ({ characterId }) => characterId === "penelope",
+    );
+    const penelopeVisibleClaimIds = new Set([
+      ...(penelopeView?.knownClaimIds ?? []),
+      ...(penelopeView?.uncertainClaimIds ?? []),
+    ]);
+    if (
+      !ogygiaClaim?.epistemicVisibility.includes("narrator") ||
+      penelopeVisibleClaimIds.has("claim.odyssey.odysseus_at_ogygia") ||
+      !uncertainFateClaim ||
+      !penelopeView?.uncertainClaimIds.includes(uncertainFateClaim.id)
+    ) {
+      throw new Error("The fixture knowledge-boundary proof no longer matches the World Pack.");
+    }
+
+    const participantSlots = registeredRun.participantIntents.map((participantIntent) => {
+      const controlledEntityId = participantIntent.controlledEntityIds[0];
+      const character = worldPack.entities.find(({ id }) => id === controlledEntityId);
+      if (!controlledEntityId || !character) {
+        throw new Error("A registered rehearsal participant controls an unknown character.");
+      }
+      return {
+        intentId: participantIntent.intentId,
+        participantId: participantIntent.participantId,
+        controlledEntityId,
+        characterLabel: character.name,
+        defaultIntent: participantIntent.intent,
+        frozen: true as const,
+      };
+    });
+
     return NextResponse.json({
       mode: "fixture",
       worldPack: {
@@ -113,20 +164,41 @@ export async function GET() {
       selectedStyleProfileId: worldPack.defaultStyleProfileId,
       overlay,
       snapshot,
-      participantSlots: [
+      participantSlots,
+      registeredRehearsal: {
+        replayCaseId: "replay.red_sail_proposal",
+        stageId: registeredRun.stageId,
+        draftFixtureId: "draft.red_sail_proposal",
+        styleProfileId: registeredRun.styleProfileId,
+        taskType: "expand",
+        brief: registeredRun.brief,
+        participantIntents: registeredRun.participantIntents,
+        frozen: true,
+      },
+      knowledgeBoundary: [
         {
-          intentId: "intent.penelope",
-          participantId: "participant.one",
-          controlledEntityId: "penelope",
-          characterLabel: "Penelope",
-          defaultIntent: "Keep uncertainty distinct from knowledge while preparing the household.",
+          perspectiveId: "narrator",
+          perspectiveLabel: "Narrator",
+          factLabel: "Odysseus is on Ogygia",
+          status: "visible",
+          evidenceId: ogygiaClaim.id,
+          basis: "World Pack visibility includes narrator.",
         },
         {
-          intentId: "intent.telemachus",
-          participantId: "participant.two",
-          controlledEntityId: "telemachus",
-          characterLabel: "Telemachus",
-          defaultIntent: "Propose a red-sail harbor signal and organize a cautious watch.",
+          perspectiveId: "penelope",
+          perspectiveLabel: "Penelope",
+          factLabel: "Odysseus's exact Ogygia location",
+          status: "withheld",
+          evidenceId: ogygiaClaim.id,
+          basis: "Absent from Penelope's character-scoped agent view.",
+        },
+        {
+          perspectiveId: "penelope",
+          perspectiveLabel: "Penelope",
+          factLabel: "Odysseus's fate",
+          status: "uncertain",
+          evidenceId: uncertainFateClaim.id,
+          basis: "Registered as uncertain in Penelope's character view.",
         },
       ],
       proofs: {

@@ -5,7 +5,6 @@ import type { CanonOverlay } from "@/src/contracts/canon-overlay";
 import type { CreatorDecision } from "@/src/contracts/creator-decision";
 import type { CreatorDecisionResult } from "@/src/contracts/creator-decision";
 import type { GraphDescriptor } from "@/src/contracts/graph";
-import type { ParticipantIntent } from "@/src/contracts/participant-intent";
 import {
   MAX_DISPLAY_DESCRIPTION_LENGTH,
   type ProposalPatch,
@@ -106,11 +105,12 @@ const statusTone = (status: DemoReplayResult["status"]): string => {
 const statusCopy = (status: DemoReplayResult["status"]): string =>
   status.replaceAll("_", " ");
 
+const countWords = (text: string): number =>
+  text.trim().length === 0 ? 0 : text.trim().split(/\s+/u).length;
+
 export function TableWorkbench() {
   const [phase, setPhase] = useState<WorkbenchPhase>("loading");
   const [bootstrap, setBootstrap] = useState<DemoBootstrap | null>(null);
-  const [intents, setIntents] = useState<ParticipantIntent[]>([]);
-  const [selectedStyleId, setSelectedStyleId] = useState("");
   const [overlay, setOverlay] = useState<CanonOverlay | null>(null);
   const [snapshot, setSnapshot] = useState<SimulationSnapshot | null>(null);
   const [runResult, setRunResult] = useState<RunResult | null>(null);
@@ -139,20 +139,30 @@ export function TableWorkbench() {
       if (demo.participantSlots.length < 2) {
         throw new Error("The demo must provide two local participant slots.");
       }
-      if (!demo.styleProfiles.some(({ id }) => id === demo.selectedStyleProfileId)) {
+      if (
+        demo.registeredRehearsal.styleProfileId !== demo.selectedStyleProfileId ||
+        !demo.styleProfiles.some(({ id }) => id === demo.registeredRehearsal.styleProfileId)
+      ) {
         throw new Error("The selected style profile is not registered by the demo.");
       }
 
-      const initialIntents = demo.participantSlots.slice(0, 2).map((slot) => ({
-        intentId: slot.intentId,
-        participantId: slot.participantId,
-        controlledEntityIds: [slot.controlledEntityId],
-        intent: slot.defaultIntent,
-      }));
+      if (
+        !demo.registeredRehearsal.frozen ||
+        demo.registeredRehearsal.participantIntents.length !== 2 ||
+        demo.registeredRehearsal.participantIntents.some(
+          (intent, index) =>
+            intent.intentId !== demo.participantSlots[index]?.intentId ||
+            intent.participantId !== demo.participantSlots[index]?.participantId ||
+            intent.controlledEntityIds.length !== 1 ||
+            intent.controlledEntityIds[0] !== demo.participantSlots[index]?.controlledEntityId ||
+            intent.intent !== demo.participantSlots[index]?.defaultIntent ||
+            !demo.participantSlots[index]?.frozen,
+        )
+      ) {
+        throw new Error("The public rehearsal inputs must match the frozen replay registration.");
+      }
 
       setBootstrap(demo);
-      setIntents(initialIntents);
-      setSelectedStyleId(demo.selectedStyleProfileId);
       setOverlay(demo.overlay);
       setSnapshot(demo.snapshot);
       setRunResult(null);
@@ -185,26 +195,31 @@ export function TableWorkbench() {
     }
   }, [phase]);
 
+  const intents = bootstrap?.registeredRehearsal.participantIntents ?? [];
+  const selectedStyleId = bootstrap?.registeredRehearsal.styleProfileId ?? "";
   const styleProfile = bootstrap?.styleProfiles.find(({ id }) => id === selectedStyleId);
   const proposal = runResult?.proposals[0] ?? null;
   const completedDraft =
     runResult?.modelOutcome.outcome === "completed" ? runResult.modelOutcome.draft : null;
   const busy = ["loading", "running", "deciding", "transitioning"].includes(phase);
   const visibleReplayResults = overlayReplay?.replayResults ?? bootstrap?.replayResults ?? [];
-
-  const updateIntent = (index: number, value: string) => {
-    setIntents((current) =>
-      current.map((item, itemIndex) => (itemIndex === index ? { ...item, intent: value } : item)),
-    );
-  };
+  const maxWordsConstraint = styleProfile?.constraints.find(
+    ({ kind, checkMode, value }) =>
+      kind === "max_words" && checkMode === "deterministic" && typeof value === "number",
+  );
+  const humanStyleConstraints = styleProfile?.constraints.filter(
+    ({ checkMode }) => checkMode === "human",
+  ) ?? [];
+  const narrativeWordCount = completedDraft ? countWords(completedDraft.narrative) : 0;
+  const authorizingIntentIds = new Set(
+    completedDraft?.utterances.map(({ authorizingIntentId }) => authorizingIntentId) ?? [],
+  );
+  const contributingIntentIds = new Set(
+    completedDraft?.utterances.flatMap(({ contributingIntentIds }) => contributingIntentIds) ?? [],
+  );
 
   const runCandidate = async () => {
     if (!bootstrap || !overlay || !snapshot) return;
-    const empty = intents.findIndex(({ intent }) => intent.trim().length === 0);
-    if (empty >= 0) {
-      setFormError(`Participant ${empty + 1} needs an intent before the rehearsal can run.`);
-      return;
-    }
 
     setFormError(null);
     setApiError(null);
@@ -228,14 +243,13 @@ export function TableWorkbench() {
 
     const request: RunRequest = {
       modelMode: "fixture",
-      draftFixtureId: "draft.red_sail_proposal",
+      draftFixtureId: bootstrap.registeredRehearsal.draftFixtureId,
       overlay: requestOverlay,
       snapshot: requestSnapshot,
       styleProfileId: selectedStyleId,
-      taskType: "expand",
-      brief:
-        "Compose the two local participant intents as a restrained Ithaca scene. Keep the red-sail convention outside canon until the creator decides.",
-      participantIntents: intents,
+      taskType: bootstrap.registeredRehearsal.taskType,
+      brief: bootstrap.registeredRehearsal.brief,
+      participantIntents: bootstrap.registeredRehearsal.participantIntents,
     };
 
     try {
@@ -442,6 +456,10 @@ export function TableWorkbench() {
             only after creator approval.
           </p>
         </div>
+        <div className="responsibility-contract" data-testid="responsibility-contract">
+          <strong>Model proposes · Harness verifies · Creator decides</strong>
+          <p>The creator owns the style profile, canon changes, and every final release decision.</p>
+        </div>
         <dl className="run-strip">
           <div><dt>World Pack</dt><dd>{bootstrap.worldPack.label}</dd></div>
           <div><dt>Version</dt><dd>{bootstrap.worldPack.version}</dd></div>
@@ -465,41 +483,39 @@ export function TableWorkbench() {
               <li key={number}><span>{number}</span>{label}</li>
             ))}
           </ol>
-          <p className="rail-note">One facilitator collects these inputs locally. This is not a remote multiplayer room.</p>
+          <p className="rail-note">This public rehearsal loads registered synthetic inputs. Arbitrary facilitator-collected intents belong to the gated live-adapter path, not this fixture.</p>
         </aside>
 
         <div className="workbench-content">
           <section className="setup-panel panel" aria-labelledby="setup-title">
             <div className="panel-heading">
               <div>
-                <p className="kicker">01 / TABLE SETUP</p>
-                <h2 id="setup-title">People, characters, and style stay separate.</h2>
+                <p className="kicker">01 / REGISTERED REHEARSAL</p>
+                <h2 id="setup-title">Frozen inputs make this run auditable.</h2>
               </div>
-              <span className="status-chip neutral">2 LOCAL INPUTS</span>
+              <span className="status-chip neutral">2 FROZEN INTENTS</span>
             </div>
 
             <form onSubmit={(event) => { event.preventDefault(); void runCandidate(); }}>
-              <fieldset className="participant-fieldset" disabled={phase !== "setup" && phase !== "error"}>
-                <legend className="sr-only">Participant intents</legend>
+              <fieldset className="participant-fieldset">
+                <legend className="sr-only">Frozen registered participant intents</legend>
                 <div className="participant-grid">
                   {intents.map((item, index) => {
                     const slot = bootstrap.participantSlots[index];
                     return (
-                      <article className="participant-card" key={item.intentId}>
+                      <article
+                        className="participant-card frozen-intent-card"
+                        key={item.intentId}
+                        data-testid={`participant-intent-${index}`}
+                        data-frozen="true"
+                      >
                         <div className="participant-meta">
                           <span>{slot?.participantId ?? item.participantId}</span>
                           <strong>{slot?.characterLabel ?? item.controlledEntityIds[0]}</strong>
                         </div>
-                        <label htmlFor={`participant-intent-${index}`}>Intent</label>
-                        <textarea
-                          id={`participant-intent-${index}`}
-                          data-testid={`participant-intent-${index}`}
-                          maxLength={800}
-                          rows={4}
-                          value={item.intent}
-                          onChange={(event) => updateIntent(index, event.target.value)}
-                        />
-                        <small>{item.intent.length}/800 · controls {item.controlledEntityIds[0]}</small>
+                        <p className="frozen-label">REGISTERED · FROZEN · NON-EDITABLE</p>
+                        <p className="frozen-intent-copy">{item.intent}</p>
+                        <small>{item.intentId} · controls {item.controlledEntityIds[0]}</small>
                       </article>
                     );
                   })}
@@ -507,19 +523,10 @@ export function TableWorkbench() {
               </fieldset>
 
               <div className="style-row">
-                <div>
-                  <label htmlFor="style-profile">Creator style profile</label>
-                  <select
-                    id="style-profile"
-                    data-testid="style-profile"
-                    value={selectedStyleId}
-                    onChange={(event) => setSelectedStyleId(event.target.value)}
-                    disabled={phase !== "setup" && phase !== "error"}
-                  >
-                    {bootstrap.styleProfiles.map((profile) => (
-                      <option key={profile.id} value={profile.id}>{profile.label}</option>
-                    ))}
-                  </select>
+                <div className="frozen-style-profile" data-testid="style-profile" data-frozen="true">
+                  <span>Creator style profile · registered</span>
+                  <strong>{styleProfile?.label}</strong>
+                  <small>{selectedStyleId} · frozen for this rehearsal</small>
                 </div>
                 <ul className="constraint-list" aria-label="Selected style constraints">
                   {styleProfile?.constraints.map((constraint) => (
@@ -534,14 +541,17 @@ export function TableWorkbench() {
 
               {formError ? <p className="inline-error" role="alert">{formError}</p> : null}
               <div className="action-row">
-                <p>Fixture output is frozen. The checks, graph, decisions, and state transitions are deterministic.</p>
+                <p>
+                  Loaded from <code>{bootstrap.registeredRehearsal.replayCaseId}</code> / <code>{bootstrap.registeredRehearsal.stageId}</code>.
+                  The fixture adapter selects the registered draft ID; prompt prose does not branch the output.
+                </p>
                 <button
                   className="button primary"
                   data-testid="run-candidate"
                   type="submit"
                   disabled={phase !== "setup" && phase !== "error"}
                 >
-                  Build candidate <span aria-hidden="true">→</span>
+                  Run frozen rehearsal <span aria-hidden="true">→</span>
                 </button>
               </div>
             </form>
@@ -589,6 +599,37 @@ export function TableWorkbench() {
             </div>
           </section>
 
+          <section className="knowledge-boundary panel" aria-labelledby="knowledge-boundary-title" data-testid="knowledge-boundary">
+            <div className="panel-heading">
+              <div>
+                <p className="kicker">CHARACTER-SCOPED RETRIEVAL</p>
+                <h2 id="knowledge-boundary-title">Who can know this?</h2>
+              </div>
+              <p className="panel-note">Derived from the World Pack and the frozen character view.</p>
+            </div>
+            <div className="knowledge-boundary-table" role="table" aria-label="Fixture knowledge visibility boundaries">
+              <div className="knowledge-boundary-row knowledge-boundary-header" role="row">
+                <span role="columnheader">Perspective</span>
+                <span role="columnheader">Fact</span>
+                <span role="columnheader">Boundary</span>
+                <span role="columnheader">Evidence</span>
+              </div>
+              {bootstrap.knowledgeBoundary.map((boundary) => (
+                <div
+                  className="knowledge-boundary-row"
+                  role="row"
+                  key={`${boundary.perspectiveId}-${boundary.factLabel}`}
+                  data-testid={`knowledge-${boundary.perspectiveId}-${boundary.status}`}
+                >
+                  <strong role="cell">{boundary.perspectiveLabel}</strong>
+                  <span role="cell">{boundary.factLabel}</span>
+                  <span role="cell" className={`boundary-status ${boundary.status}`}>{boundary.status}</span>
+                  <span role="cell"><code>{boundary.evidenceId}</code><small>{boundary.basis}</small></span>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {apiError ? (
             <section className="api-error" role="alert" data-testid="api-error">
               <div><span>REQUEST FAILED</span><strong>{apiError}</strong></div>
@@ -624,14 +665,20 @@ export function TableWorkbench() {
                         {completedDraft.utterances.map((utterance, index) => (
                           <li key={`${utterance.speakerId}-${index}`}>
                             <strong>{utterance.speakerId}</strong>
-                            <span>authorized by {utterance.authorizingIntentId}</span>
+                            <span>authorizing intent · {utterance.authorizingIntentId}</span>
+                            <span>
+                              contributing intent{utterance.contributingIntentIds.length === 1 ? "" : "s"} · {utterance.contributingIntentIds.length > 0
+                                ? utterance.contributingIntentIds.join(" · ")
+                                : "none"}
+                            </span>
                             <q>{utterance.text}</q>
                           </li>
                         ))}
                       </ul>
-                      <p className="constraint-proof">
-                        {completedDraft.appliedStyleConstraintIds.length} registered style constraints referenced
-                      </p>
+                      <div className="intent-coverage" data-testid="intent-coverage">
+                        <strong>{authorizingIntentIds.size}/{intents.length} intents authorize a playable line</strong>
+                        <span>{contributingIntentIds.size}/{intents.length} intents also appear as contributors</span>
+                      </div>
                     </article>
                   </div>
                 ) : (
@@ -669,9 +716,44 @@ export function TableWorkbench() {
                     ) : <p>No hard violations.</p>}
                   </article>
                 </div>
-              </section>
 
-              <KnowledgeGraph graph={decisionGraph ?? runResult.graph} />
+                {completedDraft ? (
+                  <section className="style-receipt" aria-labelledby="style-receipt-title" data-testid="style-receipt">
+                    <div className="style-receipt-heading">
+                      <div>
+                        <p className="kicker">STYLE RECEIPT</p>
+                        <h3 id="style-receipt-title">Objective checks pass; taste stays human.</h3>
+                      </div>
+                      <strong className="style-warning">Referenced ≠ verified</strong>
+                    </div>
+                    <div className="style-receipt-grid">
+                      <article>
+                        <span>OBJECTIVE · MAX_WORDS</span>
+                        <dl>
+                          <div><dt>limit</dt><dd>{typeof maxWordsConstraint?.value === "number" ? maxWordsConstraint.value : "—"}</dd></div>
+                          <div><dt>actual</dt><dd data-testid="style-word-count">{narrativeWordCount}</dd></div>
+                          <div><dt>result</dt><dd className="receipt-pass">{typeof maxWordsConstraint?.value === "number" && narrativeWordCount <= maxWordsConstraint.value ? "PASS" : "FAIL"}</dd></div>
+                        </dl>
+                      </article>
+                      <article>
+                        <span>HUMAN-REVIEWED CONSTRAINTS</span>
+                        <ul>
+                          {humanStyleConstraints.map((constraint) => (
+                            <li key={constraint.id}>
+                              <strong>{constraint.kind.replaceAll("_", " ")}</strong>
+                              <code>{constraint.id}</code>
+                              <small>creator review required</small>
+                            </li>
+                          ))}
+                        </ul>
+                      </article>
+                    </div>
+                    <p>
+                      The draft references {completedDraft.appliedStyleConstraintIds.length} registered constraints; only deterministic checks are machine-verified. Live AB/BA not measured.
+                    </p>
+                  </section>
+                ) : null}
+              </section>
 
               {proposal ? (
                 <section className="decision-panel panel" aria-labelledby="decision-title" data-testid="proposal">
@@ -758,6 +840,8 @@ export function TableWorkbench() {
                   ) : null}
                 </section>
               ) : null}
+
+              <KnowledgeGraph graph={decisionGraph ?? runResult.graph} />
             </>
           ) : null}
 
@@ -819,9 +903,64 @@ export function TableWorkbench() {
                       <div><dt>Mode</dt><dd>fixture only</dd></div>
                       <div><dt>Canon</dt><dd>overlay v{overlay.version}</dd></div>
                       <div><dt>State</dt><dd>idle → watching → signal_seen</dd></div>
-                      <div><dt>Style</dt><dd>{styleProfile?.constraints.length ?? 0} constraints exposed</dd></div>
+                      <div>
+                        <dt>Style</dt>
+                        <dd>
+                          {typeof maxWordsConstraint?.value === "number" && narrativeWordCount <= maxWordsConstraint.value ? 1 : 0} deterministic pass · {humanStyleConstraints.length} creator review
+                        </dd>
+                      </div>
                       <div><dt>Replay</dt><dd>{visibleReplayResults.filter(({ status }) => status === "pass").length}/{visibleReplayResults.length} controls pass</dd></div>
                     </dl>
+                    <details className="review-packet" data-testid="production-review-packet">
+                      <summary>Production review packet</summary>
+                      <p>This collapsed packet organizes fixture evidence for human handoff; it is not production-readiness evidence.</p>
+                      <div className="review-packet-grid">
+                        <section>
+                          <h3>Intent lineage</h3>
+                          <ul>
+                            {intents.map((intent) => (
+                              <li key={intent.intentId}>
+                                <strong>{intent.intentId}</strong>
+                                <span>{intent.controlledEntityIds.join(", ")}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                        <section>
+                          <h3>Evidence used</h3>
+                          <ul>
+                            {runResult?.evidence.claimIds.map((id) => <li key={id}>{id}</li>)}
+                          </ul>
+                          <small>{runResult?.evidence.characterViews.length ?? 0} character-scoped views</small>
+                          <p>
+                            Knowledge boundary · {bootstrap.knowledgeBoundary.filter(({ status }) => status === "withheld").length} withheld · {bootstrap.knowledgeBoundary.filter(({ status }) => status === "uncertain").length} uncertain
+                          </p>
+                          <p>
+                            Conflict control · {bootstrap.proofs.conflict.status.replaceAll("_", " ")}
+                          </p>
+                        </section>
+                        <section>
+                          <h3>Creator canon delta</h3>
+                          <p>{decisionResult?.status ?? "unreviewed"} · overlay v{overlay.version}</p>
+                          <ul>
+                            {proposal?.patches.map((patch) => (
+                              <li key={patch.op === "add_rule" ? patch.rule.id : patch.claim.id}>
+                                {patch.op} · {patch.op === "add_rule" ? patch.rule.id : patch.claim.id}
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                        <section>
+                          <h3>State + replay</h3>
+                          <p>{timeline.map(({ snapshot: item }) => snapshotVariable(item)).join(" → ")}</p>
+                          <ul>
+                            {visibleReplayResults.map((result) => (
+                              <li key={result.id}>{result.id} · {result.status.toUpperCase()}</li>
+                            ))}
+                          </ul>
+                        </section>
+                      </div>
+                    </details>
                     <button className="button secondary" type="button" onClick={() => void loadDemo()} data-testid="replay-demo">
                       Replay demo
                     </button>

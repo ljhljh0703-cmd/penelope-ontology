@@ -1,28 +1,503 @@
-import { access, mkdir, writeFile } from "node:fs/promises";
+import { createHash, randomUUID } from "node:crypto";
+import {
+  access,
+  link,
+  mkdir,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   loadDemoWorldPack,
   loadOverlayFixture,
   loadSnapshotFixture,
 } from "@/src/adapters/filesystem/demo-data";
 import { fixtureNarrativeModel } from "@/src/adapters/fixtures/narrative-model";
+import { loadGpt56Config, type Environment } from "@/src/adapters/openai/gpt56-config";
 import { createOpenAiNarrativeModel } from "@/src/adapters/openai/narrative-model";
 import { createRunOrchestrator } from "@/src/application/run-orchestrator";
+import type { RunRequest, RunResult } from "@/src/contracts/run";
 import { canonicalJson, sha256Canonical } from "@/src/domain/canonical-json";
 import { buildLiveEvidenceRunRequest } from "@/src/evidence/live-evidence-request";
+import {
+  LiveCaptureRecoverySchema,
+  type LiveCaptureAttemptReceipt,
+  type LiveCaptureOutcome,
+} from "@/src/evidence/live-capture-contracts";
 import { sanitizeLiveEvidence } from "@/src/evidence/sanitize-live-evidence";
+
+type LiveRunRequest = Extract<RunRequest, { modelMode: "live" }>;
+type LiveModelOutcome = RunResult["modelOutcome"]["outcome"];
+
+type LiveEvidenceFileSystem = {
+  access: typeof access;
+  link: typeof link;
+  mkdir: typeof mkdir;
+  rm: typeof rm;
+  writeFile: typeof writeFile;
+};
+
+export type CaptureLiveEvidenceResult = {
+  rawPath: string;
+  publicPath: string;
+  attemptReceiptPath: string;
+  receipt: LiveCaptureAttemptReceipt;
+};
+
+export type CaptureLiveEvidenceOptions = {
+  root: string;
+  env: Environment;
+  request: LiveRunRequest;
+  worldPackId: string;
+  worldPackSha256: string;
+  run: (request: LiveRunRequest) => Promise<RunResult>;
+  attemptId?: string;
+  now?: () => string;
+  fileSystem?: LiveEvidenceFileSystem;
+  sanitize?: typeof sanitizeLiveEvidence;
+};
+
+const nodeFileSystem: LiveEvidenceFileSystem = {
+  access,
+  link,
+  mkdir,
+  rm,
+  writeFile,
+};
 
 const pretty = (value: unknown): string =>
   `${JSON.stringify(JSON.parse(canonicalJson(value)), null, 2)}\n`;
 
-const assertAbsent = async (filePath: string): Promise<void> => {
+const isMissing = (error: unknown): boolean =>
+  error instanceof Error && "code" in error && error.code === "ENOENT";
+
+const assertAbsent = async (
+  filePath: string,
+  fileSystem: LiveEvidenceFileSystem,
+  label: string,
+): Promise<void> => {
   try {
-    await access(filePath);
+    await fileSystem.access(filePath);
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") return;
+    if (isMissing(error)) return;
     throw error;
   }
-  throw new Error(`Refusing to replace existing live evidence: ${filePath}`);
+  throw new LiveEvidenceCaptureError(
+    "live_evidence_already_exists",
+    `Refusing to replace existing ${label}.`,
+  );
+};
+
+const sha256Text = (value: string): string =>
+  createHash("sha256").update(value).digest("hex");
+
+const publicErrorCode = (value: string): string =>
+  /^[a-z0-9_]{1,80}$/.test(value) ? value : "typed_model_failure";
+
+const publicModelId = (value: string | null | undefined): string | null =>
+  value && /^gpt-5\.6(?:$|-[A-Za-z0-9._-]+$)/.test(value) ? value : null;
+
+const safeAttemptId = (value: string): string => {
+  if (!/^[A-Za-z0-9._-]{1,128}$/.test(value)) {
+    throw new LiveEvidenceCaptureError(
+      "live_attempt_id_invalid",
+      "The live evidence attempt ID must be a short filesystem-safe identifier.",
+    );
+  }
+  return value;
+};
+
+const atomicWriteOnce = async ({
+  targetPath,
+  source,
+  attemptId,
+  fileSystem,
+  label,
+}: {
+  targetPath: string;
+  source: string;
+  attemptId: string;
+  fileSystem: LiveEvidenceFileSystem;
+  label: string;
+}): Promise<void> => {
+  const temporaryPath = `${targetPath}.${attemptId}.tmp`;
+  let temporaryCreated = false;
+  try {
+    await assertAbsent(targetPath, fileSystem, label);
+    await fileSystem.writeFile(temporaryPath, source, {
+      encoding: "utf8",
+      flag: "wx",
+    });
+    temporaryCreated = true;
+    // Hard-link creation is atomic and fails with EEXIST instead of replacing a
+    // target that appears after preflight. The temp file is in the same directory.
+    try {
+      await fileSystem.link(temporaryPath, targetPath);
+    } catch (error) {
+      if (error instanceof Error && "code" in error && error.code === "EEXIST") {
+        throw new LiveEvidenceCaptureError(
+          "live_evidence_target_conflict",
+          `Refusing to replace a concurrent ${label}.`,
+        );
+      }
+      throw error;
+    }
+  } finally {
+    if (temporaryCreated) {
+      await fileSystem.rm(temporaryPath, { force: true }).catch(() => undefined);
+    }
+  }
+};
+
+export class LiveEvidenceCaptureError extends Error {
+  constructor(
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "LiveEvidenceCaptureError";
+  }
+}
+
+export class LiveEvidenceTypedRunError extends LiveEvidenceCaptureError {
+  constructor(
+    readonly outcome: Exclude<LiveModelOutcome, "completed">,
+    readonly modelErrorCode: string,
+  ) {
+    super(
+      "live_model_typed_failure",
+      `Live evidence was not persisted because the model outcome was ${outcome}.`,
+    );
+    this.name = "LiveEvidenceTypedRunError";
+  }
+}
+
+export const getLiveEvidenceCapturePaths = (root: string, attemptId: string) => {
+  const rawDirectory = path.join(root, "artifacts", "live");
+  const publicDirectory = path.join(root, "artifacts", "evidence");
+  return {
+    rawDirectory,
+    publicDirectory,
+    attemptDirectory: path.join(rawDirectory, "live-capture-attempts"),
+    rawPath: path.join(rawDirectory, "live-run.json"),
+    publicPath: path.join(publicDirectory, "live-sanitized.json"),
+    lockPath: path.join(rawDirectory, "live-capture.lock.json"),
+    attemptRecoveryPath: path.join(
+      rawDirectory,
+      "live-capture-attempts",
+      `${attemptId}.pending.json`,
+    ),
+    attemptReceiptPath: path.join(
+      rawDirectory,
+      "live-capture-attempts",
+      `${attemptId}.json`,
+    ),
+  };
+};
+
+const captureError = (code: string, message: string): LiveEvidenceCaptureError =>
+  new LiveEvidenceCaptureError(code, message);
+
+const isTargetConflict = (error: unknown): boolean =>
+  error instanceof LiveEvidenceCaptureError &&
+  error.code === "live_evidence_target_conflict";
+
+export const captureLiveEvidence = async ({
+  root,
+  env,
+  request,
+  worldPackId,
+  worldPackSha256,
+  run,
+  attemptId: attemptIdInput = randomUUID(),
+  now = () => new Date().toISOString(),
+  fileSystem = nodeFileSystem,
+  sanitize = sanitizeLiveEvidence,
+}: CaptureLiveEvidenceOptions): Promise<CaptureLiveEvidenceResult> => {
+  const attemptId = safeAttemptId(attemptIdInput);
+  const config = loadGpt56Config(env);
+  const paths = getLiveEvidenceCapturePaths(root, attemptId);
+  const requestSha256 = sha256Canonical(request);
+
+  // All durable-state and configuration checks happen before the lock and model dispatch.
+  await Promise.all([
+    assertAbsent(paths.rawPath, fileSystem, "raw live evidence"),
+    assertAbsent(paths.publicPath, fileSystem, "sanitized live evidence"),
+    assertAbsent(paths.attemptRecoveryPath, fileSystem, "live recovery sentinel"),
+    assertAbsent(paths.attemptReceiptPath, fileSystem, "live attempt receipt"),
+  ]);
+  await Promise.all([
+    fileSystem.mkdir(paths.publicDirectory, { recursive: true }),
+    fileSystem.mkdir(paths.attemptDirectory, { recursive: true }),
+  ]);
+
+  let lockAcquired = false;
+  try {
+    await fileSystem.writeFile(
+      paths.lockPath,
+      pretty({
+        schemaVersion: 1,
+        evidenceType: "live_capture_lock",
+        attemptId,
+        reservedAt: now(),
+      }),
+      { encoding: "utf8", flag: "wx" },
+    );
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "EEXIST") {
+      throw captureError(
+        "live_capture_in_progress",
+        "Another live evidence capture is already active.",
+      );
+    }
+    throw error;
+  }
+  lockAcquired = true;
+
+  try {
+    await atomicWriteOnce({
+      targetPath: paths.attemptRecoveryPath,
+      source: pretty(
+        LiveCaptureRecoverySchema.parse({
+          schemaVersion: 1,
+          evidenceType: "live_capture_recovery",
+          attemptId,
+          requestSha256,
+          requestedModel: config.model,
+          reservedAt: now(),
+          state: "dispatch_reserved",
+        }),
+      ),
+      attemptId,
+      fileSystem,
+      label: "live recovery sentinel",
+    });
+  } catch {
+    try {
+      await fileSystem.rm(paths.lockPath, { force: false });
+    } catch {
+      throw captureError(
+        "live_capture_lock_release_failed",
+        "The live capture lock could not be released after reservation failed.",
+      );
+    }
+    throw captureError(
+      "live_attempt_recovery_write_failed",
+      "The live attempt could not reserve a durable pre-dispatch recovery record.",
+    );
+  }
+
+  let dispatchedAt: string | null = null;
+  let finishedAt: string | null = null;
+  let result: RunResult | null = null;
+  let captureOutcome: LiveCaptureOutcome = "run_threw";
+  let errorCode: string | null = "live_run_threw";
+  let rawPersisted = false;
+  let publicPersisted = false;
+  let primaryError: unknown = null;
+  let receipt: LiveCaptureAttemptReceipt | null = null;
+  let receiptError: unknown = null;
+  let recoveryError: unknown = null;
+  let lockError: unknown = null;
+
+  try {
+    dispatchedAt = now();
+    try {
+      result = await run(request);
+      finishedAt = now();
+    } catch {
+      finishedAt = now();
+      captureOutcome = "run_threw";
+      errorCode = "live_run_threw";
+      primaryError = captureError(
+        "live_run_threw",
+        "The live evidence run failed before returning a typed model outcome.",
+      );
+    }
+
+    if (result !== null) {
+      const { modelOutcome } = result;
+      if (modelOutcome.outcome !== "completed") {
+        captureOutcome = "typed_failure";
+        errorCode = publicErrorCode(modelOutcome.error.code);
+        primaryError = new LiveEvidenceTypedRunError(
+          modelOutcome.outcome,
+          errorCode,
+        );
+      } else if (modelOutcome.trace.mode !== "live") {
+        captureOutcome = "invalid_live_result";
+        errorCode = "fixture_result_rejected";
+        primaryError = captureError(
+          "fixture_result_rejected",
+          "A fixture result cannot be persisted as live evidence.",
+        );
+      } else {
+        let sanitized: ReturnType<typeof sanitizeLiveEvidence> | null = null;
+        try {
+          sanitized = sanitize(result, finishedAt ?? now(), {
+            worldPackId,
+            worldPackSha256,
+            request,
+          });
+        } catch {
+          captureOutcome = "sanitization_failed";
+          errorCode = "live_evidence_sanitization_failed";
+          primaryError = captureError(
+            "live_evidence_sanitization_failed",
+            "The completed live result failed the evidence authority or privacy gate.",
+          );
+        }
+
+        if (sanitized !== null) {
+          try {
+            await atomicWriteOnce({
+              targetPath: paths.rawPath,
+              source: pretty(result),
+              attemptId,
+              fileSystem,
+              label: "raw live evidence",
+            });
+            rawPersisted = true;
+          } catch (error) {
+            const targetConflict = isTargetConflict(error);
+            captureOutcome = targetConflict ? "raw_target_conflict" : "raw_write_failed";
+            errorCode = targetConflict
+              ? "raw_live_evidence_target_exists"
+              : "raw_live_evidence_write_failed";
+            primaryError = captureError(
+              errorCode,
+              targetConflict
+                ? "Concurrent raw live evidence already owns the canonical path."
+                : "The completed live result could not be persisted atomically.",
+            );
+          }
+
+          if (rawPersisted) {
+            try {
+              await atomicWriteOnce({
+                targetPath: paths.publicPath,
+                source: pretty(sanitized),
+                attemptId,
+                fileSystem,
+                label: "sanitized live evidence",
+              });
+              publicPersisted = true;
+              captureOutcome = "persisted";
+              errorCode = null;
+            } catch (error) {
+              const targetConflict = isTargetConflict(error);
+              captureOutcome = targetConflict
+                ? "public_target_conflict"
+                : "public_write_failed";
+              errorCode = targetConflict
+                ? "public_live_evidence_target_exists"
+                : "public_live_evidence_write_failed";
+              try {
+                await fileSystem.rm(paths.rawPath, { force: false });
+                rawPersisted = false;
+                primaryError = captureError(
+                  errorCode,
+                  targetConflict
+                    ? "Concurrent sanitized evidence already owns the canonical path."
+                    : "The sanitized public evidence could not be published atomically.",
+                );
+              } catch {
+                captureOutcome = "canonical_rollback_failed";
+                errorCode = "live_evidence_pair_rollback_failed";
+                primaryError = captureError(
+                  "live_evidence_pair_rollback_failed",
+                  "The incomplete canonical evidence pair requires manual recovery.",
+                );
+              }
+            }
+          }
+        }
+      }
+    }
+  } finally {
+    if (dispatchedAt !== null) {
+      finishedAt ??= now();
+      const trace = result?.modelOutcome.trace;
+      const responseId = trace?.responseId ?? null;
+      receipt = {
+        schemaVersion: 1,
+        evidenceType: "live_capture_attempt",
+        attemptId,
+        requestSha256,
+        dispatchedAt,
+        finishedAt,
+        requestedModel: config.model,
+        actualModel: publicModelId(trace?.actualModel),
+        modelOutcome: result?.modelOutcome.outcome ?? "not_returned",
+        captureOutcome,
+        errorCode,
+        responseIdSha256: responseId ? sha256Text(responseId) : null,
+        inputTokens: trace?.inputTokens ?? null,
+        outputTokens: trace?.outputTokens ?? null,
+        rawPersisted,
+        publicPersisted,
+      };
+      try {
+        await atomicWriteOnce({
+          targetPath: paths.attemptReceiptPath,
+          source: pretty(receipt),
+          attemptId,
+          fileSystem,
+          label: "live attempt receipt",
+        });
+      } catch (error) {
+        receiptError = error;
+      }
+    }
+    if (receiptError === null && dispatchedAt !== null) {
+      try {
+        await fileSystem.rm(paths.attemptRecoveryPath, { force: false });
+      } catch (error) {
+        recoveryError = error;
+      }
+    }
+    if (lockAcquired && receiptError === null && recoveryError === null) {
+      try {
+        await fileSystem.rm(paths.lockPath, { force: false });
+      } catch (error) {
+        lockError = error;
+      }
+    }
+  }
+
+  if (receiptError !== null) {
+    throw captureError(
+      "live_attempt_receipt_write_failed",
+      "The dispatched live attempt could not be recorded safely.",
+    );
+  }
+  if (recoveryError !== null) {
+    throw captureError(
+      "live_attempt_recovery_release_failed",
+      "The completed attempt receipt exists, but its recovery sentinel requires manual cleanup.",
+    );
+  }
+  if (lockError !== null) {
+    throw captureError(
+      "live_capture_lock_release_failed",
+      "The live capture lock could not be released.",
+    );
+  }
+  if (primaryError !== null) throw primaryError;
+  if (receipt === null || !rawPersisted || !publicPersisted) {
+    throw captureError(
+      "live_capture_incomplete",
+      "The live capture did not reach its complete persisted state.",
+    );
+  }
+
+  return {
+    rawPath: paths.rawPath,
+    publicPath: paths.publicPath,
+    attemptReceiptPath: paths.attemptReceiptPath,
+    receipt,
+  };
 };
 
 const main = async (): Promise<void> => {
@@ -35,53 +510,41 @@ const main = async (): Promise<void> => {
     env: process.env,
     styleProfiles: worldPack.styleProfiles,
   });
-  const run = createRunOrchestrator({ worldPack, fixtureModel: fixtureNarrativeModel, liveModel });
-  const runRequest = buildLiveEvidenceRunRequest({
+  const run = createRunOrchestrator({
+    worldPack,
+    fixtureModel: fixtureNarrativeModel,
+    liveModel,
+  });
+  const request = buildLiveEvidenceRunRequest({
     overlay,
     snapshot,
     styleProfileId: worldPack.defaultStyleProfileId,
   });
-  const rawDirectory = path.join(process.cwd(), "artifacts", "live");
-  const publicDirectory = path.join(process.cwd(), "artifacts", "evidence");
-  const rawPath = path.join(rawDirectory, "live-run.json");
-  const publicPath = path.join(publicDirectory, "live-sanitized.json");
-  const lockPath = path.join(rawDirectory, "live-capture.lock.json");
-  await Promise.all([
-    mkdir(rawDirectory, { recursive: true }),
-    mkdir(publicDirectory, { recursive: true }),
-  ]);
-  await writeFile(
-    lockPath,
-    pretty({
-      schemaVersion: 1,
-      evidenceType: "live_capture_lock",
-      reservedAt: new Date().toISOString(),
-      writeOnce: true,
-    }),
-    { encoding: "utf8", flag: "wx" },
-  );
-  await Promise.all([assertAbsent(rawPath), assertAbsent(publicPath)]);
-  const result = await run(runRequest);
-  if (result.modelOutcome.outcome !== "completed" || result.modelOutcome.trace.mode !== "live") {
-    throw new Error(`Live run did not complete: ${result.modelOutcome.outcome}`);
-  }
-
-  const capturedAt = new Date().toISOString();
-  const sanitized = sanitizeLiveEvidence(result, capturedAt, {
+  await captureLiveEvidence({
+    root: process.cwd(),
+    env: process.env,
+    request,
     worldPackId: worldPack.meta.id,
     worldPackSha256: sha256Canonical(worldPack),
-    request: runRequest,
+    run,
   });
-  await writeFile(rawPath, pretty(result), { encoding: "utf8", flag: "wx" });
-  await writeFile(publicPath, pretty(sanitized), { encoding: "utf8", flag: "wx" });
   process.stdout.write(
     "LIVE_EVIDENCE_CAPTURED raw=artifacts/live/live-run.json public=artifacts/evidence/live-sanitized.json\n",
   );
   process.stdout.write("Run `npm run evidence` to refresh readiness and the evidence manifest.\n");
 };
 
-void main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : "Unknown live evidence failure.";
-  process.stderr.write(`LIVE_EVIDENCE_FAILED ${message}\n`);
-  process.exitCode = 1;
-});
+export const isDirectExecution = (
+  moduleUrl: string,
+  entryPath: string | undefined = process.argv[1],
+): boolean =>
+  entryPath !== undefined &&
+  path.resolve(entryPath) === path.resolve(fileURLToPath(moduleUrl));
+
+if (isDirectExecution(import.meta.url)) {
+  void main().catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : "Unknown live evidence failure.";
+    process.stderr.write(`LIVE_EVIDENCE_FAILED ${message}\n`);
+    process.exitCode = 1;
+  });
+}

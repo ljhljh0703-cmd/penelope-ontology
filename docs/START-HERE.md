@@ -6,14 +6,15 @@ For the current status, deadline plan, Go/No-Go gates, and next Codex task bound
 
 ## Product in one sentence
 
-A rehearsal workbench that combines participant intents inside a creator's world and style, shows the evidence it used, and applies only creator-approved changes to the next state.
+A rehearsal workbench that traces a registered fixture bundle—or gated live intent bundle—through a creator's world and style, shows the evidence it used, and applies only creator-approved changes to the next state.
 
 The primary users are professional GMs, narrative production teams, and game scene or quest designers who spend time reconciling multiple intents, generic model prose, and plausible-sounding continuity errors. Writers working inside a bounded canon are an adjacent audience, not a separately validated user segment. The product does not claim that a language model “remembers the world” or naturally owns the creator's voice. It builds a visible control path around the model:
 
 ```text
-ParticipantIntent[] + StyleProfile + World Pack / SimulationSnapshot
+registered fixture ParticipantIntent[2] / gated live ParticipantIntent[]
++ StyleProfile + World Pack / SimulationSnapshot
 → deterministic retrieval
-→ GPT-5.6 structured draft
+→ fixture structured draft / gated GPT-5.6 structured draft
 → hard validation
 → creator decision
 → derived canon/knowledge graph
@@ -25,14 +26,14 @@ ParticipantIntent[] + StyleProfile + World Pack / SimulationSnapshot
 
 Implemented and fixture-verified:
 
-- a Next.js Table workbench for two local participant intents and one original creator-owned style profile
+- a Next.js Table workbench that replays one registered, frozen two-intent fixture with one original creator-owned style profile
 - strict World Pack, model draft, overlay, decision, graph, simulation, and replay contracts
 - deterministic character-scoped retrieval, hard validation, provenance graph, creator decision, hashing, and two-step transition
 - a small public-safe Greek mythology fixture with five frozen cases and an eight-stage replay
 - a live GPT-5.6 Responses adapter with strict Structured Outputs and typed failure paths
 - fixture/live evidence separation, privacy scanning, browser tests, and generated public evidence artifacts
 - a preregistered same-GPT-5.6 style-control AB/BA protocol with no automatic retries, condition-masked creator ratings, and a write-once public report
-- a clean candidate-copy rehearsal with a reproducible install and full release gate
+- a historical clean-copy rehearsal for the prior implementation proof; the final candidate still requires its own post-commit identified record
 
 The public surface is fixture-only. It demonstrates the product flow without spending API credits or presenting fixture output as a live model response.
 
@@ -47,15 +48,26 @@ Not verified or released yet:
 
 ## Local setup
 
-Requirements: Node.js 22 or newer.
+Requirements: Node.js 22.x and npm. Use the lockfile-backed install so the tested dependency graph is reproduced.
 
 ```bash
-npm install
+npm ci
 cp .env.example .env.local
 npm run dev
 ```
 
-Fixture mode is the default and does not require an API key. The public route rejects live requests. The separate local live-evidence command requires both `ENABLE_OPENAI_LIVE=true` and `OPENAI_API_KEY`; until a real call is captured, fixture output must not be described as GPT-5.6 output.
+Fixture mode is the default and does not require an API key. The public route rejects live requests, and the public fixture is not an arbitrary participant-intent composer. Arbitrary facilitator-collected intents exist only at the gated live-adapter boundary.
+
+For a deliberate local live capture, edit the ignored `.env.local` created above:
+
+```dotenv
+ENABLE_OPENAI_LIVE=true
+OPENAI_API_KEY=<your-key>
+OPENAI_MODEL=gpt-5.6
+OPENAI_REASONING_EFFORT=medium
+```
+
+Then run `npm run evidence:live`. That command and `npm run eval:style:capture` load `.env.local` explicitly on Node 22; they do not require exporting the key into the parent shell. Never commit `.env.local`. Before dispatch, the capture writes a prose-free recovery sentinel. Every normal success or failure replaces that sentinel with an append-only local receipt under the ignored `artifacts/live/live-capture-attempts/` path; if receipt persistence itself fails, the sentinel and exclusive lock remain for manual recovery instead of letting the call disappear. A typed failure with a durable receipt releases the lock, and an ordinary public-write failure rolls back the incomplete canonical pair so a later explicit retry remains possible. A completed raw-and-sanitized pair is write-once. `npm run evidence` marks it verified only after the authority-bound completed receipt is validated and copied to the public evidence set. Until a real call is captured, fixture output must not be described as GPT-5.6 output.
 
 Run the local gate with:
 

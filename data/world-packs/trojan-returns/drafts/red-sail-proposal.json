@@ -1,7 +1,7 @@
 {
   "styleProfileId": "style.table_ready_mythic",
-  "narrative": "Telemachus proposes a red sail as a new Ithacan signal, but the scene leaves that custom outside canon until the creator decides.",
-  "mentionedEntityIds": ["telemachus"],
+  "narrative": "The loom falls quiet. Penelope says, “A signal is not a return; let the watch look before the hall believes.” Telemachus answers, “Then let a red sail call the harbor watch, and nothing more.” The custom remains outside canon until the creator decides.",
+  "mentionedEntityIds": ["penelope", "telemachus"],
   "appliedStyleConstraintIds": [
     "style.table_ready_mythic.avoidance",
     "style.table_ready_mythic.cadence",
@@ -14,10 +14,18 @@
   "usedClaimIds": [],
   "utterances": [
     {
+      "speakerId": "penelope",
+      "authorizingIntentId": "intent.penelope",
+      "contributingIntentIds": ["intent.telemachus"],
+      "text": "A signal is not a return; let the watch look before the hall believes.",
+      "assertedClaimIds": [],
+      "certainty": "uncertain"
+    },
+    {
       "speakerId": "telemachus",
       "authorizingIntentId": "intent.telemachus",
       "contributingIntentIds": ["intent.penelope"],
-      "text": "If we make the red sail our signal, the harbor watch can rise before rumor reaches the hall.",
+      "text": "Then let a red sail call the harbor watch, and nothing more.",
       "assertedClaimIds": [],
       "certainty": "uncertain"
     }

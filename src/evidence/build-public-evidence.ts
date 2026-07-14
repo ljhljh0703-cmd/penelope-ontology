@@ -267,7 +267,7 @@ export const buildPublicEvidence = async () => {
   const styleHarness = {
     evidenceType: "harness_mechanism" as const,
     claimBoundary:
-      "This demonstrates explicit prose-control inputs, mechanisms, and auditability; a live ablation is required before claiming a measured writing effect or model-vendor comparison.",
+      "This demonstrates explicit prose-control inputs, mechanisms, and auditability; a live same-model ablation is required before claiming a measured writing effect, while a separate controlled cross-model evaluation is required before any model-vendor comparison.",
     selectedProfile: styleProfile,
     modelInputBoundary: [
       "selected style profile",

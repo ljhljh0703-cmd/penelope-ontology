@@ -107,7 +107,7 @@ export function KnowledgeGraph({
         </svg>
       </div>
 
-      <details className="graph-fallback" open>
+      <details className="graph-fallback">
         <summary>Graph as text</summary>
         <div className="graph-text-grid">
           <div>

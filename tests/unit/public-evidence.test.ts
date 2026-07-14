@@ -9,6 +9,7 @@ import {
 import { SanitizedLiveEvidenceSchema } from "@/src/evidence/sanitize-live-evidence";
 import { sha256Canonical } from "@/src/domain/canonical-json";
 import { buildPublicEvidence } from "@/src/evidence/build-public-evidence";
+import { assertCompletedLiveCaptureReceiptBinding } from "@/src/evidence/live-capture-contracts";
 import { StyleAblationPlanSchema } from "@/src/evaluation/style-ablation-contracts";
 
 describe("sanitized public evidence", () => {
@@ -116,5 +117,67 @@ describe("sanitized public evidence", () => {
         worldPackSha256: "b".repeat(64),
       }),
     ).toThrow("live evidence is stale");
+  });
+
+  it("requires a completed capture receipt bound to the sanitized run", () => {
+    const hash = "a".repeat(64);
+    const liveEvidence = SanitizedLiveEvidenceSchema.parse({
+      schemaVersion: 1,
+      evidenceType: "live_sanitized",
+      capturedAt: "2026-07-15T00:00:01.000Z",
+      authority: {
+        worldPackId: "pack.demo",
+        worldPackVersion: "0.2.0",
+        worldPackSha256: hash,
+        styleProfileId: "style.demo",
+        overlayId: "creator_canon",
+        overlayVersion: 0,
+        overlayHash: hash,
+        scenarioId: "scenario.demo",
+        baseStateId: "state.demo",
+        requestSha256: hash,
+      },
+      requestedModel: "gpt-5.6",
+      actualModel: "gpt-5.6-test",
+      inputTokens: 10,
+      outputTokens: 8,
+      responseIdSha256: hash,
+      runId: "run.demo",
+      runStatus: "passed",
+      hardViolationCodes: [],
+      draftDigest: hash,
+      graphDigest: hash,
+      currentStateHash: hash,
+      proposedStateHash: hash,
+      rawResponsePersistedPublicly: false,
+    });
+    const receipt = {
+      schemaVersion: 1,
+      evidenceType: "live_capture_attempt",
+      attemptId: "attempt.demo",
+      requestSha256: hash,
+      dispatchedAt: "2026-07-15T00:00:00.000Z",
+      finishedAt: liveEvidence.capturedAt,
+      requestedModel: liveEvidence.requestedModel,
+      actualModel: liveEvidence.actualModel,
+      modelOutcome: "completed",
+      captureOutcome: "persisted",
+      errorCode: null,
+      responseIdSha256: liveEvidence.responseIdSha256,
+      inputTokens: liveEvidence.inputTokens,
+      outputTokens: liveEvidence.outputTokens,
+      rawPersisted: true,
+      publicPersisted: true,
+    } as const;
+
+    expect(assertCompletedLiveCaptureReceiptBinding(receipt, liveEvidence)).toEqual(
+      receipt,
+    );
+    expect(() =>
+      assertCompletedLiveCaptureReceiptBinding(
+        { ...receipt, publicPersisted: false },
+        liveEvidence,
+      ),
+    ).toThrow("not bound");
   });
 });

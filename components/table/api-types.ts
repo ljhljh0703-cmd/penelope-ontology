@@ -1,6 +1,7 @@
 import type { CanonOverlay } from "@/src/contracts/canon-overlay";
 import type { CreatorDecisionResult } from "@/src/contracts/creator-decision";
 import type { GraphDescriptor } from "@/src/contracts/graph";
+import type { ParticipantIntent } from "@/src/contracts/participant-intent";
 import type { HardViolation } from "@/src/contracts/run";
 import type {
   SimulationSnapshot,
@@ -14,6 +15,27 @@ export type DemoParticipantSlot = {
   controlledEntityId: string;
   characterLabel: string;
   defaultIntent: string;
+  frozen: true;
+};
+
+export type DemoRegisteredRehearsal = {
+  replayCaseId: "replay.red_sail_proposal";
+  stageId: string;
+  draftFixtureId: "draft.red_sail_proposal";
+  styleProfileId: string;
+  taskType: "expand";
+  brief: string;
+  participantIntents: ParticipantIntent[];
+  frozen: true;
+};
+
+export type DemoKnowledgeBoundary = {
+  perspectiveId: "narrator" | "penelope";
+  perspectiveLabel: string;
+  factLabel: string;
+  status: "visible" | "withheld" | "uncertain";
+  evidenceId: string;
+  basis: string;
 };
 
 export type DemoReplayResult = {
@@ -44,6 +66,8 @@ export type DemoBootstrap = {
   overlay: CanonOverlay;
   snapshot: SimulationSnapshot;
   participantSlots: DemoParticipantSlot[];
+  registeredRehearsal: DemoRegisteredRehearsal;
+  knowledgeBoundary: DemoKnowledgeBoundary[];
   proofs: {
     grounded: {
       status: "passed";

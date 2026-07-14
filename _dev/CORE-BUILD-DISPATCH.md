@@ -20,6 +20,10 @@ facilitator-collected ParticipantIntent[] + creator-owned StyleProfile
 
 Primary users are professional GMs, narrative production teams, and game scenario or quest designers. The existing app shell, contracts, fixture data, documents, and tests are groundwork, not evidence that this flow already works.
 
+### Truth-audit amendment — 2026-07-15
+
+The earlier editable-input wording in the Required outputs, local Table UI constraint, and primary UI story is superseded for the public fixture surface by D-028. The implemented public workbench replays the exact registered, frozen two-intent red-sail stage and must reject any changed brief, intent, style, fixture ID, overlay, or snapshot. This preserves the user-approved participant/character/lineage contract without implying that a fixed fixture reacts to arbitrary prompt prose. Arbitrary facilitator-collected intents remain represented at the gated live adapter boundary and become a public product claim only after sanitized live evidence. A separately registered multi-preset fixture may reopen bounded selection later; an editable text box around one fixed draft may not.
+
 ## Phase 0: contract lock
 
 Do not start retrieval, UI, or live API implementation until failing tests expose and the schemas close these eight contract groups:
@@ -45,7 +49,7 @@ Gate: malformed-input and invariant tests exist for all eight groups, then the s
 6. Deterministic canon/knowledge graph descriptor plus a static SVG or equivalent browser view. No graph database.
 7. Creator accept/edit/reject against a base overlay version/hash, with deterministic canon hash, stale-decision rejection, and same-turn snapshot rebase.
 8. Deterministic `SimulationScenario + SimulationState → validated action batch → transition → SimulationSnapshot` behavior across two chained steps.
-9. One-page Table UI that replaces the stale Day-0 page title and validator-only copy, collects two or three participant intents, and runs the red-sail proposal/approval/next-state flow. Living-Hector, Penelope knowledge leak, and Helen conflict remain visible replay evidence.
+9. One-page Table UI that replaces the stale Day-0 page title and validator-only copy, loads the exact registered frozen two-intent rehearsal, and runs the red-sail proposal/approval/next-state flow. Living-Hector, Penelope knowledge leak, and Helen conflict remain visible replay evidence. Arbitrary input stays at the gated live boundary until its own evidence exists.
 10. Frozen proposal/decision-rebase/Step-1/Step-2 replay, unchanged-control comparisons, and sanitized fixture/live/graph/simulation evidence artifacts.
 11. Unit, integration, replay, transition, and browser smoke tests.
 
@@ -68,7 +72,7 @@ World Pack, StyleProfile, SimulationScenario, and initial snapshot loaders
 - Use GPT-5.6 through the Responses API. Start with `gpt-5.6`, `reasoning.effort: medium`, and Structured Outputs.
 - GPT-5.6 output is nondeterministic. Determinism claims apply only to retrieval, validation, selected structured-draft processing, graph descriptors, transitions, hashes, and fixture replay.
 - Do not add function calling, PTC, graph DB, embeddings, authentication, remote collaboration, multi-agent runtime, general-purpose editing, persistent agent memory, or long-running autonomous simulation.
-- The local Table UI may collect multiple participant intents. Never call it an online room or actual multi-user collaboration.
+- The public Table UI must load its registered frozen intent bundle. The gated live boundary may accept multiple facilitator-collected intents; neither path is an online room or actual multi-user collaboration.
 - Style profiles are original creator constraints, not living-author imitation. Do not claim that Codex, GPT-5.6, Fable, Opus, or another model is the superior writer without a controlled human evaluation.
 - Do not create the public README until the implemented Evidence Packet exists and the evidence skill's write-mode preflight passes.
 - Never call fixture output live GPT-5.6 evidence.
@@ -108,7 +112,7 @@ World Pack, StyleProfile, SimulationScenario, and initial snapshot loaders
 
 ## Demo and stretch boundary
 
-The primary UI story is a single flow: three local participant intents + selected style profile → character views → structured candidate → graph violation/proposal → creator decision → `idle → watching → signal_seen` state chain → replay. Error cases are compressed into the regression panel rather than becoming four disconnected mini-demos.
+The primary UI story is a single flow: registered frozen two-intent rehearsal + selected style profile → character views → structured candidate → style and knowledge receipts → creator decision → graph detail → `idle → watching → signal_seen` state chain → replay and human-handoff packet. Error cases are compressed into the regression panel rather than becoming four disconnected mini-demos.
 
 If the complete vertical slice, live trace, browser smoke, privacy scan, Evidence Packet, and release rehearsal all pass with at least 12 hours of buffer, follow `docs/MVP-SCOPE.md`'s stretch ladder. The first game-production extension is a small Quest Consistency Linter, not a general quest generator. Remote multiplayer and long-horizon simulation do not reopen automatically.
 

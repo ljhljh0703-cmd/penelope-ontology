@@ -1,40 +1,40 @@
 # Demo narration — release-gated script
 
-Target: 2:45–2:55 at a calm 130–140 words per minute. Record in English. Do not record the GPT-5.6 sentences until the sanitized live trace exists.
+Target: 2:40–2:55 at a calm 130–140 words per minute, including UI pauses. Record in English. The current script describes the gated adapter without claiming a completed live call.
 
 ## Script
 
 **0:00–0:18 — Problem**
 
-Fluent AI prose can still become expensive narrative rework. It may flatten a house style, reveal knowledge a character should not have, or invent connective lore that quietly becomes canon. Narrative Knowledge Harness is a rehearsal workbench for professional game masters and narrative teams.
+Fluent AI prose can still create expensive narrative rework. It can flatten a house style, reveal knowledge a character should not have, or make invented connective lore sound canonical. Narrative Knowledge Harness is a rehearsal workbench for professional game masters and narrative teams.
 
 **0:18–0:43 — Intent and style**
 
-Two participants can contribute different intentions without being confused with the characters they control. The creator also selects an original style profile. Its constraints have stable IDs, so style is an explicit production input rather than a hopeful sentence hidden in a prompt.
+The public demo loads two registered participant intents and keeps people, controlled characters, and generated speakers distinct. The fixture is frozen, so it never pretends to react to arbitrary prompt prose. A creator-owned style profile uses stable IDs, making voice an inspectable production input.
 
 **0:43–1:06 — Knowledge and model boundary**
 
-The World Pack separates public facts, uncertain beliefs, hidden narrator knowledge, active source traditions, and creator rules. Here, Penelope can reason from uncertainty, but she cannot see the hidden Ogygia edge. GPT-5.6 returns a structured candidate; it does not get authority to decide what is true.
+The World Pack separates public facts, uncertain beliefs, narrator-only knowledge, source traditions, and creator rules. This table shows that the narrator sees Ogygia, Penelope does not, and her belief about Odysseus remains uncertain. The fixture returns a structured candidate through the contract used by the gated GPT-5.6 adapter.
 
 **1:06–1:31 — Validation and proposal**
 
-Deterministic validators check the candidate’s speakers, intent lineage, evidence, time, location, character knowledge, and unsupported expansion. The red-sail signal is useful, but it is new lore. The graph therefore shows it as a proposal, and the workflow stops for a creator decision.
+Both intents authorize a playable line and remain visible in the lineage receipt. Deterministic validators check speakers, evidence, time, location, knowledge, and unsupported expansion. The style receipt checks the word bound but leaves voice and cadence to creator review. Because the red-sail signal is new lore, the workflow stops.
 
 **1:31–1:57 — Creator gate and state**
 
-Only after I accept or edit the proposal does the overlay advance from version zero to version one. An edit can improve display wording, but it cannot change the rule's locked meaning. Approval still does not fake a simulation step. Two registered transitions then move the harbor watch from idle, to watching, to signal seen.
+Only after I accept or edit does the overlay advance from version zero to one. Editing can improve display wording, never the rule's locked meaning. Approval is not a simulation step. Two registered transitions then move the harbor watch from idle, to watching, to signal seen.
 
 **1:57–2:20 — Replay**
 
-Every approved overlay reruns four frozen safety controls against its exact new hash. Hector cannot return alive after his fixed death. Penelope still cannot receive the hidden claim. Conflicting Helen traditions still require a decision. A rejected or stale proposal leaves both canon and state unchanged.
+The approved overlay reruns four safety controls against its exact hash. Hector stays dead, Penelope still cannot receive hidden knowledge, and conflicting Helen traditions still require a decision. The final packet gathers lineage, evidence, canon delta, state, conflict, and replay for human handoff—not production-readiness evidence.
 
 **2:20–2:46 — Codex and the writing constraint**
 
-I started from a familiar skepticism: Codex can engineer, but its default prose may feel generic beside writing-first systems such as Fable or Opus. I did not answer that with a cherry-picked paragraph. I used Codex to turn voice and world rules into typed schemas, deterministic validators, adversarial tests, UI states, and an evidence packet. GPT-5.6 proposes inside that harness; the creator keeps taste and final judgment.
+I began with a familiar skepticism: Codex can engineer, but its default prose may feel generic beside writing-first systems such as Fable or Opus. I answered with no cherry-picked paragraph. Codex helped turn voice and world rules into schemas, validators, adversarial tests, UI states, and evidence. The gated GPT-5.6 adapter is built to propose inside that harness; the creator keeps taste and final judgment.
 
 **2:46–2:55 — Close**
 
-This is not automated authorship. It is an inspectable harness for rehearsing narrative work before a plausible sentence becomes an expensive continuity mistake.
+This is not automated authorship. It is an inspectable rehearsal before a plausible sentence becomes an expensive continuity mistake.
 
 ## Recording gate
 

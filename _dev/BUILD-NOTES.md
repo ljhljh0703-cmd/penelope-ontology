@@ -104,3 +104,49 @@ This file records implementation-time decisions without interrupting the critica
 - `portfolio-refiner` refine preflight returned `SERVING_STALE` because the feedback dependency hash changed. No canonical portfolio copy was produced, and `juhyeong-voice` was not read or applied.
 - README write/derive remains `SERVING_CANDIDATE` under `package-project-evidence`; public README generation still requires explicit user approval plus an `--allow-candidate` rerun.
 - Product naming, public remote/CI, hosted demo, narrated YouTube video, private `/feedback` field, and final Devpost submission remain external release work.
+
+## 2026-07-15 — Fixture truthfulness and live-capture hardening
+
+### Gaps found and closed
+
+1. The public workbench displayed editable participant text while the fixture adapter always selected one registered draft ID. Editing prose therefore implied causal composition that did not exist. The public path now loads the exact registered replay stage, freezes both synthetic intents and the style profile, labels the run as a frozen rehearsal, and states that prompt prose does not branch fixture output. Arbitrary facilitator-collected intents remain a gated live-path claim.
+2. The red-sail fixture previously exposed only one playable line and hid the second intent in metadata. Penelope and Telemachus now each authorize a line and reciprocally reference the other intent as a contributor; the UI shows the stable lineage and 2/2 coverage.
+3. Style constraints were counted but not audited. A visible style receipt now machine-checks only `max_words`, lists the six subjective constraints as `creator review required`, and keeps `Referenced ≠ verified` plus `Live AB/BA not measured` visible.
+4. Character-scoped retrieval required graph interpretation. A compact `Who can know this?` table now distinguishes narrator-visible Ogygia, Penelope-withheld Ogygia, and Penelope's uncertain belief before the detailed graph.
+5. The creator gate was separated from the candidate by a long graph. The gate now appears immediately after the candidate and style receipt; graph-as-text is collapsed by default.
+6. The final screen lacked a production-team handoff surface. A collapsed review packet now organizes fixture intent lineage, evidence, canon delta, state, conflicts, and replay while explicitly denying production-readiness evidence.
+7. Live capture could dispatch without a durable attempt record, leave a stale lock or partial pair, and depended on the parent shell exporting `.env.local`. The command is now import-safe, prevalidates configuration and completed outputs, reserves a prose-free recovery sentinel plus exclusive lock before dispatch, writes append-only receipts under ignored raw storage, and publishes raw then sanitized artifacts with same-directory temporary files plus atomic no-clobber hard links. Receipt-write failure retains the sentinel and lock for manual recovery; evidence generation refuses unresolved recovery state and requires an authority-bound completed receipt before publishing verified readiness. A target created during the preflight-to-publish race is preserved; an ordinary incomplete pair rolls back; a typed failure with a durable receipt permits explicit retry. Node 22 loads `.env.local` for both live commands.
+8. `/api/health` hard-coded live evidence as false, while a status-only guard would have accepted a malformed future artifact. It now requires the full generated readiness evidence type, GPT-5.6 model family, authority hashes, sanitized path, and public-privacy flag, so later health cannot disagree with the evidence contract.
+9. Freezing the browser inputs did not initially freeze the server authority: a caller could still post altered brief or intent text beside the registered draft ID, then carry that relabeled request into decision and transition routes. All three public boundaries now require canonical equality with the exact registered replay stage, including brief, intents, draft, style, task, overlay, and snapshot. Valid-schema mutations fail closed.
+
+### Evidence boundary decision
+
+- The public fixture proves the registered pair's lineage, validators, creator authority, state chain, and replay. It does not prove arbitrary free-text composition or a live GPT-5.6 result.
+- To reopen arbitrary public composition, require either a sanitized real GPT-5.6 run with a reviewed reviewer-access path or a separately specified set of registered presets whose exact fixture branching is tested. Do not restore editable text around a fixed draft.
+- The production review packet is an organization surface, not practitioner evidence, productivity evidence, or production readiness.
+
+### Verification in this pass
+
+- Focused health, live-capture, and API route suite: 14/14 PASS.
+- ESLint: PASS.
+- TypeScript with incremental cache disabled: PASS.
+- `git diff --check`: PASS.
+- Desktop/mobile Table browser suite from the UI lane: 10/10 PASS before final combined recertification.
+- A duplicate generated `.next` cache was deleted once before recertification. The failure had a specific stale-cache hypothesis; no identical blind retry occurred and the loop sentinel did not fire.
+
+Combined current-tree recertification after the authority fixes:
+
+- Evidence generation and seven-file manifest verification: PASS; manifest SHA-256 `5d1d725860a45967c83fc3d6b0b20f58f58b483397e76a821d95d8dbd92b5f18`.
+- ESLint and non-incremental TypeScript: PASS.
+- Vitest: 30 files / 156 tests PASS.
+- Privacy scan: 155 public candidates PASS.
+- Next production build: PASS.
+- Production Playwright: 10/10 PASS across desktop Chromium and mobile WebKit.
+- Visual inspection: desktop candidate, mobile candidate, and completed desktop flow with the review packet open show no clipped controls, overlap, or fixture/live ambiguity.
+- Final exact-SHA clean-copy and deployment smoke remain intentionally after the candidate commit; their authority is stored in the ignored private release record to avoid a self-referential documentation commit.
+
+### Remaining discussion and release gates
+
+- A real GPT-5.6 trace is still required before the submission may say arbitrary participant intents produced the candidate or add GPT-5.6 to completed live-use claims.
+- The four-call same-model style probe remains optional evidence beyond the minimum one-call integration gate; without it, the UI and copy must continue to say `Live AB/BA not measured`.
+- Root README generation remains behind the explicit `SERVING_CANDIDATE` approval gate. Final naming, remote, hosted demo, video, private `/feedback` field, and Devpost submission remain external actions.

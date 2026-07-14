@@ -4,7 +4,7 @@ The demo uses `trojan-returns-demo@0.2.0`, one original creator-owned style prof
 
 ## 1. Table setup: people, characters, and style stay separate
 
-The primary flow collects two local synthetic participant inputs:
+The public primary flow loads two registered, frozen synthetic participant intents. They are non-editable because this fixture is a replay, not an arbitrary text composer:
 
 | Participant | Controlled character | Intent |
 |---|---|---|
@@ -25,7 +25,7 @@ Expected contract behavior:
 
 The model receives a separate `agent_view` for each controlled character plus the style profile. Penelope's view does not contain the exact Ogygia-location claim; the facilitator audit graph may show that the narrator has the edge while Penelope does not.
 
-GPT-5.6 or the matching fixture produces a bounded scene candidate. Penelope preserves the distinction between signal and certainty; Telemachus proposes the red-sail convention. Every utterance and action remains attributable to input intents and evidence IDs. A separate grounded replay pairs Penelope with Eurycleia.
+The matching fixture produces a bounded scene candidate. Penelope preserves the distinction between signal and certainty; Telemachus proposes the red-sail convention. Each character gets a playable line with authorizing and contributing intent IDs. A separate grounded replay pairs Penelope with Eurycleia. The gated GPT-5.6 adapter accepts arbitrary facilitator-collected intents, but that behavior is not evidence until a sanitized live call exists.
 
 Expected result before creator action: `needs_creator_decision` with `unapproved_expansion` for the red-sail rule. The rule is original demo canon, not ancient mythology.
 

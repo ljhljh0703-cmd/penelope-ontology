@@ -94,6 +94,34 @@ const expectStatus = (response, expected, label) => {
   }
 };
 
+export const buildRegisteredFixtureRunRequest = (demo) => {
+  const registration = demo?.registeredRehearsal;
+  if (
+    !registration ||
+    typeof registration !== "object" ||
+    registration.frozen !== true ||
+    typeof registration.draftFixtureId !== "string" ||
+    typeof registration.styleProfileId !== "string" ||
+    typeof registration.taskType !== "string" ||
+    typeof registration.brief !== "string" ||
+    !Array.isArray(registration.participantIntents) ||
+    registration.participantIntents.length !== 2
+  ) {
+    fail("Demo endpoint is missing the frozen registered rehearsal authority.");
+  }
+
+  return {
+    modelMode: "fixture",
+    draftFixtureId: registration.draftFixtureId,
+    overlay: demo.overlay,
+    snapshot: demo.snapshot,
+    styleProfileId: registration.styleProfileId,
+    taskType: registration.taskType,
+    brief: registration.brief,
+    participantIntents: registration.participantIntents,
+  };
+};
+
 export const smokeDeployment = async (baseUrl, expectedSha) => {
   const rootUrl = new URL("./", baseUrl);
   rootUrl.searchParams.set("__smoke_build", expectedSha);
@@ -151,22 +179,7 @@ export const smokeDeployment = async (baseUrl, expectedSha) => {
     fail("Demo endpoint does not match the frozen fixture proof contract.");
   }
 
-  const participantIntents = demo.participantSlots.map((slot) => ({
-    intentId: slot.intentId,
-    participantId: slot.participantId,
-    controlledEntityIds: [slot.controlledEntityId],
-    intent: slot.defaultIntent,
-  }));
-  const runRequest = {
-    modelMode: "fixture",
-    draftFixtureId: "draft.red_sail_proposal",
-    overlay: demo.overlay,
-    snapshot: demo.snapshot,
-    styleProfileId: demo.selectedStyleProfileId,
-    taskType: "expand",
-    brief: "Propose a red-sail signal without treating it as canon.",
-    participantIntents,
-  };
+  const runRequest = buildRegisteredFixtureRunRequest(demo);
   const runResponse = await fetchWithTimeout(new URL("api/runs", baseUrl), {
     method: "POST",
     headers: { "content-type": "application/json" },

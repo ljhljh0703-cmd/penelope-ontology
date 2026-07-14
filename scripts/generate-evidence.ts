@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -9,6 +9,11 @@ import {
 } from "@/src/adapters/filesystem/demo-data";
 import { buildPublicEvidence } from "@/src/evidence/build-public-evidence";
 import { canonicalJson, sha256Canonical } from "@/src/domain/canonical-json";
+import {
+  LiveCaptureAttemptReceiptSchema,
+  assertCompletedLiveCaptureReceiptBinding,
+  type LiveCaptureAttemptReceipt,
+} from "@/src/evidence/live-capture-contracts";
 import { buildLiveEvidenceRunRequest } from "@/src/evidence/live-evidence-request";
 import {
   SanitizedLiveEvidenceSchema,
@@ -27,6 +32,87 @@ const stablePrettyJson = (value: unknown): string =>
 
 const sha256 = (value: string): string =>
   createHash("sha256").update(value).digest("hex");
+
+const isMissing = (error: unknown): boolean =>
+  error instanceof Error && "code" in error && error.code === "ENOENT";
+
+const exists = async (filePath: string): Promise<boolean> => {
+  try {
+    await access(filePath);
+    return true;
+  } catch (error) {
+    if (isMissing(error)) return false;
+    throw error;
+  }
+};
+
+const assertNoUnresolvedLiveCapture = async (): Promise<void> => {
+  const liveDirectory = path.join(process.cwd(), "artifacts", "live");
+  if (await exists(path.join(liveDirectory, "live-capture.lock.json"))) {
+    throw new Error(
+      "Live evidence cannot be verified while a capture lock requires recovery.",
+    );
+  }
+  let attemptFiles: string[] = [];
+  try {
+    attemptFiles = await readdir(path.join(liveDirectory, "live-capture-attempts"));
+  } catch (error) {
+    if (!isMissing(error)) throw error;
+  }
+  if (attemptFiles.some((fileName) => fileName.endsWith(".pending.json"))) {
+    throw new Error(
+      "Live evidence cannot be verified while a recovery sentinel is unresolved.",
+    );
+  }
+};
+
+const loadBoundLocalLiveCaptureReceipt = async (
+  liveEvidence: ReturnType<typeof SanitizedLiveEvidenceSchema.parse>,
+): Promise<LiveCaptureAttemptReceipt> => {
+  const attemptDirectory = path.join(
+    process.cwd(),
+    "artifacts",
+    "live",
+    "live-capture-attempts",
+  );
+  let fileNames: string[];
+  try {
+    fileNames = await readdir(attemptDirectory);
+  } catch (error) {
+    if (isMissing(error)) {
+      throw new Error(
+        "Sanitized live evidence requires a bound completed capture receipt.",
+      );
+    }
+    throw error;
+  }
+  const receipts = await Promise.all(
+    fileNames
+      .filter(
+        (fileName) =>
+          fileName.endsWith(".json") && !fileName.endsWith(".pending.json"),
+      )
+      .sort()
+      .map(async (fileName) =>
+        LiveCaptureAttemptReceiptSchema.parse(
+          JSON.parse(await readFile(path.join(attemptDirectory, fileName), "utf8")) as unknown,
+        ),
+      ),
+  );
+  const candidates = receipts.filter(
+    (receipt) =>
+      receipt.requestSha256 === liveEvidence.authority.requestSha256 &&
+      receipt.finishedAt === liveEvidence.capturedAt &&
+      receipt.responseIdSha256 === liveEvidence.responseIdSha256 &&
+      receipt.captureOutcome === "persisted",
+  );
+  if (candidates.length !== 1) {
+    throw new Error(
+      "Sanitized live evidence requires exactly one bound completed capture receipt.",
+    );
+  }
+  return assertCompletedLiveCaptureReceiptBinding(candidates[0], liveEvidence);
+};
 
 export const buildPreservedEvidenceManifestEntry = (
   relativePath: string,
@@ -76,7 +162,22 @@ const main = async (): Promise<void> => {
       JSON.parse(liveSanitizedSource) as unknown,
     );
   } catch (error) {
-    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
+    if (!isMissing(error)) throw error;
+  }
+  const publicLiveCaptureReceiptPath = path.join(
+    outputDirectory,
+    "live-capture-receipt.json",
+  );
+  let liveCaptureReceiptSource: string | null = null;
+  let liveCaptureReceipt: LiveCaptureAttemptReceipt | null = null;
+  let writeDerivedLiveCaptureReceipt = false;
+  try {
+    liveCaptureReceiptSource = await readFile(publicLiveCaptureReceiptPath, "utf8");
+    liveCaptureReceipt = LiveCaptureAttemptReceiptSchema.parse(
+      JSON.parse(liveCaptureReceiptSource) as unknown,
+    );
+  } catch (error) {
+    if (!isMissing(error)) throw error;
   }
   const liveRunRequest = buildLiveEvidenceRunRequest({
     overlay,
@@ -90,6 +191,19 @@ const main = async (): Promise<void> => {
   });
   if (liveSanitized) {
     assertLiveEvidenceAuthorityBinding(liveSanitized, expectedLiveAuthority);
+    await assertNoUnresolvedLiveCapture();
+    if (liveCaptureReceipt) {
+      liveCaptureReceipt = assertCompletedLiveCaptureReceiptBinding(
+        liveCaptureReceipt,
+        liveSanitized,
+      );
+    } else {
+      liveCaptureReceipt = await loadBoundLocalLiveCaptureReceipt(liveSanitized);
+      liveCaptureReceiptSource = stablePrettyJson(liveCaptureReceipt);
+      writeDerivedLiveCaptureReceipt = true;
+    }
+  } else if (liveCaptureReceipt) {
+    throw new Error("A public live capture receipt cannot exist without sanitized evidence.");
   }
   let styleAblation: unknown = null;
   let styleAblationSource: string | null = null;
@@ -158,6 +272,9 @@ const main = async (): Promise<void> => {
         requestedModel: liveSanitized.requestedModel,
         actualModel: liveSanitized.actualModel,
         authorityBindingVerified: true,
+        captureReceiptPath: "artifacts/evidence/live-capture-receipt.json",
+        captureReceiptSha256: sha256(liveCaptureReceiptSource ?? ""),
+        captureBindingVerified: true,
         worldPackSha256: liveSanitized.authority.worldPackSha256,
         requestSha256: liveSanitized.authority.requestSha256,
         rawResponsePersistedPublicly: false,
@@ -228,6 +345,12 @@ const main = async (): Promise<void> => {
     "live-readiness.json": liveReadiness,
   };
   await mkdir(outputDirectory, { recursive: true });
+  if (writeDerivedLiveCaptureReceipt && liveCaptureReceiptSource !== null) {
+    await writeFile(publicLiveCaptureReceiptPath, liveCaptureReceiptSource, {
+      encoding: "utf8",
+      flag: "wx",
+    });
+  }
   const manifestEntries: Array<{ path: string; sha256: string; bytes: number }> = [];
   for (const [fileName, value] of Object.entries(files).sort(([left], [right]) =>
     left.localeCompare(right),
@@ -261,6 +384,14 @@ const main = async (): Promise<void> => {
       buildPreservedEvidenceManifestEntry(
         "artifacts/evidence/live-sanitized.json",
         liveSanitizedSource,
+      ),
+    );
+  }
+  if (liveCaptureReceipt && liveCaptureReceiptSource !== null) {
+    manifestEntries.push(
+      buildPreservedEvidenceManifestEntry(
+        "artifacts/evidence/live-capture-receipt.json",
+        liveCaptureReceiptSource,
       ),
     );
   }

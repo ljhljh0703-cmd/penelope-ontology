@@ -6,13 +6,18 @@ import {
 } from "@/src/contracts/creator-decision";
 import type { ModelDraft } from "@/src/contracts/model-draft";
 import type { CanonProposal } from "@/src/contracts/proposal";
+import type { ReplayCase } from "@/src/contracts/replay";
 import type {
   FixtureRunRequest,
   RunResult,
 } from "@/src/contracts/run";
+import { FixtureRunRequestSchema } from "@/src/contracts/run";
 import type { SimulationSnapshot } from "@/src/contracts/simulation";
 import { applyCreatorDecision } from "@/src/domain/canon-overlay";
-import { sha256Canonical } from "@/src/domain/canonical-json";
+import {
+  canonicalJson,
+  sha256Canonical,
+} from "@/src/domain/canonical-json";
 import type { WorldPack } from "@/src/domain/schemas";
 import type { NarrativeModel } from "@/src/ports/narrative-model";
 import { createRunOrchestrator } from "@/src/application/run-orchestrator";
@@ -30,6 +35,80 @@ export class FixtureCreatorAuthorityError extends Error {
   }
 }
 
+export class PublicFixtureRunAuthorityError extends Error {
+  readonly code = "public_fixture_run_not_registered";
+
+  constructor() {
+    super("The public fixture request must match the registered frozen rehearsal.");
+    this.name = "PublicFixtureRunAuthorityError";
+  }
+}
+
+const REGISTERED_REPLAY_CASE_ID = "replay.red_sail_proposal";
+const REGISTERED_RUN_STAGE_ID = "stage.red_sail_proposal";
+const REGISTERED_OVERLAY_FIXTURE_ID = "overlay.v0";
+const REGISTERED_SNAPSHOT_FIXTURE_ID = "snapshot.s0";
+const REGISTERED_DRAFT_FIXTURE_ID = "draft.red_sail_proposal";
+
+export const buildRegisteredPublicFixtureRunRequest = ({
+  replayCases,
+  registeredOverlay,
+  registeredSnapshot,
+}: {
+  replayCases: ReadonlyArray<ReplayCase>;
+  registeredOverlay: CanonOverlay;
+  registeredSnapshot: SimulationSnapshot;
+}): FixtureRunRequest => {
+  const replayCase = replayCases.find(({ id }) => id === REGISTERED_REPLAY_CASE_ID);
+  const stage = replayCase?.stages.find(
+    (candidate) =>
+      candidate.kind === "run" && candidate.stageId === REGISTERED_RUN_STAGE_ID,
+  );
+  if (
+    !replayCase ||
+    stage?.kind !== "run" ||
+    stage.overlayFixtureId !== REGISTERED_OVERLAY_FIXTURE_ID ||
+    stage.snapshotFixtureId !== REGISTERED_SNAPSHOT_FIXTURE_ID ||
+    stage.draftFixtureId !== REGISTERED_DRAFT_FIXTURE_ID
+  ) {
+    throw new Error("The registered public fixture rehearsal is unavailable.");
+  }
+
+  return FixtureRunRequestSchema.parse({
+    modelMode: "fixture",
+    draftFixtureId: stage.draftFixtureId,
+    overlay: registeredOverlay,
+    snapshot: registeredSnapshot,
+    styleProfileId: stage.styleProfileId,
+    taskType: stage.taskType,
+    brief: stage.brief,
+    participantIntents: stage.participantIntents,
+  });
+};
+
+export const assertRegisteredPublicFixtureRunRequest = ({
+  replayCases,
+  registeredOverlay,
+  registeredSnapshot,
+  runRequest,
+}: {
+  replayCases: ReadonlyArray<ReplayCase>;
+  registeredOverlay: CanonOverlay;
+  registeredSnapshot: SimulationSnapshot;
+  runRequest: FixtureRunRequest;
+}): FixtureRunRequest => {
+  const parsed = FixtureRunRequestSchema.parse(runRequest);
+  const registered = buildRegisteredPublicFixtureRunRequest({
+    replayCases,
+    registeredOverlay,
+    registeredSnapshot,
+  });
+  if (canonicalJson(parsed) !== canonicalJson(registered)) {
+    throw new PublicFixtureRunAuthorityError();
+  }
+  return parsed;
+};
+
 export type VerifiedFixtureCreatorDecision = {
   verifiedRun: RunResult;
   proposal: CanonProposal;
@@ -39,6 +118,7 @@ export type VerifiedFixtureCreatorDecision = {
 
 export const verifyFixtureCreatorDecision = async ({
   worldPack,
+  replayCases,
   registeredOverlay,
   registeredSnapshot,
   runRequest,
@@ -46,12 +126,19 @@ export const verifyFixtureCreatorDecision = async ({
   fixtureModel,
 }: {
   worldPack: WorldPack;
+  replayCases: ReadonlyArray<ReplayCase>;
   registeredOverlay: CanonOverlay;
   registeredSnapshot: SimulationSnapshot;
   runRequest: FixtureRunRequest;
   creatorDecision: CreatorDecision;
   fixtureModel: NarrativeModel;
 }): Promise<VerifiedFixtureCreatorDecision> => {
+  assertRegisteredPublicFixtureRunRequest({
+    replayCases,
+    registeredOverlay,
+    registeredSnapshot,
+    runRequest,
+  });
   const registeredBaseAuthorityIsValid =
     sha256Canonical(runRequest.overlay) === sha256Canonical(registeredOverlay) &&
     sha256Canonical(runRequest.snapshot) === sha256Canonical(registeredSnapshot);
