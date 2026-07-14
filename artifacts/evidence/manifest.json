@@ -1,9 +1,9 @@
 {
   "files": [
     {
-      "bytes": 3033,
+      "bytes": 3440,
       "path": "artifacts/evidence/evidence-packet.json",
-      "sha256": "9069e40455d274934782e231613606a42deadea10edbd187bb03a6c8163e957f"
+      "sha256": "90e8518f15af22d83d1a7a8453f8624748e1fa5316148e03a0dea371b8d848c4"
     },
     {
       "bytes": 2624,
@@ -11,9 +11,9 @@
       "sha256": "55a12c56a4c678af7b54f9a585d410b26ac889535e3d3aa79fb46f197c4504d7"
     },
     {
-      "bytes": 8542,
+      "bytes": 21009,
       "path": "artifacts/evidence/graph-descriptor.json",
-      "sha256": "a52ab9f3c0c9538f06e83e05fbb1db7a3b1a3b7397605cc4c803b6354297afca"
+      "sha256": "8ef66274b5a95aa3523e72cbef39e3c81fcc0199a513c9d6aec74fa149af409d"
     },
     {
       "bytes": 394,
@@ -26,9 +26,14 @@
       "sha256": "d9a7161306609c2405584d0d6d16c66b2ce6130877d4266aefe0cb55464ecf14"
     },
     {
-      "bytes": 2231,
+      "bytes": 811,
+      "path": "artifacts/evidence/style-ablation-readiness.json",
+      "sha256": "3db1ec51ec69924df674a981d5cdee7e4deceef759d87c1a0a8dd99ec2db811e"
+    },
+    {
+      "bytes": 2588,
       "path": "artifacts/evidence/style-harness.json",
-      "sha256": "1505cd916c7bb5a301317e40e77c968178bbb979f48890a660a5b00a092b560c"
+      "sha256": "b8acc3ab2c44b84382c56a5cd915f017c4b8aeb390c594c26ec6b96e1aa40436"
     }
   ],
   "schemaVersion": 1

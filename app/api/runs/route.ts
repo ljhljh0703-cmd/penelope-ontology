@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { loadDemoWorldPack } from "@/src/adapters/filesystem/demo-data";
 import { fixtureNarrativeModel } from "@/src/adapters/fixtures/narrative-model";
-import { createOpenAiNarrativeModel } from "@/src/adapters/openai/narrative-model";
 import {
   RunInputError,
   createRunOrchestrator,
@@ -10,16 +9,35 @@ import {
 
 export const runtime = "nodejs";
 
+const isLiveRequest = (body: unknown): boolean =>
+  typeof body === "object" &&
+  body !== null &&
+  "modelMode" in body &&
+  body.modelMode === "live";
+
 export async function POST(request: Request) {
   try {
-    const [body, worldPack] = await Promise.all([request.json(), loadDemoWorldPack()]);
-    const liveModel = createOpenAiNarrativeModel({
-      styleProfiles: worldPack.styleProfiles,
-    });
+    const body: unknown = await request.json();
+    if (isLiveRequest(body)) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "public_live_disabled",
+            message:
+              "The public run route is fixture-only. Use the local evidence command for live GPT-5.6 runs.",
+          },
+        },
+        { status: 403 },
+      );
+    }
+
+    const worldPack = await loadDemoWorldPack();
     const run = createRunOrchestrator({
       worldPack,
       fixtureModel: fixtureNarrativeModel,
-      liveModel,
+      // The public route cannot construct a network-backed adapter. The raw
+      // modelMode guard above rejects live requests before orchestration.
+      liveModel: fixtureNarrativeModel,
     });
     return NextResponse.json(await run(body));
   } catch (error) {

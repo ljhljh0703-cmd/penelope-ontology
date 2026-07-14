@@ -5,23 +5,102 @@ import {
   loadSnapshotFixture,
 } from "@/src/adapters/filesystem/demo-data";
 import { fixtureNarrativeModel } from "@/src/adapters/fixtures/narrative-model";
+import { createRunOrchestrator } from "@/src/application/run-orchestrator";
 import { runFrozenReplay } from "@/src/application/replay-runner";
+import type { NarrativeModel } from "@/src/ports/narrative-model";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const disabledLiveModel: NarrativeModel = {
+  async generate() {
+    return {
+      outcome: "configuration_error",
+      error: {
+        code: "public_demo_live_forbidden",
+        message: "The public demo is fixture-only.",
+        retryable: false,
+      },
+      trace: {
+        mode: "live",
+        outcome: "configuration_error",
+        requestedModel: "gpt-5.6",
+        actualModel: null,
+        responseId: null,
+        inputTokens: null,
+        outputTokens: null,
+      },
+    };
+  },
+};
+
 export async function GET() {
   try {
-    const [{ worldPack, replayCases }, overlay, snapshot] = await Promise.all([
+    const [{ worldPack, replayCases }, overlay, snapshot, helenSnapshot] = await Promise.all([
       loadDemoBundle(),
       loadOverlayFixture("overlay.v0"),
       loadSnapshotFixture("snapshot.s0"),
+      loadSnapshotFixture("snapshot.helen_s0"),
     ]);
-    const replay = await runFrozenReplay({
+    const run = createRunOrchestrator({
       worldPack,
-      replayCases,
       fixtureModel: fixtureNarrativeModel,
+      liveModel: disabledLiveModel,
     });
+    const [replay, grounded, conflict] = await Promise.all([
+      runFrozenReplay({
+        worldPack,
+        replayCases,
+        fixtureModel: fixtureNarrativeModel,
+      }),
+      run({
+        modelMode: "fixture",
+        draftFixtureId: "draft.grounded_penelope",
+        overlay,
+        snapshot,
+        styleProfileId: worldPack.defaultStyleProfileId,
+        taskType: "scene",
+        brief: "Let Penelope and Eurycleia discuss a rumor without revealing hidden facts.",
+        participantIntents: [
+          {
+            intentId: "intent.penelope",
+            participantId: "participant.one",
+            controlledEntityIds: ["penelope"],
+            intent: "Keep Penelope cautious and focused on what she can prepare.",
+          },
+          {
+            intentId: "intent.eurycleia",
+            participantId: "participant.two",
+            controlledEntityIds: ["eurycleia"],
+            intent: "Offer practical household support without claiming secret knowledge.",
+          },
+        ],
+      }),
+      run({
+        modelMode: "fixture",
+        draftFixtureId: "draft.helen_conflict",
+        overlay,
+        snapshot: helenSnapshot,
+        styleProfileId: worldPack.defaultStyleProfileId,
+        taskType: "query",
+        brief: "State where the real Helen was during the war without choosing a tradition.",
+        participantIntents: [
+          {
+            intentId: "intent.helen",
+            participantId: "participant.one",
+            controlledEntityIds: ["helen"],
+            intent: "Expose the unresolved split between the active traditions.",
+          },
+        ],
+      }),
+    ]);
+    if (
+      grounded.status !== "passed" ||
+      grounded.modelOutcome.outcome !== "completed" ||
+      conflict.status !== "needs_creator_decision"
+    ) {
+      throw new Error("The public proof fixtures do not match their frozen outcomes.");
+    }
 
     return NextResponse.json({
       mode: "fixture",
@@ -50,6 +129,27 @@ export async function GET() {
           defaultIntent: "Propose a red-sail harbor signal and organize a cautious watch.",
         },
       ],
+      proofs: {
+        grounded: {
+          status: grounded.status,
+          narrative: grounded.modelOutcome.draft.narrative,
+          usedClaimIds: grounded.modelOutcome.draft.usedClaimIds,
+          selectedClaimIds: grounded.evidence.claimIds,
+          characterViews: grounded.evidence.characterViews.map(
+            ({ characterId, knownClaimIds, uncertainClaimIds }) => ({
+              characterId,
+              knownClaimIds,
+              uncertainClaimIds,
+            }),
+          ),
+        },
+        conflict: {
+          status: conflict.status,
+          violationCodes: conflict.hardViolations.map(({ code }) => code),
+          evidenceIds: conflict.hardViolations.flatMap(({ evidenceIds }) => evidenceIds),
+          graph: conflict.graph,
+        },
+      },
       replayResults: replay.map((result) => ({
         id: result.id,
         label: result.description,

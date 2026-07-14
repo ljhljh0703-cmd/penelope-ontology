@@ -36,7 +36,7 @@ Headless Chrome renders were inspected at 1440×1200 and a 500×900 narrow viewp
 
 ## Source reachability
 
-The four Perseus reference URLs in the demo pack returned HTTP 200. Claim-level locators, Penelope's epistemic fixture, and edition rights remain open `SOURCE_VERIFY` / `RIGHTS_VERIFY` gates.
+The four Perseus reference URLs in the demo pack returned HTTP 200. At scaffold time, claim-level locators, Penelope's epistemic fixture, and edition handling were still open. Those checks later closed as verified, original summaries with `reference_only` source handling; see `SOURCE-VERIFICATION.md`.
 
 ## Evidence boundary
 

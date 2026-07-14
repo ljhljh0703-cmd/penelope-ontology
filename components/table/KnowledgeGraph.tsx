@@ -25,27 +25,32 @@ const positionNodes = (graph: GraphDescriptor): PositionedNode[] => {
 
 export function KnowledgeGraph({
   graph,
-  proposalApplied,
+  kicker = "CANON / KNOWLEDGE GRAPH",
+  title = "What the harness can prove",
+  note = "Derived view · not a graph database",
+  testId = "graph",
+  accessibleTitle = "Narrative evidence and proposal graph",
 }: {
   graph: GraphDescriptor;
-  proposalApplied: boolean;
+  kicker?: string;
+  title?: string;
+  note?: string;
+  testId?: string;
+  accessibleTitle?: string;
 }) {
   const nodes = positionNodes(graph);
   const nodeIndex = new Map(nodes.map((node) => [node.id, node]));
   const rows = Math.max(1, Math.ceil(nodes.length / 4));
   const height = 148 + (rows - 1) * 132;
 
-  const presentationState = (state: GraphVisualState): GraphVisualState =>
-    proposalApplied && state === "ghost_proposal" ? "approved_overlay" : state;
-
   return (
-    <section className="graph-panel panel" aria-labelledby="graph-title" data-testid="graph">
+    <section className="graph-panel panel" aria-labelledby={`${testId}-title`} data-testid={testId}>
       <div className="panel-heading">
         <div>
-          <p className="kicker">CANON / KNOWLEDGE GRAPH</p>
-          <h2 id="graph-title">What the harness can prove</h2>
+          <p className="kicker">{kicker}</p>
+          <h2 id={`${testId}-title`}>{title}</h2>
         </div>
-        <p className="panel-note">Derived view · not a graph database</p>
+        <p className="panel-note">{note}</p>
       </div>
 
       <div className="graph-frame">
@@ -53,10 +58,10 @@ export function KnowledgeGraph({
           className="knowledge-graph"
           viewBox={`0 0 760 ${height}`}
           role="img"
-          aria-labelledby="graph-svg-title graph-svg-description"
+          aria-labelledby={`${testId}-svg-title ${testId}-svg-description`}
         >
-          <title id="graph-svg-title">Narrative evidence and proposal graph</title>
-          <desc id="graph-svg-description">
+          <title id={`${testId}-svg-title`}>{accessibleTitle}</title>
+          <desc id={`${testId}-svg-description`}>
             A deterministic visual projection of evidence, character knowledge, blocked assertions,
             proposals, and current state. A complete text version follows the graphic.
           </desc>
@@ -65,7 +70,7 @@ export function KnowledgeGraph({
             const from = nodeIndex.get(edge.fromNodeId);
             const to = nodeIndex.get(edge.toNodeId);
             if (!from || !to) return null;
-            const visualState = presentationState(edge.visualState);
+            const visualState = edge.visualState;
             return (
               <g key={edge.id} className={`graph-edge graph-state-${visualState}`}>
                 <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} />
@@ -75,7 +80,7 @@ export function KnowledgeGraph({
           })}
 
           {nodes.map((node) => {
-            const visualState = presentationState(node.visualState);
+            const visualState = node.visualState;
             return (
               <g
                 key={node.id}
@@ -103,7 +108,7 @@ export function KnowledgeGraph({
             <h3>Nodes</h3>
             <ul>
               {graph.nodes.map((node) => {
-                const state = presentationState(node.visualState);
+                const state = node.visualState;
                 return (
                   <li key={node.id}>
                     <strong>{node.label}</strong>
@@ -119,7 +124,7 @@ export function KnowledgeGraph({
               {graph.edges.map((edge) => {
                 const from = nodeIndex.get(edge.fromNodeId)?.label ?? edge.fromNodeId;
                 const to = nodeIndex.get(edge.toNodeId)?.label ?? edge.toNodeId;
-                const state = presentationState(edge.visualState);
+                const state = edge.visualState;
                 return (
                   <li key={edge.id}>
                     <strong>{from}</strong> {edge.predicate ?? edge.kind} <strong>{to}</strong>

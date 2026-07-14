@@ -52,6 +52,7 @@ describe("creator decision and bounded simulation", () => {
   it("accepts into overlay v1 and rebases the snapshot without consuming a turn", () => {
     const initial = createInitialSnapshot(pack, overlayV0);
     const result = applyCreatorDecision({
+      worldPack: pack,
       overlay: overlayV0,
       snapshot: initial,
       proposal,
@@ -79,6 +80,7 @@ describe("creator decision and bounded simulation", () => {
   it("chains exactly two registered transitions after approval", () => {
     const initial = createInitialSnapshot(pack, overlayV0);
     const approved = applyCreatorDecision({
+      worldPack: pack,
       overlay: overlayV0,
       snapshot: initial,
       proposal,
@@ -125,7 +127,7 @@ describe("creator decision and bounded simulation", () => {
     expect(third.violations.map(({ code }) => code)).toContain("step_limit_exceeded");
   });
 
-  it("blocks direct skips and pre-approval use without changing the snapshot", () => {
+  it("blocks direct skips without changing the snapshot", () => {
     const initial = createInitialSnapshot(pack, overlayV0);
     const scenario = pack.simulationScenarios[0];
 
@@ -141,9 +143,146 @@ describe("creator decision and bounded simulation", () => {
     expect(direct.violations.map(({ code }) => code)).toContain("state_transition_invalid");
   });
 
+  it("blocks the registered first transition before its creator rule is approved", () => {
+    const initial = createInitialSnapshot(pack, overlayV0);
+    const result = applySimulationAction({
+      scenario: pack.simulationScenarios[0],
+      snapshot: initial,
+      action: action("idle", "watching"),
+      activeRuleIds: new Set(),
+    });
+
+    expect(result.status).toBe("blocked");
+    expect(result.snapshot).toEqual(initial);
+    expect(result.transition.fromStateHash).toBe(result.transition.toStateHash);
+    expect(result.violations.map(({ code }) => code)).toContain("unapproved_expansion");
+  });
+
+  it("applies an edit only when it preserves the proposal patch authority", () => {
+    const initial = createInitialSnapshot(pack, overlayV0);
+    const editedDescription = "A red sail asks the Ithacan watch to observe before declaring a return.";
+    const result = applyCreatorDecision({
+      worldPack: pack,
+      overlay: overlayV0,
+      snapshot: initial,
+      proposal,
+      decision: {
+        action: "edit",
+        proposalId: proposal.id,
+        proposalHash: proposal.proposalHash,
+        baseOverlayId: overlayV0.id,
+        baseOverlayVersion: overlayV0.version,
+        baseOverlayHash: overlayV0.hash,
+        patches: [
+          {
+            op: "add_rule",
+            rule: {
+              id: "rule.creator.red_sail_signal",
+              kind: "world",
+              description: editedDescription,
+            },
+          },
+        ],
+      },
+    });
+
+    expect(result.status).toBe("applied");
+    expect(result.overlay.rules[0]?.description).toBe(editedDescription);
+    expect(result.snapshot.canonHash).toBe(result.overlay.hash);
+  });
+
+  it("rejects edited patch retargeting and invalid World Pack references unchanged", () => {
+    const initial = createInitialSnapshot(pack, overlayV0);
+    const retargeted = applyCreatorDecision({
+      worldPack: pack,
+      overlay: overlayV0,
+      snapshot: initial,
+      proposal,
+      decision: {
+        action: "edit",
+        proposalId: proposal.id,
+        proposalHash: proposal.proposalHash,
+        baseOverlayId: overlayV0.id,
+        baseOverlayVersion: overlayV0.version,
+        baseOverlayHash: overlayV0.hash,
+        patches: [
+          {
+            op: "add_rule",
+            rule: {
+              id: "rule.creator.different_target",
+              kind: "world",
+              description: "This must not ride on another proposal's approval.",
+            },
+          },
+        ],
+      },
+    });
+    expect(retargeted).toEqual({ status: "invalid", overlay: overlayV0, snapshot: initial });
+
+    const invalidProposal = createCanonProposal(
+      {
+        id: "proposal.invalid_reference",
+        summary: "Try to attach a claim to an entity outside the pack.",
+        patches: [
+          {
+            op: "add_claim",
+            claim: {
+              id: "claim.creator.invalid_reference",
+              subjectId: "unknown_character",
+              predicate: "waits_at",
+              object: { kind: "entity", entityId: "ithaca" },
+              temporalScope: "ithaca.odyssey_book_1",
+              spatialScope: "ithaca",
+              epistemicVisibility: ["all"],
+              conflictSetId: null,
+              summary: "An invalid claim for the reference gate.",
+              sourceIds: ["source.odyssey.1"],
+            },
+          },
+        ],
+      },
+      overlayV0,
+    );
+    const invalid = applyCreatorDecision({
+      worldPack: pack,
+      overlay: overlayV0,
+      snapshot: initial,
+      proposal: invalidProposal,
+      decision: {
+        action: "accept",
+        proposalId: invalidProposal.id,
+        proposalHash: invalidProposal.proposalHash,
+        baseOverlayId: overlayV0.id,
+        baseOverlayVersion: overlayV0.version,
+        baseOverlayHash: overlayV0.hash,
+      },
+    });
+    expect(invalid).toEqual({ status: "invalid", overlay: overlayV0, snapshot: initial });
+  });
+
+  it("rejects without changing overlay or snapshot", () => {
+    const initial = createInitialSnapshot(pack, overlayV0);
+    const result = applyCreatorDecision({
+      worldPack: pack,
+      overlay: overlayV0,
+      snapshot: initial,
+      proposal,
+      decision: {
+        action: "reject",
+        proposalId: proposal.id,
+        proposalHash: proposal.proposalHash,
+        baseOverlayId: overlayV0.id,
+        baseOverlayVersion: overlayV0.version,
+        baseOverlayHash: overlayV0.hash,
+      },
+    });
+    expect(result).toEqual({ status: "rejected", overlay: overlayV0, snapshot: initial });
+  });
+
   it("rejects stale decisions with byte-identical authorities", () => {
     const initial = createInitialSnapshot(pack, overlayV0);
     const result = applyCreatorDecision({
+      worldPack: pack,
       overlay: overlayV0,
       snapshot: initial,
       proposal,

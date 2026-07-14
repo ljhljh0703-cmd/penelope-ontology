@@ -7,10 +7,15 @@ import {
   loadSnapshotFixture,
 } from "@/src/adapters/filesystem/demo-data";
 import type { ParticipantIntent } from "@/src/contracts/participant-intent";
-import { createCanonProposal } from "@/src/domain/canon-overlay";
+import {
+  buildCanonOverlay,
+  createCanonProposal,
+  overlayPayload,
+} from "@/src/domain/canon-overlay";
 import { canonicalJson } from "@/src/domain/canonical-json";
 import { buildGraphDescriptor } from "@/src/domain/graph-descriptor";
 import { buildCharacterAgentViews } from "@/src/domain/retrieval";
+import { rebaseSnapshot } from "@/src/domain/simulation";
 import { validateDraft } from "@/src/domain/validation";
 
 const graphForFixture = async (draftFixtureId: string) => {
@@ -125,6 +130,74 @@ describe("derived canon and knowledge graph", () => {
       }),
     );
     expectOrderedAndClosed(graph);
+  });
+
+  it("keeps approval status for an overlay claim that remains hidden from focal characters", async () => {
+    const [pack, baseOverlay, baseSnapshot, draft] = await Promise.all([
+      loadDemoWorldPack(),
+      loadOverlayFixture("overlay.v0"),
+      loadSnapshotFixture("snapshot.s0"),
+      loadDraftFixture("draft.grounded_penelope"),
+    ]);
+    const overlay = buildCanonOverlay({
+      ...overlayPayload(baseOverlay),
+      version: 1,
+      claims: [
+        {
+          id: "claim.creator.private_sign",
+          subjectId: "penelope",
+          predicate: "keeps_private_sign",
+          object: { kind: "literal", value: "a sealed token" },
+          temporalScope: "ithaca.odyssey_book_1",
+          spatialScope: "ithaca",
+          epistemicVisibility: ["narrator"],
+          conflictSetId: null,
+          summary: "A creator-approved sign remains outside the focal characters' views.",
+          sourceIds: ["source.odyssey.1"],
+          layerId: "creator_canon",
+          status: "asserted",
+        },
+      ],
+    });
+    const snapshot = rebaseSnapshot(baseSnapshot, overlay);
+    const participantIntents: ParticipantIntent[] = [
+      {
+        intentId: "intent.penelope",
+        participantId: "participant.one",
+        controlledEntityIds: ["penelope"],
+        intent: "Remain cautious.",
+      },
+      {
+        intentId: "intent.eurycleia",
+        participantId: "participant.two",
+        controlledEntityIds: ["eurycleia"],
+        intent: "Offer support.",
+      },
+    ];
+    const characterViews = buildCharacterAgentViews({
+      pack,
+      overlay,
+      snapshot,
+      participantIntents,
+    });
+    const graph = buildGraphDescriptor({
+      pack,
+      overlay,
+      snapshot,
+      draft,
+      characterViews,
+      violations: [],
+      proposals: [],
+    });
+
+    expect(graph.edges).toContainEqual(
+      expect.objectContaining({
+        id: "edge.claim.claim.creator.private_sign",
+        visualState: "approved_overlay",
+        status: "approved",
+        visibleToIds: [],
+      }),
+    );
   });
 
   it("is byte-stable for identical structured inputs", async () => {

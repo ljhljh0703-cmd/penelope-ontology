@@ -263,6 +263,12 @@
           "checkMode": "human"
         },
         {
+          "id": "style.table_ready_mythic.cadence",
+          "kind": "cadence",
+          "value": "Measured clauses should break into short, playable dialogue beats.",
+          "checkMode": "human"
+        },
+        {
           "id": "style.table_ready_mythic.goal",
           "kind": "prose_goal",
           "value": "Each line should expose a playable decision or uncertainty.",

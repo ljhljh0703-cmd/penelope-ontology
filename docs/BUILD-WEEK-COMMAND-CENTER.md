@@ -8,13 +8,13 @@ Internal submission freeze: **2026-07-21 23:00 KST**. The final ten hours are em
 
 ## Approved product proof
 
-The Work & Productivity product serves professional GMs, narrative production teams, and game scenario or quest designers. It succeeds only if this vertical slice works end to end:
+The Work & Productivity product serves professional GMs, narrative production teams, and game scene or quest designers. It succeeds only if this vertical slice works end to end:
 
 ```text
 facilitator-collected ParticipantIntent[] + creator-owned StyleProfile
 + World Pack / SimulationSnapshot
 → character-scoped retrieval and agent views
-→ GPT-5.6 structured candidate
+→ fixture-verified structured candidate / gated GPT-5.6 candidate
 → deterministic hard validation and intent lineage
 → derived canon/knowledge graph
 → creator accept/edit/reject
@@ -26,7 +26,7 @@ The primary demo is not “AI writes mythology” and not four unrelated error c
 
 1. Two locally labeled participants provide intents for Penelope and Telemachus while the facilitator selects an original table-ready mythic style profile. Penelope and Eurycleia remain a separate grounded replay control.
 2. The tool builds separate character views; Penelope does not receive the hidden Ogygia edge.
-3. GPT-5.6 returns attributed candidate utterances/actions and a red-sail rule proposal.
+3. The verified fixture returns attributed candidate utterances/actions and a red-sail rule proposal through the same strict draft contract used by the gated GPT-5.6 adapter. A real model result remains a separate gate.
 4. The audit graph exposes evidence, a blocked knowledge leak, and the proposal as a ghost relation.
 5. The facilitator accepts or edits the rule; only then does the overlay hash change.
 6. Two validated steps advance the registered `harbor_watch` variable from `idle` to `watching` to `signal_seen`.
@@ -41,13 +41,14 @@ The primary demo is not “AI writes mythology” and not four unrelated error c
 | Codex credit request | resubmitted, pending | optional; the build assumes no credit |
 | Scope decision | verified | user approved A scope, Work & Productivity audience expansion, and remote-multiplayer No-Go on 2026-07-15 |
 | Local repository | verified working tree | core work is implemented on `codex/core-vertical-slice`; final commit/public remote remain |
-| Core contracts and deterministic engine | verified | 13 contract groups plus retrieval, validation, overlay, graph, simulation, and replay tests |
+| Core contracts and deterministic engine | verified | eight demo-critical contract groups plus retrieval, validation, overlay, graph, simulation, and replay tests |
 | Table product surface | verified fixture-only | two local intents, style profile, graph, accept/edit/reject, S0r, two steps, and replay are visible without JSON editing |
-| Local release gate | verified | evidence generation, lint, typecheck, 77 tests, privacy scan, production build, and 6 browser tests pass |
+| Local release gate | verified | `npm run verify:release` covers evidence generation, lint, typecheck, the full unit/API suite, privacy scan, production build, and both browser projects |
 | Fresh-copy rehearsal | verified | clean copy `npm ci`, vulnerability audit 0, full release gate PASS |
 | Live GPT-5.6 | adapter verified; real call blocked | strict Responses adapter and typed errors are mock-tested; no API key/live response evidence exists |
+| Style controllability probe | protocol verified; live result blocked | same-model AB/BA schedule, no-retry capture, masked rubric, integrity hashes, and the focused style-evaluation suite pass; four live calls and creator ratings do not exist |
 | Quest production extension | target only | no `QuestSpec`, linter, generator, evaluation, or user proof exists |
-| Release evidence | fixture packet verified; external release pending | six sanitized evidence artifacts plus manifest exist; README is blocked by stale skill manifest; public remote, CI, deployment, video, `/feedback`, and final submission remain |
+| Release evidence | fixture packet verified; external release pending | seven sanitized evidence artifacts plus manifest exist; README write/derive preflights are `SERVING_CANDIDATE` and require explicit approval; public remote, CI, deployment, video, `/feedback`, and final submission remain |
 
 Passing fixture and fresh-copy checks proves the bounded local product path and its deterministic invariants. It does not prove live model use, quest support, user productivity, hosted reviewer access, or final submission.
 
@@ -70,7 +71,7 @@ The simulation contract must include the finite `harbor_watch: idle → watching
 
 Implement pack loading, initial snapshot derivation, canonical serialization, participant ownership validation, character agent views, stable retrieval, hard validators, fixture orchestration, and the facilitator-facing canon/knowledge graph descriptor.
 
-**Go:** deterministic retrieval and graph JSON are byte-identical across 100 runs; duplicate control, unknown lineage, unauthorized speaker/action, and unknown style-constraint IDs fail; five frozen cases have exact outcomes; Penelope's model view excludes the hidden Ogygia edge.
+**Go:** deterministic retrieval JSON is byte-identical across 100 repeated runs, and graph JSON is byte-stable across repeated identical inputs; duplicate control, unknown lineage, unauthorized speaker/action, and unknown style-constraint IDs fail; five frozen cases have exact outcomes; Penelope's model view excludes the hidden Ogygia edge.
 **No-Go:** move errors into prompts, expose facilitator-only truth to the model, or call the derived graph a database or formal ontology.
 
 ### Gate 2 — Creator-controlled canon and real two-step transition
@@ -88,14 +89,14 @@ Implement accept/edit/reject, stale-decision rejection, additive overlay, same-t
 
 Connect the Responses API using strict `text.format` Structured Outputs, keep refusals distinct from schema errors, expose the run path, and build the single-page Table flow with multi-intent input, selected style profile, graph view, creator decision, state timeline, and replay panel.
 
-The public deployment is fixture-only. Live mode is enabled only in a controlled local/server process with `OPENAI_API_KEY` and an explicit flag. Live model text is nondeterministic; only selected structured-output processing, validators, graph descriptors, transitions, and fixture replay carry deterministic claims.
+The public route and reviewer deployment are fixture-only. Every public `modelMode: live` request is rejected before orchestration. A real model call is available only through an explicitly invoked local evidence command with `OPENAI_API_KEY` and an enable flag. Live model text is nondeterministic; only selected structured-output processing, validators, graph descriptors, transitions, and fixture replay carry deterministic claims.
 
 **Go:** one sanitized real GPT-5.6 trace is verified; fixture/live identities cannot cross; the facilitator completes both steps without editing JSON; browser smoke passes.
 **No-Go:** label fixture output as live, expose a paid unauthenticated route, or show participant/character identity as if it were actual remote collaboration.
 
 ### Gate 4 — Evidence and release
 
-**Status: PARTIAL.** Source/privacy checks, fixture Evidence Packet, production build, and fresh-copy rehearsal pass. README manifest refresh, public remote/CI/deploy, video, `/feedback`, and final Devpost confirmation remain.
+**Status: PARTIAL.** Source/privacy checks, fixture Evidence Packet, production build, and fresh-copy rehearsal pass. README candidate-mode approval, public remote/CI/deploy, video, `/feedback`, and final Devpost confirmation remain.
 
 Run frozen evaluation, publish sanitized evidence, build the Evidence Packet, and derive README, Devpost copy, video claims, and later portfolio copy from the same claim ledger.
 
@@ -134,7 +135,7 @@ Excluded from submission:
 “Finished early” means Gates 0–4, live evidence, deploy, fresh clone, privacy/source checks, and release rehearsal all pass with at least 12 hours of buffer. Then apply this order:
 
 1. intent/action lineage, graph before/after diff, state-hash timeline, accessibility, and clearer evidence links
-2. run a same-model unbounded-versus-style-profile ablation with objective checks and a labeled human rubric; make no Fable/Opus superiority claim
+2. run the preregistered same-model `default_instruction_control` versus `profiled` AB/BA probe with objective checks and a condition-masked creator rubric; make no Fable/Opus superiority claim
 3. expand replay and malformed/stale/duplicate-control tests; run one to three practitioner task tests if available
 4. add a bounded Quest Consistency Linter pilot with `QuestSpec` and three seeded faults
 5. add Quest Brief export only after the linter passes
@@ -152,7 +153,7 @@ The portfolio case study is derived only after Gate 4 produces a verified Eviden
 
 > Translated narrative voice, canon, source traditions, character knowledge, participant intent, creator approval, and world-state transitions into a testable production harness with a bounded GPT-5.6 adapter—instead of relying on a model's default prose.
 
-The defensible writing angle is not “Codex or GPT-5.6 beats Fable or Opus at prose.” It is that a perceived default-writing weakness becomes an engineering surface: original style constraints are explicit, character knowledge is scoped, world claims are checked, new lore requires creator approval, and the same fixture replays after change. Raw taste remains human judgment; controllability and regression become testable.
+The defensible writing angle is not “Codex or GPT-5.6 beats Fable or Opus at prose.” Codex served as the engineering partner that converted tacit writing standards into explicit style, world, evidence, approval, and replay layers. That turns a perceived weakness of default model prose into an inspectable production surface: character knowledge is scoped, world claims are checked, new lore requires creator approval, and the same fixture replays after change. Raw taste remains human judgment; the mechanism and its regressions become auditable.
 
 The next credible game-production step is **Quest Consistency Linter & Replay**, followed by a harnessed quest-candidate generator. User adoption, productivity gains, quest automation, creativity improvement, and production readiness remain unmeasured until their own evidence exists.
 

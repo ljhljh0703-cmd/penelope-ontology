@@ -28,6 +28,7 @@ describe("Phase 0 contracts", () => {
     const world = readJson("world.json") as { styleProfiles: unknown[] };
     const profile = StyleProfileSchema.parse(world.styleProfiles[0]);
     expect(profile.constraints.some(({ kind }) => kind === "max_words")).toBe(true);
+    expect(profile.constraints.some(({ kind }) => kind === "cadence")).toBe(true);
 
     const invalid = structuredClone(profile);
     invalid.constraints[0].checkMode = "deterministic";

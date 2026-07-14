@@ -13,6 +13,9 @@ export class ModelConfigurationError extends Error {
 
 export type Environment = Readonly<Record<string, string | undefined>>;
 
+export const isGpt56ModelId = (model: string): boolean =>
+  model === DEFAULT_GPT56_MODEL || model.startsWith(`${DEFAULT_GPT56_MODEL}-`);
+
 export const loadGpt56Config = (env: Environment = process.env): Gpt56Config => {
   if (env.ENABLE_OPENAI_LIVE?.trim().toLowerCase() !== "true") {
     throw new ModelConfigurationError(
@@ -30,9 +33,16 @@ export const loadGpt56Config = (env: Environment = process.env): Gpt56Config => 
     throw new ModelConfigurationError(`Unsupported reasoning effort: ${reasoningEffort}`);
   }
 
+  const model = env.OPENAI_MODEL?.trim() || DEFAULT_GPT56_MODEL;
+  if (!isGpt56ModelId(model)) {
+    throw new ModelConfigurationError(
+      `OpenAI Build Week evidence requires the GPT-5.6 model family: ${model}`,
+    );
+  }
+
   return {
     apiKey,
-    model: env.OPENAI_MODEL?.trim() || DEFAULT_GPT56_MODEL,
+    model,
     reasoningEffort: reasoningEffort as Gpt56Config["reasoningEffort"],
   };
 };

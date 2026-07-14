@@ -94,7 +94,7 @@ type StyleProfile = {
 };
 ```
 
-Every constraint ID is stable and unique within its selected profile. `ModelDraft.appliedStyleConstraintIds` must contain only IDs registered by `styleProfileId`; unknown, duplicate, or cross-profile IDs fail validation. Profiles use original descriptive constraints and must not imitate living authors. Deterministic checks own only objective properties such as output bounds and prohibited phrases; viewpoint, cadence, and voice quality remain a separately labeled human rubric. A same-model unbounded/profiled fixture may show the effect of the harness, but no cross-model superiority claim follows from it.
+Every constraint ID is stable and unique within its selected profile. `ModelDraft.appliedStyleConstraintIds` must contain only IDs registered by `styleProfileId`; unknown, duplicate, or cross-profile IDs fail validation. Profiles use original descriptive constraints and must not imitate living authors. Deterministic checks own only objective properties such as output bounds and prohibited phrases; viewpoint, cadence, and voice quality remain a separately labeled human rubric. A preregistered same-model `default_instruction_control`/`profiled` AB/BA probe tests the harness mechanism on one fixed case; it does not itself establish improvement, literary quality, or cross-model superiority.
 
 ## Participant and speaker boundary
 
@@ -188,7 +188,7 @@ A blocked draft may be displayed as an untrusted candidate for diagnosis, but it
 
 `POST /api/decisions` applies accept/edit/reject against the bound proposal and overlay. `POST /api/transitions` applies one of the two registered fixture actions. Both endpoints are stateless: a valid accept/edit returns the next complete overlay and same-turn rebased snapshot; reject or stale input returns unchanged authorities. The browser carries only server-returned overlay/snapshot values, avoiding a server database and authentication surface.
 
-The reviewer demo runs fixture mode only. Live mode requires server-side `OPENAI_API_KEY` plus `ENABLE_OPENAI_LIVE=true`. No live call has yet been captured. When it is, only public-safe hashed metadata may be written under `artifacts/evidence/`; raw material remains ignored under `artifacts/live/`.
+The reviewer demo and public run route are fixture-only; the route rejects live requests before orchestration. The separate local evidence command requires `OPENAI_API_KEY` plus `ENABLE_OPENAI_LIVE=true`. No live call has yet been captured. When one is captured, only public-safe hashed metadata may be written under `artifacts/evidence/`; raw material remains ignored under `artifacts/live/`.
 
 ## Evidence gates
 

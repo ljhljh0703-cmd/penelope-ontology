@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CanonOverlay } from "@/src/contracts/canon-overlay";
 import type { CreatorDecision } from "@/src/contracts/creator-decision";
+import type { CreatorDecisionResult } from "@/src/contracts/creator-decision";
+import type { GraphDescriptor } from "@/src/contracts/graph";
 import type { ParticipantIntent } from "@/src/contracts/participant-intent";
 import type { ProposalPatch } from "@/src/contracts/proposal";
 import type { RunRequest, RunResult } from "@/src/contracts/run";
@@ -108,7 +110,9 @@ export function TableWorkbench() {
   const [overlay, setOverlay] = useState<CanonOverlay | null>(null);
   const [snapshot, setSnapshot] = useState<SimulationSnapshot | null>(null);
   const [runResult, setRunResult] = useState<RunResult | null>(null);
-  const [decisionResult, setDecisionResult] = useState<DecisionApiResult | null>(null);
+  const [lastRunRequest, setLastRunRequest] = useState<RunRequest | null>(null);
+  const [decisionResult, setDecisionResult] = useState<CreatorDecisionResult | null>(null);
+  const [decisionGraph, setDecisionGraph] = useState<GraphDescriptor | null>(null);
   const [transitions, setTransitions] = useState<SimulationTransitionRecord[]>([]);
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [editingProposal, setEditingProposal] = useState(false);
@@ -146,7 +150,9 @@ export function TableWorkbench() {
       setOverlay(demo.overlay);
       setSnapshot(demo.snapshot);
       setRunResult(null);
+      setLastRunRequest(null);
       setDecisionResult(null);
+      setDecisionGraph(null);
       setTransitions([]);
       setTimeline([{ label: "S0", note: "Initial fixture snapshot", snapshot: demo.snapshot }]);
       setEditingProposal(false);
@@ -195,11 +201,25 @@ export function TableWorkbench() {
     setApiError(null);
     setPhase("running");
 
+    const requestOverlay = phase === "error" ? bootstrap.overlay : overlay;
+    const requestSnapshot = phase === "error" ? bootstrap.snapshot : snapshot;
+    setOverlay(requestOverlay);
+    setSnapshot(requestSnapshot);
+    setRunResult(null);
+    setLastRunRequest(null);
+    setDecisionResult(null);
+    setDecisionGraph(null);
+    setTransitions([]);
+    setTimeline([
+      { label: "S0", note: "Initial fixture snapshot", snapshot: requestSnapshot },
+    ]);
+    setEditingProposal(false);
+
     const request: RunRequest = {
       modelMode: "fixture",
       draftFixtureId: "draft.red_sail_proposal",
-      overlay,
-      snapshot,
+      overlay: requestOverlay,
+      snapshot: requestSnapshot,
       styleProfileId: selectedStyleId,
       taskType: "expand",
       brief:
@@ -213,6 +233,7 @@ export function TableWorkbench() {
         body: JSON.stringify(request),
       });
       setRunResult(result);
+      setLastRunRequest(request);
       setSnapshot(result.currentSnapshot);
       setPhase("proposal");
     } catch (error) {
@@ -230,7 +251,7 @@ export function TableWorkbench() {
   };
 
   const decide = async (action: "accept" | "edit" | "reject") => {
-    if (!proposal || !overlay || !snapshot) return;
+    if (!proposal || !overlay || !snapshot || !lastRunRequest) return;
     if (action === "edit" && editedRuleDescription.trim().length === 0) {
       setFormError("The edited rule needs a description.");
       return;
@@ -271,26 +292,27 @@ export function TableWorkbench() {
     try {
       const result = await apiRequest<DecisionApiResult>("/api/decisions", {
         method: "POST",
-        body: JSON.stringify({ overlay, snapshot, proposal, decision }),
+        body: JSON.stringify({ runRequest: lastRunRequest, decision }),
       });
-      setDecisionResult(result);
-      setOverlay(result.overlay);
-      setSnapshot(result.snapshot);
-      if (result.status === "applied") {
+      setDecisionResult(result.decision);
+      setDecisionGraph(result.graph);
+      setOverlay(result.decision.overlay);
+      setSnapshot(result.decision.snapshot);
+      if (result.decision.status === "applied") {
         setTimeline((current) => [
           current[0],
           {
             label: "S0r",
             note: "Same turn and variables · approved overlay hash",
-            snapshot: result.snapshot,
+            snapshot: result.decision.snapshot,
           },
         ]);
         setEditingProposal(false);
         setPhase("rebased");
-      } else if (result.status === "rejected") {
+      } else if (result.decision.status === "rejected") {
         setPhase("rejected");
       } else {
-        setApiError(`Creator decision was ${result.status}; canon and state were not advanced.`);
+        setApiError(`Creator decision was ${result.decision.status}; canon and state were not advanced.`);
         setPhase("error");
       }
     } catch (error) {
@@ -379,14 +401,16 @@ export function TableWorkbench() {
             <h1>Rehearse the scene.<br /><span>Keep canon inspectable.</span></h1>
           </div>
           <p className="lede">
-            Two local participant intents enter one bounded world. The harness exposes what each
-            character can know, isolates new lore, and advances state only after creator approval.
+            Fluent default prose can still flatten a voice or invent connective lore. This harness
+            applies the creator’s style, exposes what each character can know, isolates new canon,
+            and advances state only after creator approval.
           </p>
         </div>
         <dl className="run-strip">
           <div><dt>World Pack</dt><dd>{bootstrap.worldPack.label}</dd></div>
           <div><dt>Version</dt><dd>{bootstrap.worldPack.version}</dd></div>
           <div><dt>Overlay</dt><dd data-testid="overlay-version">v{overlay.version}</dd></div>
+          <div><dt>Canon hash</dt><dd data-testid="canon-hash" title={overlay.hash}>{overlay.hash.slice(0, 12)}…</dd></div>
           <div><dt>Table state</dt><dd data-testid="state-value">{snapshotVariable(snapshot)}</dd></div>
         </dl>
       </header>
@@ -492,6 +516,43 @@ export function TableWorkbench() {
             <strong data-testid="run-status">{phaseLabels[phase]}</strong>
           </section>
 
+          <section className="proof-panel panel" aria-labelledby="proof-title" data-testid="grounded-proof">
+            <div className="panel-heading">
+              <div>
+                <p className="kicker">FIXTURE PREFLIGHT</p>
+                <h2 id="proof-title">A pass needs evidence. A conflict stays visible.</h2>
+              </div>
+              <span className="status-chip neutral">SERVER EXECUTED</span>
+            </div>
+            <div className="proof-grid">
+              <article className="proof-card grounded">
+                <div className="proof-card-heading">
+                  <span>GROUNDED SCENE</span>
+                  <strong className="status-chip pass">{bootstrap.proofs.grounded.status}</strong>
+                </div>
+                <blockquote>{bootstrap.proofs.grounded.narrative}</blockquote>
+                <p>Used evidence</p>
+                <ul className="evidence-tags">
+                  {bootstrap.proofs.grounded.usedClaimIds.map((id) => <li key={id}>{id}</li>)}
+                </ul>
+                <small>
+                  {bootstrap.proofs.grounded.characterViews.length} character-scoped views · {bootstrap.proofs.grounded.selectedClaimIds.length} selected claims
+                </small>
+              </article>
+              <article className="proof-card conflict">
+                <div className="proof-card-heading">
+                  <span>SOURCE CONFLICT</span>
+                  <strong className="status-chip decision">needs creator decision</strong>
+                </div>
+                <p>Helen’s wartime location remains split across two active traditions. The harness exposes the contradiction instead of blending it.</p>
+                <ul className="evidence-tags">
+                  {bootstrap.proofs.conflict.evidenceIds.map((id) => <li key={id}>{id}</li>)}
+                </ul>
+                <small>{bootstrap.proofs.conflict.violationCodes.join(" · ")}</small>
+              </article>
+            </div>
+          </section>
+
           {apiError ? (
             <section className="api-error" role="alert" data-testid="api-error">
               <div><span>REQUEST FAILED</span><strong>{apiError}</strong></div>
@@ -574,7 +635,7 @@ export function TableWorkbench() {
                 </div>
               </section>
 
-              <KnowledgeGraph graph={runResult.graph} proposalApplied={decisionResult?.status === "applied"} />
+              <KnowledgeGraph graph={decisionGraph ?? runResult.graph} />
 
               {proposal ? (
                 <section className="decision-panel panel" aria-labelledby="decision-title" data-testid="proposal">
@@ -683,9 +744,22 @@ export function TableWorkbench() {
                 </div>
               ) : null}
               {phase === "complete" ? (
-                <div className="completion-note">
+                <div className="completion-note" data-testid="completion-summary">
                   <span aria-hidden="true">✓</span>
-                  <div><strong>Scenario limit reached.</strong><p>The Table stops after two validated steps. No third-step action is available.</p></div>
+                  <div>
+                    <strong>Scenario limit reached.</strong>
+                    <p>The Table stops after two validated steps. No third-step action is available.</p>
+                    <dl className="completion-metrics">
+                      <div><dt>Mode</dt><dd>fixture only</dd></div>
+                      <div><dt>Canon</dt><dd>overlay v{overlay.version}</dd></div>
+                      <div><dt>State</dt><dd>idle → watching → signal_seen</dd></div>
+                      <div><dt>Style</dt><dd>{styleProfile?.constraints.length ?? 0} constraints exposed</dd></div>
+                      <div><dt>Replay</dt><dd>{bootstrap.replayResults.filter(({ status }) => status === "pass").length}/{bootstrap.replayResults.length} controls pass</dd></div>
+                    </dl>
+                    <button className="button secondary" type="button" onClick={() => void loadDemo()} data-testid="replay-demo">
+                      Replay demo
+                    </button>
+                  </div>
                 </div>
               ) : null}
             </section>
@@ -709,6 +783,15 @@ export function TableWorkbench() {
               ))}
             </div>
           </section>
+
+          <KnowledgeGraph
+            graph={bootstrap.proofs.conflict.graph}
+            kicker="FROZEN CONFLICT CONTROL"
+            title="Two traditions remain two traditions."
+            note="Helen comparison · creator decision required"
+            testId="conflict-graph"
+            accessibleTitle="Helen tradition conflict graph"
+          />
         </div>
       </div>
 

@@ -54,10 +54,10 @@ Historical note: this RETURN records the Day-0 decision at the time it was produ
 
 Two failed gates and three independent-verifier findings were corrected and retained in `docs/SCAFFOLD-VERIFICATION.md`: incompatible TypeScript 7/ESLint 10 ranges, an over-broad process environment type, JSON Schema/Zod parity, missing referential/replay checks, and fixture/live trace separation.
 
-## Gates
+## Gates at scaffold time
 
-- `README_BLOCKED_STALE_SKILL`: package-project-evidence write preflight reported a stale source manifest.
-- mythology source locators and edition rights remain `SOURCE_VERIFY` / `RIGHTS_VERIFY`.
+- README generation was blocked by a stale package manifest at scaffold time; current write/derive preflights are `SERVING_CANDIDATE` and still require explicit user approval.
+- mythology locator/rights handling later closed as `verified` / `reference_only`; see `docs/SOURCE-VERIFICATION.md`.
 - no real GPT-5.6 call has been made.
 - no public repository, deployment, demo video, `/feedback` ID, or Devpost submission exists yet.
 - the Day 0 scaffold is intended to be frozen as one local baseline commit; no remote or push is part of this gate.

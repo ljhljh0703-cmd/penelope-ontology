@@ -4,6 +4,7 @@ import OpenAI, { APIConnectionTimeoutError, APIError } from "openai";
 import { describe, expect, it, vi } from "vitest";
 import {
   createOpenAiNarrativeModel,
+  DEFAULT_OPENAI_MAX_OUTPUT_TOKENS,
   DEFAULT_OPENAI_TIMEOUT_MS,
 } from "@/src/adapters/openai/narrative-model";
 import { ModelDraftSchema } from "@/src/contracts/model-draft";
@@ -153,6 +154,7 @@ describe("OpenAI narrative model adapter", () => {
     expect(body).toMatchObject({
       model: "gpt-5.6",
       reasoning: { effort: "medium" },
+      max_output_tokens: DEFAULT_OPENAI_MAX_OUTPUT_TOKENS,
       store: false,
       text: {
         format: {

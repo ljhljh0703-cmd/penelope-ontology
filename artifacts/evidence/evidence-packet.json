@@ -20,9 +20,17 @@
     "stageCount": 8
   },
   "graphSummary": {
-    "descriptorDigest": "06f091c766324dfc1f83dff4078202bc74335ecfada08980f6b6cc43277b44b6",
-    "edgeCount": 8,
-    "nodeCount": 17
+    "afterApproval": {
+      "descriptorDigest": "0e3965e80d9f5956eadb957a50b72313b8c33acc73b375974a0e0cdf6bfe73d3",
+      "edgeCount": 7,
+      "nodeCount": 16
+    },
+    "beforeApproval": {
+      "descriptorDigest": "06f091c766324dfc1f83dff4078202bc74335ecfada08980f6b6cc43277b44b6",
+      "edgeCount": 8,
+      "nodeCount": 17
+    },
+    "conflictControlDigest": "f1b1542680af15a795f19478167e6558b5e92027f8e56491ba30a655a3856228"
   },
   "liveEvidenceStatus": "not_executed",
   "project": {
@@ -69,7 +77,7 @@
       "requestedModel": "fixture-v1",
       "responseId": null
     },
-    "runId": "run.bd703684717813ac2cd8",
+    "runId": "run.167e190c1bce6e7d7c48",
     "status": "needs_creator_decision"
   },
   "schemaVersion": 1,
@@ -99,10 +107,11 @@
       }
     ]
   },
+  "styleAblationStatus": "not_executed",
   "styleHarnessSummary": {
-    "claimBoundary": "This demonstrates explicit prose control and auditability; it is not a model-vendor writing-quality comparison.",
-    "constraintCount": 6,
+    "claimBoundary": "This demonstrates explicit prose-control inputs, mechanisms, and auditability; a live ablation is required before claiming a measured writing effect or model-vendor comparison.",
+    "constraintCount": 7,
     "deterministicCheckCount": 1,
-    "humanReviewCheckCount": 5
+    "humanReviewCheckCount": 6
   }
 }

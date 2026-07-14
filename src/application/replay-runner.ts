@@ -146,6 +146,7 @@ export const runFrozenReplay = async ({
                 baseOverlayHash: proposal.baseOverlayHash,
               };
         const result = applyCreatorDecision({
+          worldPack,
           overlay: await loadOverlayFixture(priorStage.overlayFixtureId),
           snapshot: prior.currentSnapshot,
           proposal,

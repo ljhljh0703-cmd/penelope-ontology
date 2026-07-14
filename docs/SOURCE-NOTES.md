@@ -6,27 +6,27 @@ The repository stores short original fact summaries, not quotations from modern 
 
 | Source | Use | Current gate |
 |---|---|---|
-| Iliad, Book 24 | Hector's death and completed funeral state | `SOURCE_VERIFY` exact locator and edition rights |
-| Iliad, Book 3 | Homeric-layer Helen at Troy | `SOURCE_VERIFY` exact locator and edition rights |
-| Odyssey, Book 1 | Odysseus on Ogygia and the Ithacan opening state | `SOURCE_VERIFY` Penelope's exact epistemic boundary |
-| Euripides, Helen 566–596 | later-tragedy phantom/real-Helen conflict | page reached; `RIGHTS_VERIFY` edition expression |
+| Iliad, Book 24 | Hector's death and completed funeral state | `verified` · bibliographic reference only |
+| Iliad, Book 3 | Homeric-layer Helen at Troy | `verified` · bibliographic reference only |
+| Odyssey, Book 1 | Odysseus on Ogygia and the Ithacan opening state | `verified` · bibliographic reference only |
+| Euripides, Helen 566–596 | later-tragedy phantom/real-Helen conflict | `verified` · bibliographic reference only |
 
 The Perseus pages are bibliographic references only. No displayed translation sentence is redistributed.
 
-All four URLs returned HTTP 200 on 2026-07-14. This verifies reachability only; it does not close the claim-level source or edition-rights gates.
+The initial 2026-07-14 intake verified reachability only. The 2026-07-15 follow-up checked the cited passages, retained independently written summaries, and recorded every World Pack source as `verificationStatus: verified` and `rightsStatus: reference_only`. See [`SOURCE-VERIFICATION.md`](./SOURCE-VERIFICATION.md). This closes the current small-pack source/reference gate; it does not grant permission to copy translation text or expand the claims beyond the cited passages.
 
 
-## Required before public data freeze
+## Requirements preserved for public data freeze
 
-- verify each claim against the cited work and narrow locator
-- verify edition and translation rights in the jurisdictions relevant to publication
+- keep each claim bound to its cited work and narrow locator
+- use the linked editions as bibliographic references only; do not redistribute translation expression
 - require every demo source URL to return successfully at freeze time
-- allow no live-demo claim to remain `source_verify` or `rights_verify`
+- allow no live-demo source record to regress from `verified` / `reference_only`
 - describe Penelope's boundary only as “no evidence edge inside this selected pack and source scope” unless a stronger claim is directly supported
 - normalize English and Korean transliterations separately if Korean UI copy is added
 - retain both claims when traditions conflict; never merge them as a single historical fact
 - label the red-sail return signal as original creator canon, not ancient mythology
-- label the `harbor_watch` state machine, participant intents, and `style.ithaca_restrained` profile as synthetic/original demo data, not mythology claims
+- label the `harbor_watch` state machine, participant intents, and `style.table_ready_mythic` profile as synthetic/original demo data, not mythology claims
 
 ## Safe expression policy
 
@@ -37,4 +37,4 @@ All four URLs returned HTTP 200 on 2026-07-14. This verifies reachability only; 
 
 ## PASS definition
 
-The source/rights gate passes only when each demo claim has an exact work/book/line or section locator, the linked source is reachable, the repository summary was written independently without copied translation text, the selected edition can be used as a reference in the intended publication context, and all live-demo records have `verificationStatus: verified`. Reachability alone is not PASS.
+The current reference-only gate passes when each demo claim has an exact work/book/line or section locator, the linked source is reachable, the repository summary was written independently without copied translation text, and every source record has `verificationStatus: verified` plus `rightsStatus: reference_only`. Those conditions are recorded in the World Pack and [`SOURCE-VERIFICATION.md`](./SOURCE-VERIFICATION.md). Reachability alone would not be PASS, and any future quotation, translation reuse, illustration, or new source requires a new rights check.

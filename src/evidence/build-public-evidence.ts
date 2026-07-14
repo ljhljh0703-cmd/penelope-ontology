@@ -10,6 +10,7 @@ import { runFrozenReplay } from "@/src/application/replay-runner";
 import type { NarrativeModel } from "@/src/ports/narrative-model";
 import { applyCreatorDecision } from "@/src/domain/canon-overlay";
 import { sha256Canonical } from "@/src/domain/canonical-json";
+import { buildGraphDescriptor } from "@/src/domain/graph-descriptor";
 import { activeRules } from "@/src/domain/retrieval";
 import { applySimulationAction } from "@/src/domain/simulation";
 
@@ -58,11 +59,19 @@ const countBy = (values: ReadonlyArray<string>): Record<string, number> =>
   );
 
 export const buildPublicEvidence = async () => {
-  const [{ worldPack, replayCases }, overlayV0, snapshotS0, step1Draft, step2Draft] =
+  const [
+    { worldPack, replayCases },
+    overlayV0,
+    snapshotS0,
+    helenSnapshot,
+    step1Draft,
+    step2Draft,
+  ] =
     await Promise.all([
       loadDemoBundle(),
       loadOverlayFixture("overlay.v0"),
       loadSnapshotFixture("snapshot.s0"),
+      loadSnapshotFixture("snapshot.helen_s0"),
       loadDraftFixture("draft.red_sail_step_1"),
       loadDraftFixture("draft.red_sail_step_2"),
     ]);
@@ -83,8 +92,29 @@ export const buildPublicEvidence = async () => {
   });
   const proposal = proposalRun.proposals[0];
   if (!proposal) throw new Error("The proposal fixture did not produce a creator proposal.");
+  const conflictRun = await run({
+    modelMode: "fixture",
+    draftFixtureId: "draft.helen_conflict",
+    overlay: overlayV0,
+    snapshot: helenSnapshot,
+    styleProfileId: worldPack.defaultStyleProfileId,
+    taskType: "query",
+    brief: "Expose the unresolved Helen traditions without selecting one.",
+    participantIntents: [
+      {
+        intentId: "intent.helen",
+        participantId: "participant.one",
+        controlledEntityIds: ["helen"],
+        intent: "Keep both active traditions visible for creator review.",
+      },
+    ],
+  });
+  if (conflictRun.status !== "needs_creator_decision") {
+    throw new Error("The conflict fixture did not preserve creator authority.");
+  }
 
   const decision = applyCreatorDecision({
+    worldPack,
     overlay: overlayV0,
     snapshot: snapshotS0,
     proposal,
@@ -98,6 +128,21 @@ export const buildPublicEvidence = async () => {
     },
   });
   if (decision.status !== "applied") throw new Error("The fixture proposal was not applied.");
+  if (proposalRun.modelOutcome.outcome !== "completed") {
+    throw new Error("The fixture proposal did not return a structured draft.");
+  }
+  const approvedGraph = buildGraphDescriptor({
+    pack: worldPack,
+    overlay: decision.overlay,
+    snapshot: decision.snapshot,
+    draft: proposalRun.modelOutcome.draft,
+    characterViews: proposalRun.evidence.characterViews,
+    violations: proposalRun.hardViolations.filter(
+      ({ code, evidenceIds }) =>
+        code !== "unapproved_expansion" || !evidenceIds.includes(proposal.id),
+    ),
+    proposals: [],
+  });
 
   const scenario = worldPack.simulationScenarios.find(
     ({ id }) => id === decision.snapshot.scenarioId,
@@ -150,10 +195,19 @@ export const buildPublicEvidence = async () => {
     evidenceType: "derived_graph" as const,
     descriptor: proposalRun.graph,
     descriptorDigest: sha256Canonical(proposalRun.graph),
+    approvedDescriptor: approvedGraph,
+    approvedDescriptorDigest: sha256Canonical(approvedGraph),
+    conflictDescriptor: conflictRun.graph,
+    conflictDescriptorDigest: sha256Canonical(conflictRun.graph),
     nodeCount: proposalRun.graph.nodes.length,
     edgeCount: proposalRun.graph.edges.length,
+    approvedNodeCount: approvedGraph.nodes.length,
+    approvedEdgeCount: approvedGraph.edges.length,
     nodeVisualStates: countBy(proposalRun.graph.nodes.map(({ visualState }) => visualState)),
     edgeStatuses: countBy(proposalRun.graph.edges.map(({ status }) => status)),
+    approvedNodeVisualStates: countBy(approvedGraph.nodes.map(({ visualState }) => visualState)),
+    approvedEdgeStatuses: countBy(approvedGraph.edges.map(({ status }) => status)),
+    conflictEdgeStatuses: countBy(conflictRun.graph.edges.map(({ status }) => status)),
   };
   const simulation = {
     evidenceType: "deterministic_simulation" as const,
@@ -191,7 +245,7 @@ export const buildPublicEvidence = async () => {
   const styleHarness = {
     evidenceType: "harness_mechanism" as const,
     claimBoundary:
-      "This demonstrates explicit prose control and auditability; it is not a model-vendor writing-quality comparison.",
+      "This demonstrates explicit prose-control inputs, mechanisms, and auditability; a live ablation is required before claiming a measured writing effect or model-vendor comparison.",
     selectedProfile: styleProfile,
     modelInputBoundary: [
       "selected style profile",
@@ -270,9 +324,17 @@ export const buildPublicEvidence = async () => {
       digest: fixtureReplay.digest,
     },
     graphSummary: {
-      nodeCount: graph.nodeCount,
-      edgeCount: graph.edgeCount,
-      descriptorDigest: graph.descriptorDigest,
+      beforeApproval: {
+        nodeCount: graph.nodeCount,
+        edgeCount: graph.edgeCount,
+        descriptorDigest: graph.descriptorDigest,
+      },
+      afterApproval: {
+        nodeCount: graph.approvedNodeCount,
+        edgeCount: graph.approvedEdgeCount,
+        descriptorDigest: graph.approvedDescriptorDigest,
+      },
+      conflictControlDigest: graph.conflictDescriptorDigest,
     },
     simulationSummary: {
       overlayHash: simulation.creatorDecision.overlayHash,

@@ -1,5 +1,6 @@
 import type { CanonOverlay } from "@/src/contracts/canon-overlay";
 import type { CreatorDecisionResult } from "@/src/contracts/creator-decision";
+import type { GraphDescriptor } from "@/src/contracts/graph";
 import type { HardViolation } from "@/src/contracts/run";
 import type {
   SimulationSnapshot,
@@ -34,6 +35,25 @@ export type DemoBootstrap = {
   overlay: CanonOverlay;
   snapshot: SimulationSnapshot;
   participantSlots: DemoParticipantSlot[];
+  proofs: {
+    grounded: {
+      status: "passed";
+      narrative: string;
+      usedClaimIds: string[];
+      selectedClaimIds: string[];
+      characterViews: Array<{
+        characterId: string;
+        knownClaimIds: string[];
+        uncertainClaimIds: string[];
+      }>;
+    };
+    conflict: {
+      status: "needs_creator_decision";
+      violationCodes: string[];
+      evidenceIds: string[];
+      graph: GraphDescriptor;
+    };
+  };
   replayResults: DemoReplayResult[];
 };
 
@@ -44,4 +64,7 @@ export type TransitionApiResult = {
   violations: HardViolation[];
 };
 
-export type DecisionApiResult = CreatorDecisionResult;
+export type DecisionApiResult = {
+  decision: CreatorDecisionResult;
+  graph: GraphDescriptor;
+};

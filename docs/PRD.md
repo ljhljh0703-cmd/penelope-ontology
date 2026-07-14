@@ -4,7 +4,7 @@
 
 Track: Work & Productivity.
 
-Audience: professional tabletop game masters, narrative production teams, writers, and game scenario or quest designers working with a bounded canon.
+Primary audience: professional tabletop game masters, narrative production teams, and game scene or quest designers working with a bounded canon. Writers in bounded-world production are an adjacent audience.
 
 Job to be done: combine several stakeholder or character intents into a usable, voice-directed scene candidate without silently introducing unsupported facts, leaking character-only knowledge, collapsing conflicting source traditions, flattening the creator's style into generic prose, or treating an idea as approved canon.
 
@@ -23,7 +23,7 @@ This is a testable hypothesis, not a claim that the product guarantees coherent 
 1. The facilitator selects a World Pack, canon profile, fixed state, and an original creator-owned `StyleProfile` describing viewpoint, tense, cadence goals, dialogue mode, explicit avoidances, and output bounds.
 2. The facilitator records one or more `ParticipantIntent` values, each separating the human participant from the fictional entities they control.
 3. Deterministic retrieval creates character-scoped `agent_view` bundles containing only active, relevant entities, claims, events, rules, and knowledge.
-4. GPT-5.6 receives the bounded style profile and character views, then returns prose plus a strict structured account of speakers, assertions, actions, proposed changes, and referenced style-constraint IDs.
+4. The fixture path and GPT-5.6 adapter share one strict draft contract for prose, speakers, assertions, actions, proposed changes, and referenced style-constraint IDs. A real model invocation remains a separate local evidence gate.
 5. Hard validators check entity existence, state, timeline, location, knowledge, active traditions, support, and expansion approval.
 6. The UI exposes deterministic violations, provenance, and proposals through a derived canon/knowledge graph; no second model call owns or imitates the hard gate.
 7. New lore is isolated as a proposal. The creator accepts, edits, or rejects it against a specific overlay version and hash.
@@ -36,7 +36,7 @@ This is a testable hypothesis, not a claim that the product guarantees coherent 
 One web page must demonstrate all of the following with the same small World Pack:
 
 - one grounded scene passes with visible evidence
-- one original style profile is visible in the run and referenced through stable registered constraint IDs by the structured draft; this is a controllability demonstration, not proof of superior prose quality
+- one original style profile is visible in the run and referenced through stable registered constraint IDs by the structured draft; this demonstrates an inspectable control mechanism, not improved or superior prose quality
 - two or three participant intents are composed without conflating participant IDs and character speaker IDs
 - one dead/out-of-place character is blocked
 - one character knowledge leak is blocked
@@ -46,7 +46,7 @@ One web page must demonstrate all of the following with the same small World Pac
 - only validated actions change registered scenario variables; the snapshot references the approved overlay through version/hash rather than duplicating its rules
 - the accepted rule can be used in the second deterministic step
 - unchanged control cases keep their expected outcomes, while the red-sail case has explicit pre-approval and post-approval expectations
-- the UI clearly distinguishes fixture and live GPT-5.6 runs
+- the UI clearly labels fixture output and never presents it as a live GPT-5.6 run
 
 The hosted demo exposes fixture mode only. Live GPT-5.6 mode is a controlled local/server evidence path, not an unauthenticated public endpoint.
 
@@ -80,7 +80,7 @@ Creative quality and fun require human judgment; they are not reduced to a singl
 
 ## Style-harness hypothesis
 
-The product does not assume that a model's default prose voice is good enough. World truth, character knowledge, and prose style are separate harness layers. The creator owns the style profile; the model receives only the selected constraints; deterministic code checks only objective constraints; subjective cadence and voice remain a human rubric. A same-model unbounded-versus-profiled comparison may demonstrate controllability, but it must not be presented as a cross-model quality victory.
+The product does not assume that fluent default prose is production-ready prose. Instead of asking Codex or GPT-5.6 to imitate a preferred writer, it turns the creator's own standards into inspectable constraints. World truth, character knowledge, prose style, creator approval, and state change remain separate harness layers. The model receives only the selected bundle; deterministic code checks objective constraints; subjective cadence and voice remain a condition-masked creator rubric. A preregistered same-model `default_instruction_control` versus `profiled` AB/BA probe tests whether registered controllability measures move in the intended direction on that fixed case; it is not a cross-model quality comparison.
 
 ## Post-core portfolio runway
 

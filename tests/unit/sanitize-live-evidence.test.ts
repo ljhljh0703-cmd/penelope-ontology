@@ -7,6 +7,8 @@ import {
 import { fixtureNarrativeModel } from "@/src/adapters/fixtures/narrative-model";
 import { createRunOrchestrator } from "@/src/application/run-orchestrator";
 import { RunResultSchema } from "@/src/contracts/run";
+import { sha256Canonical } from "@/src/domain/canonical-json";
+import { buildLiveEvidenceRunRequest } from "@/src/evidence/live-evidence-request";
 import { sanitizeLiveEvidence } from "@/src/evidence/sanitize-live-evidence";
 
 describe("live evidence sanitizer", () => {
@@ -46,9 +48,12 @@ describe("live evidence sanitizer", () => {
     });
     if (fixtureResult.modelOutcome.outcome !== "completed") throw new Error("Fixture failed.");
     const rawResponseId = "resp_private_test_identity";
-    const liveResult = RunResultSchema.parse({
-      ...fixtureResult,
-      modelOutcome: {
+    const request = buildLiveEvidenceRunRequest({
+      overlay,
+      snapshot,
+      styleProfileId: worldPack.defaultStyleProfileId,
+    });
+    const modelOutcome = {
         ...fixtureResult.modelOutcome,
         trace: {
           mode: "live",
@@ -59,15 +64,38 @@ describe("live evidence sanitizer", () => {
           inputTokens: 100,
           outputTokens: 50,
         },
-      },
+      } as const;
+    const liveResult = RunResultSchema.parse({
+      ...fixtureResult,
+      runId: `run.${sha256Canonical({ request, modelOutcome }).slice(0, 20)}`,
+      modelOutcome,
     });
 
-    const sanitized = sanitizeLiveEvidence(liveResult, "2026-07-15T00:00:00.000Z");
+    const sanitized = sanitizeLiveEvidence(liveResult, "2026-07-15T00:00:00.000Z", {
+      worldPackId: worldPack.meta.id,
+      worldPackSha256: sha256Canonical(worldPack),
+      request,
+    });
     const serialized = JSON.stringify(sanitized);
     expect(sanitized.responseIdSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(serialized).not.toContain(rawResponseId);
     expect(serialized).not.toContain(fixtureResult.modelOutcome.draft.narrative);
     expect(sanitized.rawResponsePersistedPublicly).toBe(false);
+    expect(sanitized.authority).toMatchObject({
+      worldPackId: worldPack.meta.id,
+      worldPackVersion: worldPack.meta.version,
+      worldPackSha256: sha256Canonical(worldPack),
+      styleProfileId: worldPack.defaultStyleProfileId,
+      overlayHash: overlay.hash,
+      requestSha256: sha256Canonical(request),
+    });
+    expect(() =>
+      sanitizeLiveEvidence(liveResult, "2026-07-15T00:00:00.000Z", {
+        worldPackId: worldPack.meta.id,
+        worldPackSha256: sha256Canonical(worldPack),
+        request: { ...request, brief: "A changed request must not inherit the old trace." },
+      }),
+    ).toThrow("request digest does not match");
   });
 
   it("rejects fixture-only evidence", async () => {
@@ -104,7 +132,18 @@ describe("live evidence sanitizer", () => {
         },
       ],
     });
-    expect(() => sanitizeLiveEvidence(result, "2026-07-15T00:00:00.000Z")).toThrow(
+    const request = buildLiveEvidenceRunRequest({
+      overlay,
+      snapshot,
+      styleProfileId: worldPack.defaultStyleProfileId,
+    });
+    expect(() =>
+      sanitizeLiveEvidence(result, "2026-07-15T00:00:00.000Z", {
+        worldPackId: worldPack.meta.id,
+        worldPackSha256: sha256Canonical(worldPack),
+        request,
+      }),
+    ).toThrow(
       "Only a completed live run",
     );
   });

@@ -17,8 +17,8 @@ This file records implementation-time decisions without interrupting the critica
 4. Hash payloads exclude their own hash fields. Canonical JSON sorts object keys and explicitly normalizes unordered ID sets while preserving ordered narrative and transition arrays.
 5. Creator decision and SHA-256 calculation stay in server-side pure domain code. The browser stores only returned overlay/snapshot values and never reimplements hashing.
 6. `presentEntityIds` means scene membership. `deceasedEntityIds` separately blocks living actions, so Hector may be present as a corpse in the funeral state.
-7. Fixture and live requests are discriminated. Fixture mode requires a structured fixture ID; live mode forbids it and remains disabled unless both a server-side API key and explicit enable flag exist.
-8. The UI will use a finite workbench state machine and stateless API calls. React will not duplicate canon or transition rules.
+7. Fixture and live requests are discriminated. Fixture mode requires a structured fixture ID; live mode forbids it. The public route rejects live requests, while the separate live-evidence adapter remains unavailable unless both a server-side API key and explicit enable flag exist.
+8. The UI uses a finite workbench state machine and stateless API calls. React does not duplicate canon or transition rules.
 9. Alias validation uses Unicode-aware registered-name boundaries. The regression suite caught and fixed the false match `Ithaca` inside `Ithacan`; fixture data was not weakened to hide the defect.
 10. Public evidence is generated from the executable fixture flow. It records graph, proposal, decision/rebase, two transitions, a blocked third step, replay, and style-harness boundaries without presenting fixture output as a live model call.
 11. The live adapter sends only participant intents, the selected original style profile, and character-scoped views/context. It omits the complete overlay, snapshot, facilitator graph, and top-level true-state evidence IDs from the model input.
@@ -27,21 +27,44 @@ This file records implementation-time decisions without interrupting the critica
 
 - Phase 0 contract suite: 26 tests passed at handoff.
 - Integrated unit and API suite: 71 tests passed before the browser surface handoff; the final count is recorded by the release gate rather than frozen here.
-- Final local release gate: 77 unit/API tests and 6 Playwright checks passed across desktop Chromium and iPhone/WebKit.
+- Final local release gate after the truth audit: the full unit/API suite and both Playwright projects passed.
 - Frozen replay: five cases and eight stages, including proposal → creator decision/rebase → Step 1 → Step 2.
 - Deterministic chain: `idle → watching → signal_seen`; a third step is blocked with the state hash unchanged.
-- Public evidence generator: six sanitized artifacts plus a SHA-256 manifest.
-- Privacy scan passed after evidence generation.
+- Public evidence generator: seven sanitized artifacts plus a SHA-256 manifest, including explicit `not_executed` style-ablation readiness.
+- Privacy scan passed over 142 public candidates after evidence generation.
+
+## 2026-07-15 — Post-core truth audit
+
+### Gaps found and closed
+
+1. The public run route still had code capable of constructing a live adapter when environment flags existed. The route now rejects every `modelMode: live` request before orchestration and contains no network-backed adapter.
+2. Action evidence checks covered asserted claims but not unknown or inactive claims/rules. The validator now fails closed with typed violations and deterministic deduplication.
+3. Creator edit/accept validated proposal hashes but not every patch reference against the selected World Pack. Decisions now require the World Pack, reject ID collisions and out-of-pack references, respect expansion policy, and forbid edit retargeting.
+4. The browser recolored the pre-approval graph after acceptance instead of rendering a newly derived approved graph. The decision endpoint now returns a server-rebuilt graph bound to the new overlay/snapshot; browser tests prove the proposal edge disappears and approved overlay state appears.
+5. The original style profile omitted an explicit cadence record. Cadence is now a registered constraint referenced by all fixtures and required by validation.
+6. The Table did not put enough positive and exception evidence in the judge path. The server now executes a grounded Penelope control and a Helen tradition-conflict control; the UI shows used evidence, conflict IDs, canon hash, completion metrics, and replay reset.
+7. The writing-harness thesis lacked a controlled test path. A preregistered same-GPT-5.6 AB/BA protocol now fixes model, brief, evidence, exact output schema, and reasoning; changes only the creator style bundle; disables retries/replacements; binds plan, capture, blind packet, ratings, receipt, and report hashes; and publishes only aggregate write-once evidence.
+8. The decision endpoint initially trusted a client-supplied run result, then still accepted a self-hashed but unregistered base overlay. It now replays the fixture on the server, requires only proposal-scoped expansion violations, and accepts decisions only from the registered overlay v0 / snapshot S0 authority. Fabricated proposals and injected-canon bases return `409`.
+9. Action evidence claims could bypass the temporal claim ledger. Every action claim must now appear in `usedClaimIds`, where activity and future-phase checks already fail closed.
+10. Live evidence could become stale after a World Pack or request change. Sanitized evidence now binds the exact shared request, current pack hash, overlay, snapshot, style, and GPT-5.6 model family. The capture command reserves a write-once lock before the API call and records raw then sanitized output sequentially.
+11. Error recovery could retain a stale approved graph. A retry now resets to the registered base authority, clears prior decision/transition state, and has desktop/mobile browser regression coverage.
+
+### Verification after audit
+
+- Local: full Vitest suite, privacy scan, production build, and both Playwright projects PASS.
+- Fresh copy: clean `npm ci`, vulnerability audit, the same full suite, privacy scan, production build, and both browser projects PASS.
+- Visual inspection: desktop and iPhone layouts show the problem statement, style constraints, proof controls, graph, and single-column responsive flow without overlap.
+- Live style status: protocol verified, capture `not_executed`; no API key, raw prose, or public result exists.
 
 ### Improvement queue after required gates
 
 - Add a Quest Consistency Linter only after vertical slice, live trace, browser smoke, privacy scan, Evidence Packet, and release rehearsal all pass with the required buffer.
-- Run a same-model unbounded/profiled style ablation with objective checks and a separately labeled human rubric; do not make model-vendor superiority claims.
+- Run the preregistered same-model `default_instruction_control`/`profiled` AB/BA probe with objective checks and a condition-masked creator rubric; do not make model-vendor superiority claims.
 - Consider graph DB or embeddings only after a representative multi-pack retrieval evaluation shows a measured need.
 
 ### External or discussion items
 
 - `OPENAI_API_KEY` is currently absent from the process environment. Live GPT-5.6 evidence cannot be produced until a key is supplied locally; implementation and fixture verification continue meanwhile.
-- Browser smoke is complete: all 6 Table-flow checks pass across desktop Chromium and iPhone/WebKit.
-- `package-project-evidence` audit mode is certified, but README write-mode preflight returned `SERVING_STALE` because the readme-standard delegate, checklist, and template hashes changed. Do not create README.md until Vault Claude refreshes the manifest and write-mode preflight passes.
+- Browser smoke is complete: all 8 Table-flow checks pass across desktop Chromium and iPhone/WebKit.
+- `package-project-evidence` audit mode is certified. The latest write and derive preflights both return `SERVING_CANDIDATE`, not PASS; the skill requires explicit user approval and a rerun with `--allow-candidate`. Do not create README.md or portfolio copy before that approval. The user's ban on `juhyeong-voice` remains independent and binding.
 - Final product name remains intentionally unlocked. The technical label stays `Narrative Knowledge Harness` until the user names it.

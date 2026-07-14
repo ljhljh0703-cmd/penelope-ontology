@@ -12,30 +12,39 @@ test("fixture Table completes proposal, approval, rebase, and exactly two transi
   await expect(page.getByTestId("style-profile")).not.toHaveValue("");
   await expect(page.getByTestId("replay-panel")).toBeVisible();
   await expect(page.getByTestId("replay-panel").locator(".status-chip.pass")).toHaveCount(5);
+  await expect(page.getByTestId("grounded-proof")).toContainText("GROUNDED SCENE");
+  await expect(page.getByTestId("grounded-proof")).toContainText("claim.odyssey.penelope_uncertain_fate");
+  await expect(page.getByTestId("conflict-graph")).toContainText("blocked assertion");
   await expect(page.getByTestId("overlay-version")).toHaveText("v0");
   await expect(page.getByTestId("state-value")).toHaveText("idle");
+  const initialCanonHash = await page.getByTestId("canon-hash").textContent();
 
   await page.getByTestId("run-candidate").click();
 
   await expect(page.getByTestId("run-status")).toHaveText("Creator decision required");
   await expect(page.getByTestId("proposal")).toContainText("GHOST PROPOSAL");
   await expect(page.getByRole("img", { name: "Narrative evidence and proposal graph" })).toBeVisible();
-  await expect(page.getByText("Graph as text")).toBeVisible();
+  await expect(page.getByTestId("graph").getByText("Graph as text")).toBeVisible();
   await expect(page.getByTestId("decision-reject")).toBeVisible();
   await expect(page.getByTestId("decision-edit")).toBeVisible();
   await expect(page.getByTestId("decision-accept")).toBeVisible();
 
   await page.getByTestId("decision-edit").click();
-  await expect(page.getByLabel("Edit the rule description")).toBeVisible();
-  await page.getByRole("button", { name: "Cancel" }).click();
-
-  await page.getByTestId("decision-accept").click();
+  const editedRule = page.getByLabel("Edit the rule description");
+  await expect(editedRule).toBeVisible();
+  await editedRule.fill(
+    "A red sail asks the Ithacan watch to observe before declaring a return.",
+  );
+  await page.getByTestId("decision-apply-edit").click();
 
   await expect(page.getByTestId("run-status")).toHaveText("Canon approved · state rebased");
   await expect(page.getByTestId("overlay-version")).toHaveText("v1");
+  await expect(page.getByTestId("canon-hash")).not.toHaveText(initialCanonHash ?? "");
   await expect(page.getByTestId("state-value")).toHaveText("idle");
   await expect(page.getByTestId("state-timeline")).toContainText("S0r");
   await expect(page.getByTestId("state-timeline")).toContainText("Same turn and variables");
+  await expect(page.getByTestId("graph")).toContainText("approved creator canon");
+  await expect(page.getByTestId("graph")).not.toContainText("unapproved proposal");
 
   await page.getByTestId("advance-step-1").click();
   await expect(page.getByTestId("run-status")).toHaveText("Step 1 applied");
@@ -47,6 +56,9 @@ test("fixture Table completes proposal, approval, rebase, and exactly two transi
   await expect(page.getByText("Hash chain continuous across 2 transitions.")).toBeVisible();
   await expect(page.getByText("Scenario limit reached.")).toBeVisible();
   await expect(page.getByText("No third-step action is available.")).toBeVisible();
+  await expect(page.getByTestId("completion-summary")).toContainText("fixture only");
+  await expect(page.getByTestId("completion-summary")).toContainText("overlay v1");
+  await expect(page.getByTestId("completion-summary")).toContainText("5/5 controls pass");
   await expect(page.getByTestId("advance-step-1")).toHaveCount(0);
   await expect(page.getByTestId("advance-step-2")).toHaveCount(0);
 
@@ -54,6 +66,11 @@ test("fixture Table completes proposal, approval, rebase, and exactly two transi
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
   );
   expect(hasPageOverflow).toBe(false);
+
+  await page.getByTestId("replay-demo").click();
+  await expect(page.getByTestId("run-status")).toHaveText("Ready for rehearsal");
+  await expect(page.getByTestId("overlay-version")).toHaveText("v0");
+  await expect(page.getByTestId("state-value")).toHaveText("idle");
 });
 
 test("intent validation is keyboard reachable and does not send an empty intent", async ({ page }) => {
@@ -79,4 +96,39 @@ test("reject preserves the initial overlay and state", async ({ page }) => {
   await expect(page.getByTestId("overlay-version")).toHaveText("v0");
   await expect(page.getByTestId("state-value")).toHaveText("idle");
   await expect(page.getByText("Rejected safely.")).toBeVisible();
+});
+
+test("a transition error can restart from the registered base without stale decision UI", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByTestId("run-candidate").click();
+  await page.getByTestId("decision-accept").click();
+  await expect(page.getByTestId("overlay-version")).toHaveText("v1");
+
+  await page.route("**/api/transitions", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: { code: "test_transition_failure", message: "Injected transition failure." },
+      }),
+    });
+  });
+  await page.getByTestId("advance-step-1").click();
+  await expect(page.getByTestId("api-error")).toContainText("Injected transition failure");
+  await page.unroute("**/api/transitions");
+
+  await page.getByTestId("run-candidate").click();
+  await expect(page.getByTestId("overlay-version")).toHaveText("v0");
+  await expect(page.getByTestId("state-value")).toHaveText("idle");
+  await expect(page.getByTestId("decision-accept")).toBeVisible();
+  await expect(
+    page
+      .getByTestId("graph")
+      .locator("li")
+      .filter({ hasText: "In this creator canon" })
+      .filter({ hasText: "unapproved proposal" })
+      .first(),
+  ).toBeVisible();
 });

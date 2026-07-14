@@ -16,7 +16,11 @@ import {
 } from "@/src/contracts/proposal";
 import type { SimulationSnapshot } from "@/src/contracts/simulation";
 import { sha256Canonical } from "@/src/domain/canonical-json";
-import { rebaseSnapshot } from "@/src/domain/simulation";
+import { WorldPackSchema, type WorldPack } from "@/src/domain/schemas";
+import {
+  hasValidSnapshotHash,
+  rebaseSnapshot,
+} from "@/src/domain/simulation";
 
 const normalizeOverlayPayload = (payload: CanonOverlayPayload): CanonOverlayPayload => ({
   ...payload,
@@ -71,12 +75,22 @@ export const hasValidProposalHash = (proposal: CanonProposal): boolean => {
 };
 
 const applyPatches = (
+  pack: WorldPack,
   overlay: CanonOverlay,
   patches: ReadonlyArray<ProposalPatch>,
 ): CanonOverlay => {
   const claims = [...overlay.claims];
   const rules = [...overlay.rules];
-  const knownIds = new Set([...claims.map(({ id }) => id), ...rules.map(({ id }) => id)]);
+  const knownIds = new Set([
+    ...pack.claims.map(({ id }) => id),
+    ...pack.rules.map(({ id }) => id),
+    ...claims.map(({ id }) => id),
+    ...rules.map(({ id }) => id),
+  ]);
+  const entityIds = new Set(pack.entities.map(({ id }) => id));
+  const sourceIds = new Set(pack.sources.map(({ id }) => id));
+  const phaseIds = new Set(pack.events.map(({ phaseId }) => phaseId));
+  const visibilityIds = new Set(["all", "gods", "narrator", ...entityIds]);
 
   for (const patch of patches) {
     const targetId = patch.op === "add_claim" ? patch.claim.id : patch.rule.id;
@@ -86,12 +100,28 @@ const applyPatches = (
     knownIds.add(targetId);
 
     if (patch.op === "add_claim") {
+      const referencedEntityIds = [
+        patch.claim.subjectId,
+        ...(patch.claim.object.kind === "entity" ? [patch.claim.object.entityId] : []),
+        ...(patch.claim.spatialScope ? [patch.claim.spatialScope] : []),
+      ];
+      if (
+        referencedEntityIds.some((id) => !entityIds.has(id)) ||
+        !phaseIds.has(patch.claim.temporalScope) ||
+        patch.claim.sourceIds.some((id) => !sourceIds.has(id)) ||
+        patch.claim.epistemicVisibility.some((id) => !visibilityIds.has(id))
+      ) {
+        throw new Error(`Claim patch has references outside the selected World Pack: ${targetId}`);
+      }
       claims.push({
         ...patch.claim,
         layerId: "creator_canon",
         status: "asserted",
       });
     } else {
+      if (!pack.expansionPolicy.allowNewRules) {
+        throw new Error("The selected World Pack does not allow new creator rules.");
+      }
       rules.push({
         ...patch.rule,
         layerId: "creator_canon",
@@ -108,19 +138,47 @@ const applyPatches = (
   });
 };
 
+const patchAuthority = (patches: ReadonlyArray<ProposalPatch>): string[] =>
+  patches
+    .map((patch) =>
+      patch.op === "add_claim"
+        ? `${patch.op}:${patch.claim.id}`
+        : `${patch.op}:${patch.rule.id}`,
+    )
+    .sort();
+
+const samePatchAuthority = (
+  proposalPatches: ReadonlyArray<ProposalPatch>,
+  editedPatches: ReadonlyArray<ProposalPatch>,
+): boolean =>
+  JSON.stringify(patchAuthority(proposalPatches)) ===
+  JSON.stringify(patchAuthority(editedPatches));
+
 export const applyCreatorDecision = ({
+  worldPack: worldPackInput,
   overlay,
   snapshot,
   proposal,
   decision,
 }: {
+  worldPack: WorldPack;
   overlay: CanonOverlay;
   snapshot: SimulationSnapshot;
   proposal: CanonProposal;
   decision: CreatorDecision;
 }): CreatorDecisionResult => {
+  const parsedPack = WorldPackSchema.safeParse(worldPackInput);
+  if (!parsedPack.success) return { status: "invalid", overlay, snapshot };
+  const worldPack = parsedPack.data;
   const stale =
     !hasValidOverlayHash(overlay) ||
+    !hasValidSnapshotHash(snapshot) ||
+    overlay.worldPackId !== worldPack.meta.id ||
+    overlay.worldPackVersion !== worldPack.meta.version ||
+    snapshot.worldPackVersion !== worldPack.meta.version ||
+    snapshot.overlayId !== overlay.id ||
+    snapshot.overlayVersion !== overlay.version ||
+    snapshot.canonHash !== overlay.hash ||
     overlay.id !== decision.baseOverlayId ||
     overlay.version !== decision.baseOverlayVersion ||
     overlay.hash !== decision.baseOverlayHash ||
@@ -139,8 +197,19 @@ export const applyCreatorDecision = ({
     return { status: "rejected", overlay, snapshot };
   }
 
+  if (!worldPack.expansionPolicy.approvalActions.includes(decision.action)) {
+    return { status: "invalid", overlay, snapshot };
+  }
+  if (
+    decision.action === "edit" &&
+    !samePatchAuthority(proposal.patches, decision.patches)
+  ) {
+    return { status: "invalid", overlay, snapshot };
+  }
+
   try {
     const nextOverlay = applyPatches(
+      worldPack,
       overlay,
       decision.action === "edit" ? decision.patches : proposal.patches,
     );

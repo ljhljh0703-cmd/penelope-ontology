@@ -59,6 +59,17 @@ const validateStyle = (draft: ModelDraft, context: ValidationContext): HardViola
       );
     }
   }
+  for (const constraint of context.styleProfile.constraints) {
+    if (!draft.appliedStyleConstraintIds.includes(constraint.id)) {
+      violations.push(
+        violation(
+          "style_constraint_invalid",
+          `Draft omitted selected style constraint ${constraint.id}.`,
+          [constraint.id],
+        ),
+      );
+    }
+  }
 
   for (const constraint of context.styleProfile.constraints) {
     if (constraint.kind === "max_words" && typeof constraint.value === "number") {
@@ -306,14 +317,70 @@ const validateClaimsAndKnowledge = (
 
 const validateActions = (draft: ModelDraft, context: ValidationContext): HardViolation[] => {
   const violations: HardViolation[] = [];
-  const activeRuleIds = new Set([
-    ...context.pack.rules
-      .filter(({ layerId, status }) => context.activeLayerIds.has(layerId) && status === "active")
-      .map(({ id }) => id),
-    ...context.overlay.rules.map(({ id }) => id),
-  ]);
+  const claimIndex = new Map(allClaims(context).map((claim) => [claim.id, claim]));
+  const overlayClaimIds = new Set(context.overlay.claims.map(({ id }) => id));
+  const ruleIndex = new Map(
+    [...context.pack.rules, ...context.overlay.rules].map((rule) => [rule.id, rule]),
+  );
+  const overlayRuleIds = new Set(context.overlay.rules.map(({ id }) => id));
 
   for (const action of draft.actions) {
+    for (const claimId of action.evidenceClaimIds) {
+      const claim = claimIndex.get(claimId);
+      if (!claim) {
+        violations.push(
+          violation(
+            "unsupported_claim",
+            `Unknown action evidence claim ${claimId}.`,
+            [claimId],
+          ),
+        );
+      } else if (
+        !overlayClaimIds.has(claimId) &&
+        !context.activeLayerIds.has(claim.layerId)
+      ) {
+        violations.push(
+          violation(
+            "tradition_inactive",
+            `Action evidence claim ${claimId} belongs to inactive layer ${claim.layerId}.`,
+            [claimId, claim.layerId],
+          ),
+        );
+      } else if (!draft.usedClaimIds.includes(claimId)) {
+        violations.push(
+          violation(
+            "unsupported_claim",
+            `Action evidence claim ${claimId} must also be declared in usedClaimIds.`,
+            [claimId],
+          ),
+        );
+      }
+    }
+
+    for (const ruleId of action.evidenceRuleIds) {
+      const rule = ruleIndex.get(ruleId);
+      if (!rule) {
+        violations.push(
+          violation(
+            "unapproved_expansion",
+            `Unknown or unapproved action evidence rule ${ruleId}.`,
+            [ruleId],
+          ),
+        );
+      } else if (
+        !overlayRuleIds.has(ruleId) &&
+        (!context.activeLayerIds.has(rule.layerId) || rule.status !== "active")
+      ) {
+        violations.push(
+          violation(
+            "tradition_inactive",
+            `Action evidence rule ${ruleId} belongs to inactive layer ${rule.layerId}.`,
+            [ruleId, rule.layerId],
+          ),
+        );
+      }
+    }
+
     const variable = context.scenario.variables.find(({ id }) => id === action.variableId);
     const current = context.snapshot.variables.find(({ id }) => id === action.variableId);
     if (!variable || !current) {
@@ -340,7 +407,7 @@ const validateActions = (draft: ModelDraft, context: ValidationContext): HardVio
       continue;
     }
     for (const ruleId of transition.requiredRuleIds) {
-      if (!activeRuleIds.has(ruleId) || !action.evidenceRuleIds.includes(ruleId)) {
+      if (!action.evidenceRuleIds.includes(ruleId)) {
         violations.push(
           violation(
             "unapproved_expansion",

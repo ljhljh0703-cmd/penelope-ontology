@@ -32,7 +32,8 @@ import {
   type Gpt56Config,
 } from "@/src/adapters/openai/gpt56-config";
 
-export const DEFAULT_OPENAI_TIMEOUT_MS = 30_000;
+export const DEFAULT_OPENAI_TIMEOUT_MS = 90_000;
+export const DEFAULT_OPENAI_MAX_OUTPUT_TOKENS = 4_096;
 
 const MODEL_INSTRUCTIONS = [
   "Return only the structured narrative draft required by the supplied schema.",
@@ -262,13 +263,14 @@ export const createOpenAiNarrativeModel = (
       }
 
       try {
-        client ??= new OpenAI({ apiKey: config.apiKey });
+        client ??= new OpenAI({ apiKey: config.apiKey, maxRetries: 0 });
         const response = await client.responses.parse(
           {
             model: config.model,
             reasoning: { effort: config.reasoningEffort },
             instructions: MODEL_INSTRUCTIONS,
             input: JSON.stringify(input),
+            max_output_tokens: DEFAULT_OPENAI_MAX_OUTPUT_TOKENS,
             text: {
               format: zodTextFormat(ModelDraftSchema, "narrative_model_draft"),
             },

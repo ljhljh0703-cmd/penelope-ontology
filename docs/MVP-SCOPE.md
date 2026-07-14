@@ -12,7 +12,7 @@ The user approved the attack-balanced A scope on **2026-07-15 KST**. The schedul
 - derived canon/knowledge graph view from typed JSON
 - a real deterministic two-step finite-state simulation (`idle → watching → signal_seen`) with chained snapshots and hashes
 - frozen replay before and after an approved change
-- fixture-only public demo plus separately verified live GPT-5.6 evidence
+- fixture-only public demo plus a separate, still-open live GPT-5.6 evidence gate
 
 Actual remote multiplayer, graph databases, embeddings, and long-running autonomous simulation are not submission features.
 
@@ -41,7 +41,7 @@ Actual remote multiplayer, graph databases, embeddings, and long-running autonom
 Finishing code early does not automatically authorize new infrastructure. A stretch step opens only after the current vertical slice passes `npm run verify`, browser smoke, privacy scan, fixture replay, one sanitized live run, and claim-ledger update with at least **12 hours of release buffer** remaining.
 
 1. **Evidence and usability depth** — improve error explanations, accessibility, empty/error states, replay report, and conduct one to three practitioner task tests.
-2. **Style-harness ablation** — run the same model and evidence bundle with and without the selected original style profile; measure only objective constraints automatically and use a labeled human rubric for voice/cadence. Do not turn this into a Fable/Opus superiority claim.
+2. **Style-harness ablation** — run the same model, brief, evidence, schema, and reasoning setting in preregistered AB/BA order; change only the selected original style bundle between `default_instruction_control` and `profiled`. Measure objective constraints automatically and use a condition-masked creator rubric for voice/cadence. Do not turn this into a Fable/Opus superiority claim.
 3. **Quest Consistency Linter pilot** — add a small `QuestSpec` contract and three seeded faults: impossible precondition, invalid NPC state/knowledge, and unapproved canon dependency. This is quest-design QA, not automatic quest generation.
 4. **Quest Brief export** — only if the linter passes, derive a structured brief containing objectives, preconditions, steps, effects, failure states, knowledge requirements, and canon proposals.
 5. **Presentation polish** — improve graph transitions and two-step diff visualization after evidence-producing features are stable.

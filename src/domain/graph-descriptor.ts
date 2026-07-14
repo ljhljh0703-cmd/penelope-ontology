@@ -91,10 +91,10 @@ export const buildGraphDescriptor = ({
     const isMissing = !visibleClaims.has(claim.id);
     const visualState: GraphVisualState = isBlocked
       ? "blocked_assertion"
-      : isMissing
-        ? "missing_character_knowledge"
-        : isOverlay
-          ? "approved_overlay"
+      : isOverlay
+        ? "approved_overlay"
+        : isMissing
+          ? "missing_character_knowledge"
           : "active_evidence";
     addEntityNode(claim.subjectId, visualState, [claim.id]);
     if (objectNode.kind === "entity") {
@@ -116,7 +116,7 @@ export const buildGraphDescriptor = ({
         )
         .map(({ characterId }) => characterId)
         .sort(),
-      status: isBlocked ? "blocked" : isMissing ? "missing" : isOverlay ? "approved" : "active",
+      status: isBlocked ? "blocked" : isOverlay ? "approved" : isMissing ? "missing" : "active",
     });
   }
 

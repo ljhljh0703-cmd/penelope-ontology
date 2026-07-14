@@ -153,6 +153,47 @@ describe("run orchestrator", () => {
     });
   });
 
+  it("blocks an unauthorized action without changing the proposed snapshot", async () => {
+    const [worldPack, overlay, snapshot] = await Promise.all([
+      loadDemoWorldPack(),
+      loadOverlayFixture("overlay.v1.red-sail"),
+      loadSnapshotFixture("snapshot.s0r"),
+    ]);
+    const run = createRunOrchestrator({
+      worldPack,
+      fixtureModel: fixtureNarrativeModel,
+      liveModel: unavailableLiveModel,
+    });
+    const result = await run({
+      modelMode: "fixture",
+      draftFixtureId: "draft.red_sail_step_1",
+      overlay,
+      snapshot,
+      styleProfileId: "style.table_ready_mythic",
+      taskType: "action",
+      brief: "Attempt the watch action with mismatched participant control.",
+      participantIntents: [
+        {
+          intentId: "intent.telemachus",
+          participantId: "participant.one",
+          controlledEntityIds: ["penelope"],
+          intent: "Keep Penelope cautious.",
+        },
+        {
+          intentId: "intent.penelope",
+          participantId: "participant.two",
+          controlledEntityIds: ["eurycleia"],
+          intent: "Let Eurycleia prepare the household.",
+        },
+      ],
+    });
+
+    expect(result.status).toBe("blocked");
+    expect(result.hardViolations.map(({ code }) => code)).toContain("unauthorized_action");
+    expect(result.currentSnapshot).toEqual(snapshot);
+    expect(result.proposedNextSnapshot).toEqual(snapshot);
+  });
+
   it("fails closed when live mode is unavailable", async () => {
     const [worldPack, overlay, snapshot] = await Promise.all([
       loadDemoWorldPack(),

@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "evaluationId": "style-ablation.penelope.v1",
+  "targetModel": "gpt-5.6",
+  "reasoningEffort": "medium",
+  "maxOutputTokens": 4096,
+  "commonInstructions": "Return only the narrative required by the strict output schema. Use only the supplied character-scoped evidence and participant intents. Do not invent hidden world facts. If creatorStyleBundle is null, follow only these common instructions. If it is present, apply its explicit constraints. Never report constraint IDs or evaluation labels in the narrative.",
+  "outputContract": {
+    "name": "style_ablation_narrative",
+    "strict": true,
+    "fields": [
+      "narrative"
+    ]
+  },
+  "commonInput": {
+    "brief": "Compose a short exchange in Ithaca between Penelope and Eurycleia. Penelope must decide whether to preserve public hope or prepare privately for bad news; Eurycleia offers practical counsel. Neither character knows Odysseus's exact location. End at a decision point.",
+    "participantIntents": [
+      {
+        "intentId": "intent.penelope",
+        "participantId": "participant.one",
+        "controlledEntityIds": [
+          "penelope"
+        ],
+        "intent": "Keep hope distinct from knowledge while choosing what the household should do next."
+      },
+      {
+        "intentId": "intent.eurycleia",
+        "participantId": "participant.two",
+        "controlledEntityIds": [
+          "eurycleia"
+        ],
+        "intent": "Offer practical support without claiming to know Odysseus's location."
+      }
+    ],
+    "evidence": {
+      "characterViews": [
+        {
+          "characterId": "penelope",
+          "entityIds": [
+            "odysseus",
+            "penelope"
+          ],
+          "knownClaimIds": [],
+          "uncertainClaimIds": [
+            "claim.odyssey.penelope_uncertain_fate"
+          ],
+          "eventIds": [
+            "event.odyssey_opening"
+          ],
+          "ruleIds": [
+            "rule.character_knowledge",
+            "rule.closed_world"
+          ],
+          "context": "Penelope knows only that Odysseus's fate remains uncertain; she does not know his exact location."
+        },
+        {
+          "characterId": "eurycleia",
+          "entityIds": [
+            "eurycleia",
+            "odysseus"
+          ],
+          "knownClaimIds": [],
+          "uncertainClaimIds": [
+            "claim.odyssey.penelope_uncertain_fate"
+          ],
+          "eventIds": [
+            "event.odyssey_opening"
+          ],
+          "ruleIds": [
+            "rule.character_knowledge",
+            "rule.closed_world"
+          ],
+          "context": "Eurycleia shares the household's uncertainty and can offer practical counsel, not hidden knowledge."
+        }
+      ],
+      "context": "The Ithacan household waits during the opening state. Odysseus's exact location is outside both characters' knowledge."
+    }
+  },
+  "styleBundle": {
+    "id": "style.table_ready_mythic",
+    "label": "Table-ready mythic restraint",
+    "constraints": [
+      {
+        "id": "style.table_ready_mythic.viewpoint",
+        "kind": "viewpoint",
+        "value": "limited_third",
+        "checkMode": "human"
+      },
+      {
+        "id": "style.table_ready_mythic.tense",
+        "kind": "tense",
+        "value": "present",
+        "checkMode": "human"
+      },
+      {
+        "id": "style.table_ready_mythic.dialogue",
+        "kind": "dialogue_mode",
+        "value": "subtextual_table_ready",
+        "checkMode": "human"
+      },
+      {
+        "id": "style.table_ready_mythic.cadence",
+        "kind": "cadence",
+        "value": "Measured clauses should break into short, playable dialogue beats.",
+        "checkMode": "human"
+      },
+      {
+        "id": "style.table_ready_mythic.goal",
+        "kind": "prose_goal",
+        "value": "Each line should expose a playable decision or uncertainty.",
+        "checkMode": "human"
+      },
+      {
+        "id": "style.table_ready_mythic.avoidance",
+        "kind": "avoidance",
+        "value": "Do not convert uncertain character knowledge into narrator certainty.",
+        "checkMode": "human"
+      },
+      {
+        "id": "style.table_ready_mythic.max_words",
+        "kind": "max_words",
+        "value": 180,
+        "checkMode": "deterministic"
+      }
+    ]
+  },
+  "objectiveChecks": [
+    {
+      "constraintId": "style.table_ready_mythic.max_words",
+      "kind": "max_words",
+      "maximum": 180
+    }
+  ],
+  "humanRubric": [
+    {
+      "constraintId": "style.table_ready_mythic.viewpoint",
+      "criterion": "Uses limited third person without unrestricted omniscience."
+    },
+    {
+      "constraintId": "style.table_ready_mythic.tense",
+      "criterion": "Maintains present tense consistently."
+    },
+    {
+      "constraintId": "style.table_ready_mythic.dialogue",
+      "criterion": "Dialogue is playable at the table and carries subtext rather than exposition."
+    },
+    {
+      "constraintId": "style.table_ready_mythic.cadence",
+      "criterion": "Measured clauses break into short, playable dialogue beats."
+    },
+    {
+      "constraintId": "style.table_ready_mythic.goal",
+      "criterion": "Lines expose a playable decision or meaningful uncertainty."
+    },
+    {
+      "constraintId": "style.table_ready_mythic.avoidance",
+      "criterion": "Uncertain character knowledge remains uncertain and is not promoted to narrator fact."
+    }
+  ],
+  "scoreAnchors": {
+    "zero": "not demonstrated",
+    "one": "partly demonstrated",
+    "two": "consistently demonstrated"
+  },
+  "pairs": [
+    {
+      "pairId": "pair.1",
+      "order": [
+        "default_instruction_control",
+        "profiled"
+      ]
+    },
+    {
+      "pairId": "pair.2",
+      "order": [
+        "profiled",
+        "default_instruction_control"
+      ]
+    }
+  ]
+}

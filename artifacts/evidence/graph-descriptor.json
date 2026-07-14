@@ -1,4 +1,447 @@
 {
+  "approvedDescriptor": {
+    "edges": [
+      {
+        "evidenceIds": [
+          "f58ba371d991e962f388f80306b5129a38217838d3ff3485a486e537bb79f79a"
+        ],
+        "fromNodeId": "snapshot.f58ba371d991",
+        "id": "edge.applied.f58ba371d991.harbor_watch",
+        "kind": "applied",
+        "predicate": "tracks",
+        "status": "current",
+        "toNodeId": "state_variable.harbor_watch",
+        "visibleToIds": [],
+        "visualState": "current_scenario_value"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_dead",
+          "source.iliad.24"
+        ],
+        "fromNodeId": "entity.hector",
+        "id": "edge.claim.claim.iliad.hector_dead",
+        "kind": "claim",
+        "predicate": "state",
+        "status": "active",
+        "toNodeId": "literal.claim.iliad.hector_dead",
+        "visibleToIds": [
+          "penelope",
+          "telemachus"
+        ],
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_funeral_complete",
+          "source.iliad.24"
+        ],
+        "fromNodeId": "entity.hector",
+        "id": "edge.claim.claim.iliad.hector_funeral_complete",
+        "kind": "claim",
+        "predicate": "funeral_state",
+        "status": "active",
+        "toNodeId": "literal.claim.iliad.hector_funeral_complete",
+        "visibleToIds": [
+          "penelope",
+          "telemachus"
+        ],
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.helen_at_troy",
+          "source.iliad.3"
+        ],
+        "fromNodeId": "entity.helen",
+        "id": "edge.claim.claim.iliad.helen_at_troy",
+        "kind": "claim",
+        "predicate": "located_at",
+        "status": "active",
+        "toNodeId": "entity.troy",
+        "visibleToIds": [
+          "penelope",
+          "telemachus"
+        ],
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.odyssey.odysseus_at_ogygia",
+          "source.odyssey.1"
+        ],
+        "fromNodeId": "entity.odysseus",
+        "id": "edge.claim.claim.odyssey.odysseus_at_ogygia",
+        "kind": "claim",
+        "predicate": "located_at",
+        "status": "missing",
+        "toNodeId": "entity.ogygia",
+        "visibleToIds": [],
+        "visualState": "missing_character_knowledge"
+      },
+      {
+        "evidenceIds": [
+          "claim.odyssey.penelope_uncertain_fate",
+          "source.odyssey.1"
+        ],
+        "fromNodeId": "entity.penelope",
+        "id": "edge.claim.claim.odyssey.penelope_uncertain_fate",
+        "kind": "claim",
+        "predicate": "believes_fate_of_odysseus",
+        "status": "active",
+        "toNodeId": "literal.claim.odyssey.penelope_uncertain_fate",
+        "visibleToIds": [
+          "penelope"
+        ],
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "f58ba371d991e962f388f80306b5129a38217838d3ff3485a486e537bb79f79a"
+        ],
+        "fromNodeId": "state_variable.harbor_watch",
+        "id": "edge.current_value.harbor_watch",
+        "kind": "current_value",
+        "predicate": "current_value",
+        "status": "current",
+        "toNodeId": "state_value.harbor_watch.idle",
+        "visibleToIds": [],
+        "visualState": "current_scenario_value"
+      }
+    ],
+    "id": "graph.f58ba371d991",
+    "nodes": [
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_dead"
+        ],
+        "id": "entity.hector",
+        "kind": "entity",
+        "label": "Hector",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.helen_at_troy"
+        ],
+        "id": "entity.helen",
+        "kind": "entity",
+        "label": "Helen",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.odyssey.odysseus_at_ogygia"
+        ],
+        "id": "entity.odysseus",
+        "kind": "entity",
+        "label": "Odysseus",
+        "visualState": "missing_character_knowledge"
+      },
+      {
+        "evidenceIds": [
+          "claim.odyssey.odysseus_at_ogygia"
+        ],
+        "id": "entity.ogygia",
+        "kind": "entity",
+        "label": "Ogygia",
+        "visualState": "missing_character_knowledge"
+      },
+      {
+        "evidenceIds": [
+          "claim.odyssey.penelope_uncertain_fate"
+        ],
+        "id": "entity.penelope",
+        "kind": "entity",
+        "label": "Penelope",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "telemachus"
+        ],
+        "id": "entity.telemachus",
+        "kind": "entity",
+        "label": "Telemachus",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.helen_at_troy"
+        ],
+        "id": "entity.troy",
+        "kind": "entity",
+        "label": "Troy",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_dead"
+        ],
+        "id": "literal.claim.iliad.hector_dead",
+        "kind": "literal",
+        "label": "dead",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_funeral_complete"
+        ],
+        "id": "literal.claim.iliad.hector_funeral_complete",
+        "kind": "literal",
+        "label": "complete",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.odyssey.penelope_uncertain_fate"
+        ],
+        "id": "literal.claim.odyssey.penelope_uncertain_fate",
+        "kind": "literal",
+        "label": "uncertain",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "rule.character_knowledge"
+        ],
+        "id": "rule.rule.character_knowledge",
+        "kind": "rule",
+        "label": "A character may assert only claims present in that character's knowledge profile.",
+        "visualState": "approved_overlay"
+      },
+      {
+        "evidenceIds": [
+          "rule.closed_world"
+        ],
+        "id": "rule.rule.closed_world",
+        "kind": "rule",
+        "label": "Unsupported facts are blocked or isolated as expansion proposals.",
+        "visualState": "approved_overlay"
+      },
+      {
+        "evidenceIds": [
+          "rule.creator.red_sail_signal"
+        ],
+        "id": "rule.rule.creator.red_sail_signal",
+        "kind": "rule",
+        "label": "In this creator canon, Ithacans treat a returning ship's red sail as a signal to begin the royal harbor watch.",
+        "visualState": "approved_overlay"
+      },
+      {
+        "evidenceIds": [
+          "scenario.harbor_watch"
+        ],
+        "id": "snapshot.f58ba371d991",
+        "kind": "snapshot",
+        "label": "Turn 0",
+        "visualState": "current_scenario_value"
+      },
+      {
+        "evidenceIds": [
+          "f58ba371d991e962f388f80306b5129a38217838d3ff3485a486e537bb79f79a"
+        ],
+        "id": "state_value.harbor_watch.idle",
+        "kind": "state_value",
+        "label": "idle",
+        "visualState": "current_scenario_value"
+      },
+      {
+        "evidenceIds": [
+          "scenario.harbor_watch"
+        ],
+        "id": "state_variable.harbor_watch",
+        "kind": "state_variable",
+        "label": "harbor_watch",
+        "visualState": "current_scenario_value"
+      }
+    ]
+  },
+  "approvedDescriptorDigest": "0e3965e80d9f5956eadb957a50b72313b8c33acc73b375974a0e0cdf6bfe73d3",
+  "approvedEdgeCount": 7,
+  "approvedEdgeStatuses": {
+    "active": 4,
+    "current": 2,
+    "missing": 1
+  },
+  "approvedNodeCount": 16,
+  "approvedNodeVisualStates": {
+    "active_evidence": 8,
+    "approved_overlay": 3,
+    "current_scenario_value": 3,
+    "missing_character_knowledge": 2
+  },
+  "conflictDescriptor": {
+    "edges": [
+      {
+        "evidenceIds": [
+          "claim.helen.real_helen_in_egypt",
+          "source.helen.566"
+        ],
+        "fromNodeId": "entity.helen",
+        "id": "edge.claim.claim.helen.real_helen_in_egypt",
+        "kind": "claim",
+        "predicate": "located_at",
+        "status": "blocked",
+        "toNodeId": "entity.egypt",
+        "visibleToIds": [
+          "helen"
+        ],
+        "visualState": "blocked_assertion"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_dead",
+          "source.iliad.24"
+        ],
+        "fromNodeId": "entity.hector",
+        "id": "edge.claim.claim.iliad.hector_dead",
+        "kind": "claim",
+        "predicate": "state",
+        "status": "active",
+        "toNodeId": "literal.claim.iliad.hector_dead",
+        "visibleToIds": [
+          "helen"
+        ],
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_funeral_complete",
+          "source.iliad.24"
+        ],
+        "fromNodeId": "entity.hector",
+        "id": "edge.claim.claim.iliad.hector_funeral_complete",
+        "kind": "claim",
+        "predicate": "funeral_state",
+        "status": "active",
+        "toNodeId": "literal.claim.iliad.hector_funeral_complete",
+        "visibleToIds": [
+          "helen"
+        ],
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.helen_at_troy",
+          "source.iliad.3"
+        ],
+        "fromNodeId": "entity.helen",
+        "id": "edge.claim.claim.iliad.helen_at_troy",
+        "kind": "claim",
+        "predicate": "located_at",
+        "status": "blocked",
+        "toNodeId": "entity.troy",
+        "visibleToIds": [
+          "helen"
+        ],
+        "visualState": "blocked_assertion"
+      },
+      {
+        "evidenceIds": [
+          "claim.helen.real_helen_in_egypt",
+          "claim.iliad.helen_at_troy"
+        ],
+        "fromNodeId": "entity.egypt",
+        "id": "edge.conflict.conflict.helen_wartime_location",
+        "kind": "conflict",
+        "predicate": null,
+        "status": "blocked",
+        "toNodeId": "entity.troy",
+        "visibleToIds": [],
+        "visualState": "blocked_assertion"
+      }
+    ],
+    "id": "graph.89d43f4febb6",
+    "nodes": [
+      {
+        "evidenceIds": [
+          "claim.helen.real_helen_in_egypt"
+        ],
+        "id": "entity.egypt",
+        "kind": "entity",
+        "label": "Egypt",
+        "visualState": "blocked_assertion"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_dead"
+        ],
+        "id": "entity.hector",
+        "kind": "entity",
+        "label": "Hector",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.helen.real_helen_in_egypt"
+        ],
+        "id": "entity.helen",
+        "kind": "entity",
+        "label": "Helen",
+        "visualState": "blocked_assertion"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.helen_at_troy"
+        ],
+        "id": "entity.troy",
+        "kind": "entity",
+        "label": "Troy",
+        "visualState": "blocked_assertion"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_dead"
+        ],
+        "id": "literal.claim.iliad.hector_dead",
+        "kind": "literal",
+        "label": "dead",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_funeral_complete"
+        ],
+        "id": "literal.claim.iliad.hector_funeral_complete",
+        "kind": "literal",
+        "label": "complete",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "rule.character_knowledge"
+        ],
+        "id": "rule.rule.character_knowledge",
+        "kind": "rule",
+        "label": "A character may assert only claims present in that character's knowledge profile.",
+        "visualState": "approved_overlay"
+      },
+      {
+        "evidenceIds": [
+          "rule.closed_world"
+        ],
+        "id": "rule.rule.closed_world",
+        "kind": "rule",
+        "label": "Unsupported facts are blocked or isolated as expansion proposals.",
+        "visualState": "approved_overlay"
+      },
+      {
+        "evidenceIds": [
+          "scenario.helen_comparison"
+        ],
+        "id": "snapshot.89d43f4febb6",
+        "kind": "snapshot",
+        "label": "Turn 0",
+        "visualState": "current_scenario_value"
+      }
+    ]
+  },
+  "conflictDescriptorDigest": "f1b1542680af15a795f19478167e6558b5e92027f8e56491ba30a655a3856228",
+  "conflictEdgeStatuses": {
+    "active": 2,
+    "blocked": 3
+  },
   "descriptor": {
     "edges": [
       {

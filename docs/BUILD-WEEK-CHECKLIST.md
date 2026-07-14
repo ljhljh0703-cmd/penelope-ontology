@@ -18,6 +18,8 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Vertical slice implemented
 - [x] Participant/character ownership and authorizing/contributing intent lineage verified
 - [x] Original creator-owned style profile applied and visibly separated from canon/knowledge
+- [x] Same-model style-ablation protocol, no-retry capture path, masked rubric, and fail-closed evaluator implemented
+- [ ] Four GPT-5.6 style-ablation calls and creator ratings captured
 - [x] Canon/knowledge graph perspective and stable descriptor verified
 - [x] Two chained state transitions and snapshot hashes verified
 - [ ] Real GPT-5.6 use verified
@@ -33,10 +35,12 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] `.env.example` added without secrets
 - [x] Sample data and source policy added
 - [x] Technical setup draft available in `docs/START-HERE.md`
-- [x] Local evidence generation, lint, typecheck, 77 tests, privacy scan, production build, audit with 0 vulnerabilities, and 6 browser checks passed
+- [x] Local evidence generation, lint, typecheck, the full unit/API suite, privacy scan, production build, vulnerability audit, and both browser projects passed
 - [x] Fresh-copy install and full release gate verified
 - [x] Fixture Evidence Packet completed from executable fixtures and source checks; browser smoke is verified separately
 - [ ] Sanitized real GPT-5.6 evidence added to the packet
+- [x] Style-ablation readiness is public and explicitly marked `not_executed`
+- [ ] Write-once style-ablation report finalized from live capture and creator ratings
 - [ ] Public README derived after evidence and write-mode preflight pass
 - [ ] Public GitHub remote created and pushed
 - [ ] CI passes on the public commit
@@ -66,8 +70,8 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 
 ## Active blockers
 
-1. Live GPT-5.6 access and one sanitized real response trace are still required; the adapter alone is not live evidence.
-2. README write-mode is `SERVING_STALE`; Vault Claude must refresh the package manifest before README generation.
+1. Live GPT-5.6 access is still required for one sanitized integration trace and the four-call style ablation; adapter and protocol tests are not live evidence.
+2. README write/derive preflights are `SERVING_CANDIDATE`; explicit approval and an `--allow-candidate` rerun are required before README generation.
 3. Final product name, public GitHub remote, CI, and hosted fixture deployment remain open.
 4. Public narrated video, `/feedback` session field, and final Devpost submission remain external actions.
 5. Practitioner/user productivity evidence does not exist and must not be claimed.

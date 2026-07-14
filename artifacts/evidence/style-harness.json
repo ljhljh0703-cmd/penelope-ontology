@@ -1,5 +1,5 @@
 {
-  "claimBoundary": "This demonstrates explicit prose control and auditability; it is not a model-vendor writing-quality comparison.",
+  "claimBoundary": "This demonstrates explicit prose-control inputs, mechanisms, and auditability; a live ablation is required before claiming a measured writing effect or model-vendor comparison.",
   "deterministicChecks": [
     "style.table_ready_mythic.max_words"
   ],
@@ -8,6 +8,7 @@
     "style.table_ready_mythic.viewpoint",
     "style.table_ready_mythic.tense",
     "style.table_ready_mythic.dialogue",
+    "style.table_ready_mythic.cadence",
     "style.table_ready_mythic.goal",
     "style.table_ready_mythic.avoidance"
   ],
@@ -19,6 +20,7 @@
   "modelOutputReceipts": {
     "appliedStyleConstraintIds": [
       "style.table_ready_mythic.avoidance",
+      "style.table_ready_mythic.cadence",
       "style.table_ready_mythic.dialogue",
       "style.table_ready_mythic.goal",
       "style.table_ready_mythic.max_words",
@@ -46,6 +48,12 @@
         "id": "style.table_ready_mythic.dialogue",
         "kind": "dialogue_mode",
         "value": "subtextual_table_ready"
+      },
+      {
+        "checkMode": "human",
+        "id": "style.table_ready_mythic.cadence",
+        "kind": "cadence",
+        "value": "Measured clauses should break into short, playable dialogue beats."
       },
       {
         "checkMode": "human",

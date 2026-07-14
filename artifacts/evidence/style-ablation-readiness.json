@@ -1,0 +1,29 @@
+{
+  "design": {
+    "control": "default_instruction_control",
+    "expectedCalls": 4,
+    "maxOutputTokens": 4096,
+    "noAutomaticRetries": true,
+    "order": [
+      [
+        "default_instruction_control",
+        "profiled"
+      ],
+      [
+        "profiled",
+        "default_instruction_control"
+      ]
+    ],
+    "pairs": 2,
+    "treatment": "profiled"
+  },
+  "evaluationId": "style-ablation.penelope.v1",
+  "evidenceType": "style_ablation_readiness",
+  "planPath": "data/evals/style-ablation-plan.json",
+  "planSha256": "f22db045155b168ef475ff2fa7592681711a9413ac98363fbf1889f6a4f2e7ac",
+  "reason": "The preregistered protocol is implemented, but no live four-call capture exists.",
+  "receiptPath": null,
+  "receiptStatus": "not_present",
+  "requestedModel": "gpt-5.6",
+  "status": "not_executed"
+}

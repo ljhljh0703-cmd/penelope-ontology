@@ -5,6 +5,7 @@ export const StyleConstraintKindSchema = z.enum([
   "viewpoint",
   "tense",
   "dialogue_mode",
+  "cadence",
   "prose_goal",
   "avoidance",
   "prohibited_phrase",

@@ -79,4 +79,6 @@ After the two-step scenario, all unchanged control cases retain their exact expe
 
 ## 6. Style evidence boundary
 
-The demo may later show the same model and evidence bundle with and without `style.table_ready_mythic`. Objective checks can cover output bounds, prohibited phrases, and referenced constraint IDs. Viewpoint, cadence, and voice are judged with a clearly labeled human rubric. This demonstrates a controllable style harness; it does not prove that Codex or GPT-5.6 writes better than Fable, Opus, or any other system.
+The repository preregisters one fixed Penelope/Eurycleia case as two AB/BA pairs. Model, brief, character-scoped evidence, participant intents, output schema, and reasoning effort remain constant. Only `creatorStyleBundle` changes between `default_instruction_control` and `profiled`. Automatic retries and replacement calls are disabled. Objective checks cover registered deterministic constraints; viewpoint, tense, dialogue, cadence, playable uncertainty, and knowledge restraint use a condition-masked creator rubric.
+
+The protocol and evaluator are implemented, but no live four-call capture exists yet. A result may appear in the demo only after the write-once public report is finalized. Even a `supported_on_probe` result would demonstrate limited same-model controllability on this synthetic case; it would not prove that Codex or GPT-5.6 writes better than Fable, Opus, or any other system.

@@ -4,6 +4,7 @@
   "mentionedEntityIds": ["hector", "odysseus", "penelope"],
   "appliedStyleConstraintIds": [
     "style.table_ready_mythic.avoidance",
+    "style.table_ready_mythic.cadence",
     "style.table_ready_mythic.dialogue",
     "style.table_ready_mythic.goal",
     "style.table_ready_mythic.max_words",
