@@ -23,6 +23,15 @@ export type DemoReplayResult = {
   detail: string;
 };
 
+export type OverlayReplayApiResult = {
+  suiteId: "approved_overlay_regression";
+  overlayId: string;
+  overlayVersion: number;
+  overlayHash: string;
+  allPassed: boolean;
+  replayResults: DemoReplayResult[];
+};
+
 export type DemoBootstrap = {
   mode: "fixture";
   worldPack: {
@@ -67,4 +76,5 @@ export type TransitionApiResult = {
 export type DecisionApiResult = {
   decision: CreatorDecisionResult;
   graph: GraphDescriptor;
+  overlayReplay: OverlayReplayApiResult | null;
 };

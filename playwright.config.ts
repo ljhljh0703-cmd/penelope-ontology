@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const isCI = Boolean(process.env.CI);
+
 export default defineConfig({
   testDir: "./tests/browser",
   fullyParallel: false,
@@ -16,9 +18,11 @@ export default defineConfig({
     { name: "webkit-mobile", use: { ...devices["iPhone 13"] } },
   ],
   webServer: {
-    command: "npm run dev -- --hostname 127.0.0.1 --port 3210",
+    command: isCI
+      ? "npm run start -- --hostname 127.0.0.1 --port 3210"
+      : "npm run dev -- --hostname 127.0.0.1 --port 3210",
     url: "http://127.0.0.1:3210/api/health",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !isCI,
     timeout: 120_000,
   },
 });

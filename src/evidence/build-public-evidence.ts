@@ -6,7 +6,10 @@ import {
 } from "@/src/adapters/filesystem/demo-data";
 import { fixtureNarrativeModel } from "@/src/adapters/fixtures/narrative-model";
 import { createRunOrchestrator } from "@/src/application/run-orchestrator";
-import { runFrozenReplay } from "@/src/application/replay-runner";
+import {
+  runApprovedOverlayReplay,
+  runFrozenReplay,
+} from "@/src/application/replay-runner";
 import type { NarrativeModel } from "@/src/ports/narrative-model";
 import { applyCreatorDecision } from "@/src/domain/canon-overlay";
 import { sha256Canonical } from "@/src/domain/canonical-json";
@@ -178,11 +181,26 @@ export const buildPublicEvidence = async () => {
     replayCases,
     fixtureModel: fixtureNarrativeModel,
   });
+  const approvedOverlayReplay = await runApprovedOverlayReplay({
+    worldPack,
+    replayCases,
+    fixtureModel: fixtureNarrativeModel,
+    overlay: decision.overlay,
+  });
   const styleProfile = worldPack.styleProfiles.find(
     ({ id }) => id === worldPack.defaultStyleProfileId,
   );
   if (!styleProfile) throw new Error("The selected style profile is unavailable.");
 
+  const approvedOverlayRegressionPayload = {
+    suiteId: approvedOverlayReplay.suiteId,
+    overlayId: approvedOverlayReplay.overlayId,
+    overlayVersion: approvedOverlayReplay.overlayVersion,
+    overlayHash: approvedOverlayReplay.overlayHash,
+    allPassed: approvedOverlayReplay.passed,
+    caseCount: approvedOverlayReplay.cases.length,
+    cases: approvedOverlayReplay.cases,
+  };
   const fixtureReplay = {
     evidenceType: "fixture_replay" as const,
     allPassed: replay.every(({ passed }) => passed),
@@ -190,6 +208,10 @@ export const buildPublicEvidence = async () => {
     stageCount: replay.flatMap(({ stages }) => stages).length,
     cases: replay,
     digest: sha256Canonical(replay),
+    approvedOverlayRegression: {
+      ...approvedOverlayRegressionPayload,
+      digest: sha256Canonical(approvedOverlayRegressionPayload),
+    },
   };
   const graph = {
     evidenceType: "derived_graph" as const,
@@ -322,6 +344,12 @@ export const buildPublicEvidence = async () => {
       caseCount: fixtureReplay.caseCount,
       stageCount: fixtureReplay.stageCount,
       digest: fixtureReplay.digest,
+      approvedOverlayRegression: {
+        allPassed: fixtureReplay.approvedOverlayRegression.allPassed,
+        caseCount: fixtureReplay.approvedOverlayRegression.caseCount,
+        overlayHash: fixtureReplay.approvedOverlayRegression.overlayHash,
+        digest: fixtureReplay.approvedOverlayRegression.digest,
+      },
     },
     graphSummary: {
       beforeApproval: {

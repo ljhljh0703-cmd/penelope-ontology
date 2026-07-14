@@ -94,6 +94,7 @@ export const RuleSchema = z
     id: IdentifierSchema,
     kind: z.enum(["world", "timeline", "knowledge", "expansion"]),
     description: z.string().min(1),
+    displayDescription: z.string().min(1).optional(),
     layerId: IdentifierSchema,
     status: z.enum(["active", "proposed"]),
   })

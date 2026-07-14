@@ -1,5 +1,68 @@
 {
   "allPassed": true,
+  "approvedOverlayRegression": {
+    "allPassed": true,
+    "caseCount": 4,
+    "cases": [
+      {
+        "description": "A character-scoped exchange preserves Penelope's uncertainty.",
+        "id": "replay.grounded_penelope",
+        "passed": true,
+        "stages": [
+          {
+            "detail": "overlay=v1; passed; violations=none",
+            "kind": "run",
+            "passed": true,
+            "stageId": "stage.grounded"
+          }
+        ]
+      },
+      {
+        "description": "A deceased and absent speaker cannot enter the Ithacan fixed state.",
+        "id": "replay.living_hector",
+        "passed": true,
+        "stages": [
+          {
+            "detail": "overlay=v1; blocked; violations=entity_state_invalid,location_path_missing",
+            "kind": "run",
+            "passed": true,
+            "stageId": "stage.living_hector"
+          }
+        ]
+      },
+      {
+        "description": "Penelope cannot state the narrator-only Ogygia location as certain knowledge.",
+        "id": "replay.penelope_knows_ogygia",
+        "passed": true,
+        "stages": [
+          {
+            "detail": "overlay=v1; blocked; violations=belief_scope_violation",
+            "kind": "run",
+            "passed": true,
+            "stageId": "stage.penelope_ogygia"
+          }
+        ]
+      },
+      {
+        "description": "Two active source traditions remain unresolved until the creator selects one.",
+        "id": "replay.helen_conflict",
+        "passed": true,
+        "stages": [
+          {
+            "detail": "overlay=v1; needs_creator_decision; violations=tradition_conflict_unresolved",
+            "kind": "run",
+            "passed": true,
+            "stageId": "stage.helen_conflict"
+          }
+        ]
+      }
+    ],
+    "digest": "1ecbf61b5a0e67d879d80a83da23ce3ac1326b4bf936ca8b504cee1bb848477e",
+    "overlayHash": "402c39cece3b992e9b5e6ede1a8a15ead41851caaa6622c9b97e109aa3576749",
+    "overlayId": "creator_canon",
+    "overlayVersion": 1,
+    "suiteId": "approved_overlay_regression"
+  },
   "caseCount": 5,
   "cases": [
     {

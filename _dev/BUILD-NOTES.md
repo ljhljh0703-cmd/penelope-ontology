@@ -68,3 +68,38 @@ This file records implementation-time decisions without interrupting the critica
 - Browser smoke is complete: all 8 Table-flow checks pass across desktop Chromium and iPhone/WebKit.
 - `package-project-evidence` audit mode is certified. The latest write and derive preflights both return `SERVING_CANDIDATE`, not PASS; the skill requires explicit user approval and a rerun with `--allow-candidate`. Do not create README.md or portfolio copy before that approval. The user's ban on `juhyeong-voice` remains independent and binding.
 - Final product name remains intentionally unlocked. The technical label stays `Narrative Knowledge Harness` until the user names it.
+
+## 2026-07-15 — Release and authority hardening
+
+### Gaps found and closed
+
+1. An applied overlay originally reused the five-case baseline result even though the canon hash had changed. Applied and edited decisions now rerun four run-only safety controls against the exact new overlay hash; a failed regression returns `409` and the browser does not advance visible canon.
+2. The transition route originally accepted a client-supplied, self-hashed overlay. It now reconstructs the registered fixture run and creator decision on the server, reruns approved-overlay controls, derives the authoritative prior snapshot, and rejects forged canon or skipped state.
+3. Creator edit originally allowed rule semantics to travel behind a stable patch ID. Rule identity, kind, and semantic description plus every claim semantic field—including summary—now participate in edit authority. Only a separate `displayDescription` may change.
+4. A first display-wording design kept machine semantics safe but let presentation text replace the only human-facing graph label. Proposal and graph audit surfaces now always show the locked semantic description and expose display wording separately as explicitly non-authoritative.
+5. Production CI now pins Node 22.x and immutable action SHAs, installs from the lockfile, audits dependencies, requires exact HEAD plus a clean tracked/untracked tree through `build:identified`, and exercises `next start`. Hosting-provider Git SHA outranks a manual label. A separate manual deployment-smoke workflow accepts only a credential-free HTTPS origin, except loopback HTTP.
+6. The deployment smoke rejects redirects and URL credentials, requires an exact build SHA from a cache-busted health response, checks every declared security-header directive, the fixture and health boundaries, the proposal/decision path, exact-overlay replay, S0r→S1→S2 snapshot/transition/canon hash continuity, and mandatory denial of public live requests.
+7. Submission copy now treats familiar skepticism about Codex default prose versus writing-first systems as a design constraint, not a benchmark result. The defensible claim is that Codex translated tacit style/world requirements into inspectable harness layers; creator taste and final judgment remain human.
+
+### Latest verification
+
+- Integrated gate: 26 Vitest files / 139 tests PASS; evidence generation and seven-file manifest verification PASS; ESLint, TypeScript, privacy scan over 150 public candidates, and Next production build PASS.
+- Production browser: 10/10 PASS across desktop Chromium and mobile WebKit, including failed-decision fail-closed behavior, recovery, semantic/display separation, exact-overlay replay, and two transitions.
+- Deployment smoke functional checks PASS for `root-boundary`, `security-headers`, `build-identity`, `health`, `fixture-demo`, `approved-overlay-replay`, `two-step-transition`, and `live-route-denial`. Certification is intentionally pending until the final commit repeats the run from a clean clone through `build:identified`.
+- Independent adversarial re-audit: rule/claim semantic mutation P1 and human-audit concealment P2 are closed. Duplicate patches fail closed; patch ordering is normalized.
+
+### Failures with new hypotheses
+
+- A generated `.next/types` duplicate-file collision was removed as stale local build output; source contracts were unchanged.
+- Two unit failures came from tests assuming the target rule was array index zero and that proposal and accepted-fixture wording were identical. Tests now locate the stable rule ID and compare against the fixture authority.
+- Two browser failures came from the same stale hard-coded wording assumption. The browser now captures the rendered locked semantic description and proves it remains identical after display editing and in the graph.
+- No identical failure was retried three times without a new falsifiable hypothesis; the loop sentinel did not fire.
+
+### Remaining discussion and external gates
+
+- The stateless transition route proves an authorized state chain, not historical occurrence of an earlier HTTP request. Persistent room chronology would require accounts, storage, or signed session receipts and remains outside the MVP.
+- Claim visibility/source ID arrays remain order-sensitive in edit authority. This is fail-closed and no claim-edit UI exists; normalize only if a future semantic migration contract treats equivalent set order as editable.
+- `OPENAI_API_KEY` and `ENABLE_OPENAI_LIVE=true` are still absent, so one sanitized GPT-5.6 integration trace and the four-call style probe remain unexecuted.
+- `portfolio-refiner` refine preflight returned `SERVING_STALE` because the feedback dependency hash changed. No canonical portfolio copy was produced, and `juhyeong-voice` was not read or applied.
+- README write/derive remains `SERVING_CANDIDATE` under `package-project-evidence`; public README generation still requires explicit user approval plus an `--allow-candidate` rerun.
+- Product naming, public remote/CI, hosted demo, narrated YouTube video, private `/feedback` field, and final Devpost submission remain external release work.

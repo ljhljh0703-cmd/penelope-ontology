@@ -35,7 +35,15 @@ const makeNode = (
   label: string,
   visualState: GraphVisualState,
   evidenceIds: string[] = [],
-): GraphNode => ({ id, kind, label, visualState, evidenceIds: [...new Set(evidenceIds)].sort() });
+  nonAuthoritativeDisplayLabel: string | null = null,
+): GraphNode => ({
+  id,
+  kind,
+  label,
+  nonAuthoritativeDisplayLabel,
+  visualState,
+  evidenceIds: [...new Set(evidenceIds)].sort(),
+});
 
 export const buildGraphDescriptor = ({
   pack,
@@ -153,7 +161,14 @@ export const buildGraphDescriptor = ({
       if (patch.op === "add_rule") {
         const ruleNodeId = `rule.${patch.rule.id}`;
         upsertNode(
-          makeNode(ruleNodeId, "rule", patch.rule.description, "ghost_proposal", [proposal.id]),
+          makeNode(
+            ruleNodeId,
+            "rule",
+            patch.rule.description,
+            "ghost_proposal",
+            [proposal.id],
+            patch.rule.displayDescription,
+          ),
         );
         edges.set(`edge.proposal.${proposal.id}.${patch.rule.id}`, {
           id: `edge.proposal.${proposal.id}.${patch.rule.id}`,
@@ -186,7 +201,16 @@ export const buildGraphDescriptor = ({
 
   for (const rule of overlay.rules) {
     const nodeId = `rule.${rule.id}`;
-    upsertNode(makeNode(nodeId, "rule", rule.description, "approved_overlay", [rule.id]));
+    upsertNode(
+      makeNode(
+        nodeId,
+        "rule",
+        rule.description,
+        "approved_overlay",
+        [rule.id],
+        rule.displayDescription ?? null,
+      ),
+    );
   }
 
   const snapshotNodeId = `snapshot.${snapshot.stateHash.slice(0, 12)}`;

@@ -94,7 +94,13 @@ export function KnowledgeGraph({
                 <text className="graph-node-label" textAnchor="middle" y="12">
                   {node.label.length > 18 ? `${node.label.slice(0, 16)}…` : node.label}
                 </text>
-                <title>{`${node.label}: ${stateLabels[visualState]}`}</title>
+                <title>
+                  {`${node.label}: ${stateLabels[visualState]}${
+                    node.nonAuthoritativeDisplayLabel
+                      ? `. Display wording (non-authoritative): ${node.nonAuthoritativeDisplayLabel}`
+                      : ""
+                  }`}
+                </title>
               </g>
             );
           })}
@@ -112,6 +118,11 @@ export function KnowledgeGraph({
                 return (
                   <li key={node.id}>
                     <strong>{node.label}</strong>
+                    {node.nonAuthoritativeDisplayLabel ? (
+                      <em>
+                        Display wording (non-authoritative): {node.nonAuthoritativeDisplayLabel}
+                      </em>
+                    ) : null}
                     <span>{stateLabels[state]}</span>
                   </li>
                 );

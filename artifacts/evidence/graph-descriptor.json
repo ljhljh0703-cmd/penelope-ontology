@@ -118,6 +118,7 @@
         "id": "entity.hector",
         "kind": "entity",
         "label": "Hector",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -127,6 +128,7 @@
         "id": "entity.helen",
         "kind": "entity",
         "label": "Helen",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -136,6 +138,7 @@
         "id": "entity.odysseus",
         "kind": "entity",
         "label": "Odysseus",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "missing_character_knowledge"
       },
       {
@@ -145,6 +148,7 @@
         "id": "entity.ogygia",
         "kind": "entity",
         "label": "Ogygia",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "missing_character_knowledge"
       },
       {
@@ -154,6 +158,7 @@
         "id": "entity.penelope",
         "kind": "entity",
         "label": "Penelope",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -163,6 +168,7 @@
         "id": "entity.telemachus",
         "kind": "entity",
         "label": "Telemachus",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -172,6 +178,7 @@
         "id": "entity.troy",
         "kind": "entity",
         "label": "Troy",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -181,6 +188,7 @@
         "id": "literal.claim.iliad.hector_dead",
         "kind": "literal",
         "label": "dead",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -190,6 +198,7 @@
         "id": "literal.claim.iliad.hector_funeral_complete",
         "kind": "literal",
         "label": "complete",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -199,6 +208,7 @@
         "id": "literal.claim.odyssey.penelope_uncertain_fate",
         "kind": "literal",
         "label": "uncertain",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -208,6 +218,7 @@
         "id": "rule.rule.character_knowledge",
         "kind": "rule",
         "label": "A character may assert only claims present in that character's knowledge profile.",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "approved_overlay"
       },
       {
@@ -217,6 +228,7 @@
         "id": "rule.rule.closed_world",
         "kind": "rule",
         "label": "Unsupported facts are blocked or isolated as expansion proposals.",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "approved_overlay"
       },
       {
@@ -226,6 +238,7 @@
         "id": "rule.rule.creator.red_sail_signal",
         "kind": "rule",
         "label": "In this creator canon, Ithacans treat a returning ship's red sail as a signal to begin the royal harbor watch.",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "approved_overlay"
       },
       {
@@ -235,6 +248,7 @@
         "id": "snapshot.f58ba371d991",
         "kind": "snapshot",
         "label": "Turn 0",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "current_scenario_value"
       },
       {
@@ -244,6 +258,7 @@
         "id": "state_value.harbor_watch.idle",
         "kind": "state_value",
         "label": "idle",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "current_scenario_value"
       },
       {
@@ -253,11 +268,12 @@
         "id": "state_variable.harbor_watch",
         "kind": "state_variable",
         "label": "harbor_watch",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "current_scenario_value"
       }
     ]
   },
-  "approvedDescriptorDigest": "0e3965e80d9f5956eadb957a50b72313b8c33acc73b375974a0e0cdf6bfe73d3",
+  "approvedDescriptorDigest": "fbedd6d7a4662987d183a52db6afd74b8e2a3ef65af709242fd92b00442d1fa9",
   "approvedEdgeCount": 7,
   "approvedEdgeStatuses": {
     "active": 4,
@@ -361,6 +377,7 @@
         "id": "entity.egypt",
         "kind": "entity",
         "label": "Egypt",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "blocked_assertion"
       },
       {
@@ -370,6 +387,7 @@
         "id": "entity.hector",
         "kind": "entity",
         "label": "Hector",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -379,6 +397,7 @@
         "id": "entity.helen",
         "kind": "entity",
         "label": "Helen",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "blocked_assertion"
       },
       {
@@ -388,6 +407,7 @@
         "id": "entity.troy",
         "kind": "entity",
         "label": "Troy",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "blocked_assertion"
       },
       {
@@ -397,6 +417,7 @@
         "id": "literal.claim.iliad.hector_dead",
         "kind": "literal",
         "label": "dead",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -406,6 +427,7 @@
         "id": "literal.claim.iliad.hector_funeral_complete",
         "kind": "literal",
         "label": "complete",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -415,6 +437,7 @@
         "id": "rule.rule.character_knowledge",
         "kind": "rule",
         "label": "A character may assert only claims present in that character's knowledge profile.",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "approved_overlay"
       },
       {
@@ -424,6 +447,7 @@
         "id": "rule.rule.closed_world",
         "kind": "rule",
         "label": "Unsupported facts are blocked or isolated as expansion proposals.",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "approved_overlay"
       },
       {
@@ -433,11 +457,12 @@
         "id": "snapshot.89d43f4febb6",
         "kind": "snapshot",
         "label": "Turn 0",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "current_scenario_value"
       }
     ]
   },
-  "conflictDescriptorDigest": "f1b1542680af15a795f19478167e6558b5e92027f8e56491ba30a655a3856228",
+  "conflictDescriptorDigest": "7dcbca967e767ac708ea9ea5896fce961555543f118dad4489eb619788a70d8c",
   "conflictEdgeStatuses": {
     "active": 2,
     "blocked": 3
@@ -574,6 +599,7 @@
         "id": "entity.hector",
         "kind": "entity",
         "label": "Hector",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -583,6 +609,7 @@
         "id": "entity.helen",
         "kind": "entity",
         "label": "Helen",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -592,6 +619,7 @@
         "id": "entity.odysseus",
         "kind": "entity",
         "label": "Odysseus",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "missing_character_knowledge"
       },
       {
@@ -601,6 +629,7 @@
         "id": "entity.ogygia",
         "kind": "entity",
         "label": "Ogygia",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "missing_character_knowledge"
       },
       {
@@ -610,6 +639,7 @@
         "id": "entity.penelope",
         "kind": "entity",
         "label": "Penelope",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -619,6 +649,7 @@
         "id": "entity.telemachus",
         "kind": "entity",
         "label": "Telemachus",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -628,6 +659,7 @@
         "id": "entity.troy",
         "kind": "entity",
         "label": "Troy",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -637,6 +669,7 @@
         "id": "literal.claim.iliad.hector_dead",
         "kind": "literal",
         "label": "dead",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -646,6 +679,7 @@
         "id": "literal.claim.iliad.hector_funeral_complete",
         "kind": "literal",
         "label": "complete",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -655,6 +689,7 @@
         "id": "literal.claim.odyssey.penelope_uncertain_fate",
         "kind": "literal",
         "label": "uncertain",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "active_evidence"
       },
       {
@@ -664,6 +699,7 @@
         "id": "proposal.proposal.red_sail_signal",
         "kind": "proposal",
         "label": "Add an original red-sail signal to creator canon.",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "ghost_proposal"
       },
       {
@@ -673,6 +709,7 @@
         "id": "rule.rule.character_knowledge",
         "kind": "rule",
         "label": "A character may assert only claims present in that character's knowledge profile.",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "approved_overlay"
       },
       {
@@ -682,6 +719,7 @@
         "id": "rule.rule.closed_world",
         "kind": "rule",
         "label": "Unsupported facts are blocked or isolated as expansion proposals.",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "approved_overlay"
       },
       {
@@ -691,6 +729,7 @@
         "id": "rule.rule.creator.red_sail_signal",
         "kind": "rule",
         "label": "In this creator canon, Ithacans treat a returning ship's red sail as a signal to begin the royal harbor watch.",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "ghost_proposal"
       },
       {
@@ -700,6 +739,7 @@
         "id": "snapshot.ffc558f0c9bd",
         "kind": "snapshot",
         "label": "Turn 0",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "current_scenario_value"
       },
       {
@@ -709,6 +749,7 @@
         "id": "state_value.harbor_watch.idle",
         "kind": "state_value",
         "label": "idle",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "current_scenario_value"
       },
       {
@@ -718,11 +759,12 @@
         "id": "state_variable.harbor_watch",
         "kind": "state_variable",
         "label": "harbor_watch",
+        "nonAuthoritativeDisplayLabel": null,
         "visualState": "current_scenario_value"
       }
     ]
   },
-  "descriptorDigest": "06f091c766324dfc1f83dff4078202bc74335ecfada08980f6b6cc43277b44b6",
+  "descriptorDigest": "68ce384e1f71a0818cb4125a06fd07d46ae87b77a28baa61e7ad95d0aa5dffca",
   "edgeCount": 8,
   "edgeStatuses": {
     "active": 4,

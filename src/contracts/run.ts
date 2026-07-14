@@ -113,6 +113,7 @@ export const RunResultSchema = z
   .strict();
 
 export type RunRequest = z.infer<typeof RunRequestSchema>;
+export type FixtureRunRequest = z.infer<typeof FixtureRunRequestSchema>;
 export type ModelTrace = z.infer<typeof ModelTraceSchema>;
 export type RunResult = z.infer<typeof RunResultSchema>;
 export type HardViolation = z.infer<typeof HardViolationSchema>;

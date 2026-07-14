@@ -122,8 +122,10 @@ const applyPatches = (
       if (!pack.expansionPolicy.allowNewRules) {
         throw new Error("The selected World Pack does not allow new creator rules.");
       }
+      const { displayDescription, ...semanticRule } = patch.rule;
       rules.push({
-        ...patch.rule,
+        ...semanticRule,
+        ...(displayDescription ? { displayDescription } : {}),
         layerId: "creator_canon",
         status: "active",
       });
@@ -138,21 +140,39 @@ const applyPatches = (
   });
 };
 
-const patchAuthority = (patches: ReadonlyArray<ProposalPatch>): string[] =>
-  patches
-    .map((patch) =>
-      patch.op === "add_claim"
-        ? `${patch.op}:${patch.claim.id}`
-        : `${patch.op}:${patch.rule.id}`,
-    )
-    .sort();
+const patchAuthority = (patches: ReadonlyArray<ProposalPatch>): string =>
+  sha256Canonical(
+    patches
+      .map((patch) =>
+        patch.op === "add_claim"
+          ? {
+              op: patch.op,
+              id: patch.claim.id,
+              subjectId: patch.claim.subjectId,
+              predicate: patch.claim.predicate,
+              object: patch.claim.object,
+              temporalScope: patch.claim.temporalScope,
+              spatialScope: patch.claim.spatialScope,
+              epistemicVisibility: patch.claim.epistemicVisibility,
+              conflictSetId: patch.claim.conflictSetId,
+              summary: patch.claim.summary,
+              sourceIds: patch.claim.sourceIds,
+            }
+          : {
+              op: patch.op,
+              id: patch.rule.id,
+              kind: patch.rule.kind,
+              description: patch.rule.description,
+            },
+      )
+      .sort(({ id: left }, { id: right }) => left.localeCompare(right)),
+  );
 
 const samePatchAuthority = (
   proposalPatches: ReadonlyArray<ProposalPatch>,
   editedPatches: ReadonlyArray<ProposalPatch>,
 ): boolean =>
-  JSON.stringify(patchAuthority(proposalPatches)) ===
-  JSON.stringify(patchAuthority(editedPatches));
+  patchAuthority(proposalPatches) === patchAuthority(editedPatches);
 
 export const applyCreatorDecision = ({
   worldPack: worldPackInput,

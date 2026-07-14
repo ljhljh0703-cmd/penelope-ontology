@@ -25,11 +25,13 @@ Evidence states: `verified`, `source-backed`, `fixture-only`, `planned`, `target
 | style-ablation-protocol | A same-model comparison changes only the creator style bundle and cannot silently retry, replace, or overwrite calls | verified | preregistered AB/BA plan, strict contracts, focused style-evaluation suite, plan/capture/ratings hashes, and write-once report path |
 | style-controllability-ablation | Whether the selected style profile changes registered controllability measures in the intended direction on the fixed GPT-5.6 probe | blocked | four live calls, both profiled objective passes, positive creator-rubric delta in both AB/BA pairs, and no registered human-criterion regression |
 | canon-knowledge-graph | A deterministic canon/knowledge graph shows used evidence, missing character knowledge, conflicts, proposals, approvals, and state | fixture-only | byte-stable graph tests, evidence artifact, browser view, and text fallback |
-| bounded-state-transition | Two simulation steps change only registered state variables and approved overlay data, with deterministic snapshot hashes | fixture-only | transition invariants, exact hash chain, API/browser flow, and blocked third step |
+| bounded-state-transition | Two simulation steps change only registered state variables and server-rederived creator-approved overlay data, with deterministic snapshot hashes | fixture-only | transition invariants, exact hash chain, forged-overlay rejection, API/browser flow, and blocked third step |
 | creator-gate | Proposal cannot change canon before valid approval | verified | version/hash decision tests and unchanged reject/stale paths |
-| replay-regression | Unchanged controls preserve outcomes while red-sail matches explicit v0/v1 expectations | fixture-only | five cases, eight stages, proposal → decision/rebase → Step 1 → Step 2 report |
+| semantic-edit-lock | Creator edit may change rule display wording but cannot retarget, alter, or conceal rule/claim semantics | verified | semantic rule-description and claim-summary mutation tests, strict proposal contract, server-replayed decision path, and graph/browser audit-surface checks |
+| replay-regression | The baseline five-case/eight-stage suite passes, and every applied or edited overlay reruns four run-only safety controls against its exact hash before transition | fixture-only | proposal → decision/rebase → approved-overlay replay → Step 1 → Step 2 report |
 | evidence-packet | Sanitized public evidence is generated from executable fixtures | verified | seven JSON artifacts plus SHA-256 manifest and privacy scan |
 | fresh-copy-rehearsal | A clean public candidate copy installs and passes the release gate | verified | `npm ci`, vulnerability audit, full unit/API suite, privacy scan, production build, and both browser projects |
+| deployment-smoke-local | The production smoke rejects stale build identity and verifies the exact two-step authority chain | planned | repeat from the final clean commit using `build:identified`, then verify cache-busted build SHA, all configured security headers, overlay/snapshot hashes, S0r→S1→S2 transition records, and public-live denial |
 | source-locators | Four mythology locators resolve and support the original summaries | verified | Perseus link checks and `docs/SOURCE-VERIFICATION.md` |
 | public-readme | README derives from the Evidence Packet through the approved writing gate | blocked | package write/derive preflights are `SERVING_CANDIDATE`; explicit user approval and `--allow-candidate` rerun are required |
 | reviewer-demo-hosted | A judge can use the working demo without rebuilding | planned | public deployment URL and browser smoke |
@@ -48,6 +50,7 @@ Allowed after corresponding evidence exists:
 
 - implemented provenance-aware retrieval and deterministic world checks
 - isolated new lore behind creator approval and versioned replay
+- separated editable display wording from locked rule and claim semantics
 - used GPT-5.6 Structured Outputs in a real narrative-generation path
 - replayed a fixed contract set before and after a creator-approved overlay
 - combined facilitator-collected participant intents with explicit participant, controlled-character, and generated-speaker attribution

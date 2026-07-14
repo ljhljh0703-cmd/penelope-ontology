@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { HashSchema, IdentifierSchema, VersionSchema } from "@/src/contracts/common";
 import { CanonOverlaySchema } from "@/src/contracts/canon-overlay";
-import { ProposalPatchSchema } from "@/src/contracts/proposal";
+import { MAX_PROPOSAL_PATCHES, ProposalPatchSchema } from "@/src/contracts/proposal";
 import { SimulationSnapshotSchema } from "@/src/contracts/simulation";
 
 const CreatorDecisionBaseFields = {
@@ -18,7 +18,7 @@ export const CreatorDecisionSchema = z.discriminatedUnion("action", [
     .object({
       ...CreatorDecisionBaseFields,
       action: z.literal("edit"),
-      patches: z.array(ProposalPatchSchema).min(1),
+      patches: z.array(ProposalPatchSchema).min(1).max(MAX_PROPOSAL_PATCHES),
     })
     .strict(),
   z.object({ ...CreatorDecisionBaseFields, action: z.literal("reject") }).strict(),

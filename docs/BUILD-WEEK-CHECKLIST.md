@@ -37,6 +37,15 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Technical setup draft available in `docs/START-HERE.md`
 - [x] Local evidence generation, lint, typecheck, the full unit/API suite, privacy scan, production build, vulnerability audit, and both browser projects passed
 - [x] Fresh-copy install and full release gate verified
+- [x] Node 22.x pinned consistently for local, CI, and hosted runtime selection
+- [x] Identified build gate requires exact HEAD plus a clean tracked/untracked worktree; hosted Git provider SHA outranks manual labels
+- [x] Browser CI configured to exercise `next start` after the production build
+- [x] Credential-free deployment smoke gate added for exact build identity, fixture boundary, all declared security headers, health, frozen proof, transition hash continuity, and public live denial
+- [x] Applied or edited overlays trigger a fresh 4/4 server replay bound to their exact hash
+- [x] Transition authority is rederived from the registered run and creator decision; a forged self-hashed overlay returns 409
+- [x] Creator display edits cannot mutate or conceal locked rule/claim semantics; proposal and graph surfaces show both authorities separately
+- [x] Judge run guide and release-gated English narration script added
+- [ ] Final clean-commit production deployment smoke passes build identity, boundary, headers, health, fixture flow, approved-overlay replay, exact transition hash chain, and live-route denial
 - [x] Fixture Evidence Packet completed from executable fixtures and source checks; browser smoke is verified separately
 - [ ] Sanitized real GPT-5.6 evidence added to the packet
 - [x] Style-ablation readiness is public and explicitly marked `not_executed`
@@ -72,9 +81,10 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 
 1. Live GPT-5.6 access is still required for one sanitized integration trace and the four-call style ablation; adapter and protocol tests are not live evidence.
 2. README write/derive preflights are `SERVING_CANDIDATE`; explicit approval and an `--allow-candidate` rerun are required before README generation.
-3. Final product name, public GitHub remote, CI, and hosted fixture deployment remain open.
-4. Public narrated video, `/feedback` session field, and final Devpost submission remain external actions.
-5. Practitioner/user productivity evidence does not exist and must not be claimed.
+3. Portfolio-specific refine preflight is `SERVING_STALE`; the feedback dependency must be synchronized before canonical portfolio copy is produced.
+4. Final product name, public GitHub remote, CI, and hosted fixture deployment remain open.
+5. Public narrated video, `/feedback` session field, and final Devpost submission remain external actions.
+6. Practitioner/user productivity evidence does not exist and must not be claimed.
 
 ## Final release closure
 
@@ -83,3 +93,5 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [ ] Final repository commit is clean and matches the deployed source
 
 Current local proof is recorded in `docs/BUILD-WEEK-COMMAND-CENTER.md`, `docs/EVIDENCE-LEDGER.md`, and `artifacts/evidence/manifest.json`. `docs/SCAFFOLD-VERIFICATION.md` is the historical Day-0 baseline. A local or fresh-copy PASS is not a public CI, live-model, deployment, or submission PASS.
+
+The public Devpost project currently exists at `https://devpost.com/software/narrative-ontology-harness`, but its final submission record is still empty. The external project title is not treated as final naming approval inside the repository.

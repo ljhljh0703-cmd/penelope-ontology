@@ -15,22 +15,28 @@
   },
   "fixtureReplaySummary": {
     "allPassed": true,
+    "approvedOverlayRegression": {
+      "allPassed": true,
+      "caseCount": 4,
+      "digest": "1ecbf61b5a0e67d879d80a83da23ce3ac1326b4bf936ca8b504cee1bb848477e",
+      "overlayHash": "402c39cece3b992e9b5e6ede1a8a15ead41851caaa6622c9b97e109aa3576749"
+    },
     "caseCount": 5,
     "digest": "ce36a197a69baf2e77725e84918ce50d6982ccca771fb89f994cb44e45f481f6",
     "stageCount": 8
   },
   "graphSummary": {
     "afterApproval": {
-      "descriptorDigest": "0e3965e80d9f5956eadb957a50b72313b8c33acc73b375974a0e0cdf6bfe73d3",
+      "descriptorDigest": "fbedd6d7a4662987d183a52db6afd74b8e2a3ef65af709242fd92b00442d1fa9",
       "edgeCount": 7,
       "nodeCount": 16
     },
     "beforeApproval": {
-      "descriptorDigest": "06f091c766324dfc1f83dff4078202bc74335ecfada08980f6b6cc43277b44b6",
+      "descriptorDigest": "68ce384e1f71a0818cb4125a06fd07d46ae87b77a28baa61e7ad95d0aa5dffca",
       "edgeCount": 8,
       "nodeCount": 17
     },
-    "conflictControlDigest": "f1b1542680af15a795f19478167e6558b5e92027f8e56491ba30a655a3856228"
+    "conflictControlDigest": "7dcbca967e767ac708ea9ea5896fce961555543f118dad4489eb619788a70d8c"
   },
   "liveEvidenceStatus": "not_executed",
   "project": {
@@ -77,7 +83,7 @@
       "requestedModel": "fixture-v1",
       "responseId": null
     },
-    "runId": "run.167e190c1bce6e7d7c48",
+    "runId": "run.deccd3f07d5b5969cd7c",
     "status": "needs_creator_decision"
   },
   "schemaVersion": 1,

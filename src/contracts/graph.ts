@@ -23,6 +23,7 @@ export const GraphNodeSchema = z
       "state_value",
     ]),
     label: z.string().min(1),
+    nonAuthoritativeDisplayLabel: z.string().min(1).nullable(),
     visualState: GraphVisualStateSchema,
     evidenceIds: z.array(IdentifierSchema),
   })

@@ -846,6 +846,30 @@ select:disabled {
   text-transform: uppercase;
 }
 
+.graph-fallback li em {
+  color: var(--muted);
+  font-size: 10px;
+  font-style: normal;
+}
+
+.proposal-rule-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.proposal-rule-copy p {
+  display: grid;
+  gap: 3px;
+}
+
+.proposal-rule-copy strong {
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .proposal-card {
   display: grid;
   grid-template-columns: 1.5fr 0.8fr;

@@ -132,6 +132,66 @@ describe("derived canon and knowledge graph", () => {
     expectOrderedAndClosed(graph);
   });
 
+  it("keeps locked rule semantics visible beside non-authoritative display wording", async () => {
+    const [pack, baseOverlay, baseSnapshot, draft] = await Promise.all([
+      loadDemoWorldPack(),
+      loadOverlayFixture("overlay.v1.red-sail"),
+      loadSnapshotFixture("snapshot.s0r"),
+      loadDraftFixture("draft.red_sail_step_1"),
+    ]);
+    const overlay = buildCanonOverlay({
+      ...overlayPayload(baseOverlay),
+      rules: baseOverlay.rules.map((rule) =>
+        rule.id === "rule.creator.red_sail_signal"
+          ? { ...rule, displayDescription: "Blue lantern teleport rule." }
+          : rule,
+      ),
+    });
+    const semanticDescription = baseOverlay.rules.find(
+      ({ id }) => id === "rule.creator.red_sail_signal",
+    )?.description;
+    if (!semanticDescription) throw new Error("Missing registered red-sail semantic rule.");
+    const snapshot = rebaseSnapshot(baseSnapshot, overlay);
+    const participantIntents: ParticipantIntent[] = [
+      {
+        intentId: "intent.penelope",
+        participantId: "participant.one",
+        controlledEntityIds: ["penelope"],
+        intent: "Remain cautious.",
+      },
+      {
+        intentId: "intent.eurycleia",
+        participantId: "participant.two",
+        controlledEntityIds: ["eurycleia"],
+        intent: "Offer support.",
+      },
+    ];
+    const characterViews = buildCharacterAgentViews({
+      pack,
+      overlay,
+      snapshot,
+      participantIntents,
+    });
+    const graph = buildGraphDescriptor({
+      pack,
+      overlay,
+      snapshot,
+      draft,
+      characterViews,
+      violations: [],
+      proposals: [],
+    });
+
+    expect(graph.nodes).toContainEqual(
+      expect.objectContaining({
+        id: "rule.rule.creator.red_sail_signal",
+        label: semanticDescription,
+        nonAuthoritativeDisplayLabel: "Blue lantern teleport rule.",
+        visualState: "approved_overlay",
+      }),
+    );
+  });
+
   it("keeps approval status for an overlay claim that remains hidden from focal characters", async () => {
     const [pack, baseOverlay, baseSnapshot, draft] = await Promise.all([
       loadDemoWorldPack(),

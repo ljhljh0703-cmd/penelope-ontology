@@ -1,22 +1,19 @@
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import {
-  loadDemoWorldPack,
+  loadDemoBundle,
   loadOverlayFixture,
   loadSnapshotFixture,
 } from "@/src/adapters/filesystem/demo-data";
 import { fixtureNarrativeModel } from "@/src/adapters/fixtures/narrative-model";
 import {
-  RunInputError,
-  createRunOrchestrator,
-} from "@/src/application/run-orchestrator";
-import {
-  CreatorDecisionResultSchema,
-  CreatorDecisionSchema,
-} from "@/src/contracts/creator-decision";
+  FixtureCreatorAuthorityError,
+  verifyFixtureCreatorDecision,
+} from "@/src/application/fixture-creator-authority";
+import { runApprovedOverlayReplay } from "@/src/application/replay-runner";
+import { RunInputError } from "@/src/application/run-orchestrator";
+import { CreatorDecisionSchema } from "@/src/contracts/creator-decision";
 import { FixtureRunRequestSchema } from "@/src/contracts/run";
-import { applyCreatorDecision } from "@/src/domain/canon-overlay";
-import { sha256Canonical } from "@/src/domain/canonical-json";
 import { buildGraphDescriptor } from "@/src/domain/graph-descriptor";
 import { normalizeParticipantIntents } from "@/src/domain/participants";
 import { retrieveEvidence } from "@/src/domain/retrieval";
@@ -33,72 +30,24 @@ const DecisionRequestSchema = z
 export async function POST(request: Request) {
   try {
     const body = DecisionRequestSchema.parse(await request.json());
-    const [worldPack, registeredOverlay, registeredSnapshot] = await Promise.all([
-      loadDemoWorldPack(),
+    const [{ worldPack, replayCases }, registeredOverlay, registeredSnapshot] = await Promise.all([
+      loadDemoBundle(),
       loadOverlayFixture("overlay.v0"),
       loadSnapshotFixture("snapshot.s0"),
     ]);
-    const registeredBaseAuthorityIsValid =
-      sha256Canonical(body.runRequest.overlay) === sha256Canonical(registeredOverlay) &&
-      sha256Canonical(body.runRequest.snapshot) === sha256Canonical(registeredSnapshot);
-    if (!registeredBaseAuthorityIsValid) {
-      return NextResponse.json(
-        {
-          error: {
-            code: "creator_decision_authority_invalid",
-            message: "The public fixture decision must start from its registered base authority.",
-          },
-        },
-        { status: 409 },
-      );
-    }
-    const run = createRunOrchestrator({
+    const {
+      verifiedRun,
+      proposal: proposalFromRun,
+      completedDraft,
+      decision,
+    } = await verifyFixtureCreatorDecision({
       worldPack,
+      registeredOverlay,
+      registeredSnapshot,
+      runRequest: body.runRequest,
+      creatorDecision: body.decision,
       fixtureModel: fixtureNarrativeModel,
-      liveModel: fixtureNarrativeModel,
     });
-    const verifiedRun = await run(body.runRequest);
-    const proposalFromRun = verifiedRun.proposals.find(
-      ({ id, proposalHash }) =>
-        id === body.decision.proposalId && proposalHash === body.decision.proposalHash,
-    );
-    const completedDraft =
-      verifiedRun.modelOutcome.outcome === "completed"
-        ? verifiedRun.modelOutcome.draft
-        : null;
-    const fixtureAuthorityIsValid =
-      Boolean(proposalFromRun) &&
-      Boolean(completedDraft) &&
-      verifiedRun.status === "needs_creator_decision" &&
-      verifiedRun.modelOutcome.trace.mode === "fixture" &&
-      verifiedRun.proposedNextSnapshot.stateHash === verifiedRun.currentSnapshot.stateHash &&
-      verifiedRun.hardViolations.length > 0 &&
-      verifiedRun.hardViolations.every(
-        ({ code, evidenceIds }) =>
-          code === "unapproved_expansion" &&
-          verifiedRun.proposals.some(({ id }) => evidenceIds.includes(id)),
-      );
-    if (!fixtureAuthorityIsValid || !proposalFromRun || !completedDraft) {
-      return NextResponse.json(
-        {
-          error: {
-            code: "creator_decision_authority_invalid",
-            message: "The public fixture decision must reference its verified run authority.",
-          },
-        },
-        { status: 409 },
-      );
-    }
-
-    const decision = CreatorDecisionResultSchema.parse(
-      applyCreatorDecision({
-        worldPack,
-        overlay: body.runRequest.overlay,
-        snapshot: body.runRequest.snapshot,
-        proposal: proposalFromRun,
-        decision: body.decision,
-      }),
-    );
     const participants = normalizeParticipantIntents(
       body.runRequest.participantIntents,
       worldPack,
@@ -131,8 +80,59 @@ export async function POST(request: Request) {
             });
           })()
         : verifiedRun.graph;
-    return NextResponse.json({ decision, graph });
+    const overlayReplay =
+      decision.status === "applied"
+        ? await runApprovedOverlayReplay({
+            worldPack,
+            replayCases,
+            fixtureModel: fixtureNarrativeModel,
+            overlay: decision.overlay,
+          })
+        : null;
+    if (overlayReplay && !overlayReplay.passed) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "creator_decision_regression_failed",
+            message: "The candidate overlay failed its frozen safety controls and was not returned as applied canon.",
+          },
+        },
+        { status: 409 },
+      );
+    }
+    return NextResponse.json({
+      decision,
+      graph,
+      overlayReplay: overlayReplay
+        ? {
+            suiteId: overlayReplay.suiteId,
+            overlayId: overlayReplay.overlayId,
+            overlayVersion: overlayReplay.overlayVersion,
+            overlayHash: overlayReplay.overlayHash,
+            allPassed: overlayReplay.passed,
+            replayResults: overlayReplay.cases.map((result) => ({
+              id: result.id,
+              label: result.description,
+              status: result.passed ? "pass" : "fail",
+              detail: result.stages
+                .map(({ stageId, passed }) => `${stageId}:${passed ? "PASS" : "FAIL"}`)
+                .join(" · "),
+            })),
+          }
+        : null,
+    });
   } catch (error) {
+    if (error instanceof FixtureCreatorAuthorityError) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "creator_decision_authority_invalid",
+            message: error.message,
+          },
+        },
+        { status: 409 },
+      );
+    }
     if (error instanceof ZodError || error instanceof RunInputError) {
       return NextResponse.json(
         {

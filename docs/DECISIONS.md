@@ -27,6 +27,8 @@
 | D-023 | Call the derived visualization a canon/knowledge graph, not an ontology graph | Typed JSON relations do not yet establish a formal semantic class and relation contract | A documented ontology contract and validation suite exist |
 | D-024 | Treat prose style as a creator-owned harness layer, not a model-brand property | The product should compensate for generic default prose by supplying explicit voice, viewpoint, cadence, and avoidance constraints alongside world knowledge | A paired human evaluation shows a simpler approach is equally controllable |
 | D-025 | Make no Fable, Opus, or other model-writing superiority claim | The project has no controlled cross-model writing evaluation; its claim is controllability through a harness, not raw-model victory | A preregistered same-brief evaluation with human raters is completed |
+| D-026 | Creator edit may change non-authoritative display wording, never semantic rule or claim fields | A creator can improve presentation without using one proposal approval to retarget identity, kind, semantic description, entities, scope, visibility, conflict, or sources | A separately reviewed semantic migration contract exists |
+| D-027 | Stateless transition APIs validate an exact authorized state chain, not wall-clock session occurrence | The fixture demo has no accounts, room state, or database; UI sequencing and snapshot authority are evidence, while per-session occurrence would require signed receipts or persistence | Remote rooms or persistent sessions enter scope |
 
 ## Rejected now
 

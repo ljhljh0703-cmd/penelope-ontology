@@ -7,6 +7,9 @@ import {
 } from "@/src/contracts/common";
 import { ClaimObjectSchema } from "@/src/domain/schemas";
 
+export const MAX_DISPLAY_DESCRIPTION_LENGTH = 800;
+export const MAX_PROPOSAL_PATCHES = 8;
+
 export const ProposedClaimInputSchema = z
   .object({
     id: IdentifierSchema,
@@ -27,6 +30,7 @@ export const ProposedRuleInputSchema = z
     id: IdentifierSchema,
     kind: z.enum(["world", "timeline", "knowledge", "expansion"]),
     description: z.string().min(1),
+    displayDescription: z.string().min(1).max(MAX_DISPLAY_DESCRIPTION_LENGTH).nullable(),
   })
   .strict();
 
@@ -39,7 +43,7 @@ export const ModelProposalSchema = z
   .object({
     id: IdentifierSchema,
     summary: z.string().min(1),
-    patches: z.array(ProposalPatchSchema).min(1),
+    patches: z.array(ProposalPatchSchema).min(1).max(MAX_PROPOSAL_PATCHES),
   })
   .strict()
   .superRefine((proposal, context) => {
@@ -56,7 +60,7 @@ export const CanonProposalSchema = z
   .object({
     id: IdentifierSchema,
     summary: z.string().min(1),
-    patches: z.array(ProposalPatchSchema).min(1),
+    patches: z.array(ProposalPatchSchema).min(1).max(MAX_PROPOSAL_PATCHES),
     baseOverlayId: z.literal("creator_canon"),
     baseOverlayVersion: VersionSchema,
     baseOverlayHash: HashSchema,

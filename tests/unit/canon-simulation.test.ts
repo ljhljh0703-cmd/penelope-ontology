@@ -29,6 +29,7 @@ const proposal = createCanonProposal(
           id: "rule.creator.red_sail_signal",
           kind: "world",
           description: "The Ithacan harbor watch treats a red sail as a return signal.",
+          displayDescription: null,
         },
       },
     ],
@@ -179,7 +180,8 @@ describe("creator decision and bounded simulation", () => {
             rule: {
               id: "rule.creator.red_sail_signal",
               kind: "world",
-              description: editedDescription,
+              description: "The Ithacan harbor watch treats a red sail as a return signal.",
+              displayDescription: editedDescription,
             },
           },
         ],
@@ -187,8 +189,104 @@ describe("creator decision and bounded simulation", () => {
     });
 
     expect(result.status).toBe("applied");
-    expect(result.overlay.rules[0]?.description).toBe(editedDescription);
+    expect(result.overlay.rules[0]?.description).toBe(
+      "The Ithacan harbor watch treats a red sail as a return signal.",
+    );
+    expect(result.overlay.rules[0]?.displayDescription).toBe(editedDescription);
     expect(result.snapshot.canonHash).toBe(result.overlay.hash);
+  });
+
+  it("rejects an edit that changes the semantic rule description", () => {
+    const initial = createInitialSnapshot(pack, overlayV0);
+    const result = applyCreatorDecision({
+      worldPack: pack,
+      overlay: overlayV0,
+      snapshot: initial,
+      proposal,
+      decision: {
+        action: "edit",
+        proposalId: proposal.id,
+        proposalHash: proposal.proposalHash,
+        baseOverlayId: overlayV0.id,
+        baseOverlayVersion: overlayV0.version,
+        baseOverlayHash: overlayV0.hash,
+        patches: [
+          {
+            op: "add_rule",
+            rule: {
+              id: "rule.creator.red_sail_signal",
+              kind: "world",
+              description: "A blue lantern tavern custom replaces the red-sail meaning.",
+              displayDescription: "This display copy cannot authorize the semantic change.",
+            },
+          },
+        ],
+      },
+    });
+
+    expect(result).toEqual({ status: "invalid", overlay: overlayV0, snapshot: initial });
+  });
+
+  it("rejects an edit that changes claim summary semantics", () => {
+    const initial = createInitialSnapshot(pack, overlayV0);
+    const claimProposal = createCanonProposal(
+      {
+        id: "proposal.creator.penelope_watch",
+        summary: "Propose a creator-owned harbor-watch claim.",
+        patches: [
+          {
+            op: "add_claim",
+            claim: {
+              id: "claim.creator.penelope_watch",
+              subjectId: "penelope",
+              predicate: "waits_at",
+              object: { kind: "entity", entityId: "ithaca" },
+              temporalScope: "ithaca.odyssey_book_1",
+              spatialScope: "ithaca",
+              epistemicVisibility: ["all"],
+              conflictSetId: null,
+              summary: "Penelope waits for news in Ithaca.",
+              sourceIds: ["source.odyssey.1"],
+            },
+          },
+        ],
+      },
+      overlayV0,
+    );
+
+    const result = applyCreatorDecision({
+      worldPack: pack,
+      overlay: overlayV0,
+      snapshot: initial,
+      proposal: claimProposal,
+      decision: {
+        action: "edit",
+        proposalId: claimProposal.id,
+        proposalHash: claimProposal.proposalHash,
+        baseOverlayId: overlayV0.id,
+        baseOverlayVersion: overlayV0.version,
+        baseOverlayHash: overlayV0.hash,
+        patches: [
+          {
+            op: "add_claim",
+            claim: {
+              id: "claim.creator.penelope_watch",
+              subjectId: "penelope",
+              predicate: "waits_at",
+              object: { kind: "entity", entityId: "ithaca" },
+              temporalScope: "ithaca.odyssey_book_1",
+              spatialScope: "ithaca",
+              epistemicVisibility: ["all"],
+              conflictSetId: null,
+              summary: "Penelope has already received certain news in Ithaca.",
+              sourceIds: ["source.odyssey.1"],
+            },
+          },
+        ],
+      },
+    });
+
+    expect(result).toEqual({ status: "invalid", overlay: overlayV0, snapshot: initial });
   });
 
   it("rejects edited patch retargeting and invalid World Pack references unchanged", () => {
@@ -212,6 +310,7 @@ describe("creator decision and bounded simulation", () => {
               id: "rule.creator.different_target",
               kind: "world",
               description: "This must not ride on another proposal's approval.",
+              displayDescription: null,
             },
           },
         ],

@@ -103,17 +103,18 @@ describe("fixture API vertical slice", () => {
     expect(run.proposals).toHaveLength(1);
     const proposal = run.proposals[0];
 
+    const creatorDecision = {
+      action: "accept" as const,
+      proposalId: proposal.id,
+      proposalHash: proposal.proposalHash,
+      baseOverlayId: proposal.baseOverlayId,
+      baseOverlayVersion: proposal.baseOverlayVersion,
+      baseOverlayHash: proposal.baseOverlayHash,
+    };
     const decisionResponse = await postDecision(
       jsonRequest("http://local.test/api/decisions", {
         runRequest,
-        decision: {
-          action: "accept",
-          proposalId: proposal.id,
-          proposalHash: proposal.proposalHash,
-          baseOverlayId: proposal.baseOverlayId,
-          baseOverlayVersion: proposal.baseOverlayVersion,
-          baseOverlayHash: proposal.baseOverlayHash,
-        },
+        decision: creatorDecision,
       }),
     );
     expect(decisionResponse.status).toBe(200);
@@ -123,6 +124,18 @@ describe("fixture API vertical slice", () => {
     expect(decision.overlay.version).toBe(1);
     expect(decision.snapshot.turnIndex).toBe(0);
     expect(decision.snapshot.canonHash).toBe(decision.overlay.hash);
+    expect(decisionPayload.overlayReplay).toMatchObject({
+      suiteId: "approved_overlay_regression",
+      overlayVersion: 1,
+      overlayHash: decision.overlay.hash,
+      allPassed: true,
+    });
+    expect(decisionPayload.overlayReplay.replayResults).toHaveLength(4);
+    expect(
+      decisionPayload.overlayReplay.replayResults.every(
+        ({ status }: { status: string }) => status === "pass",
+      ),
+    ).toBe(true);
     expect(
       decisionPayload.graph.nodes.some(
         ({ kind, visualState }: { kind: string; visualState: string }) =>
@@ -137,10 +150,10 @@ describe("fixture API vertical slice", () => {
 
     const step1Response = await postTransition(
       jsonRequest("http://local.test/api/transitions", {
-        overlay: decision.overlay,
+        runRequest,
+        decision: creatorDecision,
         snapshot: decision.snapshot,
         step: 1,
-        participantIntents,
       }),
     );
     expect(step1Response.status).toBe(200);
@@ -151,10 +164,10 @@ describe("fixture API vertical slice", () => {
 
     const step2Response = await postTransition(
       jsonRequest("http://local.test/api/transitions", {
-        overlay: decision.overlay,
+        runRequest,
+        decision: creatorDecision,
         snapshot: step1.snapshot,
         step: 2,
-        participantIntents,
       }),
     );
     expect(step2Response.status).toBe(200);
@@ -165,13 +178,79 @@ describe("fixture API vertical slice", () => {
 
     const thirdResponse = await postTransition(
       jsonRequest("http://local.test/api/transitions", {
-        overlay: decision.overlay,
+        runRequest,
+        decision: creatorDecision,
         snapshot: step2.snapshot,
         step: 2,
-        participantIntents,
       }),
     );
     expect(thirdResponse.status).toBe(409);
+  });
+
+  it("rejects a forged self-hashed overlay at the transition authority boundary", async () => {
+    const demo = await (await getDemo()).json();
+    const participantIntents = demo.participantSlots.map(
+      (slot: {
+        intentId: string;
+        participantId: string;
+        controlledEntityId: string;
+        defaultIntent: string;
+      }) => ({
+        intentId: slot.intentId,
+        participantId: slot.participantId,
+        controlledEntityIds: [slot.controlledEntityId],
+        intent: slot.defaultIntent,
+      }),
+    );
+    const runRequest = {
+      modelMode: "fixture" as const,
+      draftFixtureId: "draft.red_sail_proposal",
+      overlay: demo.overlay,
+      snapshot: demo.snapshot,
+      styleProfileId: demo.selectedStyleProfileId,
+      taskType: "expand" as const,
+      brief: "Propose a red-sail signal without treating it as canon.",
+      participantIntents,
+    };
+    const run = await (
+      await postRun(jsonRequest("http://local.test/api/runs", runRequest))
+    ).json();
+    const proposal = run.proposals[0];
+    const creatorDecision = {
+      action: "accept" as const,
+      proposalId: proposal.id,
+      proposalHash: proposal.proposalHash,
+      baseOverlayId: proposal.baseOverlayId,
+      baseOverlayVersion: proposal.baseOverlayVersion,
+      baseOverlayHash: proposal.baseOverlayHash,
+    };
+    const forgedOverlay = buildCanonOverlay({
+      ...overlayPayload(demo.overlay),
+      version: 1,
+      rules: [
+        ...demo.overlay.rules,
+        {
+          id: "rule.creator.red_sail_signal",
+          kind: "expansion" as const,
+          description: "A forged red-sail rule that never passed the submitted decision.",
+          layerId: "creator_canon" as const,
+          status: "active" as const,
+        },
+      ],
+    });
+    const forgedSnapshot = rebaseSnapshot(demo.snapshot, forgedOverlay);
+
+    const response = await postTransition(
+      jsonRequest("http://local.test/api/transitions", {
+        runRequest,
+        decision: creatorDecision,
+        snapshot: forgedSnapshot,
+        step: 1,
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).error.code).toBe("transition_authority_invalid");
   });
 
   it("recomputes decision authority and refuses a fabricated proposal", async () => {
@@ -296,38 +375,46 @@ describe("fixture API vertical slice", () => {
   it("keeps unapproved sibling proposals visible after one proposal is accepted", async () => {
     const demo = await (await getDemo()).json();
     const draft = await loadDraftFixture("draft.red_sail_proposal");
-    vi.spyOn(fixtureNarrativeModel, "generate").mockResolvedValue({
-      outcome: "completed",
-      draft: {
-        ...draft,
-        proposals: [
-          ...draft.proposals,
-          {
-            id: "proposal.blue_lantern_signal",
-            summary: "Keep a second signal outside canon.",
-            patches: [
-              {
-                op: "add_rule",
-                rule: {
-                  id: "rule.creator.blue_lantern_signal",
-                  kind: "expansion",
-                  description: "A blue lantern would open a different harbor watch.",
-                },
+    const originalGenerate = fixtureNarrativeModel.generate.bind(fixtureNarrativeModel);
+    vi.spyOn(fixtureNarrativeModel, "generate").mockImplementation(
+      async (request, evidence) =>
+        request.modelMode === "fixture" &&
+        request.draftFixtureId === "draft.red_sail_proposal"
+          ? {
+              outcome: "completed",
+              draft: {
+                ...draft,
+                proposals: [
+                  ...draft.proposals,
+                  {
+                    id: "proposal.blue_lantern_signal",
+                    summary: "Keep a second signal outside canon.",
+                    patches: [
+                      {
+                        op: "add_rule",
+                        rule: {
+                          id: "rule.creator.blue_lantern_signal",
+                          kind: "expansion",
+                          description: "A blue lantern would open a different harbor watch.",
+                          displayDescription: null,
+                        },
+                      },
+                    ],
+                  },
+                ],
               },
-            ],
-          },
-        ],
-      },
-      trace: {
-        mode: "fixture",
-        outcome: "completed",
-        requestedModel: "fixture-v1",
-        actualModel: null,
-        responseId: null,
-        inputTokens: null,
-        outputTokens: null,
-      },
-    });
+              trace: {
+                mode: "fixture",
+                outcome: "completed",
+                requestedModel: "fixture-v1",
+                actualModel: null,
+                responseId: null,
+                inputTokens: null,
+                outputTokens: null,
+              },
+            }
+          : originalGenerate(request, evidence),
+    );
     const participantIntents = demo.participantSlots.map(
       (slot: {
         intentId: string;
@@ -389,5 +476,76 @@ describe("fixture API vertical slice", () => {
           status === "proposed" && evidenceIds.includes("proposal.red_sail_signal"),
       ),
     ).toBe(false);
+  });
+
+  it("does not return applied canon when the fresh overlay replay fails", async () => {
+    const demo = await (await getDemo()).json();
+    const participantIntents = demo.participantSlots.map(
+      (slot: {
+        intentId: string;
+        participantId: string;
+        controlledEntityId: string;
+        defaultIntent: string;
+      }) => ({
+        intentId: slot.intentId,
+        participantId: slot.participantId,
+        controlledEntityIds: [slot.controlledEntityId],
+        intent: slot.defaultIntent,
+      }),
+    );
+    const runRequest = {
+      modelMode: "fixture" as const,
+      draftFixtureId: "draft.red_sail_proposal",
+      overlay: demo.overlay,
+      snapshot: demo.snapshot,
+      styleProfileId: demo.selectedStyleProfileId,
+      taskType: "expand" as const,
+      brief: "Propose a red-sail signal without treating it as canon.",
+      participantIntents,
+    };
+    const run = await (
+      await postRun(jsonRequest("http://local.test/api/runs", runRequest))
+    ).json();
+    const proposal = run.proposals[0];
+    const unrelatedDraft = await loadDraftFixture("draft.red_sail_proposal");
+    const originalGenerate = fixtureNarrativeModel.generate.bind(fixtureNarrativeModel);
+    vi.spyOn(fixtureNarrativeModel, "generate").mockImplementation(
+      async (request, evidence) =>
+        request.modelMode === "fixture" &&
+        request.draftFixtureId !== "draft.red_sail_proposal"
+          ? {
+              outcome: "completed",
+              draft: unrelatedDraft,
+              trace: {
+                mode: "fixture",
+                outcome: "completed",
+                requestedModel: "fixture-v1",
+                actualModel: null,
+                responseId: null,
+                inputTokens: null,
+                outputTokens: null,
+              },
+            }
+          : originalGenerate(request, evidence),
+    );
+
+    const response = await postDecision(
+      jsonRequest("http://local.test/api/decisions", {
+        runRequest,
+        decision: {
+          action: "accept",
+          proposalId: proposal.id,
+          proposalHash: proposal.proposalHash,
+          baseOverlayId: proposal.baseOverlayId,
+          baseOverlayVersion: proposal.baseOverlayVersion,
+          baseOverlayHash: proposal.baseOverlayHash,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).error.code).toBe(
+      "creator_decision_regression_failed",
+    );
   });
 });

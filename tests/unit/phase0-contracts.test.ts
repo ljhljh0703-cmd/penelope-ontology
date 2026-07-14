@@ -10,6 +10,10 @@ import {
   ModelTraceSchema,
 } from "@/src/contracts/model-outcome";
 import { ParticipantIntentSetSchema } from "@/src/contracts/participant-intent";
+import {
+  MAX_DISPLAY_DESCRIPTION_LENGTH,
+  MAX_PROPOSAL_PATCHES,
+} from "@/src/contracts/proposal";
 import { ProposalPatchSchema } from "@/src/contracts/proposal";
 import { RunRequestSchema } from "@/src/contracts/run";
 import {
@@ -142,6 +146,7 @@ describe("Phase 0 contracts", () => {
       id,
       kind: "entity" as const,
       label: id,
+      nonAuthoritativeDisplayLabel: null,
       visualState: "active_evidence" as const,
       evidenceIds: [],
     });
@@ -221,6 +226,48 @@ describe("Phase 0 contracts", () => {
         baseOverlayId: overlay.id,
         baseOverlayVersion: overlay.version,
         baseOverlayHash: overlay.hash,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("bounds creator display edits and proposal patch count", () => {
+    const overlay = CanonOverlaySchema.parse(readJson("overlays/overlay.v0.json"));
+    const base = {
+      action: "edit" as const,
+      proposalId: "proposal.red_sail_signal",
+      proposalHash: "a".repeat(64),
+      baseOverlayId: overlay.id,
+      baseOverlayVersion: overlay.version,
+      baseOverlayHash: overlay.hash,
+    };
+    const patch = (index: number, displayDescription: string) => ({
+      op: "add_rule" as const,
+      rule: {
+        id: `rule.creator.limit_${index}`,
+        kind: "world" as const,
+        description: "Locked semantic rule.",
+        displayDescription,
+      },
+    });
+
+    expect(
+      CreatorDecisionSchema.safeParse({
+        ...base,
+        patches: [patch(0, "x".repeat(MAX_DISPLAY_DESCRIPTION_LENGTH))],
+      }).success,
+    ).toBe(true);
+    expect(
+      CreatorDecisionSchema.safeParse({
+        ...base,
+        patches: [patch(0, "x".repeat(MAX_DISPLAY_DESCRIPTION_LENGTH + 1))],
+      }).success,
+    ).toBe(false);
+    expect(
+      CreatorDecisionSchema.safeParse({
+        ...base,
+        patches: Array.from({ length: MAX_PROPOSAL_PATCHES + 1 }, (_, index) =>
+          patch(index, "Display wording."),
+        ),
       }).success,
     ).toBe(false);
   });

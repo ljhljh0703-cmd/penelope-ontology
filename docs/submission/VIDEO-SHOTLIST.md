@@ -18,7 +18,7 @@ Target: 2:50–2:55. Public YouTube video with spoken narration. Background musi
 
 Use this idea in narration without making a vendor comparison claim:
 
-> We did not ask the model to magically remember a world or discover our voice. We encoded style, character knowledge, canon, approval, and state transitions as separate harness layers.
+> We did not answer doubts about default model prose with one favorable paragraph. We encoded style, character knowledge, canon, approval, and state transitions as separate harness layers, then made them replayable.
 
 A default-instruction-control versus style-profile comparison may appear only if the preregistered AB/BA runs and condition-masked creator rubric have both been captured. Do not call the control “unbounded,” cherry-pick a favorable pair, imply independent review, or say Codex or GPT-5.6 writes better than Fable, Opus, or another model.
 

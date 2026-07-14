@@ -1,7 +1,7 @@
 # Build Week command center
 
 Status snapshot: **2026-07-15 KST**
-Current state: **Core fixture vertical slice and fresh-copy release rehearsal verified; live-model and external submission gates remain.**
+Current state: **Core fixture vertical slice, authority hardening, production browser suite, and local deployment smoke verified; live-model, final clean-copy rehearsal, and external submission gates remain.**
 
 Official submission deadline: **2026-07-22 09:00 KST** (2026-07-21 17:00 PDT).
 Internal submission freeze: **2026-07-21 23:00 KST**. The final ten hours are emergency buffer, not feature time.
@@ -41,10 +41,11 @@ The primary demo is not “AI writes mythology” and not four unrelated error c
 | Codex credit request | resubmitted, pending | optional; the build assumes no credit |
 | Scope decision | verified | user approved A scope, Work & Productivity audience expansion, and remote-multiplayer No-Go on 2026-07-15 |
 | Local repository | verified working tree | core work is implemented on `codex/core-vertical-slice`; final commit/public remote remain |
-| Core contracts and deterministic engine | verified | eight demo-critical contract groups plus retrieval, validation, overlay, graph, simulation, and replay tests |
-| Table product surface | verified fixture-only | two local intents, style profile, graph, accept/edit/reject, S0r, two steps, and replay are visible without JSON editing |
-| Local release gate | verified | `npm run verify:release` covers evidence generation, lint, typecheck, the full unit/API suite, privacy scan, production build, and both browser projects |
-| Fresh-copy rehearsal | verified | clean copy `npm ci`, vulnerability audit 0, full release gate PASS |
+| Core contracts and deterministic engine | verified | eight demo-critical contract groups plus retrieval, validation, overlay, graph, simulation, exact-overlay replay, and transition-authority tests |
+| Table product surface | verified fixture-only | two local intents, style profile, graph, accept/edit/reject, fresh 4/4 approved-overlay replay, S0r, and two steps are visible without JSON editing |
+| Local release gate | verified | evidence generation and manifest, lint, typecheck, 139 unit/API tests, privacy scan over 150 public candidates, production build, and 10 browser checks pass |
+| Fresh-copy rehearsal | previous baseline verified; current hardening pending | prior clean copy passed; the final hardening commit still needs its own clean clone and identified release gate |
+| Deployment smoke | functional path verified; clean-source identity pending | exact identity comparison, headers, fixture flow, replay, S0r→S1→S2 hash/canon continuity, and live denial pass locally; the final commit must repeat this from a clean clone before certification |
 | Live GPT-5.6 | adapter verified; real call blocked | strict Responses adapter and typed errors are mock-tested; no API key/live response evidence exists |
 | Style controllability probe | protocol verified; live result blocked | same-model AB/BA schedule, no-retry capture, masked rubric, integrity hashes, and the focused style-evaluation suite pass; four live calls and creator ratings do not exist |
 | Quest production extension | target only | no `QuestSpec`, linter, generator, evaluation, or user proof exists |
@@ -76,16 +77,16 @@ Implement pack loading, initial snapshot derivation, canonical serialization, pa
 
 ### Gate 2 — Creator-controlled canon and real two-step transition
 
-**Status: PASS.** Accept/edit/reject, stale behavior, rebase, continuous two-step hashes, and blocked third step are verified.
+**Status: PASS.** Accept/edit/reject, stale behavior, semantic-edit locking, separate human audit labels, exact-overlay safety replay, server-rederived transition authority, continuous two-step hashes, forged-overlay rejection, and blocked third step are verified.
 
 Implement accept/edit/reject, stale-decision rejection, additive overlay, same-turn snapshot rebase, registered state-variable validation, deterministic transition, snapshot hashing, and the two-step red-sail scenario.
 
-**Go:** proposal/reject/stale/blocked leave overlay, turn, variables, and state hash unchanged; safe accept/edit returns overlay vNext and a matching rebased snapshot without consuming a turn; two validated steps produce `idle → watching → signal_seen` and a continuous hash chain; unchanged controls retain their outcomes and the red-sail v0/v1 result matches its explicit expectation.
+**Go:** proposal/reject/stale/blocked leave overlay, turn, variables, and state hash unchanged; safe accept/edit returns overlay vNext, a matching rebased snapshot, and a fresh four-control replay bound to the exact approved hash without consuming a turn; display editing cannot mutate or conceal the semantic rule used by transitions; transition endpoints reconstruct the registered decision instead of trusting client canon; two validated steps produce `idle → watching → signal_seen` and a continuous hash chain; forged overlays and skipped snapshot authorities fail.
 **No-Go:** treat an overlay-only rerun as simulation. If this gate is not green by Jul 17, remove the public simulation claim and ship a before/after canon rehearsal.
 
 ### Gate 3 — Live GPT-5.6 and Table product surface
 
-**Status: PARTIAL.** Table surface and browser smoke pass; the live adapter is mock-tested, but the required real GPT-5.6 trace is blocked by missing credentials.
+**Status: PARTIAL.** Table surface, 10 desktop/mobile browser checks, and local production deployment smoke pass; the live adapter is mock-tested, but the required real GPT-5.6 trace is blocked by missing credentials.
 
 Connect the Responses API using strict `text.format` Structured Outputs, keep refusals distinct from schema errors, expose the run path, and build the single-page Table flow with multi-intent input, selected style profile, graph view, creator decision, state timeline, and replay panel.
 
@@ -153,7 +154,9 @@ The portfolio case study is derived only after Gate 4 produces a verified Eviden
 
 > Translated narrative voice, canon, source traditions, character knowledge, participant intent, creator approval, and world-state transitions into a testable production harness with a bounded GPT-5.6 adapter—instead of relying on a model's default prose.
 
-The defensible writing angle is not “Codex or GPT-5.6 beats Fable or Opus at prose.” Codex served as the engineering partner that converted tacit writing standards into explicit style, world, evidence, approval, and replay layers. That turns a perceived weakness of default model prose into an inspectable production surface: character knowledge is scoped, world claims are checked, new lore requires creator approval, and the same fixture replays after change. Raw taste remains human judgment; the mechanism and its regressions become auditable.
+The defensible writing angle is not “Codex or GPT-5.6 beats Fable or Opus at prose.” The project treats familiar skepticism about generic default Codex prose as the brief: Codex served as the engineering partner that converted tacit writing standards into explicit style, world, evidence, approval, and replay layers. Character knowledge is scoped, world claims are checked, new lore requires creator approval, semantic rules cannot hide behind edited presentation copy, and the same fixture replays after change. Raw taste remains human judgment; the mechanism and its regressions become auditable.
+
+Portfolio copy is not yet derived. The `portfolio-refiner` refine preflight is `SERVING_STALE`, so its canonical feedback stack was not loaded; the public README path independently remains `SERVING_CANDIDATE` pending explicit approval. `juhyeong-voice` was not read or applied.
 
 The next credible game-production step is **Quest Consistency Linter & Replay**, followed by a harnessed quest-candidate generator. User adoption, productivity gains, quest automation, creativity improvement, and production readiness remain unmeasured until their own evidence exists.
 

@@ -17,6 +17,14 @@ describe("sanitized public evidence", () => {
     expect(evidence.fixtureReplay.allPassed).toBe(true);
     expect(evidence.fixtureReplay.caseCount).toBe(5);
     expect(evidence.fixtureReplay.stageCount).toBe(8);
+    expect(evidence.fixtureReplay.approvedOverlayRegression).toMatchObject({
+      allPassed: true,
+      caseCount: 4,
+      overlayHash: evidence.simulation.creatorDecision.overlayHash,
+    });
+    const { digest, ...approvedOverlayPayload } =
+      evidence.fixtureReplay.approvedOverlayRegression;
+    expect(digest).toBe(sha256Canonical(approvedOverlayPayload));
     expect(evidence.simulation.transitions).toHaveLength(2);
     expect(evidence.simulation.transitions.every(({ status }) => status === "applied")).toBe(true);
     expect(evidence.simulation.finalTurnIndex).toBe(2);

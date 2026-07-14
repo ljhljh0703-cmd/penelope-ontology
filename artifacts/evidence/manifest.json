@@ -1,19 +1,19 @@
 {
   "files": [
     {
-      "bytes": 3440,
+      "bytes": 3701,
       "path": "artifacts/evidence/evidence-packet.json",
-      "sha256": "90e8518f15af22d83d1a7a8453f8624748e1fa5316148e03a0dea371b8d848c4"
+      "sha256": "44f916291e974302636be12a54d02daa2b437959419001db1d73aada06e7e244"
     },
     {
-      "bytes": 2624,
+      "bytes": 4675,
       "path": "artifacts/evidence/fixture-replay.json",
-      "sha256": "55a12c56a4c678af7b54f9a585d410b26ac889535e3d3aa79fb46f197c4504d7"
+      "sha256": "805ce520292bffe4a492ff990c88d3c54402585c7591a272814880dad8c224b5"
     },
     {
-      "bytes": 21009,
+      "bytes": 22941,
       "path": "artifacts/evidence/graph-descriptor.json",
-      "sha256": "8ef66274b5a95aa3523e72cbef39e3c81fcc0199a513c9d6aec74fa149af409d"
+      "sha256": "2a4ee18edcfb7bf9b5e83929302e76a874acecbf9c8ce195f5fa3ece5c578e7a"
     },
     {
       "bytes": 394,
@@ -23,7 +23,7 @@
     {
       "bytes": 4118,
       "path": "artifacts/evidence/simulation-chain.json",
-      "sha256": "d9a7161306609c2405584d0d6d16c66b2ce6130877d4266aefe0cb55464ecf14"
+      "sha256": "856dd9bd3af40c9c9f74593ab621df7c9cd6761fbfa30a75b5dd32ba9605b995"
     },
     {
       "bytes": 811,

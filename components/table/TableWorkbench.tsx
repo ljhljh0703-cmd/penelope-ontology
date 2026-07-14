@@ -6,7 +6,10 @@ import type { CreatorDecision } from "@/src/contracts/creator-decision";
 import type { CreatorDecisionResult } from "@/src/contracts/creator-decision";
 import type { GraphDescriptor } from "@/src/contracts/graph";
 import type { ParticipantIntent } from "@/src/contracts/participant-intent";
-import type { ProposalPatch } from "@/src/contracts/proposal";
+import {
+  MAX_DISPLAY_DESCRIPTION_LENGTH,
+  type ProposalPatch,
+} from "@/src/contracts/proposal";
 import type { RunRequest, RunResult } from "@/src/contracts/run";
 import type {
   SimulationSnapshot,
@@ -17,6 +20,7 @@ import type {
   DecisionApiResult,
   DemoBootstrap,
   DemoReplayResult,
+  OverlayReplayApiResult,
   TransitionApiResult,
 } from "@/components/table/api-types";
 
@@ -112,7 +116,9 @@ export function TableWorkbench() {
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [lastRunRequest, setLastRunRequest] = useState<RunRequest | null>(null);
   const [decisionResult, setDecisionResult] = useState<CreatorDecisionResult | null>(null);
+  const [lastCreatorDecision, setLastCreatorDecision] = useState<CreatorDecision | null>(null);
   const [decisionGraph, setDecisionGraph] = useState<GraphDescriptor | null>(null);
+  const [overlayReplay, setOverlayReplay] = useState<OverlayReplayApiResult | null>(null);
   const [transitions, setTransitions] = useState<SimulationTransitionRecord[]>([]);
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [editingProposal, setEditingProposal] = useState(false);
@@ -152,7 +158,9 @@ export function TableWorkbench() {
       setRunResult(null);
       setLastRunRequest(null);
       setDecisionResult(null);
+      setLastCreatorDecision(null);
       setDecisionGraph(null);
+      setOverlayReplay(null);
       setTransitions([]);
       setTimeline([{ label: "S0", note: "Initial fixture snapshot", snapshot: demo.snapshot }]);
       setEditingProposal(false);
@@ -182,6 +190,7 @@ export function TableWorkbench() {
   const completedDraft =
     runResult?.modelOutcome.outcome === "completed" ? runResult.modelOutcome.draft : null;
   const busy = ["loading", "running", "deciding", "transitioning"].includes(phase);
+  const visibleReplayResults = overlayReplay?.replayResults ?? bootstrap?.replayResults ?? [];
 
   const updateIntent = (index: number, value: string) => {
     setIntents((current) =>
@@ -208,7 +217,9 @@ export function TableWorkbench() {
     setRunResult(null);
     setLastRunRequest(null);
     setDecisionResult(null);
+    setLastCreatorDecision(null);
     setDecisionGraph(null);
+    setOverlayReplay(null);
     setTransitions([]);
     setTimeline([
       { label: "S0", note: "Initial fixture snapshot", snapshot: requestSnapshot },
@@ -243,17 +254,23 @@ export function TableWorkbench() {
   };
 
   const editableRulePatch = proposal?.patches.find((patch) => patch.op === "add_rule");
+  const appliedEditableRule =
+    decisionResult?.status === "applied" && editableRulePatch?.op === "add_rule"
+      ? decisionResult.overlay.rules.find(({ id }) => id === editableRulePatch.rule.id) ?? null
+      : null;
 
   const beginEdit = () => {
     if (!editableRulePatch || editableRulePatch.op !== "add_rule") return;
-    setEditedRuleDescription(editableRulePatch.rule.description);
+    setEditedRuleDescription(
+      editableRulePatch.rule.displayDescription ?? editableRulePatch.rule.description,
+    );
     setEditingProposal(true);
   };
 
   const decide = async (action: "accept" | "edit" | "reject") => {
     if (!proposal || !overlay || !snapshot || !lastRunRequest) return;
     if (action === "edit" && editedRuleDescription.trim().length === 0) {
-      setFormError("The edited rule needs a description.");
+      setFormError("The edited display wording cannot be empty.");
       return;
     }
 
@@ -261,7 +278,13 @@ export function TableWorkbench() {
     if (action === "edit") {
       patches = proposal.patches.map((patch) =>
         patch.op === "add_rule" && patch.rule.id === editableRulePatch?.rule.id
-          ? { ...patch, rule: { ...patch.rule, description: editedRuleDescription.trim() } }
+          ? {
+              ...patch,
+              rule: {
+                ...patch.rule,
+                displayDescription: editedRuleDescription.trim(),
+              },
+            }
           : patch,
       );
     }
@@ -294,8 +317,15 @@ export function TableWorkbench() {
         method: "POST",
         body: JSON.stringify({ runRequest: lastRunRequest, decision }),
       });
+      if (result.decision.status === "applied") {
+        if (!result.overlayReplay?.allPassed) {
+          throw new Error("The candidate overlay did not pass its fresh safety-control replay.");
+        }
+      }
       setDecisionResult(result.decision);
+      setLastCreatorDecision(decision);
       setDecisionGraph(result.graph);
+      setOverlayReplay(result.overlayReplay);
       setOverlay(result.decision.overlay);
       setSnapshot(result.decision.snapshot);
       if (result.decision.status === "applied") {
@@ -322,13 +352,18 @@ export function TableWorkbench() {
   };
 
   const advance = async (step: 1 | 2) => {
-    if (!overlay || !snapshot) return;
+    if (!snapshot || !lastRunRequest || !lastCreatorDecision) return;
     setApiError(null);
     setPhase("transitioning");
     try {
       const result = await apiRequest<TransitionApiResult>("/api/transitions", {
         method: "POST",
-        body: JSON.stringify({ overlay, snapshot, step, participantIntents: intents }),
+        body: JSON.stringify({
+          runRequest: lastRunRequest,
+          decision: lastCreatorDecision,
+          snapshot,
+          step,
+        }),
       });
       if (result.status !== "applied") {
         const detail = result.violations.map(({ message }) => message).join(" ");
@@ -368,7 +403,7 @@ export function TableWorkbench() {
   if (phase === "loading" && !bootstrap) {
     return (
       <main id="main-content" className="workbench loading-screen" aria-busy="true">
-        <p className="kicker">FIXTURE MODE</p>
+        <p className="kicker">FIXTURE MODE · NO LIVE CALL</p>
         <h1>Preparing the Table rehearsal…</h1>
         <p>Loading the synthetic World Pack, overlay, snapshot, and frozen replay.</p>
       </main>
@@ -402,8 +437,9 @@ export function TableWorkbench() {
           </div>
           <p className="lede">
             Fluent default prose can still flatten a voice or invent connective lore. This harness
-            applies the creator’s style, exposes what each character can know, isolates new canon,
-            and advances state only after creator approval.
+            makes creator-owned style constraints explicit, carries them into the structured
+            contract, exposes what each character can know, isolates new canon, and advances state
+            only after creator approval.
           </p>
         </div>
         <dl className="run-strip">
@@ -652,11 +688,31 @@ export function TableWorkbench() {
                     <div>
                       <span>{proposal.id}</span>
                       <h3>{proposal.summary}</h3>
-                      {proposal.patches.map((patch) => (
-                        <p key={patch.op === "add_rule" ? patch.rule.id : patch.claim.id}>
-                          {patch.op === "add_rule" ? patch.rule.description : patch.claim.summary}
-                        </p>
-                      ))}
+                      {proposal.patches.map((patch) => {
+                        if (patch.op === "add_claim") {
+                          return <p key={patch.claim.id}>{patch.claim.summary}</p>;
+                        }
+                        const displayWording =
+                          appliedEditableRule?.id === patch.rule.id
+                            ? appliedEditableRule.displayDescription
+                            : patch.rule.displayDescription;
+                        return (
+                          <div className="proposal-rule-copy" key={patch.rule.id}>
+                            <p data-testid="proposal-semantic-rule">
+                              <strong>Locked semantic rule</strong>
+                              <span data-testid="proposal-semantic-description">
+                                {patch.rule.description}
+                              </span>
+                            </p>
+                            {displayWording ? (
+                              <p data-testid="proposal-display-wording">
+                                <strong>Display wording · non-authoritative</strong>
+                                {displayWording}
+                              </p>
+                            ) : null}
+                          </div>
+                        );
+                      })}
                     </div>
                     <dl>
                       <div><dt>Base overlay</dt><dd>v{proposal.baseOverlayVersion}</dd></div>
@@ -666,11 +722,21 @@ export function TableWorkbench() {
 
                   {editingProposal ? (
                     <div className="edit-rule">
-                      <label htmlFor="edited-rule">Edit the rule description</label>
-                      <textarea id="edited-rule" rows={3} value={editedRuleDescription} onChange={(event) => setEditedRuleDescription(event.target.value)} />
+                      <label htmlFor="edited-rule">Edit display wording</label>
+                      <p className="trace-line">Rule identity, kind, and semantic description remain locked.</p>
+                      <textarea
+                        id="edited-rule"
+                        rows={3}
+                        maxLength={MAX_DISPLAY_DESCRIPTION_LENGTH}
+                        value={editedRuleDescription}
+                        onChange={(event) => setEditedRuleDescription(event.target.value)}
+                      />
+                      <small>
+                        {editedRuleDescription.length}/{MAX_DISPLAY_DESCRIPTION_LENGTH} · display only
+                      </small>
                       <div className="button-group">
                         <button className="button secondary" type="button" onClick={() => setEditingProposal(false)}>Cancel</button>
-                        <button className="button primary" type="button" onClick={() => void decide("edit")} data-testid="decision-apply-edit">Apply edited rule</button>
+                        <button className="button primary" type="button" onClick={() => void decide("edit")} data-testid="decision-apply-edit">Apply display wording</button>
                       </div>
                     </div>
                   ) : null}
@@ -754,7 +820,7 @@ export function TableWorkbench() {
                       <div><dt>Canon</dt><dd>overlay v{overlay.version}</dd></div>
                       <div><dt>State</dt><dd>idle → watching → signal_seen</dd></div>
                       <div><dt>Style</dt><dd>{styleProfile?.constraints.length ?? 0} constraints exposed</dd></div>
-                      <div><dt>Replay</dt><dd>{bootstrap.replayResults.filter(({ status }) => status === "pass").length}/{bootstrap.replayResults.length} controls pass</dd></div>
+                      <div><dt>Replay</dt><dd>{visibleReplayResults.filter(({ status }) => status === "pass").length}/{visibleReplayResults.length} controls pass</dd></div>
                     </dl>
                     <button className="button secondary" type="button" onClick={() => void loadDemo()} data-testid="replay-demo">
                       Replay demo
@@ -768,13 +834,28 @@ export function TableWorkbench() {
           <section className="replay-panel panel" aria-labelledby="replay-title" data-testid="replay-panel">
             <div className="panel-heading">
               <div>
-                <p className="kicker">05 / FROZEN REPLAY</p>
-                <h2 id="replay-title">The controls keep their expected outcomes.</h2>
+                <p className="kicker">
+                  {overlayReplay ? "05 / APPROVED-OVERLAY REPLAY" : "05 / FROZEN BASELINE"}
+                </p>
+                <h2 id="replay-title">
+                  {overlayReplay
+                    ? overlayReplay.allPassed
+                      ? "The approved overlay keeps its safety controls intact."
+                      : "The approved overlay failed a safety control."
+                    : "The baseline controls keep their expected outcomes."}
+                </h2>
+                <p className="trace-line" data-testid="replay-authority">
+                  {overlayReplay
+                    ? `fresh server replay · overlay v${overlayReplay.overlayVersion} · ${overlayReplay.overlayHash.slice(0, 12)}…`
+                    : "server-executed baseline fixture suite"}
+                </p>
               </div>
-              <span className="status-chip neutral">SERVER EXECUTED</span>
+              <span className={`status-chip ${overlayReplay?.allPassed ? "pass" : "neutral"}`}>
+                {overlayReplay ? (overlayReplay.allPassed ? "FRESH PASS" : "REGRESSION") : "SERVER EXECUTED"}
+              </span>
             </div>
             <div className="replay-list">
-              {bootstrap.replayResults.map((result, index) => (
+              {visibleReplayResults.map((result, index) => (
                 <article key={result.id}>
                   <span className="replay-index">{String(index + 1).padStart(2, "0")}</span>
                   <div><h3>{result.label}</h3><p>{result.detail}</p></div>

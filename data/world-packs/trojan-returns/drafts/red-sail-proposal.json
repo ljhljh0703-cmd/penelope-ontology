@@ -35,7 +35,8 @@
           "rule": {
             "id": "rule.creator.red_sail_signal",
             "kind": "expansion",
-            "description": "In this creator canon, Ithacans treat a returning ship's red sail as a signal to begin the royal harbor watch."
+            "description": "In this creator canon, Ithacans treat a returning ship's red sail as a signal to begin the royal harbor watch.",
+            "displayDescription": null
           }
         }
       ]
