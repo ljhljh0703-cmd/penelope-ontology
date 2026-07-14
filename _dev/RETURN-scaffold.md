@@ -2,6 +2,8 @@
 
 Status: `COMPLETE_SCAFFOLD_VERIFIED`. This status covers Day 0 groundwork only, not the core product.
 
+Historical note: this RETURN records the Day-0 decision at the time it was produced. User-approved decisions D-018 through D-025 now supersede its blanket rejection of local TRPG intent composition and bounded simulation. Current scope lives in `docs/BUILD-WEEK-COMMAND-CENTER.md`; the verified scaffold evidence below remains unchanged.
+
 ## Added
 
 - local Git repository and public-safe repository contract

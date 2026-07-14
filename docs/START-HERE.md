@@ -1,21 +1,24 @@
 # Start here
 
-This is the Day 0 scaffold for a Build Week Work & Productivity project. The final product name is intentionally undecided; “Narrative Ontology Harness” is a technical working label.
+This is the Day 0 scaffold for a Build Week Work & Productivity project. The final product name is intentionally undecided; “Narrative Knowledge Harness” is a technical working label.
+
+For the current status, deadline plan, Go/No-Go gates, and next Codex task boundary, read [`BUILD-WEEK-COMMAND-CENTER.md`](./BUILD-WEEK-COMMAND-CENTER.md).
 
 ## Product in one sentence
 
-A creative engine that writes inside a creator's world, cites the canon it used, and asks before making new lore official.
+A rehearsal workbench that combines participant intents inside a creator's world and style, shows the evidence it used, and applies only creator-approved changes to the next state.
 
-The intended users are writers, narrative designers, and tabletop game masters who spend time correcting plausible-sounding continuity errors after AI generation. The product does not claim that a language model “remembers the world.” It builds a visible control path around the model:
+The intended users are professional GMs, narrative production teams, writers, and game scenario or quest designers who spend time reconciling multiple intents, generic model prose, and plausible-sounding continuity errors. The product does not claim that a language model “remembers the world” or naturally owns the creator's voice. It builds a visible control path around the model:
 
 ```text
-World Pack
+ParticipantIntent[] + StyleProfile + World Pack / SimulationSnapshot
 → deterministic retrieval
 → GPT-5.6 structured draft
 → hard validation
 → creator decision
-→ versioned canon overlay
-→ frozen replay
+→ derived canon/knowledge graph
+→ versioned canon overlay + deterministic transition
+→ second snapshot + frozen replay
 ```
 
 ## Current truth
@@ -29,6 +32,8 @@ Implemented in this scaffold:
 - contract tests and CI skeleton
 - product, architecture, demo, submission, and evidence plans
 
+The current `app/page.tsx` is a historical Day-0 presentation shell. It still shows the earlier validator-only concept and old working label; it is not evidence of the approved Table workflow and will be replaced during the core build.
+
 Not implemented yet:
 
 - retrieval
@@ -37,6 +42,9 @@ Not implemented yet:
 - creator accept/edit/reject flow
 - canon hashing and versioned overlay
 - executable replay runner
+- participant/style contracts and intent lineage
+- canon/knowledge graph descriptor and view
+- bounded two-step simulation scenario and transitions
 - end-to-end demo
 
 ## Local setup
@@ -71,7 +79,7 @@ npm run verify
 
 ## Why this is not README.md yet
 
-The repository's evidence-packaging skill failed its README write preflight because its source manifest is stale. This file is a temporary technical entry point. A public README remains a submission blocker until that skill is refreshed and the implemented claims can be re-audited.
+This file is a temporary technical entry point. The evidence audit is available, but the product claims are not: the core vertical slice and live GPT-5.6 evidence do not exist yet. A public README will be derived from the verified Evidence Packet after those gates pass, then checked against the repository, Devpost copy, and demo video.
 
 ## Official OpenAI implementation sources
 

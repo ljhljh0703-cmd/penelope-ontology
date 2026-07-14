@@ -1,12 +1,13 @@
 # Repository operating contract
 
-This repository is the public-safe Build Week workspace for a narrative ontology harness. Read this file and `_dev/CORE-BUILD-DISPATCH.md` before implementing the core slice.
+This repository is the public-safe Build Week workspace for a narrative knowledge harness. Read this file and `_dev/CORE-BUILD-DISPATCH.md` before implementing the core slice.
 
 ## Product boundary
 
 - Track: Work & Productivity.
-- Working technical label: Narrative Ontology Harness. Do not invent or lock a final brand name.
-- Core slice: World Pack → deterministic retrieval → GPT-5.6 structured draft → hard validation → creator decision → canon overlay → frozen replay.
+- Working technical label: Narrative Knowledge Harness. Do not invent or lock a final brand name.
+- Primary users: professional GMs, narrative production teams, and game scenario or quest designers.
+- Core slice: facilitator-collected participant intents + creator-owned style profile → character-scoped retrieval → GPT-5.6 structured draft → hard validation → creator decision → canon overlay and deterministic state transition → canon/knowledge graph view → frozen replay.
 - Default policy: closed world. Unsupported facts are blocked or surfaced as expansion proposals.
 - GPT-5.6 live runs and deterministic fixture runs must never be presented as the same evidence.
 
@@ -24,8 +25,10 @@ Never add private story IP, personal conversations, private knowledge-base conte
 4. Every hard violation fails closed. A blocked draft is untrusted and cannot update canon.
 5. Creator approval must be version-aware. An unapproved, rejected, or stale proposal cannot change the canon hash.
 6. Tie-breaking in retrieval and replay must be deterministic.
-7. Add no graph database, embeddings, authentication, collaboration server, multi-agent orchestration, or general-purpose editor during the MVP.
-8. Record rejected alternatives and the condition that would make each one worth revisiting.
+7. The MVP includes a deterministic graph view derived from typed JSON, local facilitator-collected multi-intent composition, and a bounded two-step simulation. Do not claim a graph database, remote multi-user room, or long-running autonomous simulation.
+8. Add no graph database, embeddings, authentication, collaboration server, multi-agent orchestration, or general-purpose editor during the MVP.
+9. Record rejected alternatives and the condition that would make each one worth revisiting.
+10. Style profiles must be original, explicit constraint bundles. Do not imitate a living author or claim model-vendor writing superiority without a controlled evaluation.
 
 ## Verification
 
@@ -39,4 +42,4 @@ Live GPT-5.6 smoke tests are manual and must be reported separately. Never claim
 
 ## Current phase
 
-Day 0 scaffold only. Contracts, static presentation, sample data, and contract tests may be present. Retrieval, live GPT-5.6 generation, validators, creator gate, replay engine, and final README remain pending until their tests and evidence exist.
+Day 0 scaffold only. Contracts, static presentation, sample data, and contract tests may be present. Participant-intent and style-profile contracts, graph descriptors, simulation transitions, retrieval, live GPT-5.6 generation, validators, creator gate, replay engine, and final README remain pending until their tests and evidence exist.
