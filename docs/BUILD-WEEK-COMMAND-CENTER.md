@@ -1,7 +1,7 @@
 # Build Week command center
 
 Status snapshot: **2026-07-15 KST**
-Current state: **Core fixture vertical slice, authority hardening, production browser suite, and local deployment smoke verified; live-model, final clean-copy rehearsal, and external submission gates remain.**
+Current state: **Core fixture vertical slice, authority hardening, clean-clone identified release gate, and exact-SHA local production smoke verified; live-model and external submission gates remain.**
 
 Official submission deadline: **2026-07-22 09:00 KST** (2026-07-21 17:00 PDT).
 Internal submission freeze: **2026-07-21 23:00 KST**. The final ten hours are emergency buffer, not feature time.
@@ -44,8 +44,8 @@ The primary demo is not “AI writes mythology” and not four unrelated error c
 | Core contracts and deterministic engine | verified | eight demo-critical contract groups plus retrieval, validation, overlay, graph, simulation, exact-overlay replay, and transition-authority tests |
 | Table product surface | verified fixture-only | two local intents, style profile, graph, accept/edit/reject, fresh 4/4 approved-overlay replay, S0r, and two steps are visible without JSON editing |
 | Local release gate | verified | evidence generation and manifest, lint, typecheck, 139 unit/API tests, privacy scan over 150 public candidates, production build, and 10 browser checks pass |
-| Fresh-copy rehearsal | previous baseline verified; current hardening pending | prior clean copy passed; the final hardening commit still needs its own clean clone and identified release gate |
-| Deployment smoke | functional path verified; clean-source identity pending | exact identity comparison, headers, fixture flow, replay, S0r→S1→S2 hash/canon continuity, and live denial pass locally; the final commit must repeat this from a clean clone before certification |
+| Fresh-copy rehearsal | verified | clean clone of implementation proof commit `fbb1b50497bff67eb6e83467cbdabc579a1c87c2` installed 395 packages, reported 0 vulnerabilities, passed `BUILD_SOURCE_OK`, 139 tests, privacy 150, production build, and 10 browser checks |
+| Deployment smoke | verified locally for implementation proof commit | cache-busted exact SHA, root boundary, all declared security headers, health, fixture flow, exact-overlay replay, S0r→S1→S2 hash/canon continuity, and public-live denial passed against `next start`; hosted origin remains pending |
 | Live GPT-5.6 | adapter verified; real call blocked | strict Responses adapter and typed errors are mock-tested; no API key/live response evidence exists |
 | Style controllability probe | protocol verified; live result blocked | same-model AB/BA schedule, no-retry capture, masked rubric, integrity hashes, and the focused style-evaluation suite pass; four live calls and creator ratings do not exist |
 | Quest production extension | target only | no `QuestSpec`, linter, generator, evaluation, or user proof exists |

@@ -2,7 +2,7 @@
   "type": "UsageReceipt",
   "schema_version": "1.0",
   "date": "2026-07-15",
-  "task": "OpenAI Build Week narrative ontology harness core vertical slice and evidence package",
+  "task": "OpenAI Build Week Narrative Knowledge Harness release evidence and submission preparation",
   "agent": "codex",
   "model": "GPT-5",
   "platform": "Codex Desktop",
@@ -10,18 +10,20 @@
   "session_id": "private-not-recorded-in-repository",
   "source_return": "_dev/RETURN-core-vertical-slice.md",
   "blocked_by_safeguard": [
-    "README write",
-    "portfolio case-study derivation"
+    "root README candidate-mode approval",
+    "portfolio-refiner stale canonical dependency",
+    "live GPT-5.6 credentials and evidence"
   ],
   "route": {
-    "intent": "project-evidence-package",
+    "intent": "project-evidence-package-and-copy-refinement",
     "method": "router",
     "match": "hit",
     "entry_point": "skills/package-project-evidence/SKILL.md",
     "based_on": [
       "AGENTS.md",
       "_dev/CORE-BUILD-DISPATCH.md",
-      "skills/package-project-evidence/SKILL.md"
+      "skills/package-project-evidence/SKILL.md",
+      "skills/portfolio-refiner/source-manifest.json"
     ],
     "selected_skills": [
       {
@@ -29,7 +31,14 @@
         "version": "1.0",
         "source_ref": "skills/package-project-evidence/SKILL.md",
         "source_sha256": "b40f0b8458e64e5cc747fc1d8a8e3a66bc0422652655b797e7e7cf527846fc8f",
-        "reason": "Public README and later portfolio claims must derive from verified repository evidence without claim drift."
+        "reason": "Public claims and later README or portfolio surfaces must derive from verified repository evidence without drift."
+      },
+      {
+        "id": "portfolio-refiner-preflight",
+        "version": "0.2.1",
+        "source_ref": "skills/portfolio-refiner/source-manifest.json",
+        "source_sha256": "81306d827a5cff9dca55ca3256b2e99c207bbe8098c2fd1d5fc11370453e762b",
+        "reason": "The user requested portfolio-grade copy, so the canonical refine route was checked before drafting and stopped on stale state."
       }
     ],
     "loaded": [
@@ -42,6 +51,16 @@
         "ref": "skills/package-project-evidence/source-manifest.json",
         "sha256": "4f1d4984303c8697d4961c6c487c444d5fc5886f46e5d808f4e56d28dbcfe086",
         "role": "source_manifest"
+      },
+      {
+        "ref": "skills/portfolio-refiner/SKILL.md",
+        "sha256": "a1eec84cc7cd079919e80f8c0ec37ef237b530f9016d9514930303b83690f639",
+        "role": "adapter_entry_only"
+      },
+      {
+        "ref": "skills/portfolio-refiner/source-manifest.json",
+        "sha256": "81306d827a5cff9dca55ca3256b2e99c207bbe8098c2fd1d5fc11370453e762b",
+        "role": "stale_preflight"
       }
     ]
   },
@@ -49,43 +68,68 @@
     "used": [
       {
         "ref": "skills/package-project-evidence/SKILL.md",
-        "effect": "Required a repository truth audit, executable Evidence Packet, privacy gate, and claim separation before public copy."
+        "effect": "Required executable evidence, privacy scanning, clean-copy reproduction, and claim parity before public copy."
+      },
+      {
+        "ref": "skills/portfolio-refiner/source-manifest.json",
+        "effect": "Prevented portfolio prose from being reconstructed from stale memory or an out-of-date feedback adapter."
       }
     ],
     "failed": [
       {
         "ref": "skills/package-project-evidence/source-manifest.json",
-        "effect": "Write and derive preflights returned SERVING_CANDIDATE; explicit user approval and --allow-candidate are required, so README and portfolio prose were not generated."
+        "effect": "README write and derive modes remain SERVING_CANDIDATE; explicit user approval and --allow-candidate are required."
+      },
+      {
+        "ref": "skills/portfolio-refiner/source-manifest.json",
+        "effect": "Refine preflight returned SERVING_STALE because the feedback dependency hash changed; canonical copy work stopped before source loading."
       }
     ],
     "missing": [
-      "Explicit user approval for candidate-mode README and portfolio derivation"
+      "Explicit candidate-mode approval for root README generation",
+      "Synchronized portfolio-refiner feedback dependency",
+      "Sanitized live GPT-5.6 response metadata"
     ]
   },
   "verification": {
     "result": "partial",
     "gate": "pending",
     "first_pass": false,
-    "retries": 2,
+    "retries": 1,
     "evidence": [
       {
-        "check": "repository-release-gate",
-        "result": "pass",
+        "check": "clean-implementation-commit",
+        "result": "pass-fbb1b50497bff67eb6e83467cbdabc579a1c87c2",
+        "ref": "_dev/RETURN-core-vertical-slice.md"
+      },
+      {
+        "check": "identified-release-gate",
+        "result": "pass-139-tests-10-browser-150-privacy-0-vulnerabilities",
         "ref": "_dev/BUILD-NOTES.md"
       },
       {
+        "check": "exact-sha-deployment-smoke",
+        "result": "pass-build-identity-and-s0r-s1-s2-hash-chain",
+        "ref": "docs/JUDGE-GUIDE.md"
+      },
+      {
         "check": "public-evidence-manifest",
-        "result": "pass",
+        "result": "pass-1c6bea39ca5c173b13b8af42a260ce3f08f84d832d40ad134380d586542af3ad",
         "ref": "artifacts/evidence/manifest.json"
       },
       {
-        "check": "README-and-portfolio-writing-preflight",
+        "check": "claim-parity",
+        "result": "pass-zero-drift-outside-refreshed-return-and-receipt",
+        "ref": "docs/EVIDENCE-LEDGER.md"
+      },
+      {
+        "check": "README-writing-preflight",
         "result": "candidate-awaiting-explicit-approval",
         "ref": "_dev/RETURN-core-vertical-slice.md"
       },
       {
-        "check": "release-and-fresh-copy-gates",
-        "result": "pass-123-tests-8-browser-0-vulnerabilities",
+        "check": "portfolio-refine-preflight",
+        "result": "stale-stopped-before-canonical-copy",
         "ref": "_dev/RETURN-core-vertical-slice.md"
       },
       {
@@ -99,8 +143,9 @@
     "mode": "metadata_only",
     "redactions": [
       "Raw prompts and private planning conversation omitted",
-      "API keys and raw live response IDs omitted",
-      "Codex session ID retained outside the public repository"
+      "API keys, raw model prose, and response IDs omitted",
+      "Private Codex feedback session ID retained outside the public repository",
+      "Personal absolute paths omitted from public artifacts"
     ]
   }
 }

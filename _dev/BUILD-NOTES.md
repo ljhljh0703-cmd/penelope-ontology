@@ -85,7 +85,8 @@ This file records implementation-time decisions without interrupting the critica
 
 - Integrated gate: 26 Vitest files / 139 tests PASS; evidence generation and seven-file manifest verification PASS; ESLint, TypeScript, privacy scan over 150 public candidates, and Next production build PASS.
 - Production browser: 10/10 PASS across desktop Chromium and mobile WebKit, including failed-decision fail-closed behavior, recovery, semantic/display separation, exact-overlay replay, and two transitions.
-- Deployment smoke functional checks PASS for `root-boundary`, `security-headers`, `build-identity`, `health`, `fixture-demo`, `approved-overlay-replay`, `two-step-transition`, and `live-route-denial`. Certification is intentionally pending until the final commit repeats the run from a clean clone through `build:identified`.
+- Clean clone of implementation proof commit `fbb1b50497bff67eb6e83467cbdabc579a1c87c2`: `npm ci` added 395 packages, vulnerability audit 0, evidence 7, 139 tests, privacy 150, `BUILD_SOURCE_OK`, production build, and 10 browser checks PASS.
+- Exact-SHA deployment smoke from that clean clone: PASS for `root-boundary`, `security-headers`, `build-identity`, `health`, `fixture-demo`, `approved-overlay-replay`, `two-step-transition`, and `live-route-denial`.
 - Independent adversarial re-audit: rule/claim semantic mutation P1 and human-audit concealment P2 are closed. Duplicate patches fail closed; patch ordering is normalized.
 
 ### Failures with new hypotheses
