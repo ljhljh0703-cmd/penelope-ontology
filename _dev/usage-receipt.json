@@ -1,0 +1,96 @@
+{
+  "type": "UsageReceipt",
+  "schema_version": "1.0",
+  "date": "2026-07-15",
+  "task": "OpenAI Build Week narrative ontology harness core vertical slice and evidence package",
+  "agent": "codex",
+  "model": "GPT-5",
+  "platform": "Codex Desktop",
+  "project": "narrative-ontology-harness",
+  "session_id": "private-not-recorded-in-repository",
+  "source_return": "_dev/RETURN-core-vertical-slice.md",
+  "blocked_by_safeguard": [
+    "README write",
+    "portfolio case-study derivation"
+  ],
+  "route": {
+    "intent": "project-evidence-package",
+    "method": "router",
+    "match": "hit",
+    "entry_point": "skills/package-project-evidence/SKILL.md",
+    "based_on": [
+      "AGENTS.md",
+      "_dev/CORE-BUILD-DISPATCH.md",
+      "skills/package-project-evidence/SKILL.md"
+    ],
+    "selected_skills": [
+      {
+        "id": "package-project-evidence",
+        "version": "1.0",
+        "source_ref": "skills/package-project-evidence/SKILL.md",
+        "source_sha256": "b40f0b8458e64e5cc747fc1d8a8e3a66bc0422652655b797e7e7cf527846fc8f",
+        "reason": "Public README and later portfolio claims must derive from verified repository evidence without claim drift."
+      }
+    ],
+    "loaded": [
+      {
+        "ref": "skills/package-project-evidence/SKILL.md",
+        "sha256": "b40f0b8458e64e5cc747fc1d8a8e3a66bc0422652655b797e7e7cf527846fc8f",
+        "role": "entry_point"
+      },
+      {
+        "ref": "skills/package-project-evidence/source-manifest.json",
+        "sha256": "4f1d4984303c8697d4961c6c487c444d5fc5886f46e5d808f4e56d28dbcfe086",
+        "role": "source_manifest"
+      }
+    ]
+  },
+  "knowledge": {
+    "used": [
+      {
+        "ref": "skills/package-project-evidence/SKILL.md",
+        "effect": "Required a repository truth audit, executable Evidence Packet, privacy gate, and claim separation before public copy."
+      }
+    ],
+    "failed": [
+      {
+        "ref": "skills/package-project-evidence/source-manifest.json",
+        "effect": "Write and derive preflights returned SERVING_STALE, so README and portfolio prose were not generated."
+      }
+    ],
+    "missing": [
+      "Vault Claude manifest refresh for README and portfolio derivation"
+    ]
+  },
+  "verification": {
+    "result": "partial",
+    "gate": "pending",
+    "first_pass": false,
+    "retries": 2,
+    "evidence": [
+      {
+        "check": "repository-release-gate",
+        "result": "pass",
+        "ref": "_dev/BUILD-NOTES.md"
+      },
+      {
+        "check": "public-evidence-manifest",
+        "result": "pass",
+        "ref": "artifacts/evidence/manifest.json"
+      },
+      {
+        "check": "README-and-portfolio-writing-preflight",
+        "result": "blocked-serving-stale",
+        "ref": "_dev/RETURN-core-vertical-slice.md"
+      }
+    ]
+  },
+  "privacy": {
+    "mode": "metadata_only",
+    "redactions": [
+      "Raw prompts and private planning conversation omitted",
+      "API keys and raw live response IDs omitted",
+      "Codex session ID retained outside the public repository"
+    ]
+  }
+}
