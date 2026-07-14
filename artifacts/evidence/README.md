@@ -2,16 +2,17 @@
 
 This directory is the stable, public-safe evidence surface for the Build Week project.
 
-Planned generated files:
+Current generated files:
 
-- `fixture-replay.json`: frozen fixture outcomes before and after an approved overlay
-- `intent-composition.json`: synthetic participant-to-character ownership and output-lineage assertions
-- `style-profile-check.json`: selected original style profile, objective constraint checks, and separately labeled human-rubric status
-- `graph-snapshots.json`: stable creator/character graph descriptors and proposal/approval diff hashes
-- `simulation-replay.json`: `idle → watching → signal_seen` transitions, chained state hashes, and unchanged-state negative cases
-- `live-sanitized.json`: sanitized metadata from at least one real GPT-5.6 run
-- `browser-smoke.json`: reviewer-path browser assertions and tested deployment URL
-- `claim-ledger.json`: machine-readable claims and evidence pointers used by README, Devpost, video, and portfolio copy
+- `evidence-packet.json`: machine-readable claim states and evidence pointers
+- `fixture-replay.json`: five frozen fixture cases across eight replay stages
+- `graph-descriptor.json`: deterministic creator and character graph projections
+- `simulation-chain.json`: proposal, approval/rebase, two transitions, and a blocked third step
+- `style-harness.json`: selected original profile, referenced constraints, and the human-judgment boundary
+- `live-readiness.json`: current live-adapter readiness; this is not evidence of a real GPT-5.6 call
+- `manifest.json`: SHA-256 and byte count for every generated public JSON artifact
+
+`live-sanitized.json` is added only after a real GPT-5.6 call passes the local privacy gate. Hosted browser evidence and a public deployment URL remain separate future release gates.
 
 Allowed live fields are timestamp, requested model, actual model, response status, token counts, validator result, and hashes of canonical request/result objects. A response ID may be hashed but is not published in raw form. Participant IDs in public artifacts must be synthetic local labels; no real account identity or remote-user claim is allowed.
 

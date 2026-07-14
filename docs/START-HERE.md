@@ -1,6 +1,6 @@
 # Start here
 
-This is the Day 0 scaffold for a Build Week Work & Productivity project. The final product name is intentionally undecided; “Narrative Knowledge Harness” is a technical working label.
+This repository contains the implemented core vertical slice for a Build Week Work & Productivity project. The final product name is intentionally undecided; “Narrative Knowledge Harness” is a technical working label.
 
 For the current status, deadline plan, Go/No-Go gates, and next Codex task boundary, read [`BUILD-WEEK-COMMAND-CENTER.md`](./BUILD-WEEK-COMMAND-CENTER.md).
 
@@ -23,29 +23,25 @@ ParticipantIntent[] + StyleProfile + World Pack / SimulationSnapshot
 
 ## Current truth
 
-Implemented in this scaffold:
+Implemented and fixture-verified:
 
-- Next.js and TypeScript application shell
-- strict World Pack and model-draft contracts
-- a small public-safe Greek mythology fixture
-- fixture/live evidence boundary
-- contract tests and CI skeleton
-- product, architecture, demo, submission, and evidence plans
+- a Next.js Table workbench for two local participant intents and one original creator-owned style profile
+- strict World Pack, model draft, overlay, decision, graph, simulation, and replay contracts
+- deterministic character-scoped retrieval, hard validation, provenance graph, creator decision, hashing, and two-step transition
+- a small public-safe Greek mythology fixture with five frozen cases and an eight-stage replay
+- a live GPT-5.6 Responses adapter with strict Structured Outputs and typed failure paths
+- fixture/live evidence separation, privacy scanning, browser tests, and generated public evidence artifacts
+- a clean candidate-copy rehearsal with a reproducible install and full release gate
 
-The current `app/page.tsx` is a historical Day-0 presentation shell. It still shows the earlier validator-only concept and old working label; it is not evidence of the approved Table workflow and will be replaced during the core build.
+The public surface defaults to fixture mode. It demonstrates the product flow without spending API credits or presenting fixture output as a live model response.
 
-Not implemented yet:
+Not verified or released yet:
 
-- retrieval
-- live GPT-5.6 call
-- hard validators
-- creator accept/edit/reject flow
-- canon hashing and versioned overlay
-- executable replay runner
-- participant/style contracts and intent lineage
-- canon/knowledge graph descriptor and view
-- bounded two-step simulation scenario and transitions
-- end-to-end demo
+- a real GPT-5.6 call and sanitized live-response metadata
+- a public hosted deployment
+- the final README, which is blocked by a stale local writing-skill manifest rather than product code
+- a narrated public demo video, `/feedback` submission field, and final Devpost submission
+- practitioner testing or evidence of productivity improvement
 
 ## Local setup
 
@@ -57,7 +53,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Fixture mode is the default and does not require an API key. Live mode will require `OPENAI_API_KEY`; until the live adapter and smoke evidence exist, fixture output must not be described as GPT-5.6 output.
+Fixture mode is the default and does not require an API key. Live mode requires both `ENABLE_OPENAI_LIVE=true` and `OPENAI_API_KEY`; until a real call is captured, fixture output must not be described as GPT-5.6 output.
 
 Run the local gate with:
 
@@ -67,19 +63,22 @@ npm run verify
 
 ## Repository map
 
-- `app/`: web presentation and future run endpoint
-- `src/domain/`: deterministic schemas and future validation core
+- `app/`: Table workbench and stateless HTTP endpoints
+- `components/table/`: workbench state machine and accessible graph view
+- `src/application/`: run orchestration and frozen replay
+- `src/domain/`: deterministic retrieval, validation, graph, overlay, and simulation core
 - `src/contracts/`: structured model and HTTP contracts
 - `src/ports/`: model boundary
-- `src/adapters/`: fixture and future GPT-5.6 adapters
+- `src/adapters/`: filesystem, fixture, and gated GPT-5.6 adapters
 - `data/world-packs/`: public-safe demo data
-- `tests/`: contract, integration, replay, and later browser checks
+- `tests/`: contract, unit, API integration, replay, privacy, and browser checks
+- `artifacts/evidence/`: sanitized generated fixture evidence and SHA-256 manifest
 - `docs/`: PRD, architecture, evidence, and submission preparation
 - `_dev/CORE-BUILD-DISPATCH.md`: clean Codex-session contract for core implementation
 
 ## Why this is not README.md yet
 
-This file is a temporary technical entry point. The evidence audit is available, but the product claims are not: the core vertical slice and live GPT-5.6 evidence do not exist yet. A public README will be derived from the verified Evidence Packet after those gates pass, then checked against the repository, Devpost copy, and demo video.
+This file remains the technical entry point because `package-project-evidence` write-mode preflight reported `SERVING_STALE` for the README delegate files. The executable Evidence Packet now exists, but README generation must wait until Vault Claude refreshes that manifest and the preflight passes. Live GPT-5.6 evidence remains a separate pending gate.
 
 ## Official OpenAI implementation sources
 

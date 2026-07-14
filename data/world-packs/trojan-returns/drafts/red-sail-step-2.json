@@ -1,0 +1,40 @@
+{
+  "styleProfileId": "style.table_ready_mythic",
+  "narrative": "The watch catches the approved red-sail signal, and Telemachus records the sighting without claiming who is aboard.",
+  "mentionedEntityIds": ["telemachus"],
+  "appliedStyleConstraintIds": [
+    "style.table_ready_mythic.avoidance",
+    "style.table_ready_mythic.dialogue",
+    "style.table_ready_mythic.goal",
+    "style.table_ready_mythic.max_words",
+    "style.table_ready_mythic.tense",
+    "style.table_ready_mythic.viewpoint"
+  ],
+  "usedClaimIds": [],
+  "utterances": [
+    {
+      "speakerId": "telemachus",
+      "authorizingIntentId": "intent.telemachus",
+      "contributingIntentIds": ["intent.penelope"],
+      "text": "The signal is seen. We know the sail, not yet the traveler.",
+      "assertedClaimIds": [],
+      "certainty": "certain"
+    }
+  ],
+  "actions": [
+    {
+      "actorEntityId": "telemachus",
+      "authorizingIntentId": "intent.telemachus",
+      "contributingIntentIds": ["intent.penelope"],
+      "op": "set_variable",
+      "variableId": "harbor_watch",
+      "from": "watching",
+      "to": "signal_seen",
+      "evidenceClaimIds": [],
+      "evidenceRuleIds": ["rule.creator.red_sail_signal"]
+    }
+  ],
+  "assertedClaims": [],
+  "unknowns": [],
+  "proposals": []
+}

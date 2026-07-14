@@ -2,14 +2,18 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Narrative Ontology Harness — Working Build",
-  description: "A provenance-aware, creator-gated narrative generation harness.",
+  title: "Narrative Knowledge Harness — Table Rehearsal",
+  description:
+    "A fixture-mode narrative rehearsal workbench with character-scoped evidence, creator-gated canon, and bounded state transitions.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <a className="skip-link" href="#main-content">Skip to Table workbench</a>
+        {children}
+      </body>
     </html>
   );
 }

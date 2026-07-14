@@ -1,0 +1,31 @@
+{
+  "styleProfileId": "style.table_ready_mythic",
+  "narrative": "Penelope names Calypso and Ogygia as Odysseus' exact present circumstances, speaking beyond her available knowledge.",
+  "mentionedEntityIds": ["calypso", "odysseus", "ogygia", "penelope"],
+  "appliedStyleConstraintIds": [
+    "style.table_ready_mythic.avoidance",
+    "style.table_ready_mythic.dialogue",
+    "style.table_ready_mythic.goal",
+    "style.table_ready_mythic.max_words",
+    "style.table_ready_mythic.tense",
+    "style.table_ready_mythic.viewpoint"
+  ],
+  "usedClaimIds": [
+    "claim.odyssey.odysseus_at_ogygia",
+    "claim.odyssey.penelope_uncertain_fate"
+  ],
+  "utterances": [
+    {
+      "speakerId": "penelope",
+      "authorizingIntentId": "intent.penelope",
+      "contributingIntentIds": [],
+      "text": "Calypso keeps Odysseus on Ogygia; I know the island and his jailer.",
+      "assertedClaimIds": ["claim.odyssey.odysseus_at_ogygia"],
+      "certainty": "certain"
+    }
+  ],
+  "actions": [],
+  "assertedClaims": [],
+  "unknowns": [],
+  "proposals": []
+}

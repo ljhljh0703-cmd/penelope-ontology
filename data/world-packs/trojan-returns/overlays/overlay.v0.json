@@ -1,0 +1,24 @@
+{
+  "id": "creator_canon",
+  "version": 0,
+  "worldPackId": "trojan-returns-demo",
+  "worldPackVersion": "0.2.0",
+  "claims": [],
+  "rules": [
+    {
+      "id": "rule.character_knowledge",
+      "kind": "knowledge",
+      "description": "A character may assert only claims present in that character's knowledge profile.",
+      "layerId": "creator_canon",
+      "status": "active"
+    },
+    {
+      "id": "rule.closed_world",
+      "kind": "world",
+      "description": "Unsupported facts are blocked or isolated as expansion proposals.",
+      "layerId": "creator_canon",
+      "status": "active"
+    }
+  ],
+  "hash": "15fe0c8edf47d0a78322b08d33a598036b7498b7a2fb6ee2f90c64da01327806"
+}

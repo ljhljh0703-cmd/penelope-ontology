@@ -1,0 +1,15 @@
+{
+  "scenarioId": "scenario.harbor_watch",
+  "turnIndex": 0,
+  "canonProfileId": "profile.homeric_default",
+  "styleProfileId": "style.table_ready_mythic",
+  "baseStateId": "state.ithaca.odyssey_book_1",
+  "worldPackVersion": "0.2.0",
+  "overlayId": "creator_canon",
+  "overlayVersion": 0,
+  "canonHash": "15fe0c8edf47d0a78322b08d33a598036b7498b7a2fb6ee2f90c64da01327806",
+  "presentEntityIds": ["eurycleia", "penelope", "telemachus"],
+  "deceasedEntityIds": ["hector"],
+  "variables": [{ "id": "harbor_watch", "value": "idle" }],
+  "stateHash": "ffc558f0c9bd9139cd18c7408cb393b405d75698cc412d35cf345b1c5094f50e"
+}

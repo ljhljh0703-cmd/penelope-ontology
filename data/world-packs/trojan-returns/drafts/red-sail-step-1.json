@@ -1,0 +1,40 @@
+{
+  "styleProfileId": "style.table_ready_mythic",
+  "narrative": "Telemachus orders the approved red-sail watch while Penelope keeps the household from declaring a victory too soon.",
+  "mentionedEntityIds": ["penelope", "telemachus"],
+  "appliedStyleConstraintIds": [
+    "style.table_ready_mythic.avoidance",
+    "style.table_ready_mythic.dialogue",
+    "style.table_ready_mythic.goal",
+    "style.table_ready_mythic.max_words",
+    "style.table_ready_mythic.tense",
+    "style.table_ready_mythic.viewpoint"
+  ],
+  "usedClaimIds": ["claim.odyssey.penelope_uncertain_fate"],
+  "utterances": [
+    {
+      "speakerId": "telemachus",
+      "authorizingIntentId": "intent.telemachus",
+      "contributingIntentIds": ["intent.penelope"],
+      "text": "Raise the harbor watch. The red sail permits vigilance, not certainty.",
+      "assertedClaimIds": [],
+      "certainty": "certain"
+    }
+  ],
+  "actions": [
+    {
+      "actorEntityId": "telemachus",
+      "authorizingIntentId": "intent.telemachus",
+      "contributingIntentIds": ["intent.penelope"],
+      "op": "set_variable",
+      "variableId": "harbor_watch",
+      "from": "idle",
+      "to": "watching",
+      "evidenceClaimIds": [],
+      "evidenceRuleIds": ["rule.creator.red_sail_signal"]
+    }
+  ],
+  "assertedClaims": [],
+  "unknowns": [],
+  "proposals": []
+}

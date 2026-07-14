@@ -1,0 +1,15 @@
+{
+  "scenarioId": "scenario.helen_comparison",
+  "turnIndex": 0,
+  "canonProfileId": "profile.helen_comparison",
+  "styleProfileId": "style.table_ready_mythic",
+  "baseStateId": "state.troy.hector_funeral_complete",
+  "worldPackVersion": "0.2.0",
+  "overlayId": "creator_canon",
+  "overlayVersion": 0,
+  "canonHash": "15fe0c8edf47d0a78322b08d33a598036b7498b7a2fb6ee2f90c64da01327806",
+  "presentEntityIds": ["hector", "helen"],
+  "deceasedEntityIds": ["hector"],
+  "variables": [],
+  "stateHash": "89d43f4febb695614dd4b56b0b5916ed23573991cb83561e8e08dc8f5a7d7ace"
+}

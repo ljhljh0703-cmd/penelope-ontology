@@ -1,18 +1,17 @@
 # Demo scenario
 
-The demo uses `trojan-returns-demo@0.1.0`, one original creator-owned style profile, and the bounded `harbor_watch` simulation scenario. It does not claim coverage of Greek mythology outside the active pack, actual remote collaboration, or model-vendor writing superiority.
+The demo uses `trojan-returns-demo@0.2.0`, one original creator-owned style profile, and the bounded `harbor_watch` simulation scenario. It does not claim coverage of Greek mythology outside the active pack, actual remote collaboration, or model-vendor writing superiority.
 
 ## 1. Table setup: people, characters, and style stay separate
 
-The facilitator collects three local synthetic participant inputs:
+The primary flow collects two local synthetic participant inputs:
 
 | Participant | Controlled character | Intent |
 |---|---|---|
-| `participant.a` | `penelope` | Seek a sign without pretending to know where Odysseus is |
-| `participant.b` | `eurycleia` | Restrain rumor and protect Penelope from false certainty |
-| `participant.c` | `telemachus` | Propose that the harbor watch use a red sail as a return signal |
+| `participant.one` | `penelope` | Keep the household from confusing a signal with certainty |
+| `participant.two` | `telemachus` | Propose that the harbor watch use a red sail as a return signal |
 
-The selected `style.ithaca_restrained` profile is an original constraint bundle: limited-third viewpoint, restrained dialogue, uncertainty carried through subtext, no encyclopedic exposition, no living-author imitation, and a fixed output bound.
+The selected `style.table_ready_mythic` profile is an original constraint bundle: limited-third viewpoint, present tense, table-ready subtext, uncertainty carried through a playable choice, no living-author imitation, and a fixed output bound.
 
 Expected contract behavior:
 
@@ -26,7 +25,7 @@ Expected contract behavior:
 
 The model receives a separate `agent_view` for each controlled character plus the style profile. Penelope's view does not contain the exact Ogygia-location claim; the facilitator audit graph may show that the narrator has the edge while Penelope does not.
 
-GPT-5.6 or the matching fixture produces a bounded scene candidate. Penelope may express hope or uncertainty. Eurycleia may caution against rumor. Telemachus may propose the red-sail convention. Every utterance and action remains attributable to input intents and evidence IDs.
+GPT-5.6 or the matching fixture produces a bounded scene candidate. Penelope preserves the distinction between signal and certainty; Telemachus proposes the red-sail convention. Every utterance and action remains attributable to input intents and evidence IDs. A separate grounded replay pairs Penelope with Eurycleia.
 
 Expected result before creator action: `needs_creator_decision` with `unapproved_expansion` for the red-sail rule. The rule is original demo canon, not ancient mythology.
 
@@ -39,7 +38,7 @@ The facilitator-facing graph shows:
 - source-tradition conflict when the Helen comparison profile is selected
 - the red-sail rule as a ghost proposal
 
-The facilitator accepts, edits, or rejects against the current overlay version/hash. Reject or stale input changes nothing. Accept/edit returns the complete next overlay and a same-turn, same-variable rebased snapshot whose overlay/canon references and state hash match it; this rebase is not a simulation step. The immutable World Pack remains `0.1.0`. The proposal becomes an active graph relation only after the valid decision.
+The facilitator accepts, edits, or rejects against the current overlay version/hash. Reject or stale input changes nothing. Accept/edit returns the complete next overlay and a same-turn, same-variable rebased snapshot whose overlay/canon references and state hash match it; this rebase is not a simulation step. The immutable World Pack remains `0.2.0`. The proposal becomes an active graph relation only after the valid decision.
 
 ## 4. Real two-step simulation
 
@@ -80,4 +79,4 @@ After the two-step scenario, all unchanged control cases retain their exact expe
 
 ## 6. Style evidence boundary
 
-The demo may show the same model and evidence bundle with and without `style.ithaca_restrained`. Objective checks can cover output bounds, prohibited phrases, and referenced constraint IDs. Viewpoint, cadence, and voice are judged with a clearly labeled human rubric. This demonstrates a controllable style harness; it does not prove that Codex or GPT-5.6 writes better than Fable, Opus, or any other system.
+The demo may later show the same model and evidence bundle with and without `style.table_ready_mythic`. Objective checks can cover output bounds, prohibited phrases, and referenced constraint IDs. Viewpoint, cadence, and voice are judged with a clearly labeled human rubric. This demonstrates a controllable style harness; it does not prove that Codex or GPT-5.6 writes better than Fable, Opus, or any other system.

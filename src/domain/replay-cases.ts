@@ -1,61 +1,90 @@
-import { z } from "zod";
-import { HardViolationSchema } from "@/src/contracts/run";
-import { IdentifierSchema, type WorldPack } from "@/src/domain/schemas";
+import {
+  ReplayCaseSchema,
+  ReplayCaseSetSchema,
+  type ReplayCase,
+} from "@/src/contracts/replay";
+import type { WorldPack } from "@/src/domain/schemas";
 
-const ViolationCodeSchema = HardViolationSchema.shape.code;
+export { ReplayCaseSchema, ReplayCaseSetSchema };
+export type { ReplayCase };
 
-export const ReplayCaseSchema = z
-  .object({
-    id: IdentifierSchema,
-    stateId: IdentifierSchema,
-    canonProfileId: IdentifierSchema,
-    prompt: z.string().min(1),
-    expectedStatus: z.enum(["passed", "blocked", "needs_creator_decision"]),
-    requiredViolationCodes: z.array(ViolationCodeSchema),
-  })
-  .strict();
-
-export const ReplayCaseSetSchema = z
-  .array(ReplayCaseSchema)
-  .min(1)
-  .superRefine((cases, context) => {
-    const seen = new Set<string>();
-    for (const replayCase of cases) {
-      if (seen.has(replayCase.id)) {
-        context.addIssue({
-          code: "custom",
-          message: `Duplicate replay case id: ${replayCase.id}`,
-        });
-      }
-      seen.add(replayCase.id);
-    }
-  });
-
-export type ReplayCase = z.infer<typeof ReplayCaseSchema>;
+export type ReplayFixtureIndex = {
+  draftFixtureIds: ReadonlySet<string>;
+  overlayFixtureIds: ReadonlySet<string>;
+  snapshotFixtureIds: ReadonlySet<string>;
+};
 
 export const validateReplayCaseReferences = (
   pack: WorldPack,
   cases: ReadonlyArray<ReplayCase>,
+  fixtures: ReplayFixtureIndex,
 ): string[] => {
-  const stateIds = new Set(pack.states.map(({ id }) => id));
-  const profileIds = new Set(pack.canonProfiles.map(({ id }) => id));
   const declaredIds = new Set(pack.replayCaseIds);
-  const fixtureIds = new Set(cases.map(({ id }) => id));
+  const fixtureCaseIds = new Set(cases.map(({ id }) => id));
+  const styleProfileIds = new Set(pack.styleProfiles.map(({ id }) => id));
+  const characterIds = new Set(
+    pack.entities.filter(({ kind }) => kind === "character").map(({ id }) => id),
+  );
   const issues: string[] = [];
 
   for (const replayCase of cases) {
-    if (!stateIds.has(replayCase.stateId)) {
-      issues.push(`Replay ${replayCase.id} has unknown state ${replayCase.stateId}`);
-    }
-    if (!profileIds.has(replayCase.canonProfileId)) {
-      issues.push(`Replay ${replayCase.id} has unknown canon profile ${replayCase.canonProfileId}`);
+    const priorStageIds = new Set<string>();
+    for (const stage of replayCase.stages) {
+      if (stage.kind === "run") {
+        if (!fixtures.draftFixtureIds.has(stage.draftFixtureId)) {
+          issues.push(`Replay ${replayCase.id} references unknown draft fixture ${stage.draftFixtureId}`);
+        }
+        if (!fixtures.overlayFixtureIds.has(stage.overlayFixtureId)) {
+          issues.push(`Replay ${replayCase.id} references unknown overlay fixture ${stage.overlayFixtureId}`);
+        }
+        if (!fixtures.snapshotFixtureIds.has(stage.snapshotFixtureId)) {
+          issues.push(`Replay ${replayCase.id} references unknown snapshot fixture ${stage.snapshotFixtureId}`);
+        }
+        if (!styleProfileIds.has(stage.styleProfileId)) {
+          issues.push(`Replay ${replayCase.id} references unknown style profile ${stage.styleProfileId}`);
+        }
+        for (const entityId of stage.participantIntents.flatMap(
+          ({ controlledEntityIds }) => controlledEntityIds,
+        )) {
+          if (!characterIds.has(entityId)) {
+            issues.push(`Replay ${replayCase.id} controls unknown character ${entityId}`);
+          }
+        }
+      } else if (stage.kind === "decision") {
+        if (!priorStageIds.has(stage.proposalFromStageId)) {
+          issues.push(
+            `Replay ${replayCase.id} decision references unavailable stage ${stage.proposalFromStageId}`,
+          );
+        }
+        if (!fixtures.overlayFixtureIds.has(stage.expectedOverlayFixtureId)) {
+          issues.push(
+            `Replay ${replayCase.id} references unknown overlay fixture ${stage.expectedOverlayFixtureId}`,
+          );
+        }
+        if (!fixtures.snapshotFixtureIds.has(stage.expectedSnapshotFixtureId)) {
+          issues.push(
+            `Replay ${replayCase.id} references unknown snapshot fixture ${stage.expectedSnapshotFixtureId}`,
+          );
+        }
+      } else {
+        if (!fixtures.draftFixtureIds.has(stage.draftFixtureId)) {
+          issues.push(`Replay ${replayCase.id} references unknown draft fixture ${stage.draftFixtureId}`);
+        }
+        if (!fixtures.overlayFixtureIds.has(stage.overlayFixtureId)) {
+          issues.push(`Replay ${replayCase.id} references unknown overlay fixture ${stage.overlayFixtureId}`);
+        }
+        if (!fixtures.snapshotFixtureIds.has(stage.snapshotFixtureId)) {
+          issues.push(`Replay ${replayCase.id} references unknown snapshot fixture ${stage.snapshotFixtureId}`);
+        }
+      }
+      priorStageIds.add(stage.stageId);
     }
   }
 
   for (const id of declaredIds) {
-    if (!fixtureIds.has(id)) issues.push(`World Pack declares missing replay fixture ${id}`);
+    if (!fixtureCaseIds.has(id)) issues.push(`World Pack declares missing replay fixture ${id}`);
   }
-  for (const id of fixtureIds) {
+  for (const id of fixtureCaseIds) {
     if (!declaredIds.has(id)) issues.push(`Replay fixture ${id} is not declared by the World Pack`);
   }
 

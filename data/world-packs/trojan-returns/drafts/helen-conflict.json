@@ -1,0 +1,31 @@
+{
+  "styleProfileId": "style.table_ready_mythic",
+  "narrative": "Helen faces two active traditions: one places her at Troy, while another places the real Helen in Egypt. The draft refuses to erase the split.",
+  "mentionedEntityIds": ["egypt", "helen", "troy"],
+  "appliedStyleConstraintIds": [
+    "style.table_ready_mythic.avoidance",
+    "style.table_ready_mythic.dialogue",
+    "style.table_ready_mythic.goal",
+    "style.table_ready_mythic.max_words",
+    "style.table_ready_mythic.tense",
+    "style.table_ready_mythic.viewpoint"
+  ],
+  "usedClaimIds": [
+    "claim.helen.real_helen_in_egypt",
+    "claim.iliad.helen_at_troy"
+  ],
+  "utterances": [
+    {
+      "speakerId": "helen",
+      "authorizingIntentId": "intent.helen",
+      "contributingIntentIds": [],
+      "text": "Choose which song governs this table before you tell the company where I stood.",
+      "assertedClaimIds": [],
+      "certainty": "uncertain"
+    }
+  ],
+  "actions": [],
+  "assertedClaims": [],
+  "unknowns": ["The creator has not resolved conflict.helen_wartime_location."],
+  "proposals": []
+}

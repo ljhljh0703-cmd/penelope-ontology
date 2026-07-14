@@ -1,9 +1,9 @@
 {
-  "schemaVersion": "0.1.0",
+  "schemaVersion": "0.2.0",
   "meta": {
     "id": "trojan-returns-demo",
     "title": "Troy to Ithaca: two fixed moments",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "A deliberately small demo pack covering Hector's funeral and the opening state of the Odyssey.",
     "sourcePolicy": "original_summaries_no_translation_quotes"
   },
@@ -27,7 +27,7 @@
       "rightsStatus": "public_domain_source"
     },
     {
-      "id": "creator_canon.v0",
+      "id": "creator_canon",
       "traditionGroup": "creator_canon",
       "sourceWork": "Creator canon",
       "rightsStatus": "original_creator_canon"
@@ -42,7 +42,7 @@
       "url": "https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0134%3Abook%3D24",
       "editionNote": "Bibliographic reference only; no translation text is copied.",
       "rightsStatus": "reference_only",
-      "verificationStatus": "source_verify"
+      "verificationStatus": "verified"
     },
     {
       "id": "source.iliad.3",
@@ -52,7 +52,7 @@
       "url": "https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0134%3Abook%3D3",
       "editionNote": "Bibliographic reference only; no translation text is copied.",
       "rightsStatus": "reference_only",
-      "verificationStatus": "source_verify"
+      "verificationStatus": "verified"
     },
     {
       "id": "source.odyssey.1",
@@ -62,7 +62,7 @@
       "url": "https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0218%3Abook%3D1",
       "editionNote": "Bibliographic reference only; no translation text is copied.",
       "rightsStatus": "reference_only",
-      "verificationStatus": "source_verify"
+      "verificationStatus": "verified"
     },
     {
       "id": "source.helen.566",
@@ -72,7 +72,7 @@
       "url": "https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0100%3Acard%3D566",
       "editionNote": "Bibliographic reference only; no translation text is copied.",
       "rightsStatus": "reference_only",
-      "verificationStatus": "source_verify"
+      "verificationStatus": "verified"
     }
   ],
   "entities": [
@@ -198,22 +198,7 @@
       "sourceIds": ["source.odyssey.1"]
     }
   ],
-  "rules": [
-    {
-      "id": "rule.closed_world",
-      "kind": "world",
-      "description": "Unsupported facts are blocked or isolated as expansion proposals.",
-      "layerId": "creator_canon.v0",
-      "status": "active"
-    },
-    {
-      "id": "rule.character_knowledge",
-      "kind": "knowledge",
-      "description": "A character may assert only claims present in that character's knowledge profile.",
-      "layerId": "creator_canon.v0",
-      "status": "active"
-    }
-  ],
+  "rules": [],
   "beliefs": [
     {
       "characterId": "penelope",
@@ -232,32 +217,112 @@
       "phaseId": "troy.hector_funeral_complete",
       "locationId": "troy",
       "presentEntityIds": ["hector", "helen"],
-      "deceasedEntityIds": ["hector"],
-      "canonVersion": "0.1.0"
+      "deceasedEntityIds": ["hector"]
     },
     {
       "id": "state.ithaca.odyssey_book_1",
       "phaseId": "ithaca.odyssey_book_1",
       "locationId": "ithaca",
       "presentEntityIds": ["penelope", "telemachus", "eurycleia"],
-      "deceasedEntityIds": ["hector"],
-      "canonVersion": "0.1.0"
+      "deceasedEntityIds": ["hector"]
     }
   ],
   "canonProfiles": [
     {
       "id": "profile.homeric_default",
-      "activeLayerIds": ["homeric.iliad", "homeric.odyssey", "creator_canon.v0"],
+      "activeLayerIds": ["homeric.iliad", "homeric.odyssey", "creator_canon"],
       "conflictResolutions": {}
     },
     {
       "id": "profile.helen_comparison",
-      "activeLayerIds": ["homeric.iliad", "later_tragedy.euripides_helen", "creator_canon.v0"],
+      "activeLayerIds": ["homeric.iliad", "later_tragedy.euripides_helen", "creator_canon"],
       "conflictResolutions": {}
+    }
+  ],
+  "styleProfiles": [
+    {
+      "id": "style.table_ready_mythic",
+      "label": "Table-ready mythic restraint",
+      "constraints": [
+        {
+          "id": "style.table_ready_mythic.viewpoint",
+          "kind": "viewpoint",
+          "value": "limited_third",
+          "checkMode": "human"
+        },
+        {
+          "id": "style.table_ready_mythic.tense",
+          "kind": "tense",
+          "value": "present",
+          "checkMode": "human"
+        },
+        {
+          "id": "style.table_ready_mythic.dialogue",
+          "kind": "dialogue_mode",
+          "value": "subtextual_table_ready",
+          "checkMode": "human"
+        },
+        {
+          "id": "style.table_ready_mythic.goal",
+          "kind": "prose_goal",
+          "value": "Each line should expose a playable decision or uncertainty.",
+          "checkMode": "human"
+        },
+        {
+          "id": "style.table_ready_mythic.avoidance",
+          "kind": "avoidance",
+          "value": "Do not convert uncertain character knowledge into narrator certainty.",
+          "checkMode": "human"
+        },
+        {
+          "id": "style.table_ready_mythic.max_words",
+          "kind": "max_words",
+          "value": 180,
+          "checkMode": "deterministic"
+        }
+      ]
+    }
+  ],
+  "simulationScenarios": [
+    {
+      "id": "scenario.harbor_watch",
+      "worldPackId": "trojan-returns-demo",
+      "worldPackVersion": "0.2.0",
+      "baseStateId": "state.ithaca.odyssey_book_1",
+      "maxSteps": 2,
+      "variables": [
+        {
+          "id": "harbor_watch",
+          "initialValue": "idle",
+          "values": ["idle", "watching", "signal_seen"],
+          "transitions": [
+            {
+              "from": "idle",
+              "to": "watching",
+              "requiredRuleIds": ["rule.creator.red_sail_signal"]
+            },
+            {
+              "from": "watching",
+              "to": "signal_seen",
+              "requiredRuleIds": ["rule.creator.red_sail_signal"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scenario.helen_comparison",
+      "worldPackId": "trojan-returns-demo",
+      "worldPackVersion": "0.2.0",
+      "baseStateId": "state.troy.hector_funeral_complete",
+      "maxSteps": 0,
+      "variables": []
     }
   ],
   "defaultStateId": "state.ithaca.odyssey_book_1",
   "defaultCanonProfileId": "profile.homeric_default",
+  "defaultStyleProfileId": "style.table_ready_mythic",
+  "defaultSimulationScenarioId": "scenario.harbor_watch",
   "expansionPolicy": {
     "mode": "creator_approval_required",
     "allowNewEntities": true,

@@ -1,0 +1,108 @@
+{
+  "determinismBoundary": {
+    "deterministic": [
+      "fixture selection",
+      "retrieval ordering",
+      "validation",
+      "proposal and overlay hashes",
+      "graph descriptor",
+      "state transitions",
+      "frozen replay"
+    ],
+    "nondeterministic": [
+      "live GPT-5.6 wording"
+    ]
+  },
+  "fixtureReplaySummary": {
+    "allPassed": true,
+    "caseCount": 5,
+    "digest": "ce36a197a69baf2e77725e84918ce50d6982ccca771fb89f994cb44e45f481f6",
+    "stageCount": 8
+  },
+  "graphSummary": {
+    "descriptorDigest": "06f091c766324dfc1f83dff4078202bc74335ecfada08980f6b6cc43277b44b6",
+    "edgeCount": 8,
+    "nodeCount": 17
+  },
+  "liveEvidenceStatus": "not_executed",
+  "project": {
+    "id": "narrative-ontology-harness",
+    "worldPackId": "trojan-returns-demo",
+    "worldPackVersion": "0.2.0"
+  },
+  "proposalRun": {
+    "evidenceIds": {
+      "claims": [
+        "claim.odyssey.penelope_uncertain_fate",
+        "claim.odyssey.odysseus_at_ogygia",
+        "claim.iliad.hector_dead",
+        "claim.iliad.hector_funeral_complete",
+        "claim.iliad.helen_at_troy"
+      ],
+      "entities": [
+        "hector",
+        "helen",
+        "ithaca",
+        "odysseus",
+        "ogygia",
+        "penelope",
+        "telemachus",
+        "troy"
+      ],
+      "events": [
+        "event.odyssey_opening"
+      ],
+      "rules": [
+        "rule.character_knowledge",
+        "rule.closed_world"
+      ]
+    },
+    "hardViolationCodes": [
+      "unapproved_expansion"
+    ],
+    "modelTrace": {
+      "actualModel": null,
+      "inputTokens": null,
+      "mode": "fixture",
+      "outcome": "completed",
+      "outputTokens": null,
+      "requestedModel": "fixture-v1",
+      "responseId": null
+    },
+    "runId": "run.bd703684717813ac2cd8",
+    "status": "needs_creator_decision"
+  },
+  "schemaVersion": 1,
+  "scope": {
+    "localParticipantIntentCount": 2,
+    "persistentAutonomousSimulation": false,
+    "primaryUsers": [
+      "professional GMs",
+      "narrative production teams",
+      "quest designers"
+    ],
+    "remoteCollaboration": false
+  },
+  "simulationSummary": {
+    "finalTurnIndex": 2,
+    "overlayHash": "402c39cece3b992e9b5e6ede1a8a15ead41851caaa6622c9b97e109aa3576749",
+    "rebasedStateHash": "f58ba371d991e962f388f80306b5129a38217838d3ff3485a486e537bb79f79a",
+    "thirdStepBlocked": true,
+    "transitionHashes": [
+      {
+        "fromStateHash": "f58ba371d991e962f388f80306b5129a38217838d3ff3485a486e537bb79f79a",
+        "toStateHash": "8479f53036aa7b118bf73ad7a7f507757f8da160d24fcf07417638bc612b811f"
+      },
+      {
+        "fromStateHash": "8479f53036aa7b118bf73ad7a7f507757f8da160d24fcf07417638bc612b811f",
+        "toStateHash": "60c767776b4744e79870476f9f0518c1361d6f27296c499ce005f7dea55cc843"
+      }
+    ]
+  },
+  "styleHarnessSummary": {
+    "claimBoundary": "This demonstrates explicit prose control and auditability; it is not a model-vendor writing-quality comparison.",
+    "constraintCount": 6,
+    "deterministicCheckCount": 1,
+    "humanReviewCheckCount": 5
+  }
+}

@@ -1,0 +1,721 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CanonOverlay } from "@/src/contracts/canon-overlay";
+import type { CreatorDecision } from "@/src/contracts/creator-decision";
+import type { ParticipantIntent } from "@/src/contracts/participant-intent";
+import type { ProposalPatch } from "@/src/contracts/proposal";
+import type { RunRequest, RunResult } from "@/src/contracts/run";
+import type {
+  SimulationSnapshot,
+  SimulationTransitionRecord,
+} from "@/src/contracts/simulation";
+import { KnowledgeGraph } from "@/components/table/KnowledgeGraph";
+import type {
+  DecisionApiResult,
+  DemoBootstrap,
+  DemoReplayResult,
+  TransitionApiResult,
+} from "@/components/table/api-types";
+
+type WorkbenchPhase =
+  | "loading"
+  | "setup"
+  | "running"
+  | "proposal"
+  | "deciding"
+  | "rebased"
+  | "transitioning"
+  | "step_one"
+  | "complete"
+  | "rejected"
+  | "error";
+
+type TimelineEntry = {
+  label: string;
+  note: string;
+  snapshot: SimulationSnapshot;
+};
+
+const phaseLabels: Record<WorkbenchPhase, string> = {
+  loading: "Loading fixture",
+  setup: "Ready for rehearsal",
+  running: "Building candidate",
+  proposal: "Creator decision required",
+  deciding: "Applying creator decision",
+  rebased: "Canon approved · state rebased",
+  transitioning: "Validating state transition",
+  step_one: "Step 1 applied",
+  complete: "Two-step rehearsal complete",
+  rejected: "Proposal rejected · state unchanged",
+  error: "Request failed",
+};
+
+const apiRequest = async <T,>(
+  path: string,
+  init?: RequestInit,
+  signal?: AbortSignal,
+): Promise<T> => {
+  const response = await fetch(path, {
+    ...init,
+    signal,
+    headers: {
+      "content-type": "application/json",
+      ...init?.headers,
+    },
+  });
+
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error(`${path} returned a non-JSON response (${response.status}).`);
+  }
+
+  if (!response.ok) {
+    const message =
+      typeof payload === "object" && payload !== null && "error" in payload
+        ? typeof payload.error === "string"
+          ? payload.error
+          : typeof payload.error === "object" &&
+              payload.error !== null &&
+              "message" in payload.error &&
+              typeof payload.error.message === "string"
+            ? payload.error.message
+            : `Request failed with status ${response.status}.`
+        : `Request failed with status ${response.status}.`;
+    throw new Error(message);
+  }
+
+  return payload as T;
+};
+
+const snapshotVariable = (snapshot: SimulationSnapshot): string =>
+  snapshot.variables.find(({ id }) => id === "harbor_watch")?.value ?? "unknown";
+
+const statusTone = (status: DemoReplayResult["status"]): string => {
+  return status === "pass" ? "pass" : "block";
+};
+
+const statusCopy = (status: DemoReplayResult["status"]): string =>
+  status.replaceAll("_", " ");
+
+export function TableWorkbench() {
+  const [phase, setPhase] = useState<WorkbenchPhase>("loading");
+  const [bootstrap, setBootstrap] = useState<DemoBootstrap | null>(null);
+  const [intents, setIntents] = useState<ParticipantIntent[]>([]);
+  const [selectedStyleId, setSelectedStyleId] = useState("");
+  const [overlay, setOverlay] = useState<CanonOverlay | null>(null);
+  const [snapshot, setSnapshot] = useState<SimulationSnapshot | null>(null);
+  const [runResult, setRunResult] = useState<RunResult | null>(null);
+  const [decisionResult, setDecisionResult] = useState<DecisionApiResult | null>(null);
+  const [transitions, setTransitions] = useState<SimulationTransitionRecord[]>([]);
+  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
+  const [editingProposal, setEditingProposal] = useState(false);
+  const [editedRuleDescription, setEditedRuleDescription] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+
+  const loadDemo = useCallback(async (signal?: AbortSignal) => {
+    setPhase("loading");
+    setApiError(null);
+    setFormError(null);
+    try {
+      const demo = await apiRequest<DemoBootstrap>("/api/demo", undefined, signal);
+      if (demo.mode !== "fixture") {
+        throw new Error("The public Table requires a fixture-mode demo payload.");
+      }
+      if (demo.participantSlots.length < 2) {
+        throw new Error("The demo must provide two local participant slots.");
+      }
+      if (!demo.styleProfiles.some(({ id }) => id === demo.selectedStyleProfileId)) {
+        throw new Error("The selected style profile is not registered by the demo.");
+      }
+
+      const initialIntents = demo.participantSlots.slice(0, 2).map((slot) => ({
+        intentId: slot.intentId,
+        participantId: slot.participantId,
+        controlledEntityIds: [slot.controlledEntityId],
+        intent: slot.defaultIntent,
+      }));
+
+      setBootstrap(demo);
+      setIntents(initialIntents);
+      setSelectedStyleId(demo.selectedStyleProfileId);
+      setOverlay(demo.overlay);
+      setSnapshot(demo.snapshot);
+      setRunResult(null);
+      setDecisionResult(null);
+      setTransitions([]);
+      setTimeline([{ label: "S0", note: "Initial fixture snapshot", snapshot: demo.snapshot }]);
+      setEditingProposal(false);
+      setEditedRuleDescription("");
+      setPhase("setup");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setApiError(error instanceof Error ? error.message : "Unable to load the fixture demo.");
+      setPhase("error");
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.resolve().then(() => loadDemo(controller.signal));
+    return () => controller.abort();
+  }, [loadDemo]);
+
+  useEffect(() => {
+    if (!["setup", "loading", "running", "deciding", "transitioning"].includes(phase)) {
+      resultHeadingRef.current?.focus();
+    }
+  }, [phase]);
+
+  const styleProfile = bootstrap?.styleProfiles.find(({ id }) => id === selectedStyleId);
+  const proposal = runResult?.proposals[0] ?? null;
+  const completedDraft =
+    runResult?.modelOutcome.outcome === "completed" ? runResult.modelOutcome.draft : null;
+  const busy = ["loading", "running", "deciding", "transitioning"].includes(phase);
+
+  const updateIntent = (index: number, value: string) => {
+    setIntents((current) =>
+      current.map((item, itemIndex) => (itemIndex === index ? { ...item, intent: value } : item)),
+    );
+  };
+
+  const runCandidate = async () => {
+    if (!bootstrap || !overlay || !snapshot) return;
+    const empty = intents.findIndex(({ intent }) => intent.trim().length === 0);
+    if (empty >= 0) {
+      setFormError(`Participant ${empty + 1} needs an intent before the rehearsal can run.`);
+      return;
+    }
+
+    setFormError(null);
+    setApiError(null);
+    setPhase("running");
+
+    const request: RunRequest = {
+      modelMode: "fixture",
+      draftFixtureId: "draft.red_sail_proposal",
+      overlay,
+      snapshot,
+      styleProfileId: selectedStyleId,
+      taskType: "expand",
+      brief:
+        "Compose the two local participant intents as a restrained Ithaca scene. Keep the red-sail convention outside canon until the creator decides.",
+      participantIntents: intents,
+    };
+
+    try {
+      const result = await apiRequest<RunResult>("/api/runs", {
+        method: "POST",
+        body: JSON.stringify(request),
+      });
+      setRunResult(result);
+      setSnapshot(result.currentSnapshot);
+      setPhase("proposal");
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "The fixture run failed.");
+      setPhase("error");
+    }
+  };
+
+  const editableRulePatch = proposal?.patches.find((patch) => patch.op === "add_rule");
+
+  const beginEdit = () => {
+    if (!editableRulePatch || editableRulePatch.op !== "add_rule") return;
+    setEditedRuleDescription(editableRulePatch.rule.description);
+    setEditingProposal(true);
+  };
+
+  const decide = async (action: "accept" | "edit" | "reject") => {
+    if (!proposal || !overlay || !snapshot) return;
+    if (action === "edit" && editedRuleDescription.trim().length === 0) {
+      setFormError("The edited rule needs a description.");
+      return;
+    }
+
+    let patches: ProposalPatch[] | undefined;
+    if (action === "edit") {
+      patches = proposal.patches.map((patch) =>
+        patch.op === "add_rule" && patch.rule.id === editableRulePatch?.rule.id
+          ? { ...patch, rule: { ...patch.rule, description: editedRuleDescription.trim() } }
+          : patch,
+      );
+    }
+
+    const decision: CreatorDecision =
+      action === "edit"
+        ? {
+            action,
+            proposalId: proposal.id,
+            proposalHash: proposal.proposalHash,
+            baseOverlayId: proposal.baseOverlayId,
+            baseOverlayVersion: proposal.baseOverlayVersion,
+            baseOverlayHash: proposal.baseOverlayHash,
+            patches: patches ?? proposal.patches,
+          }
+        : {
+            action,
+            proposalId: proposal.id,
+            proposalHash: proposal.proposalHash,
+            baseOverlayId: proposal.baseOverlayId,
+            baseOverlayVersion: proposal.baseOverlayVersion,
+            baseOverlayHash: proposal.baseOverlayHash,
+          };
+
+    setFormError(null);
+    setApiError(null);
+    setPhase("deciding");
+    try {
+      const result = await apiRequest<DecisionApiResult>("/api/decisions", {
+        method: "POST",
+        body: JSON.stringify({ overlay, snapshot, proposal, decision }),
+      });
+      setDecisionResult(result);
+      setOverlay(result.overlay);
+      setSnapshot(result.snapshot);
+      if (result.status === "applied") {
+        setTimeline((current) => [
+          current[0],
+          {
+            label: "S0r",
+            note: "Same turn and variables · approved overlay hash",
+            snapshot: result.snapshot,
+          },
+        ]);
+        setEditingProposal(false);
+        setPhase("rebased");
+      } else if (result.status === "rejected") {
+        setPhase("rejected");
+      } else {
+        setApiError(`Creator decision was ${result.status}; canon and state were not advanced.`);
+        setPhase("error");
+      }
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "The creator decision failed.");
+      setPhase("error");
+    }
+  };
+
+  const advance = async (step: 1 | 2) => {
+    if (!overlay || !snapshot) return;
+    setApiError(null);
+    setPhase("transitioning");
+    try {
+      const result = await apiRequest<TransitionApiResult>("/api/transitions", {
+        method: "POST",
+        body: JSON.stringify({ overlay, snapshot, step, participantIntents: intents }),
+      });
+      if (result.status !== "applied") {
+        const detail = result.violations.map(({ message }) => message).join(" ");
+        setApiError(detail || `Step ${step} was blocked and the state did not change.`);
+        setSnapshot(result.snapshot);
+        setPhase("error");
+        return;
+      }
+
+      setSnapshot(result.snapshot);
+      setTransitions((current) => [...current, result.transition]);
+      setTimeline((current) => [
+        ...current,
+        {
+          label: `S${step}`,
+          note: step === 1 ? "Harbor watch organized" : "Red sail observed",
+          snapshot: result.snapshot,
+        },
+      ]);
+      setPhase(step === 1 ? "step_one" : "complete");
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : `Step ${step} failed.`);
+      setPhase("error");
+    }
+  };
+
+  const transitionChainIsContinuous = useMemo(
+    () =>
+      transitions.length < 2 ||
+      transitions.every(
+        (transition, index) =>
+          index === 0 || transitions[index - 1]?.toStateHash === transition.fromStateHash,
+      ),
+    [transitions],
+  );
+
+  if (phase === "loading" && !bootstrap) {
+    return (
+      <main id="main-content" className="workbench loading-screen" aria-busy="true">
+        <p className="kicker">FIXTURE MODE</p>
+        <h1>Preparing the Table rehearsal…</h1>
+        <p>Loading the synthetic World Pack, overlay, snapshot, and frozen replay.</p>
+      </main>
+    );
+  }
+
+  if (!bootstrap || !overlay || !snapshot) {
+    return (
+      <main id="main-content" className="workbench loading-screen">
+        <p className="kicker">DEMO UNAVAILABLE</p>
+        <h1>The fixture could not be loaded.</h1>
+        <p role="alert" data-testid="api-error">{apiError ?? "Unknown bootstrap error."}</p>
+        <button className="button primary" type="button" onClick={() => void loadDemo()}>
+          Retry fixture
+        </button>
+      </main>
+    );
+  }
+
+  return (
+    <main id="main-content" className="workbench" aria-busy={busy}>
+      <header className="workbench-header shell">
+        <div className="topline">
+          <span>NARRATIVE KNOWLEDGE HARNESS</span>
+          <span className="mode-badge" data-testid="fixture-mode">FIXTURE MODE · NO LIVE CALL</span>
+        </div>
+        <div className="title-grid">
+          <div>
+            <p className="kicker">TABLE REHEARSAL / WORK &amp; PRODUCTIVITY</p>
+            <h1>Rehearse the scene.<br /><span>Keep canon inspectable.</span></h1>
+          </div>
+          <p className="lede">
+            Two local participant intents enter one bounded world. The harness exposes what each
+            character can know, isolates new lore, and advances state only after creator approval.
+          </p>
+        </div>
+        <dl className="run-strip">
+          <div><dt>World Pack</dt><dd>{bootstrap.worldPack.label}</dd></div>
+          <div><dt>Version</dt><dd>{bootstrap.worldPack.version}</dd></div>
+          <div><dt>Overlay</dt><dd data-testid="overlay-version">v{overlay.version}</dd></div>
+          <div><dt>Table state</dt><dd data-testid="state-value">{snapshotVariable(snapshot)}</dd></div>
+        </dl>
+      </header>
+
+      <div className="shell workbench-grid">
+        <aside className="stage-rail" aria-label="Rehearsal stages">
+          <p className="kicker">VISIBLE CONTROL PATH</p>
+          <ol>
+            {[
+              ["01", "Intent + style"],
+              ["02", "Candidate + evidence"],
+              ["03", "Creator decision"],
+              ["04", "Two state steps"],
+              ["05", "Frozen replay"],
+            ].map(([number, label]) => (
+              <li key={number}><span>{number}</span>{label}</li>
+            ))}
+          </ol>
+          <p className="rail-note">One facilitator collects these inputs locally. This is not a remote multiplayer room.</p>
+        </aside>
+
+        <div className="workbench-content">
+          <section className="setup-panel panel" aria-labelledby="setup-title">
+            <div className="panel-heading">
+              <div>
+                <p className="kicker">01 / TABLE SETUP</p>
+                <h2 id="setup-title">People, characters, and style stay separate.</h2>
+              </div>
+              <span className="status-chip neutral">2 LOCAL INPUTS</span>
+            </div>
+
+            <form onSubmit={(event) => { event.preventDefault(); void runCandidate(); }}>
+              <fieldset className="participant-fieldset" disabled={phase !== "setup" && phase !== "error"}>
+                <legend className="sr-only">Participant intents</legend>
+                <div className="participant-grid">
+                  {intents.map((item, index) => {
+                    const slot = bootstrap.participantSlots[index];
+                    return (
+                      <article className="participant-card" key={item.intentId}>
+                        <div className="participant-meta">
+                          <span>{slot?.participantId ?? item.participantId}</span>
+                          <strong>{slot?.characterLabel ?? item.controlledEntityIds[0]}</strong>
+                        </div>
+                        <label htmlFor={`participant-intent-${index}`}>Intent</label>
+                        <textarea
+                          id={`participant-intent-${index}`}
+                          data-testid={`participant-intent-${index}`}
+                          maxLength={800}
+                          rows={4}
+                          value={item.intent}
+                          onChange={(event) => updateIntent(index, event.target.value)}
+                        />
+                        <small>{item.intent.length}/800 · controls {item.controlledEntityIds[0]}</small>
+                      </article>
+                    );
+                  })}
+                </div>
+              </fieldset>
+
+              <div className="style-row">
+                <div>
+                  <label htmlFor="style-profile">Creator style profile</label>
+                  <select
+                    id="style-profile"
+                    data-testid="style-profile"
+                    value={selectedStyleId}
+                    onChange={(event) => setSelectedStyleId(event.target.value)}
+                    disabled={phase !== "setup" && phase !== "error"}
+                  >
+                    {bootstrap.styleProfiles.map((profile) => (
+                      <option key={profile.id} value={profile.id}>{profile.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <ul className="constraint-list" aria-label="Selected style constraints">
+                  {styleProfile?.constraints.map((constraint) => (
+                    <li key={constraint.id}>
+                      <span>{constraint.kind.replaceAll("_", " ")}</span>
+                      <strong>{String(constraint.value)}</strong>
+                      <small>{constraint.checkMode}</small>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {formError ? <p className="inline-error" role="alert">{formError}</p> : null}
+              <div className="action-row">
+                <p>Fixture output is frozen. The checks, graph, decisions, and state transitions are deterministic.</p>
+                <button
+                  className="button primary"
+                  data-testid="run-candidate"
+                  type="submit"
+                  disabled={phase !== "setup" && phase !== "error"}
+                >
+                  Build candidate <span aria-hidden="true">→</span>
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section className="run-status" aria-live="polite" aria-atomic="true">
+            <span>RUN STATUS</span>
+            <strong data-testid="run-status">{phaseLabels[phase]}</strong>
+          </section>
+
+          {apiError ? (
+            <section className="api-error" role="alert" data-testid="api-error">
+              <div><span>REQUEST FAILED</span><strong>{apiError}</strong></div>
+              <button className="button secondary" type="button" onClick={() => void loadDemo()} data-testid="reset-demo">
+                Reset fixture
+              </button>
+            </section>
+          ) : null}
+
+          {runResult ? (
+            <>
+              <section className="candidate-panel panel" aria-labelledby="candidate-title">
+                <div className="panel-heading">
+                  <div>
+                    <p className="kicker">02 / STRUCTURED CANDIDATE</p>
+                    <h2 id="candidate-title" ref={resultHeadingRef} tabIndex={-1}>A scene candidate, not canon.</h2>
+                  </div>
+                  <span className={`status-chip ${runResult.status === "blocked" ? "block" : "decision"}`}>
+                    {runResult.status.replaceAll("_", " ")}
+                  </span>
+                </div>
+
+                {completedDraft ? (
+                  <div className="candidate-grid">
+                    <article className="prose-card">
+                      <p className="kicker">CANDIDATE PROSE</p>
+                      <blockquote>{completedDraft.narrative}</blockquote>
+                      <p className="trace-line">fixture · {runResult.modelOutcome.trace.requestedModel} · no response ID</p>
+                    </article>
+                    <article className="lineage-card">
+                      <p className="kicker">INTENT LINEAGE</p>
+                      <ul>
+                        {completedDraft.utterances.map((utterance, index) => (
+                          <li key={`${utterance.speakerId}-${index}`}>
+                            <strong>{utterance.speakerId}</strong>
+                            <span>authorized by {utterance.authorizingIntentId}</span>
+                            <q>{utterance.text}</q>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="constraint-proof">
+                        {completedDraft.appliedStyleConstraintIds.length} registered style constraints referenced
+                      </p>
+                    </article>
+                  </div>
+                ) : (
+                  <p className="inline-error">Model outcome: {runResult.modelOutcome.outcome}</p>
+                )}
+
+                <div className="audit-grid">
+                  <article>
+                    <h3>Evidence selected</h3>
+                    <dl className="evidence-counts">
+                      <div><dt>Claims</dt><dd>{runResult.evidence.claimIds.length}</dd></div>
+                      <div><dt>Entities</dt><dd>{runResult.evidence.entityIds.length}</dd></div>
+                      <div><dt>Character views</dt><dd>{runResult.evidence.characterViews.length}</dd></div>
+                    </dl>
+                    <ul className="compact-list">
+                      {runResult.evidence.characterViews.map((view) => (
+                        <li key={view.characterId}>
+                          <strong>{view.characterId}</strong>
+                          <span>{view.knownClaimIds.length} known · {view.uncertainClaimIds.length} uncertain</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                  <article>
+                    <h3>Hard violations</h3>
+                    {runResult.hardViolations.length > 0 ? (
+                      <ul className="violation-list">
+                        {runResult.hardViolations.map((violation, index) => (
+                          <li key={`${violation.code}-${index}`}>
+                            <span>{violation.code}</span>
+                            <p>{violation.message}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : <p>No hard violations.</p>}
+                  </article>
+                </div>
+              </section>
+
+              <KnowledgeGraph graph={runResult.graph} proposalApplied={decisionResult?.status === "applied"} />
+
+              {proposal ? (
+                <section className="decision-panel panel" aria-labelledby="decision-title" data-testid="proposal">
+                  <div className="panel-heading">
+                    <div>
+                      <p className="kicker">03 / CREATOR GATE</p>
+                      <h2 id="decision-title">Interesting is not the same as official.</h2>
+                    </div>
+                    <span className={`status-chip ${decisionResult?.status === "applied" ? "pass" : "decision"}`}>
+                      {decisionResult?.status === "applied" ? "OVERLAY APPLIED" : "GHOST PROPOSAL"}
+                    </span>
+                  </div>
+                  <div className="proposal-card">
+                    <div>
+                      <span>{proposal.id}</span>
+                      <h3>{proposal.summary}</h3>
+                      {proposal.patches.map((patch) => (
+                        <p key={patch.op === "add_rule" ? patch.rule.id : patch.claim.id}>
+                          {patch.op === "add_rule" ? patch.rule.description : patch.claim.summary}
+                        </p>
+                      ))}
+                    </div>
+                    <dl>
+                      <div><dt>Base overlay</dt><dd>v{proposal.baseOverlayVersion}</dd></div>
+                      <div><dt>Proposal hash</dt><dd><code>{proposal.proposalHash}</code></dd></div>
+                    </dl>
+                  </div>
+
+                  {editingProposal ? (
+                    <div className="edit-rule">
+                      <label htmlFor="edited-rule">Edit the rule description</label>
+                      <textarea id="edited-rule" rows={3} value={editedRuleDescription} onChange={(event) => setEditedRuleDescription(event.target.value)} />
+                      <div className="button-group">
+                        <button className="button secondary" type="button" onClick={() => setEditingProposal(false)}>Cancel</button>
+                        <button className="button primary" type="button" onClick={() => void decide("edit")} data-testid="decision-apply-edit">Apply edited rule</button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {!decisionResult && phase !== "deciding" ? (
+                    <div className="decision-actions" aria-label="Creator decision">
+                      <button className="button quiet" type="button" onClick={() => void decide("reject")} data-testid="decision-reject">Reject</button>
+                      <button className="button secondary" type="button" onClick={beginEdit} disabled={!editableRulePatch} data-testid="decision-edit">Edit wording</button>
+                      <button className="button primary" type="button" onClick={() => void decide("accept")} data-testid="decision-accept">Accept into canon</button>
+                    </div>
+                  ) : null}
+
+                  {phase === "rejected" ? (
+                    <div className="unchanged-note">
+                      <strong>Rejected safely.</strong>
+                      <p>Overlay v{overlay.version}, turn {snapshot.turnIndex}, and state hash remain unchanged.</p>
+                      <button className="button secondary" type="button" onClick={() => void loadDemo()} data-testid="reset-demo">Reset and rehearse again</button>
+                    </div>
+                  ) : null}
+                </section>
+              ) : null}
+            </>
+          ) : null}
+
+          {timeline.length > 0 ? (
+            <section className="timeline-panel panel" aria-labelledby="timeline-title">
+              <div className="panel-heading">
+                <div>
+                  <p className="kicker">04 / BOUNDED STATE</p>
+                  <h2 id="timeline-title">Two steps. One continuous hash chain.</h2>
+                </div>
+                <span className="status-chip neutral">MAX STEPS 2</span>
+              </div>
+
+              <ol className="timeline" data-testid="state-timeline">
+                {timeline.map((entry, index) => (
+                  <li key={`${entry.label}-${entry.snapshot.stateHash}`}>
+                    <span className="timeline-index">{entry.label}</span>
+                    <div>
+                      <strong>{snapshotVariable(entry.snapshot)}</strong>
+                      <p>{entry.note}</p>
+                      <dl>
+                        <div><dt>turn</dt><dd>{entry.snapshot.turnIndex}</dd></div>
+                        <div><dt>overlay</dt><dd>v{entry.snapshot.overlayVersion}</dd></div>
+                      </dl>
+                      <code title={entry.snapshot.stateHash}>{entry.snapshot.stateHash}</code>
+                    </div>
+                    {index < timeline.length - 1 ? <i aria-hidden="true">→</i> : null}
+                  </li>
+                ))}
+              </ol>
+
+              {transitions.length > 0 ? (
+                <p className={`chain-proof ${transitionChainIsContinuous ? "pass" : "block"}`}>
+                  {transitionChainIsContinuous
+                    ? `Hash chain continuous across ${transitions.length} transition${transitions.length > 1 ? "s" : ""}.`
+                    : "Hash chain mismatch detected."}
+                </p>
+              ) : null}
+
+              {phase === "rebased" ? (
+                <div className="timeline-action">
+                  <p>S0r has the approved overlay but keeps turn 0 and <strong>idle</strong>. Rebase is not a simulation step.</p>
+                  <button className="button primary" type="button" onClick={() => void advance(1)} data-testid="advance-step-1">Run step 1 · organize watch</button>
+                </div>
+              ) : null}
+              {phase === "step_one" ? (
+                <div className="timeline-action">
+                  <p>Step 2 must consume S1 exactly. It cannot skip directly from idle to signal seen.</p>
+                  <button className="button primary" type="button" onClick={() => void advance(2)} data-testid="advance-step-2">Run step 2 · observe signal</button>
+                </div>
+              ) : null}
+              {phase === "complete" ? (
+                <div className="completion-note">
+                  <span aria-hidden="true">✓</span>
+                  <div><strong>Scenario limit reached.</strong><p>The Table stops after two validated steps. No third-step action is available.</p></div>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
+          <section className="replay-panel panel" aria-labelledby="replay-title" data-testid="replay-panel">
+            <div className="panel-heading">
+              <div>
+                <p className="kicker">05 / FROZEN REPLAY</p>
+                <h2 id="replay-title">The controls keep their expected outcomes.</h2>
+              </div>
+              <span className="status-chip neutral">SERVER EXECUTED</span>
+            </div>
+            <div className="replay-list">
+              {bootstrap.replayResults.map((result, index) => (
+                <article key={result.id}>
+                  <span className="replay-index">{String(index + 1).padStart(2, "0")}</span>
+                  <div><h3>{result.label}</h3><p>{result.detail}</p></div>
+                  <span className={`status-chip ${statusTone(result.status)}`}>{statusCopy(result.status)}</span>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <footer className="workbench-footer shell">
+        <p>Fixture demonstration · deterministic core evidence only</p>
+        <p>Live GPT-5.6 runs are a separate controlled path and are not represented here.</p>
+      </footer>
+    </main>
+  );
+}

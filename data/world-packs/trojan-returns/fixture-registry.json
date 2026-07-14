@@ -1,0 +1,22 @@
+{
+  "drafts": [
+    { "id": "draft.grounded_penelope", "path": "drafts/grounded-penelope.json" },
+    { "id": "draft.helen_conflict", "path": "drafts/helen-conflict.json" },
+    { "id": "draft.living_hector", "path": "drafts/living-hector.json" },
+    { "id": "draft.penelope_knows_ogygia", "path": "drafts/penelope-knows-ogygia.json" },
+    { "id": "draft.red_sail_proposal", "path": "drafts/red-sail-proposal.json" },
+    { "id": "draft.red_sail_step_1", "path": "drafts/red-sail-step-1.json" },
+    { "id": "draft.red_sail_step_2", "path": "drafts/red-sail-step-2.json" }
+  ],
+  "overlays": [
+    { "id": "overlay.v0", "path": "overlays/overlay.v0.json" },
+    { "id": "overlay.v1.red-sail", "path": "overlays/overlay.v1.red-sail.json" }
+  ],
+  "snapshots": [
+    { "id": "snapshot.helen_s0", "path": "snapshots/helen-s0.json" },
+    { "id": "snapshot.s0", "path": "snapshots/s0.json" },
+    { "id": "snapshot.s0r", "path": "snapshots/s0r.json" },
+    { "id": "snapshot.s1", "path": "snapshots/s1.json" },
+    { "id": "snapshot.s2", "path": "snapshots/s2.json" }
+  ]
+}

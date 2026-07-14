@@ -1,131 +1,69 @@
 import { z } from "zod";
+import { IdentifierSchema, addDuplicateIssues } from "@/src/contracts/common";
+import {
+  ModelProposalSchema,
+  ProposedClaimInputSchema,
+} from "@/src/contracts/proposal";
+import { CandidateActionSchema } from "@/src/contracts/simulation";
 
-const NullableIdentifierSchema = z.string().min(1).nullable();
-
-export const ProposedClaimSchema = z
+export const CandidateUtteranceSchema = z
   .object({
-    subjectId: NullableIdentifierSchema,
-    predicate: z.string().min(1),
-    objectEntityId: NullableIdentifierSchema,
-    objectValue: z.string().min(1).nullable(),
-    evidenceClaimIds: z.array(z.string().min(1)),
+    speakerId: IdentifierSchema,
+    authorizingIntentId: IdentifierSchema,
+    contributingIntentIds: z.array(IdentifierSchema),
+    text: z.string().min(1),
+    assertedClaimIds: z.array(IdentifierSchema),
+    certainty: z.enum(["certain", "uncertain"]),
   })
-  .strict();
+  .strict()
+  .superRefine((utterance, context) => {
+    addDuplicateIssues(utterance.contributingIntentIds, "contributing intent id", context);
+    if (utterance.contributingIntentIds.includes(utterance.authorizingIntentId)) {
+      context.addIssue({
+        code: "custom",
+        path: ["contributingIntentIds"],
+        message: "The authorizing intent cannot also be a contributing intent.",
+      });
+    }
+  });
 
 export const ModelDraftSchema = z
   .object({
-    narrative: z.string(),
-    usedClaimIds: z.array(z.string().min(1)),
-    assertedClaims: z.array(ProposedClaimSchema),
-    characterActions: z.array(
-      z
-        .object({
-          actorId: z.string().min(1),
-          action: z.string().min(1),
-          knowledgeClaimIds: z.array(z.string().min(1)),
-        })
-        .strict(),
-    ),
-    stateChanges: z.array(
-      z
-        .object({
-          op: z.enum(["move", "mark_deceased", "set_phase", "none"]),
-          entityId: NullableIdentifierSchema,
-          phaseId: NullableIdentifierSchema,
-          locationId: NullableIdentifierSchema,
-        })
-        .strict(),
-    ),
+    styleProfileId: IdentifierSchema,
+    narrative: z.string().min(1),
+    mentionedEntityIds: z.array(IdentifierSchema),
+    appliedStyleConstraintIds: z.array(IdentifierSchema).min(1),
+    usedClaimIds: z.array(IdentifierSchema),
+    utterances: z.array(CandidateUtteranceSchema),
+    actions: z.array(CandidateActionSchema),
+    assertedClaims: z.array(ProposedClaimInputSchema),
     unknowns: z.array(z.string().min(1)),
-    expansionCandidates: z.array(
-      z
-        .object({
-          id: z.string().min(1),
-          summary: z.string().min(1),
-          proposedClaims: z.array(ProposedClaimSchema),
-        })
-        .strict(),
-    ),
+    proposals: z.array(ModelProposalSchema),
   })
-  .strict();
+  .strict()
+  .superRefine((draft, context) => {
+    addDuplicateIssues(draft.mentionedEntityIds, "mentioned entity id", context);
+    addDuplicateIssues(draft.appliedStyleConstraintIds, "applied style constraint id", context);
+    addDuplicateIssues(draft.usedClaimIds, "used claim id", context);
+    addDuplicateIssues(
+      draft.assertedClaims.map(({ id }) => id),
+      "asserted claim id",
+      context,
+    );
+    addDuplicateIssues(
+      draft.proposals.map(({ id }) => id),
+      "model proposal id",
+      context,
+    );
+  });
 
+export type CandidateUtterance = z.infer<typeof CandidateUtteranceSchema>;
 export type ModelDraft = z.infer<typeof ModelDraftSchema>;
 
-const proposedClaimJsonSchema = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    subjectId: { type: ["string", "null"], minLength: 1 },
-    predicate: { type: "string", minLength: 1 },
-    objectEntityId: { type: ["string", "null"], minLength: 1 },
-    objectValue: { type: ["string", "null"], minLength: 1 },
-    evidenceClaimIds: { type: "array", items: { type: "string", minLength: 1 } },
-  },
-  required: [
-    "subjectId",
-    "predicate",
-    "objectEntityId",
-    "objectValue",
-    "evidenceClaimIds",
-  ],
-} as const;
-
-export const MODEL_DRAFT_JSON_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    narrative: { type: "string" },
-    usedClaimIds: { type: "array", items: { type: "string", minLength: 1 } },
-    assertedClaims: { type: "array", items: proposedClaimJsonSchema },
-    characterActions: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          actorId: { type: "string", minLength: 1 },
-          action: { type: "string", minLength: 1 },
-          knowledgeClaimIds: { type: "array", items: { type: "string", minLength: 1 } },
-        },
-        required: ["actorId", "action", "knowledgeClaimIds"],
-      },
-    },
-    stateChanges: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          op: { type: "string", enum: ["move", "mark_deceased", "set_phase", "none"] },
-          entityId: { type: ["string", "null"], minLength: 1 },
-          phaseId: { type: ["string", "null"], minLength: 1 },
-          locationId: { type: ["string", "null"], minLength: 1 },
-        },
-        required: ["op", "entityId", "phaseId", "locationId"],
-      },
-    },
-    unknowns: { type: "array", items: { type: "string", minLength: 1 } },
-    expansionCandidates: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          id: { type: "string", minLength: 1 },
-          summary: { type: "string", minLength: 1 },
-          proposedClaims: { type: "array", items: proposedClaimJsonSchema },
-        },
-        required: ["id", "summary", "proposedClaims"],
-      },
-    },
-  },
-  required: [
-    "narrative",
-    "usedClaimIds",
-    "assertedClaims",
-    "characterActions",
-    "stateChanges",
-    "unknowns",
-    "expansionCandidates",
-  ],
-} as const;
+// Zod is the runtime and JSON-Schema source of truth. The live adapter should use
+// `zodTextFormat(ModelDraftSchema, "narrative_model_draft")` rather than maintain
+// a second handwritten schema.
+export const MODEL_DRAFT_JSON_SCHEMA = z.toJSONSchema(ModelDraftSchema, {
+  target: "draft-07",
+  reused: "inline",
+});

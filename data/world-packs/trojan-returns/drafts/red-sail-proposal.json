@@ -1,0 +1,43 @@
+{
+  "styleProfileId": "style.table_ready_mythic",
+  "narrative": "Telemachus proposes a red sail as a new Ithacan signal, but the scene leaves that custom outside canon until the creator decides.",
+  "mentionedEntityIds": ["telemachus"],
+  "appliedStyleConstraintIds": [
+    "style.table_ready_mythic.avoidance",
+    "style.table_ready_mythic.dialogue",
+    "style.table_ready_mythic.goal",
+    "style.table_ready_mythic.max_words",
+    "style.table_ready_mythic.tense",
+    "style.table_ready_mythic.viewpoint"
+  ],
+  "usedClaimIds": [],
+  "utterances": [
+    {
+      "speakerId": "telemachus",
+      "authorizingIntentId": "intent.telemachus",
+      "contributingIntentIds": ["intent.penelope"],
+      "text": "If we make the red sail our signal, the harbor watch can rise before rumor reaches the hall.",
+      "assertedClaimIds": [],
+      "certainty": "uncertain"
+    }
+  ],
+  "actions": [],
+  "assertedClaims": [],
+  "unknowns": [],
+  "proposals": [
+    {
+      "id": "proposal.red_sail_signal",
+      "summary": "Add an original red-sail signal to creator canon.",
+      "patches": [
+        {
+          "op": "add_rule",
+          "rule": {
+            "id": "rule.creator.red_sail_signal",
+            "kind": "expansion",
+            "description": "In this creator canon, Ithacans treat a returning ship's red sail as a signal to begin the royal harbor watch."
+          }
+        }
+      ]
+    }
+  ]
+}

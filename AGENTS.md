@@ -42,4 +42,4 @@ Live GPT-5.6 smoke tests are manual and must be reported separately. Never claim
 
 ## Current phase
 
-Day 0 scaffold only. Contracts, static presentation, sample data, and contract tests may be present. Participant-intent and style-profile contracts, graph descriptors, simulation transitions, retrieval, live GPT-5.6 generation, validators, creator gate, replay engine, and final README remain pending until their tests and evidence exist.
+Core fixture vertical slice verified. Participant/style contracts, deterministic retrieval and validators, creator gate, graph descriptor and accessible view, two-step simulation, replay engine, gated GPT-5.6 adapter, Table UI, sanitized fixture evidence, production build, browser smoke, and fresh-copy rehearsal exist. A real GPT-5.6 call, final README, public remote/deployment, video, `/feedback` field, and Devpost submission remain separate release gates. Never promote fixture evidence into a live-model claim.

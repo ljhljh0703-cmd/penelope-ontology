@@ -1,0 +1,15 @@
+{
+  "adapterContract": {
+    "api": "Responses API",
+    "model": "gpt-5.6",
+    "rawResponsePersisted": false,
+    "structuredOutput": "zodTextFormat(ModelDraftSchema)"
+  },
+  "evidenceType": "live_readiness",
+  "reason": "No API key was available in the build process.",
+  "requiredServerConfiguration": [
+    "ENABLE_OPENAI_LIVE=true",
+    "OPENAI_API_KEY"
+  ],
+  "status": "not_executed"
+}

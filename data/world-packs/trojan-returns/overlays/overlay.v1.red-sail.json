@@ -1,0 +1,31 @@
+{
+  "id": "creator_canon",
+  "version": 1,
+  "worldPackId": "trojan-returns-demo",
+  "worldPackVersion": "0.2.0",
+  "claims": [],
+  "rules": [
+    {
+      "id": "rule.character_knowledge",
+      "kind": "knowledge",
+      "description": "A character may assert only claims present in that character's knowledge profile.",
+      "layerId": "creator_canon",
+      "status": "active"
+    },
+    {
+      "id": "rule.closed_world",
+      "kind": "world",
+      "description": "Unsupported facts are blocked or isolated as expansion proposals.",
+      "layerId": "creator_canon",
+      "status": "active"
+    },
+    {
+      "id": "rule.creator.red_sail_signal",
+      "kind": "expansion",
+      "description": "In this creator canon, Ithacans treat a returning ship's red sail as a signal to begin the royal harbor watch.",
+      "layerId": "creator_canon",
+      "status": "active"
+    }
+  ],
+  "hash": "402c39cece3b992e9b5e6ede1a8a15ead41851caaa6622c9b97e109aa3576749"
+}

@@ -15,6 +15,15 @@ describe("WorldPackSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("uses one stable creator layer and keeps canon versions out of fixed states", () => {
+    const pack = WorldPackSchema.parse(readWorldPack());
+    expect(pack.layers.some(({ id }) => id === "creator_canon")).toBe(true);
+    expect(pack.layers.some(({ id }) => id === "creator_canon.v0")).toBe(false);
+    expect(pack.states.every((state) => !("canonVersion" in state))).toBe(true);
+    expect(pack.styleProfiles[0].constraints.length).toBeGreaterThan(0);
+    expect(pack.simulationScenarios.find(({ id }) => id === "scenario.harbor_watch")?.maxSteps).toBe(2);
+  });
+
   it("rejects dangling claim entity references", () => {
     const fixture = readWorldPack() as Record<string, unknown>;
     const claims = fixture.claims as Array<Record<string, unknown>>;
@@ -32,7 +41,13 @@ describe("WorldPackSchema", () => {
     }, "unknown source"],
     ["rule layer", (fixture: Record<string, unknown>) => {
       const rules = fixture.rules as Array<Record<string, unknown>>;
-      rules[0] = { ...rules[0], layerId: "layer.missing" };
+      rules.push({
+        id: "rule.test",
+        kind: "world",
+        description: "Invalid test rule.",
+        layerId: "layer.missing",
+        status: "active",
+      });
     }, "unknown layer"],
     ["spatial scope", (fixture: Record<string, unknown>) => {
       const claims = fixture.claims as Array<Record<string, unknown>>;

@@ -31,7 +31,7 @@ Application orchestration ── sanitized evidence log
 
 ## Deterministic core
 
-Pure TypeScript functions will own:
+Pure TypeScript functions own:
 
 - World Pack validation
 - participant-to-character ownership validation and stable intent ordering
@@ -48,10 +48,10 @@ The same inputs must produce byte-stable JSON. Wall-clock time, random values, n
 
 ## Model boundary
 
-The live adapter will use:
+The live adapter uses:
 
 - Responses API
-- model request `gpt-5.6` (the alias currently routes to `gpt-5.6-sol`)
+- requested model `gpt-5.6`; the returned model identity is recorded only after a real call
 - `reasoning.effort: medium` as the initial measured baseline
 - Structured Outputs through `text.format`
 - a strict JSON schema with all object fields required and `additionalProperties: false`
@@ -66,7 +66,7 @@ The pack contains layers, sources, entities, claims, events, rules, belief profi
 
 Claims are the atomic provenance unit. Relations are derived from claims rather than stored twice. Conflicting traditions remain separate; confidence scores do not silently choose one. An unresolved active conflict returns `needs_creator_decision`.
 
-Creator canon is an additive overlay. Replacing a source claim requires an explicit `supersedes` relation in a future schema revision; the scaffold does not yet implement this transition.
+Creator canon is an additive overlay. Replacing a source claim requires an explicit `supersedes` relation in a future schema revision; the MVP does not implement this transition.
 
 ## Creator-owned style boundary
 
@@ -182,13 +182,13 @@ Every run ends in exactly one state:
 
 A blocked draft may be displayed as an untrusted candidate for diagnosis, but it is never treated as valid output or written to canon.
 
-## Planned HTTP contract
+## HTTP contract
 
 `POST /api/runs` accepts one complete validated `CanonOverlay`, the current `SimulationSnapshot`, `styleProfileId`, `taskType`, facilitator brief, and `ParticipantIntent[]`. World Pack version, base state, location, canon profile, and focal characters are derived from the snapshot, scenario, and controlled entities rather than accepted as duplicate request authorities. The request is rejected if its overlay version/hash or style profile does not match the snapshot. The response contains character-scoped evidence, a structured draft with intent attribution, hard violations, proposals, a facilitator-facing canon/knowledge graph descriptor, a validated transition candidate, a proposed next snapshot, and a fixture/live model trace.
 
-Creator decisions and overlay persistence remain local for the MVP. A valid accept/edit returns the next complete overlay and the rebased same-turn snapshot; reject or stale input returns both authorities unchanged. Browser storage plus JSON export avoids a server database and authentication surface.
+`POST /api/decisions` applies accept/edit/reject against the bound proposal and overlay. `POST /api/transitions` applies one of the two registered fixture actions. Both endpoints are stateless: a valid accept/edit returns the next complete overlay and same-turn rebased snapshot; reject or stale input returns unchanged authorities. The browser carries only server-returned overlay/snapshot values, avoiding a server database and authentication surface.
 
-The hosted reviewer demo runs fixture mode only. Live mode requires a server-side `OPENAI_API_KEY` plus an explicit enable flag and is disabled on the unauthenticated public deployment. A real run is executed in a controlled local/server environment and reduced to public-safe metadata under `artifacts/evidence/live-sanitized.json`; raw material remains ignored under `artifacts/live/`.
+The reviewer demo runs fixture mode only. Live mode requires server-side `OPENAI_API_KEY` plus `ENABLE_OPENAI_LIVE=true`. No live call has yet been captured. When it is, only public-safe hashed metadata may be written under `artifacts/evidence/`; raw material remains ignored under `artifacts/live/`.
 
 ## Evidence gates
 

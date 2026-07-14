@@ -1,42 +1,238 @@
 [
   {
     "id": "replay.grounded_penelope",
-    "stateId": "state.ithaca.odyssey_book_1",
-    "canonProfileId": "profile.homeric_default",
-    "prompt": "Write a short night-time exchange between Penelope and Eurycleia about rumors of Odysseus' return. Do not reveal facts they cannot know.",
-    "expectedStatus": "passed",
-    "requiredViolationCodes": []
+    "description": "A character-scoped exchange preserves Penelope's uncertainty.",
+    "stages": [
+      {
+        "kind": "run",
+        "stageId": "stage.grounded",
+        "overlayFixtureId": "overlay.v0",
+        "snapshotFixtureId": "snapshot.s0",
+        "draftFixtureId": "draft.grounded_penelope",
+        "styleProfileId": "style.table_ready_mythic",
+        "taskType": "scene",
+        "brief": "Let Penelope and Eurycleia discuss a rumor without revealing hidden facts.",
+        "participantIntents": [
+          {
+            "intentId": "intent.penelope",
+            "participantId": "participant.one",
+            "controlledEntityIds": ["penelope"],
+            "intent": "Keep Penelope cautious and focused on what she can prepare."
+          },
+          {
+            "intentId": "intent.eurycleia",
+            "participantId": "participant.two",
+            "controlledEntityIds": ["eurycleia"],
+            "intent": "Offer practical household support without claiming secret knowledge."
+          }
+        ],
+        "expected": {
+          "status": "passed",
+          "requiredViolationCodes": [],
+          "forbiddenViolationCodes": [
+            "belief_scope_violation",
+            "entity_state_invalid",
+            "unapproved_expansion"
+          ],
+          "proposalIds": []
+        }
+      }
+    ]
   },
   {
     "id": "replay.living_hector",
-    "stateId": "state.ithaca.odyssey_book_1",
-    "canonProfileId": "profile.homeric_default",
-    "prompt": "Have Hector enter the palace alive and warn Penelope about Odysseus' return.",
-    "expectedStatus": "blocked",
-    "requiredViolationCodes": ["entity_state_invalid", "location_path_missing"]
+    "description": "A deceased and absent speaker cannot enter the Ithacan fixed state.",
+    "stages": [
+      {
+        "kind": "run",
+        "stageId": "stage.living_hector",
+        "overlayFixtureId": "overlay.v0",
+        "snapshotFixtureId": "snapshot.s0",
+        "draftFixtureId": "draft.living_hector",
+        "styleProfileId": "style.table_ready_mythic",
+        "taskType": "scene",
+        "brief": "Have Hector enter the palace alive and warn Penelope.",
+        "participantIntents": [
+          {
+            "intentId": "intent.hector",
+            "participantId": "participant.one",
+            "controlledEntityIds": ["hector"],
+            "intent": "Direct Hector to enter and speak as a living messenger."
+          },
+          {
+            "intentId": "intent.penelope",
+            "participantId": "participant.two",
+            "controlledEntityIds": ["penelope"],
+            "intent": "Have Penelope receive the warning."
+          }
+        ],
+        "expected": {
+          "status": "blocked",
+          "requiredViolationCodes": ["entity_state_invalid", "location_path_missing"],
+          "forbiddenViolationCodes": ["belief_scope_violation"],
+          "proposalIds": []
+        }
+      }
+    ]
   },
   {
     "id": "replay.penelope_knows_ogygia",
-    "stateId": "state.ithaca.odyssey_book_1",
-    "canonProfileId": "profile.homeric_default",
-    "prompt": "Have Penelope confidently say that Odysseus is currently detained by Calypso on Ogygia.",
-    "expectedStatus": "blocked",
-    "requiredViolationCodes": ["belief_scope_violation"]
+    "description": "Penelope cannot state the narrator-only Ogygia location as certain knowledge.",
+    "stages": [
+      {
+        "kind": "run",
+        "stageId": "stage.penelope_ogygia",
+        "overlayFixtureId": "overlay.v0",
+        "snapshotFixtureId": "snapshot.s0",
+        "draftFixtureId": "draft.penelope_knows_ogygia",
+        "styleProfileId": "style.table_ready_mythic",
+        "taskType": "scene",
+        "brief": "Have Penelope confidently name Odysseus' exact location and captor.",
+        "participantIntents": [
+          {
+            "intentId": "intent.penelope",
+            "participantId": "participant.one",
+            "controlledEntityIds": ["penelope"],
+            "intent": "Make Penelope state the exact hidden location as fact."
+          }
+        ],
+        "expected": {
+          "status": "blocked",
+          "requiredViolationCodes": ["belief_scope_violation"],
+          "forbiddenViolationCodes": ["entity_state_invalid", "unapproved_expansion"],
+          "proposalIds": []
+        }
+      }
+    ]
   },
   {
     "id": "replay.red_sail_proposal",
-    "stateId": "state.ithaca.odyssey_book_1",
-    "canonProfileId": "profile.homeric_default",
-    "prompt": "Add a rule that Ithacans read a returning ship's red sail as proof that the royal traveler survived, then use it in the scene.",
-    "expectedStatus": "needs_creator_decision",
-    "requiredViolationCodes": ["unapproved_expansion"]
+    "description": "A rule proposal is creator-approved, rebased, and used by exactly two chained transitions.",
+    "stages": [
+      {
+        "kind": "run",
+        "stageId": "stage.red_sail_proposal",
+        "overlayFixtureId": "overlay.v0",
+        "snapshotFixtureId": "snapshot.s0",
+        "draftFixtureId": "draft.red_sail_proposal",
+        "styleProfileId": "style.table_ready_mythic",
+        "taskType": "expand",
+        "brief": "Propose a red-sail signal, but do not treat it as canon before approval.",
+        "participantIntents": [
+          {
+            "intentId": "intent.penelope",
+            "participantId": "participant.one",
+            "controlledEntityIds": ["penelope"],
+            "intent": "Keep the household from confusing a signal with certainty."
+          },
+          {
+            "intentId": "intent.telemachus",
+            "participantId": "participant.two",
+            "controlledEntityIds": ["telemachus"],
+            "intent": "Propose a red-sail harbor signal and organize a watch."
+          }
+        ],
+        "expected": {
+          "status": "needs_creator_decision",
+          "requiredViolationCodes": ["unapproved_expansion"],
+          "forbiddenViolationCodes": ["entity_state_invalid", "belief_scope_violation"],
+          "proposalIds": ["proposal.red_sail_signal"]
+        }
+      },
+      {
+        "kind": "decision",
+        "stageId": "stage.red_sail_decision",
+        "proposalFromStageId": "stage.red_sail_proposal",
+        "action": "accept",
+        "expectedOverlayFixtureId": "overlay.v1.red-sail",
+        "expectedSnapshotFixtureId": "snapshot.s0r"
+      },
+      {
+        "kind": "transition",
+        "stageId": "stage.red_sail_step_1",
+        "overlayFixtureId": "overlay.v1.red-sail",
+        "snapshotFixtureId": "snapshot.s0r",
+        "draftFixtureId": "draft.red_sail_step_1",
+        "participantIntents": [
+          {
+            "intentId": "intent.penelope",
+            "participantId": "participant.one",
+            "controlledEntityIds": ["penelope"],
+            "intent": "Keep the watch cautious."
+          },
+          {
+            "intentId": "intent.telemachus",
+            "participantId": "participant.two",
+            "controlledEntityIds": ["telemachus"],
+            "intent": "Raise the approved harbor watch."
+          }
+        ],
+        "expected": {
+          "status": "applied",
+          "fromStateHash": "f58ba371d991e962f388f80306b5129a38217838d3ff3485a486e537bb79f79a",
+          "toStateHash": "8479f53036aa7b118bf73ad7a7f507757f8da160d24fcf07417638bc612b811f",
+          "turnIndex": 1,
+          "variables": [{ "id": "harbor_watch", "value": "watching" }]
+        }
+      },
+      {
+        "kind": "transition",
+        "stageId": "stage.red_sail_step_2",
+        "overlayFixtureId": "overlay.v1.red-sail",
+        "snapshotFixtureId": "snapshot.s1",
+        "draftFixtureId": "draft.red_sail_step_2",
+        "participantIntents": [
+          {
+            "intentId": "intent.penelope",
+            "participantId": "participant.one",
+            "controlledEntityIds": ["penelope"],
+            "intent": "Keep the sighting distinct from certainty about the traveler."
+          },
+          {
+            "intentId": "intent.telemachus",
+            "participantId": "participant.two",
+            "controlledEntityIds": ["telemachus"],
+            "intent": "Record that the red-sail signal has been seen."
+          }
+        ],
+        "expected": {
+          "status": "applied",
+          "fromStateHash": "8479f53036aa7b118bf73ad7a7f507757f8da160d24fcf07417638bc612b811f",
+          "toStateHash": "60c767776b4744e79870476f9f0518c1361d6f27296c499ce005f7dea55cc843",
+          "turnIndex": 2,
+          "variables": [{ "id": "harbor_watch", "value": "signal_seen" }]
+        }
+      }
+    ]
   },
   {
     "id": "replay.helen_conflict",
-    "stateId": "state.troy.hector_funeral_complete",
-    "canonProfileId": "profile.helen_comparison",
-    "prompt": "State where the real Helen was during the war without choosing a source tradition.",
-    "expectedStatus": "needs_creator_decision",
-    "requiredViolationCodes": ["tradition_conflict_unresolved"]
+    "description": "Two active source traditions remain unresolved until the creator selects one.",
+    "stages": [
+      {
+        "kind": "run",
+        "stageId": "stage.helen_conflict",
+        "overlayFixtureId": "overlay.v0",
+        "snapshotFixtureId": "snapshot.helen_s0",
+        "draftFixtureId": "draft.helen_conflict",
+        "styleProfileId": "style.table_ready_mythic",
+        "taskType": "query",
+        "brief": "State where the real Helen was during the war without choosing a source tradition.",
+        "participantIntents": [
+          {
+            "intentId": "intent.helen",
+            "participantId": "participant.one",
+            "controlledEntityIds": ["helen"],
+            "intent": "Expose the unresolved split between the active traditions."
+          }
+        ],
+        "expected": {
+          "status": "needs_creator_decision",
+          "requiredViolationCodes": ["tradition_conflict_unresolved"],
+          "forbiddenViolationCodes": ["belief_scope_violation", "unapproved_expansion"],
+          "proposalIds": []
+        }
+      }
+    ]
   }
 ]

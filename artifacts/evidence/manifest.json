@@ -1,0 +1,35 @@
+{
+  "files": [
+    {
+      "bytes": 3033,
+      "path": "artifacts/evidence/evidence-packet.json",
+      "sha256": "9069e40455d274934782e231613606a42deadea10edbd187bb03a6c8163e957f"
+    },
+    {
+      "bytes": 2624,
+      "path": "artifacts/evidence/fixture-replay.json",
+      "sha256": "55a12c56a4c678af7b54f9a585d410b26ac889535e3d3aa79fb46f197c4504d7"
+    },
+    {
+      "bytes": 8542,
+      "path": "artifacts/evidence/graph-descriptor.json",
+      "sha256": "a52ab9f3c0c9538f06e83e05fbb1db7a3b1a3b7397605cc4c803b6354297afca"
+    },
+    {
+      "bytes": 394,
+      "path": "artifacts/evidence/live-readiness.json",
+      "sha256": "5d9072e43ba19420fbf11ed57d82418b5cf023205401785de6aac4feb897eac8"
+    },
+    {
+      "bytes": 4118,
+      "path": "artifacts/evidence/simulation-chain.json",
+      "sha256": "d9a7161306609c2405584d0d6d16c66b2ce6130877d4266aefe0cb55464ecf14"
+    },
+    {
+      "bytes": 2231,
+      "path": "artifacts/evidence/style-harness.json",
+      "sha256": "1505cd916c7bb5a301317e40e77c968178bbb979f48890a660a5b00a092b560c"
+    }
+  ],
+  "schemaVersion": 1
+}

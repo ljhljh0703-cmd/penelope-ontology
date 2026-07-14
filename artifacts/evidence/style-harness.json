@@ -1,0 +1,75 @@
+{
+  "claimBoundary": "This demonstrates explicit prose control and auditability; it is not a model-vendor writing-quality comparison.",
+  "deterministicChecks": [
+    "style.table_ready_mythic.max_words"
+  ],
+  "evidenceType": "harness_mechanism",
+  "humanReviewChecks": [
+    "style.table_ready_mythic.viewpoint",
+    "style.table_ready_mythic.tense",
+    "style.table_ready_mythic.dialogue",
+    "style.table_ready_mythic.goal",
+    "style.table_ready_mythic.avoidance"
+  ],
+  "modelInputBoundary": [
+    "selected style profile",
+    "participant intents",
+    "character-scoped evidence"
+  ],
+  "modelOutputReceipts": {
+    "appliedStyleConstraintIds": [
+      "style.table_ready_mythic.avoidance",
+      "style.table_ready_mythic.dialogue",
+      "style.table_ready_mythic.goal",
+      "style.table_ready_mythic.max_words",
+      "style.table_ready_mythic.tense",
+      "style.table_ready_mythic.viewpoint"
+    ],
+    "styleProfileId": "style.table_ready_mythic"
+  },
+  "selectedProfile": {
+    "constraints": [
+      {
+        "checkMode": "human",
+        "id": "style.table_ready_mythic.viewpoint",
+        "kind": "viewpoint",
+        "value": "limited_third"
+      },
+      {
+        "checkMode": "human",
+        "id": "style.table_ready_mythic.tense",
+        "kind": "tense",
+        "value": "present"
+      },
+      {
+        "checkMode": "human",
+        "id": "style.table_ready_mythic.dialogue",
+        "kind": "dialogue_mode",
+        "value": "subtextual_table_ready"
+      },
+      {
+        "checkMode": "human",
+        "id": "style.table_ready_mythic.goal",
+        "kind": "prose_goal",
+        "value": "Each line should expose a playable decision or uncertainty."
+      },
+      {
+        "checkMode": "human",
+        "id": "style.table_ready_mythic.avoidance",
+        "kind": "avoidance",
+        "value": "Do not convert uncertain character knowledge into narrator certainty."
+      },
+      {
+        "checkMode": "deterministic",
+        "id": "style.table_ready_mythic.max_words",
+        "kind": "max_words",
+        "value": 180
+      }
+    ],
+    "id": "style.table_ready_mythic",
+    "label": "Table-ready mythic restraint"
+  },
+  "worldConsistencyChecks": [
+    "unapproved_expansion"
+  ]
+}

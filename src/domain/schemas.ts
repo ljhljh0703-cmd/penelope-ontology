@@ -1,25 +1,20 @@
 import { z } from "zod";
+import { IdentifierSchema, addDuplicateIssues } from "@/src/contracts/common";
+import { SimulationScenarioSchema } from "@/src/contracts/simulation";
+import { StyleProfileSchema } from "@/src/contracts/style-profile";
 
-export const IdentifierSchema = z
-  .string()
-  .min(1)
-  .regex(/^[a-z0-9][a-z0-9._-]*$/, "Use stable lowercase identifiers.");
+export { IdentifierSchema } from "@/src/contracts/common";
 
 const uniqueIds = (
   values: ReadonlyArray<{ id: string }>,
   label: string,
   context: z.RefinementCtx,
-) => {
-  const seen = new Set<string>();
-  for (const value of values) {
-    if (seen.has(value.id)) {
-      context.addIssue({
-        code: "custom",
-        message: `Duplicate ${label} id: ${value.id}`,
-      });
-    }
-    seen.add(value.id);
-  }
+): void => {
+  addDuplicateIssues(
+    values.map(({ id }) => id),
+    `${label} id`,
+    context,
+  );
 };
 
 export const SourceSchema = z
@@ -119,7 +114,6 @@ export const WorldStateSchema = z
     locationId: IdentifierSchema,
     presentEntityIds: z.array(IdentifierSchema),
     deceasedEntityIds: z.array(IdentifierSchema),
-    canonVersion: z.string().min(1),
   })
   .strict();
 
@@ -133,7 +127,7 @@ export const CanonProfileSchema = z
 
 export const WorldPackSchema = z
   .object({
-    schemaVersion: z.literal("0.1.0"),
+    schemaVersion: z.literal("0.2.0"),
     meta: z
       .object({
         id: IdentifierSchema,
@@ -152,8 +146,12 @@ export const WorldPackSchema = z
     beliefs: z.array(BeliefProfileSchema),
     states: z.array(WorldStateSchema).min(1),
     canonProfiles: z.array(CanonProfileSchema).min(1),
+    styleProfiles: z.array(StyleProfileSchema).min(1),
+    simulationScenarios: z.array(SimulationScenarioSchema).min(1),
     defaultStateId: IdentifierSchema,
     defaultCanonProfileId: IdentifierSchema,
+    defaultStyleProfileId: IdentifierSchema,
+    defaultSimulationScenarioId: IdentifierSchema,
     expansionPolicy: z
       .object({
         mode: z.literal("creator_approval_required"),
@@ -178,24 +176,42 @@ export const WorldPackSchema = z
     uniqueIds(pack.rules, "rule", context);
     uniqueIds(pack.states, "state", context);
     uniqueIds(pack.canonProfiles, "canon profile", context);
+    uniqueIds(pack.styleProfiles, "style profile", context);
+    uniqueIds(pack.simulationScenarios, "simulation scenario", context);
+    addDuplicateIssues(
+      pack.beliefs.map(({ characterId }) => characterId),
+      "belief profile character id",
+      context,
+    );
 
     const layerIds = new Set(pack.layers.map(({ id }) => id));
     const sourceIds = new Set(pack.sources.map(({ id }) => id));
     const entityIds = new Set(pack.entities.map(({ id }) => id));
+    const characterIds = new Set(
+      pack.entities.filter(({ kind }) => kind === "character").map(({ id }) => id),
+    );
     const claimIds = new Set(pack.claims.map(({ id }) => id));
     const eventIds = new Set(pack.events.map(({ id }) => id));
     const eventPhaseIds = new Set(pack.events.map(({ phaseId }) => phaseId));
     const stateIds = new Set(pack.states.map(({ id }) => id));
     const profileIds = new Set(pack.canonProfiles.map(({ id }) => id));
+    const styleProfileIds = new Set(pack.styleProfiles.map(({ id }) => id));
+    const scenarioIds = new Set(pack.simulationScenarios.map(({ id }) => id));
     const conflictSetIds = new Set(
       pack.claims.flatMap(({ conflictSetId }) => (conflictSetId ? [conflictSetId] : [])),
     );
 
-    const issue = (message: string) => context.addIssue({ code: "custom", message });
+    const issue = (message: string): void => context.addIssue({ code: "custom", message });
 
     if (!stateIds.has(pack.defaultStateId)) issue(`Unknown default state: ${pack.defaultStateId}`);
     if (!profileIds.has(pack.defaultCanonProfileId)) {
       issue(`Unknown default canon profile: ${pack.defaultCanonProfileId}`);
+    }
+    if (!styleProfileIds.has(pack.defaultStyleProfileId)) {
+      issue(`Unknown default style profile: ${pack.defaultStyleProfileId}`);
+    }
+    if (!scenarioIds.has(pack.defaultSimulationScenarioId)) {
+      issue(`Unknown default simulation scenario: ${pack.defaultSimulationScenarioId}`);
     }
 
     for (const claim of pack.claims) {
@@ -232,7 +248,9 @@ export const WorldPackSchema = z
     }
 
     for (const belief of pack.beliefs) {
-      if (!entityIds.has(belief.characterId)) issue(`Belief profile has unknown character ${belief.characterId}`);
+      if (!characterIds.has(belief.characterId)) {
+        issue(`Belief profile has unknown character ${belief.characterId}`);
+      }
       for (const claimId of [...belief.knownClaimIds, ...belief.uncertainClaimIds]) {
         if (!claimIds.has(claimId)) issue(`Belief profile ${belief.characterId} has unknown claim ${claimId}`);
       }
@@ -264,13 +282,22 @@ export const WorldPackSchema = z
       }
     }
 
-    const replayIds = new Set<string>();
-    for (const replayId of pack.replayCaseIds) {
-      if (replayIds.has(replayId)) issue(`Duplicate replay case id: ${replayId}`);
-      replayIds.add(replayId);
+    for (const scenario of pack.simulationScenarios) {
+      if (scenario.worldPackId !== pack.meta.id) {
+        issue(`Simulation scenario ${scenario.id} targets unknown World Pack ${scenario.worldPackId}`);
+      }
+      if (scenario.worldPackVersion !== pack.meta.version) {
+        issue(`Simulation scenario ${scenario.id} targets stale World Pack version ${scenario.worldPackVersion}`);
+      }
+      if (!stateIds.has(scenario.baseStateId)) {
+        issue(`Simulation scenario ${scenario.id} has unknown base state ${scenario.baseStateId}`);
+      }
     }
+
+    addDuplicateIssues(pack.replayCaseIds, "replay case id", context);
   });
 
 export type WorldPack = z.infer<typeof WorldPackSchema>;
 export type WorldState = z.infer<typeof WorldStateSchema>;
 export type Claim = z.infer<typeof ClaimSchema>;
+export type Rule = z.infer<typeof RuleSchema>;

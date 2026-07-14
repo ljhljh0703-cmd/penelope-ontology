@@ -13,19 +13,24 @@ Evidence states: `verified`, `source-backed`, `fixture-only`, `planned`, `target
 | fixture-boundary | Fixture and live response identities cannot cross | verified | three discriminated trace tests passed |
 | replay-fixture-contract | World Pack and replay file have exact, valid ID parity | verified | three replay schema/reference tests passed |
 | app-builds | Production application builds | verified | `npm run verify` and Next production build exit 0 |
-| approved-table-surface | The browser implements the approved multi-intent, style, graph, creator-gate, and two-step flow | planned | end-to-end browser assertions and reviewed capture; current Day-0 shell is stale |
+| approved-table-surface | The browser implements the approved local multi-intent, style, graph, creator-gate, and two-step flow | verified | six Playwright checks across desktop and iPhone/WebKit plus inspected full-page captures |
 | dependency-audit | Installed dependency graph has no reported npm vulnerabilities | verified | `npm audit --json`, 2026-07-15, total 0 |
-| core-contracts-locked | The eight demo-critical contract groups are represented and tested | planned | contract failure tests and schema parity checks for speaker/rule/outcome/overlay/replay/intent/graph/simulation |
-| retrieval-deterministic | Retrieval order is byte-stable | planned | repeated-input test |
-| gpt56-integrated | Real GPT-5.6 Responses call works | planned | sanitized real response metadata and parsed draft |
-| hard-validation | Named world and character-knowledge violations fail closed | planned | frozen replay results |
-| multi-intent-attribution | A facilitator can combine multiple participant intents while every utterance and action retains participant-to-character lineage and one enforceable authorization source | planned | duplicate-control, unknown-lineage, unauthorized-speaker/action, and authorizing/contributing intent tests plus browser trace |
-| creator-style-profile | An original creator-owned style profile is passed beside character evidence and referenced by the structured draft | planned | stable constraint-ID contract, prompt-input trace, unknown/cross-profile ID tests, objective constraint tests, and browser evidence |
+| core-contracts-locked | The eight demo-critical contract groups are represented and tested | verified | contract and malformed-input suite plus schema/hash fixture audit |
+| retrieval-deterministic | Retrieval order and character views are stable for fixed inputs | verified | repeat-input and character-scope tests |
+| gpt56-adapter | GPT-5.6 Responses adapter uses strict Structured Outputs and typed failure paths | verified | injected-client tests; no network call |
+| gpt56-integrated | Real GPT-5.6 Responses call works | blocked | no API key or sanitized live response metadata yet |
+| hard-validation | Named world and character-knowledge violations fail closed | fixture-only | five-case frozen replay and dedicated validator tests |
+| multi-intent-attribution | A facilitator can combine local participant intents while every utterance and action retains participant-to-character lineage and one enforceable authorization source | fixture-only | duplicate-control, unknown-lineage, unauthorized-speaker/action tests plus browser flow |
+| creator-style-profile | An original creator-owned style profile is passed beside character evidence and referenced by the structured draft | fixture-only | stable constraint IDs, bounded live-input mock, validator tests, browser evidence, and style-harness artifact |
 | style-controllability-ablation | The selected style profile changes observable output characteristics for the same model and evidence bundle | target | paired same-model runs, objective checks, and a labeled human rubric |
-| canon-knowledge-graph | A deterministic canon/knowledge graph shows used evidence, hidden character knowledge, conflicts, proposals, and approval state | planned | byte-stable graph descriptor test and browser screenshot |
-| bounded-state-transition | Two simulation steps change only registered state variables and approved overlay data, with deterministic snapshot hashes | planned | transition invariant tests and two-step replay report |
-| creator-gate | Proposal cannot change canon before valid approval | planned | canon hash/version tests |
-| replay-regression | Unchanged controls preserve their outcomes while the red-sail target matches explicit v0/v1 expectations | planned | proposal → decision/rebase → Step 1 → Step 2 replay report plus control-case comparison |
+| canon-knowledge-graph | A deterministic canon/knowledge graph shows used evidence, missing character knowledge, conflicts, proposals, approvals, and state | fixture-only | byte-stable graph tests, evidence artifact, browser view, and text fallback |
+| bounded-state-transition | Two simulation steps change only registered state variables and approved overlay data, with deterministic snapshot hashes | fixture-only | transition invariants, exact hash chain, API/browser flow, and blocked third step |
+| creator-gate | Proposal cannot change canon before valid approval | verified | version/hash decision tests and unchanged reject/stale paths |
+| replay-regression | Unchanged controls preserve outcomes while red-sail matches explicit v0/v1 expectations | fixture-only | five cases, eight stages, proposal → decision/rebase → Step 1 → Step 2 report |
+| evidence-packet | Sanitized public evidence is generated from executable fixtures | verified | six JSON artifacts plus SHA-256 manifest and privacy scan |
+| fresh-copy-rehearsal | A clean public candidate copy installs and passes the release gate | verified | `npm ci`, audit 0, 77 tests, privacy, build, and 6 browser tests |
+| source-locators | Four mythology locators resolve and support the original summaries | verified | Perseus link checks and `docs/SOURCE-VERIFICATION.md` |
+| public-readme | README derives from the Evidence Packet through the approved writing gate | blocked | package write-mode preflight is `SERVING_STALE`; Vault Claude must refresh manifest |
 | reviewer-demo-hosted | A judge can use the working demo without rebuilding | planned | public deployment URL and browser smoke |
 | public-repository | Reproducible source repository is available | planned | public remote, license, CI, and fresh-clone proof |
 | demo-video-public | Public narrated demo is under three minutes | planned | YouTube URL and duration check |

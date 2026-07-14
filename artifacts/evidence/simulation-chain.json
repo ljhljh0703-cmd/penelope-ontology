@@ -1,0 +1,134 @@
+{
+  "creatorDecision": {
+    "overlayHash": "402c39cece3b992e9b5e6ede1a8a15ead41851caaa6622c9b97e109aa3576749",
+    "overlayVersion": 1,
+    "proposalHash": "caed9682267498b2717b5d47aefab79e0f34478d638bf49cc4b261435017df10",
+    "proposalId": "proposal.red_sail_signal",
+    "rebasedStateHash": "f58ba371d991e962f388f80306b5129a38217838d3ff3485a486e537bb79f79a",
+    "status": "applied",
+    "turnIndex": 0
+  },
+  "digest": "cdb7d4a1a0776e50ba753bc5ffc5434591196c140872c15fd018947ee0e94798",
+  "evidenceType": "deterministic_simulation",
+  "finalTurnIndex": 2,
+  "finalVariables": [
+    {
+      "id": "harbor_watch",
+      "value": "signal_seen"
+    }
+  ],
+  "maxSteps": 2,
+  "proposalBeforeApproval": {
+    "overlayVersion": 0,
+    "stateHash": "ffc558f0c9bd9139cd18c7408cb393b405d75698cc412d35cf345b1c5094f50e",
+    "status": "needs_creator_decision",
+    "variableValues": [
+      {
+        "id": "harbor_watch",
+        "value": "idle"
+      }
+    ]
+  },
+  "thirdStep": {
+    "stateHashUnchanged": true,
+    "status": "blocked",
+    "violations": [
+      "step_limit_exceeded",
+      "state_transition_invalid"
+    ]
+  },
+  "transitions": [
+    {
+      "action": {
+        "actorEntityId": "telemachus",
+        "authorizingIntentId": "intent.telemachus",
+        "contributingIntentIds": [
+          "intent.penelope"
+        ],
+        "evidenceClaimIds": [],
+        "evidenceRuleIds": [
+          "rule.creator.red_sail_signal"
+        ],
+        "from": "idle",
+        "op": "set_variable",
+        "to": "watching",
+        "variableId": "harbor_watch"
+      },
+      "fromStateHash": "f58ba371d991e962f388f80306b5129a38217838d3ff3485a486e537bb79f79a",
+      "status": "applied",
+      "toSnapshot": {
+        "baseStateId": "state.ithaca.odyssey_book_1",
+        "canonHash": "402c39cece3b992e9b5e6ede1a8a15ead41851caaa6622c9b97e109aa3576749",
+        "canonProfileId": "profile.homeric_default",
+        "deceasedEntityIds": [
+          "hector"
+        ],
+        "overlayId": "creator_canon",
+        "overlayVersion": 1,
+        "presentEntityIds": [
+          "eurycleia",
+          "penelope",
+          "telemachus"
+        ],
+        "scenarioId": "scenario.harbor_watch",
+        "stateHash": "8479f53036aa7b118bf73ad7a7f507757f8da160d24fcf07417638bc612b811f",
+        "styleProfileId": "style.table_ready_mythic",
+        "turnIndex": 1,
+        "variables": [
+          {
+            "id": "harbor_watch",
+            "value": "watching"
+          }
+        ],
+        "worldPackVersion": "0.2.0"
+      },
+      "toStateHash": "8479f53036aa7b118bf73ad7a7f507757f8da160d24fcf07417638bc612b811f"
+    },
+    {
+      "action": {
+        "actorEntityId": "telemachus",
+        "authorizingIntentId": "intent.telemachus",
+        "contributingIntentIds": [
+          "intent.penelope"
+        ],
+        "evidenceClaimIds": [],
+        "evidenceRuleIds": [
+          "rule.creator.red_sail_signal"
+        ],
+        "from": "watching",
+        "op": "set_variable",
+        "to": "signal_seen",
+        "variableId": "harbor_watch"
+      },
+      "fromStateHash": "8479f53036aa7b118bf73ad7a7f507757f8da160d24fcf07417638bc612b811f",
+      "status": "applied",
+      "toSnapshot": {
+        "baseStateId": "state.ithaca.odyssey_book_1",
+        "canonHash": "402c39cece3b992e9b5e6ede1a8a15ead41851caaa6622c9b97e109aa3576749",
+        "canonProfileId": "profile.homeric_default",
+        "deceasedEntityIds": [
+          "hector"
+        ],
+        "overlayId": "creator_canon",
+        "overlayVersion": 1,
+        "presentEntityIds": [
+          "eurycleia",
+          "penelope",
+          "telemachus"
+        ],
+        "scenarioId": "scenario.harbor_watch",
+        "stateHash": "60c767776b4744e79870476f9f0518c1361d6f27296c499ce005f7dea55cc843",
+        "styleProfileId": "style.table_ready_mythic",
+        "turnIndex": 2,
+        "variables": [
+          {
+            "id": "harbor_watch",
+            "value": "signal_seen"
+          }
+        ],
+        "worldPackVersion": "0.2.0"
+      },
+      "toStateHash": "60c767776b4744e79870476f9f0518c1361d6f27296c499ce005f7dea55cc843"
+    }
+  ]
+}

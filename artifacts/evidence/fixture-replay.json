@@ -1,0 +1,92 @@
+{
+  "allPassed": true,
+  "caseCount": 5,
+  "cases": [
+    {
+      "description": "A character-scoped exchange preserves Penelope's uncertainty.",
+      "id": "replay.grounded_penelope",
+      "passed": true,
+      "stages": [
+        {
+          "detail": "passed; violations=none",
+          "kind": "run",
+          "passed": true,
+          "stageId": "stage.grounded"
+        }
+      ]
+    },
+    {
+      "description": "A deceased and absent speaker cannot enter the Ithacan fixed state.",
+      "id": "replay.living_hector",
+      "passed": true,
+      "stages": [
+        {
+          "detail": "blocked; violations=entity_state_invalid,location_path_missing",
+          "kind": "run",
+          "passed": true,
+          "stageId": "stage.living_hector"
+        }
+      ]
+    },
+    {
+      "description": "Penelope cannot state the narrator-only Ogygia location as certain knowledge.",
+      "id": "replay.penelope_knows_ogygia",
+      "passed": true,
+      "stages": [
+        {
+          "detail": "blocked; violations=belief_scope_violation",
+          "kind": "run",
+          "passed": true,
+          "stageId": "stage.penelope_ogygia"
+        }
+      ]
+    },
+    {
+      "description": "A rule proposal is creator-approved, rebased, and used by exactly two chained transitions.",
+      "id": "replay.red_sail_proposal",
+      "passed": true,
+      "stages": [
+        {
+          "detail": "needs_creator_decision; violations=unapproved_expansion",
+          "kind": "run",
+          "passed": true,
+          "stageId": "stage.red_sail_proposal"
+        },
+        {
+          "detail": "applied; overlay=v1",
+          "kind": "decision",
+          "passed": true,
+          "stageId": "stage.red_sail_decision"
+        },
+        {
+          "detail": "applied; turn=1",
+          "kind": "transition",
+          "passed": true,
+          "stageId": "stage.red_sail_step_1"
+        },
+        {
+          "detail": "applied; turn=2",
+          "kind": "transition",
+          "passed": true,
+          "stageId": "stage.red_sail_step_2"
+        }
+      ]
+    },
+    {
+      "description": "Two active source traditions remain unresolved until the creator selects one.",
+      "id": "replay.helen_conflict",
+      "passed": true,
+      "stages": [
+        {
+          "detail": "needs_creator_decision; violations=tradition_conflict_unresolved",
+          "kind": "run",
+          "passed": true,
+          "stageId": "stage.helen_conflict"
+        }
+      ]
+    }
+  ],
+  "digest": "ce36a197a69baf2e77725e84918ce50d6982ccca771fb89f994cb44e45f481f6",
+  "evidenceType": "fixture_replay",
+  "stageCount": 8
+}

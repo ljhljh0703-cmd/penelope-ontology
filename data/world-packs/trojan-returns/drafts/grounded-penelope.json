@@ -1,0 +1,36 @@
+{
+  "styleProfileId": "style.table_ready_mythic",
+  "narrative": "Penelope lets the rumor rest between herself and Eurycleia without turning hope into knowledge of Odysseus.",
+  "mentionedEntityIds": ["eurycleia", "odysseus", "penelope"],
+  "appliedStyleConstraintIds": [
+    "style.table_ready_mythic.avoidance",
+    "style.table_ready_mythic.dialogue",
+    "style.table_ready_mythic.goal",
+    "style.table_ready_mythic.max_words",
+    "style.table_ready_mythic.tense",
+    "style.table_ready_mythic.viewpoint"
+  ],
+  "usedClaimIds": ["claim.odyssey.penelope_uncertain_fate"],
+  "utterances": [
+    {
+      "speakerId": "penelope",
+      "authorizingIntentId": "intent.penelope",
+      "contributingIntentIds": ["intent.eurycleia"],
+      "text": "A rumor is not a homecoming. We will prepare without pretending to know.",
+      "assertedClaimIds": ["claim.odyssey.penelope_uncertain_fate"],
+      "certainty": "uncertain"
+    },
+    {
+      "speakerId": "eurycleia",
+      "authorizingIntentId": "intent.eurycleia",
+      "contributingIntentIds": ["intent.penelope"],
+      "text": "Then I will keep the lamps ready and the servants quiet.",
+      "assertedClaimIds": [],
+      "certainty": "certain"
+    }
+  ],
+  "actions": [],
+  "assertedClaims": [],
+  "unknowns": [],
+  "proposals": []
+}

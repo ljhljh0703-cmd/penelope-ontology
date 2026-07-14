@@ -1,0 +1,299 @@
+{
+  "descriptor": {
+    "edges": [
+      {
+        "evidenceIds": [
+          "ffc558f0c9bd9139cd18c7408cb393b405d75698cc412d35cf345b1c5094f50e"
+        ],
+        "fromNodeId": "snapshot.ffc558f0c9bd",
+        "id": "edge.applied.ffc558f0c9bd.harbor_watch",
+        "kind": "applied",
+        "predicate": "tracks",
+        "status": "current",
+        "toNodeId": "state_variable.harbor_watch",
+        "visibleToIds": [],
+        "visualState": "current_scenario_value"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_dead",
+          "source.iliad.24"
+        ],
+        "fromNodeId": "entity.hector",
+        "id": "edge.claim.claim.iliad.hector_dead",
+        "kind": "claim",
+        "predicate": "state",
+        "status": "active",
+        "toNodeId": "literal.claim.iliad.hector_dead",
+        "visibleToIds": [
+          "penelope",
+          "telemachus"
+        ],
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_funeral_complete",
+          "source.iliad.24"
+        ],
+        "fromNodeId": "entity.hector",
+        "id": "edge.claim.claim.iliad.hector_funeral_complete",
+        "kind": "claim",
+        "predicate": "funeral_state",
+        "status": "active",
+        "toNodeId": "literal.claim.iliad.hector_funeral_complete",
+        "visibleToIds": [
+          "penelope",
+          "telemachus"
+        ],
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.helen_at_troy",
+          "source.iliad.3"
+        ],
+        "fromNodeId": "entity.helen",
+        "id": "edge.claim.claim.iliad.helen_at_troy",
+        "kind": "claim",
+        "predicate": "located_at",
+        "status": "active",
+        "toNodeId": "entity.troy",
+        "visibleToIds": [
+          "penelope",
+          "telemachus"
+        ],
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.odyssey.odysseus_at_ogygia",
+          "source.odyssey.1"
+        ],
+        "fromNodeId": "entity.odysseus",
+        "id": "edge.claim.claim.odyssey.odysseus_at_ogygia",
+        "kind": "claim",
+        "predicate": "located_at",
+        "status": "missing",
+        "toNodeId": "entity.ogygia",
+        "visibleToIds": [],
+        "visualState": "missing_character_knowledge"
+      },
+      {
+        "evidenceIds": [
+          "claim.odyssey.penelope_uncertain_fate",
+          "source.odyssey.1"
+        ],
+        "fromNodeId": "entity.penelope",
+        "id": "edge.claim.claim.odyssey.penelope_uncertain_fate",
+        "kind": "claim",
+        "predicate": "believes_fate_of_odysseus",
+        "status": "active",
+        "toNodeId": "literal.claim.odyssey.penelope_uncertain_fate",
+        "visibleToIds": [
+          "penelope"
+        ],
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "ffc558f0c9bd9139cd18c7408cb393b405d75698cc412d35cf345b1c5094f50e"
+        ],
+        "fromNodeId": "state_variable.harbor_watch",
+        "id": "edge.current_value.harbor_watch",
+        "kind": "current_value",
+        "predicate": "current_value",
+        "status": "current",
+        "toNodeId": "state_value.harbor_watch.idle",
+        "visibleToIds": [],
+        "visualState": "current_scenario_value"
+      },
+      {
+        "evidenceIds": [
+          "proposal.red_sail_signal"
+        ],
+        "fromNodeId": "proposal.proposal.red_sail_signal",
+        "id": "edge.proposal.proposal.red_sail_signal.rule.creator.red_sail_signal",
+        "kind": "proposal",
+        "predicate": "proposes",
+        "status": "proposed",
+        "toNodeId": "rule.rule.creator.red_sail_signal",
+        "visibleToIds": [],
+        "visualState": "ghost_proposal"
+      }
+    ],
+    "id": "graph.ffc558f0c9bd",
+    "nodes": [
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_dead"
+        ],
+        "id": "entity.hector",
+        "kind": "entity",
+        "label": "Hector",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.helen_at_troy"
+        ],
+        "id": "entity.helen",
+        "kind": "entity",
+        "label": "Helen",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.odyssey.odysseus_at_ogygia"
+        ],
+        "id": "entity.odysseus",
+        "kind": "entity",
+        "label": "Odysseus",
+        "visualState": "missing_character_knowledge"
+      },
+      {
+        "evidenceIds": [
+          "claim.odyssey.odysseus_at_ogygia"
+        ],
+        "id": "entity.ogygia",
+        "kind": "entity",
+        "label": "Ogygia",
+        "visualState": "missing_character_knowledge"
+      },
+      {
+        "evidenceIds": [
+          "claim.odyssey.penelope_uncertain_fate"
+        ],
+        "id": "entity.penelope",
+        "kind": "entity",
+        "label": "Penelope",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "telemachus"
+        ],
+        "id": "entity.telemachus",
+        "kind": "entity",
+        "label": "Telemachus",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.helen_at_troy"
+        ],
+        "id": "entity.troy",
+        "kind": "entity",
+        "label": "Troy",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_dead"
+        ],
+        "id": "literal.claim.iliad.hector_dead",
+        "kind": "literal",
+        "label": "dead",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.iliad.hector_funeral_complete"
+        ],
+        "id": "literal.claim.iliad.hector_funeral_complete",
+        "kind": "literal",
+        "label": "complete",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "claim.odyssey.penelope_uncertain_fate"
+        ],
+        "id": "literal.claim.odyssey.penelope_uncertain_fate",
+        "kind": "literal",
+        "label": "uncertain",
+        "visualState": "active_evidence"
+      },
+      {
+        "evidenceIds": [
+          "proposal.red_sail_signal"
+        ],
+        "id": "proposal.proposal.red_sail_signal",
+        "kind": "proposal",
+        "label": "Add an original red-sail signal to creator canon.",
+        "visualState": "ghost_proposal"
+      },
+      {
+        "evidenceIds": [
+          "rule.character_knowledge"
+        ],
+        "id": "rule.rule.character_knowledge",
+        "kind": "rule",
+        "label": "A character may assert only claims present in that character's knowledge profile.",
+        "visualState": "approved_overlay"
+      },
+      {
+        "evidenceIds": [
+          "rule.closed_world"
+        ],
+        "id": "rule.rule.closed_world",
+        "kind": "rule",
+        "label": "Unsupported facts are blocked or isolated as expansion proposals.",
+        "visualState": "approved_overlay"
+      },
+      {
+        "evidenceIds": [
+          "proposal.red_sail_signal"
+        ],
+        "id": "rule.rule.creator.red_sail_signal",
+        "kind": "rule",
+        "label": "In this creator canon, Ithacans treat a returning ship's red sail as a signal to begin the royal harbor watch.",
+        "visualState": "ghost_proposal"
+      },
+      {
+        "evidenceIds": [
+          "scenario.harbor_watch"
+        ],
+        "id": "snapshot.ffc558f0c9bd",
+        "kind": "snapshot",
+        "label": "Turn 0",
+        "visualState": "current_scenario_value"
+      },
+      {
+        "evidenceIds": [
+          "ffc558f0c9bd9139cd18c7408cb393b405d75698cc412d35cf345b1c5094f50e"
+        ],
+        "id": "state_value.harbor_watch.idle",
+        "kind": "state_value",
+        "label": "idle",
+        "visualState": "current_scenario_value"
+      },
+      {
+        "evidenceIds": [
+          "scenario.harbor_watch"
+        ],
+        "id": "state_variable.harbor_watch",
+        "kind": "state_variable",
+        "label": "harbor_watch",
+        "visualState": "current_scenario_value"
+      }
+    ]
+  },
+  "descriptorDigest": "06f091c766324dfc1f83dff4078202bc74335ecfada08980f6b6cc43277b44b6",
+  "edgeCount": 8,
+  "edgeStatuses": {
+    "active": 4,
+    "current": 2,
+    "missing": 1,
+    "proposed": 1
+  },
+  "evidenceType": "derived_graph",
+  "nodeCount": 17,
+  "nodeVisualStates": {
+    "active_evidence": 8,
+    "approved_overlay": 2,
+    "current_scenario_value": 3,
+    "ghost_proposal": 2,
+    "missing_character_knowledge": 2
+  }
+}
