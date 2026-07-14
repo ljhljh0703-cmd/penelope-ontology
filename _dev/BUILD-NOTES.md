@@ -143,10 +143,18 @@ Combined current-tree recertification after the authority fixes:
 - Next production build: PASS.
 - Production Playwright: 10/10 PASS across desktop Chromium and mobile WebKit.
 - Visual inspection: desktop candidate, mobile candidate, and completed desktop flow with the review packet open show no clipped controls, overlap, or fixture/live ambiguity.
-- Final exact-SHA clean-copy and deployment smoke remain intentionally after the candidate commit; their authority is stored in the ignored private release record to avoid a self-referential documentation commit.
+- Exact-SHA clean-copy and deployment smoke passed after the candidate commit; their authority is stored in the ignored private release record to avoid a self-referential documentation commit.
 
 ### Remaining discussion and release gates
 
 - A real GPT-5.6 trace is still required before the submission may say arbitrary participant intents produced the candidate or add GPT-5.6 to completed live-use claims.
 - The four-call same-model style probe remains optional evidence beyond the minimum one-call integration gate; without it, the UI and copy must continue to say `Live AB/BA not measured`.
 - Root README generation remains behind the explicit `SERVING_CANDIDATE` approval gate. Final naming, remote, hosted demo, video, private `/feedback` field, and Devpost submission remain external actions.
+
+## 2026-07-15 — Post-commit release reconciliation
+
+- The working repository and an independent clean clone both passed the exact-SHA identified release gate, 30 files / 156 tests, production build, 10 browser checks, and deployment smoke. The clean clone installed 395 packages and reported zero audit vulnerabilities.
+- Tracked status files had still described this proof as historical or pending. The checklist, command center, evidence ledger, START-HERE, AGENTS, RETURN, and usage receipt were reconciled in one bounded documentation pass.
+- The current exact commit cannot be written into a tracked file without changing that commit. `private-submission/release-record.json` therefore remains the post-commit authority and is refreshed only after the final tracked candidate is verified.
+- User-dependent choices are isolated in `_dev/PENDING-EXTERNAL-DECISIONS.md`; submission-copy fields are isolated in `docs/submission/SUBMISSION-FIELDS.md`.
+- No loop sentinel fired. This is one planned reconciliation commit followed by one post-commit recertification; no tracked file is edited after that proof.

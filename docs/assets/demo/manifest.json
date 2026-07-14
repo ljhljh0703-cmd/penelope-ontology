@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "fixtureOnly": true,
+  "files": [
+    {
+      "fileName": "01-frozen-rehearsal.png",
+      "phase": "ready",
+      "caption": "Registered frozen participant intents and creator-owned style profile.",
+      "path": "docs/assets/demo/01-frozen-rehearsal.png",
+      "bytes": 190863,
+      "sha256": "84b799fd12290f78ad292591db359b119da5036ddbf654e97f7a613e6b2655fc"
+    },
+    {
+      "fileName": "02-knowledge-boundary.png",
+      "phase": "candidate",
+      "caption": "Narrator-visible, character-withheld, and character-uncertain knowledge.",
+      "path": "docs/assets/demo/02-knowledge-boundary.png",
+      "bytes": 180665,
+      "sha256": "b6f981ba2aff740921243aac32202331c33c9be9459bddd179758d43415b1f91"
+    },
+    {
+      "fileName": "03-creator-gate.png",
+      "phase": "candidate",
+      "caption": "Structured candidate, style receipt, and creator decision before canon changes.",
+      "path": "docs/assets/demo/03-creator-gate.png",
+      "bytes": 126013,
+      "sha256": "66c154589ee8333a7f689f65a0ba0927b572fa6d4c90fce570dfdd1db582d85e"
+    },
+    {
+      "fileName": "04-two-step-replay.png",
+      "phase": "complete",
+      "caption": "Approved overlay, continuous two-step state chain, and replay result.",
+      "path": "docs/assets/demo/04-two-step-replay.png",
+      "bytes": 142694,
+      "sha256": "17656d5fc12030b38b9c504932e3e719ba3639ba7bbbe338dff6e72a8fff9f5c"
+    },
+    {
+      "fileName": "05-production-review-packet.png",
+      "phase": "complete",
+      "caption": "Fixture evidence organized for human handoff without a production-readiness claim.",
+      "path": "docs/assets/demo/05-production-review-packet.png",
+      "bytes": 148553,
+      "sha256": "9a0e0c83460326e55a46a68e0f59e314ea73c3af552e15368aec545ae3c870ce"
+    }
+  ]
+}

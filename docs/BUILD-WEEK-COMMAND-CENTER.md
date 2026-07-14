@@ -1,7 +1,7 @@
 # Build Week command center
 
 Status snapshot: **2026-07-15 KST**
-Current state: **Core fixture vertical slice, frozen-input truthfulness, registered-request authority, creator/style/knowledge audit surfaces, live-capture transaction, current-tree release gate, and production visual inspection verified; final committed-SHA rehearsal plus live-model and external submission gates remain.**
+Current state: **Core fixture vertical slice, frozen-input truthfulness, registered-request authority, creator/style/knowledge audit surfaces, live-capture transaction, exact-SHA clean-clone rehearsal, local deployment smoke, and production visual inspection verified; live-model and external submission gates remain.**
 
 Official submission deadline: **2026-07-22 09:00 KST** (2026-07-21 17:00 PDT).
 Internal submission freeze: **2026-07-21 23:00 KST**. The final ten hours are emergency buffer, not feature time.
@@ -41,13 +41,13 @@ The primary demo is not “AI writes mythology” and not four unrelated error c
 | Devpost project page | verified, not submitted | public in-progress page exists; final submission remains incomplete |
 | Codex credit request | resubmitted, pending | optional; the build assumes no credit |
 | Scope decision | verified | user approved A scope, Work & Productivity audience expansion, and remote-multiplayer No-Go on 2026-07-15 |
-| Local repository | verified working tree | core work is implemented on `codex/core-vertical-slice`; final candidate commit/public remote remain |
+| Local repository | verified clean candidate | core work is committed on `codex/core-vertical-slice`; public remote remains |
 | Core contracts and deterministic engine | verified | eight demo-critical contract groups plus retrieval, validation, registered public-fixture authority, overlay, graph, simulation, exact-overlay replay, and transition-authority tests |
 | Table product surface | verified fixture-only | registered frozen two-intent lineage, visible style receipt and knowledge boundary, creator gate before the collapsed graph, production review packet, fresh 4/4 approved-overlay replay, S0r, and two steps are visible without JSON editing |
-| Current-tree release gate | verified before final commit | seven-file evidence manifest, lint, non-incremental typecheck, 30 Vitest files / 156 tests, privacy scan over 155 public candidates, production build, and 10 production-browser checks pass |
-| Production visual inspection | verified before final commit | desktop candidate, mobile candidate, and desktop completed flow show frozen inputs, knowledge table, style receipt, creator gate before graph, two-step chain, and opened review packet without overlap or clipped controls |
-| Fresh-copy rehearsal | historical verified; current recertification pending | clean clone of prior implementation proof `fbb1b50497bff67eb6e83467cbdabc579a1c87c2` passed; the final candidate must receive its own identified clean-copy record |
-| Deployment smoke | historical verified; current recertification pending | the prior implementation proof passed exact-SHA local production smoke; the final candidate must repeat it before release, and hosted origin remains pending |
+| Current-tree release gate | verified | seven-file evidence manifest, lint, non-incremental typecheck, 30 Vitest files / 156 tests, privacy scan, production build, and 10 production-browser checks pass |
+| Production visual inspection | verified local candidate | desktop candidate, mobile candidate, and desktop completed flow show frozen inputs, knowledge table, style receipt, creator gate before graph, two-step chain, and opened review packet without overlap or clipped controls |
+| Fresh-copy rehearsal | verified local candidate | a clean clone installed 395 packages with zero audit vulnerabilities and passed evidence, lint, typecheck, 30/156 Vitest, privacy, identified production build, and 10 browser checks; post-commit authority is kept in the ignored release record |
+| Deployment smoke | verified local candidate | current repository and clean-clone production servers both passed cache-busted exact-SHA identity, security-header, health, fixture authority, approved-overlay replay, two-step transition, and public-live denial; hosted origin remains pending |
 | Live GPT-5.6 | adapter and capture transaction verified; real call blocked | strict Responses adapter, typed errors, `.env.local` loading, pre-dispatch recovery sentinel, exclusive lock, append-only receipts, atomic raw/public writes, completed-receipt readiness binding, rollback, and explicit retry are tested; no API key/live response evidence exists |
 | Style controllability probe | protocol verified; live result blocked | same-model AB/BA schedule, no-retry capture, masked rubric, integrity hashes, and the focused style-evaluation suite pass; four live calls and creator ratings do not exist |
 | Quest production extension | target only | no `QuestSpec`, linter, generator, evaluation, or user proof exists |
@@ -99,7 +99,7 @@ The public route and reviewer deployment are fixture-only. Every public `modelMo
 
 ### Gate 4 — Evidence and release
 
-**Status: PARTIAL.** Current source/privacy checks, fixture Evidence Packet, production build, browser checks, and visual inspection pass. The prior implementation proof passed fresh-copy rehearsal; final-candidate identified recertification, README approval, public remote/CI/deploy, video, `/feedback`, and Devpost confirmation remain.
+**Status: PARTIAL.** Current source/privacy checks, fixture Evidence Packet, identified clean-clone build, browser checks, local deployment smoke, and visual inspection pass. README approval, public remote/CI/hosted deployment, video, `/feedback`, and Devpost confirmation remain.
 
 Run frozen evaluation, publish sanitized evidence, build the Evidence Packet, and derive README, Devpost copy, video claims, and later portfolio copy from the same claim ledger.
 
@@ -156,7 +156,7 @@ The portfolio case study is derived only after Gate 4 produces a verified Eviden
 
 > Translated narrative voice, canon, source traditions, character knowledge, participant intent, creator approval, and world-state transitions into a testable production harness with a bounded GPT-5.6 adapter—instead of relying on a model's default prose.
 
-The defensible writing angle is not “Codex or GPT-5.6 beats Fable or Opus at prose.” The project treats familiar skepticism about generic default Codex prose as the brief: Codex served as the engineering partner that converted tacit writing standards into explicit style, world, evidence, approval, and replay layers. Character knowledge is scoped, world claims are checked, new lore requires creator approval, semantic rules cannot hide behind edited presentation copy, and the same fixture replays after change. Raw taste remains human judgment; the mechanism and its regressions become auditable.
+The defensible writing angle is not “Codex or GPT-5.6 beats Fable or Opus at prose.” The project turns familiar skepticism about generic default Codex prose into the brief: move voice and world coherence out of model personality and into a creator-owned production contract. Codex served as the engineering partner that converted tacit writing standards into explicit style, world, evidence, approval, and replay layers. Character knowledge is scoped, world claims are checked, new lore requires creator approval, semantic rules cannot hide behind edited presentation copy, and the same fixture replays after change. The model proposes, the harness constrains and traces, and the creator decides. Raw taste remains human judgment; the mechanism and its regressions become auditable.
 
 Portfolio copy is not yet derived. The `portfolio-refiner` refine preflight is `SERVING_STALE`, so its canonical feedback stack was not loaded; the public README path independently remains `SERVING_CANDIDATE` pending explicit approval. `juhyeong-voice` was not read or applied.
 

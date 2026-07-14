@@ -38,7 +38,7 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Sample data and source policy added
 - [x] Technical setup draft available in `docs/START-HERE.md`
 - [x] Local evidence generation, lint, typecheck, the full unit/API suite, privacy scan, production build, vulnerability audit, and both browser projects passed
-- [ ] Final candidate fresh-copy install and full identified release gate verified (prior implementation proof passed historically)
+- [x] Final candidate fresh-copy install and full identified release gate verified; exact post-commit authority is stored in the ignored release record
 - [x] Node 22.x pinned consistently for local, CI, and hosted runtime selection
 - [x] Identified build gate requires exact HEAD plus a clean tracked/untracked worktree; hosted Git provider SHA outranks manual labels
 - [x] Browser CI configured to exercise `next start` after the production build
@@ -47,10 +47,10 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Public run, decision, and transition routes reject any brief, intent, draft, style, task, overlay, or snapshot that differs from the registered frozen rehearsal
 - [x] Transition authority is rederived from the registered run and creator decision; a forged self-hashed overlay returns 409
 - [x] Creator display edits cannot mutate or conceal locked rule/claim semantics; proposal and graph surfaces show both authorities separately
-- [x] Judge run guide and 358-word release-gated English narration script added
-- [x] Prior clean implementation commit `fbb1b50497bff67eb6e83467cbdabc579a1c87c2` passed identified build plus production smoke; final candidate recertification remains unchecked until its own commit exists
+- [x] Judge run guide and 378-word release-gated English narration script added
+- [x] Current release candidate passed identified build, production browser checks, and deployment smoke in both the working repository and a clean clone
 - [x] Fixture Evidence Packet completed from executable fixtures and source checks; browser smoke is verified separately
-- [x] Current-tree gate passes: seven evidence files, 30 Vitest files / 156 tests, privacy 155, production build, desktop/mobile browser 10/10, and fresh desktop/mobile visual inspection
+- [x] Current-tree gate passes: seven evidence files, 30 Vitest files / 156 tests, privacy 164, production build, desktop/mobile browser 10/10, and fresh desktop/mobile visual inspection
 - [ ] Sanitized real GPT-5.6 evidence added to the packet
 - [x] Style-ablation readiness is public and explicitly marked `not_executed`
 - [x] Live capture uses a pre-dispatch recovery sentinel, exclusive lock, prose-free receipts, atomic no-clobber publication, target-race preservation, rollback, explicit retry, and injected receipt-write-failure tests
@@ -63,12 +63,13 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 ## Required submission material
 
 - [ ] Final project name locked across Devpost, repository, video, and demo
-- [ ] Category selected in Devpost
+- [ ] Devpost final category field confirmed as Work & Productivity
 - [ ] Project description finalized
-- [ ] Built-with list reflects only technologies actually used
+- [x] Evidence-safe Built-with list prepared; GPT-5.6 remains excluded from completed-use claims until the live gate passes
 - [ ] Public YouTube demo under three minutes
 - [ ] Voice narration explains product, Codex use, and GPT-5.6 use
-- [ ] Submission material is in English or includes a clear English translation
+- [x] Submission description, shot list, and narration are prepared in English
+- [x] Five public-safe 1440×900 fixture gallery images captured with a SHA-256 manifest
 - [ ] Repository URL entered
 - [ ] Setup and sample-data instructions visible from README
 - [ ] Core Codex task `/feedback` session ID entered privately
@@ -97,7 +98,8 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 
 - [x] Day-0 health flags updated to reflect the implemented core truth
 - [x] `AGENTS.md` phase and current-state claims updated
-- [ ] Final repository commit is clean and matches the deployed source
+- [x] Local release-candidate commit is clean and exact-SHA verified
+- [ ] Hosted deployment reports the same commit as the public repository
 
 Current local proof is recorded in `docs/BUILD-WEEK-COMMAND-CENTER.md`, `docs/EVIDENCE-LEDGER.md`, and `artifacts/evidence/manifest.json`. `docs/SCAFFOLD-VERIFICATION.md` is the historical Day-0 baseline. A local or fresh-copy PASS is not a public CI, live-model, deployment, or submission PASS.
 

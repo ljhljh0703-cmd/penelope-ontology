@@ -33,7 +33,7 @@ Implemented and fixture-verified:
 - a live GPT-5.6 Responses adapter with strict Structured Outputs and typed failure paths
 - fixture/live evidence separation, privacy scanning, browser tests, and generated public evidence artifacts
 - a preregistered same-GPT-5.6 style-control AB/BA protocol with no automatic retries, condition-masked creator ratings, and a write-once public report
-- a historical clean-copy rehearsal for the prior implementation proof; the final candidate still requires its own post-commit identified record
+- an exact-SHA release rehearsal and deployment smoke reproduced in both the working repository and a clean clone; the post-commit identity is kept in the ignored local release record
 
 The public surface is fixture-only. It demonstrates the product flow without spending API credits or presenting fixture output as a live model response.
 

@@ -18,47 +18,53 @@
     "intent": "project-evidence-package-and-copy-refinement",
     "method": "router",
     "match": "hit",
-    "entry_point": "skills/package-project-evidence/SKILL.md",
+    "entry_point": "codex-skills/package-project-evidence/SKILL.md",
     "based_on": [
       "AGENTS.md",
       "_dev/CORE-BUILD-DISPATCH.md",
-      "skills/package-project-evidence/SKILL.md",
-      "skills/portfolio-refiner/source-manifest.json"
+      "codex-skills/package-project-evidence/SKILL.md",
+      "sub-brain/skills/package-project-evidence/SKILL.md",
+      "codex-skills/portfolio-refiner/source-manifest.json"
     ],
     "selected_skills": [
       {
         "id": "package-project-evidence",
         "version": "1.0",
-        "source_ref": "skills/package-project-evidence/SKILL.md",
+        "source_ref": "codex-skills/package-project-evidence/SKILL.md",
         "source_sha256": "b40f0b8458e64e5cc747fc1d8a8e3a66bc0422652655b797e7e7cf527846fc8f",
         "reason": "Public claims and later README or portfolio surfaces must derive from verified repository evidence without drift."
       },
       {
         "id": "portfolio-refiner-preflight",
         "version": "0.2.1",
-        "source_ref": "skills/portfolio-refiner/source-manifest.json",
+        "source_ref": "codex-skills/portfolio-refiner/source-manifest.json",
         "source_sha256": "81306d827a5cff9dca55ca3256b2e99c207bbe8098c2fd1d5fc11370453e762b",
         "reason": "The user requested portfolio-grade copy, so the canonical refine route was checked before drafting and stopped on stale state."
       }
     ],
     "loaded": [
       {
-        "ref": "skills/package-project-evidence/SKILL.md",
+        "ref": "codex-skills/package-project-evidence/SKILL.md",
         "sha256": "b40f0b8458e64e5cc747fc1d8a8e3a66bc0422652655b797e7e7cf527846fc8f",
         "role": "entry_point"
       },
+          {
+            "ref": "codex-skills/package-project-evidence/source-manifest.json",
+            "sha256": "4f1d4984303c8697d4961c6c487c444d5fc5886f46e5d808f4e56d28dbcfe086",
+            "role": "source_manifest"
+          },
+          {
+            "ref": "sub-brain/skills/package-project-evidence/SKILL.md",
+            "sha256": "4dbeba040601cbacf3c70469d3947d77d99cf41509e582e5f34b7b0146336a85",
+            "role": "canonical_source_read_only"
+          },
       {
-        "ref": "skills/package-project-evidence/source-manifest.json",
-        "sha256": "4f1d4984303c8697d4961c6c487c444d5fc5886f46e5d808f4e56d28dbcfe086",
-        "role": "source_manifest"
-      },
-      {
-        "ref": "skills/portfolio-refiner/SKILL.md",
+        "ref": "codex-skills/portfolio-refiner/SKILL.md",
         "sha256": "a1eec84cc7cd079919e80f8c0ec37ef237b530f9016d9514930303b83690f639",
         "role": "adapter_entry_only"
       },
       {
-        "ref": "skills/portfolio-refiner/source-manifest.json",
+        "ref": "codex-skills/portfolio-refiner/source-manifest.json",
         "sha256": "81306d827a5cff9dca55ca3256b2e99c207bbe8098c2fd1d5fc11370453e762b",
         "role": "stale_preflight"
       }
@@ -67,21 +73,21 @@
   "knowledge": {
     "used": [
       {
-        "ref": "skills/package-project-evidence/SKILL.md",
+        "ref": "codex-skills/package-project-evidence/SKILL.md",
         "effect": "Required executable evidence, privacy scanning, clean-copy reproduction, and claim parity before public copy."
       },
       {
-        "ref": "skills/portfolio-refiner/source-manifest.json",
+        "ref": "codex-skills/portfolio-refiner/source-manifest.json",
         "effect": "Prevented portfolio prose from being reconstructed from stale memory or an out-of-date feedback adapter."
       }
     ],
     "failed": [
       {
-        "ref": "skills/package-project-evidence/source-manifest.json",
+        "ref": "codex-skills/package-project-evidence/source-manifest.json",
         "effect": "README write and derive modes remain SERVING_CANDIDATE; explicit user approval and --allow-candidate are required."
       },
       {
-        "ref": "skills/portfolio-refiner/source-manifest.json",
+        "ref": "codex-skills/portfolio-refiner/source-manifest.json",
         "effect": "Refine preflight returned SERVING_STALE because the feedback dependency hash changed; canonical copy work stopped before source loading."
       }
     ],
@@ -99,17 +105,17 @@
     "evidence": [
       {
         "check": "clean-implementation-commit",
-        "result": "historical-pass-fbb1b50497bff67eb6e83467cbdabc579a1c87c2-final-candidate-pending",
+        "result": "pass-current-candidate-clean-clone-post-commit-record-ignored",
         "ref": "_dev/RETURN-core-vertical-slice.md"
       },
       {
         "check": "current-tree-release-gate",
-        "result": "pass-156-tests-10-production-browser-155-privacy-production-build",
+        "result": "pass-156-tests-10-production-browser-164-privacy-production-build",
         "ref": "_dev/BUILD-NOTES.md"
       },
       {
         "check": "exact-sha-deployment-smoke",
-        "result": "historical-pass-final-candidate-post-commit-record-pending",
+        "result": "pass-current-and-clean-clone-post-commit-record-ignored",
         "ref": "docs/JUDGE-GUIDE.md"
       },
       {
@@ -119,7 +125,7 @@
       },
       {
         "check": "claim-parity",
-        "result": "pass-zero-drift-before-post-commit-release-record",
+        "result": "pass-copy-aligned-final-release-recertification-pending",
         "ref": "docs/EVIDENCE-LEDGER.md"
       },
       {

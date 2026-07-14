@@ -30,7 +30,7 @@ The approved overlay reruns four safety controls against its exact hash. Hector 
 
 **2:20–2:46 — Codex and the writing constraint**
 
-I began with a familiar skepticism: Codex can engineer, but its default prose may feel generic beside writing-first systems such as Fable or Opus. I answered with no cherry-picked paragraph. Codex helped turn voice and world rules into schemas, validators, adversarial tests, UI states, and evidence. The gated GPT-5.6 adapter is built to propose inside that harness; the creator keeps taste and final judgment.
+A familiar critique is that Codex can engineer, but its default prose may feel less distinctive beside writing-first systems such as Fable or Opus. I did not answer with one cherry-picked paragraph. I made that the product brief: move voice and world coherence out of model personality and into a creator-owned contract. Codex helped implement that contract as schemas, validators, adversarial tests, UI states, and evidence. The gated GPT-5.6 adapter is built to propose inside the harness; the creator keeps taste and final judgment.
 
 **2:46–2:55 — Close**
 

@@ -8,7 +8,7 @@ Branch: `codex/core-vertical-slice`
 
 Starting commit: `0b24c866276cfe446fa313bda5ced3eaff052977`
 
-Prior clean implementation proof: `fbb1b50497bff67eb6e83467cbdabc579a1c87c2` — historical only; the final candidate receives its own post-commit record.
+Local release candidate: exact-SHA release gate, clean-clone reproduction, and deployment smoke verified. The current post-commit identity is recorded in ignored `private-submission/release-record.json` to avoid self-referential tracked proof.
 
 Public evidence manifest SHA-256: `5d1d725860a45967c83fc3d6b0b20f58f58b483397e76a821d95d8dbd92b5f18`
 
@@ -21,7 +21,7 @@ Public evidence manifest SHA-256: `5d1d725860a45967c83fc3d6b0b20f58f58b483397e76
 - Preserved creator authority: accept/edit/reject is server-replayed; display wording remains separate from locked semantics; accepted overlays rerun four controls before a two-step `idle → watching → signal_seen` state chain.
 - Hardened the gated GPT-5.6 capture command with Node 22 `.env.local` loading, preflight checks, a pre-dispatch recovery sentinel, an exclusive lock, prose-free append-only receipts, atomic no-clobber publication, target-race preservation, partial-pair rollback, and explicit retry. Receipt-write failure retains the sentinel and lock instead of erasing the attempt.
 - Made evidence generation and health readiness require the full generated evidence type, GPT-5.6 model family, authority hashes, completed capture-receipt binding, sanitized path, and public-privacy contract instead of a status string.
-- Updated the judge guide, Devpost draft, 358-word narration, shot list, evidence ledger, and decision log to the same fixture/live/style claim boundary.
+- Updated the judge guide, Devpost draft, 378-word narration, shot list, evidence ledger, and decision log to the same fixture/live/style claim boundary.
 
 ## Writing-harness claim boundary
 
@@ -33,13 +33,13 @@ The project treats familiar skepticism about generic default Codex prose as a de
 - ESLint and TypeScript with incremental cache disabled: PASS.
 - Vitest: 30 files / 156 tests PASS.
 - Focused deployment-smoke request, public evidence, health, and live-capture suite: 4 files / 18 tests PASS.
-- Privacy scan: 155 public candidates PASS.
+- Privacy scan: 164 public candidates PASS.
 - Next production build: PASS.
 - Production browser: 10/10 PASS across desktop Chromium and mobile WebKit, including frozen inputs, reciprocal lineage, style receipt, knowledge boundary, creator decision, display/semantic separation, exact-overlay replay, failure recovery, and two transitions.
-- Visual inspection: desktop candidate, mobile candidate, and completed desktop flow with the review packet open show no clipped controls, overlap, or fixture/live ambiguity.
+- Visual inspection: desktop candidate, mobile candidate, and completed desktop flow with the review packet open show no clipped controls, overlap, or fixture/live ambiguity. Five public-safe 1440×900 gallery captures were inspected and bound to `docs/assets/demo/manifest.json` by SHA-256.
 - `git diff --check`: PASS. No raw live prose, API key, personal absolute path, private session ID, Vault content, or private story asset entered the repository.
 
-The final exact-SHA clean-copy and deployment-smoke authority is intentionally generated only after this tracked RETURN is committed. Its local record belongs in ignored `private-submission/release-record.json`, preventing a self-referential proof commit. The prior `fbb1b...` clean-clone and exact-SHA smoke remain historical evidence, not certification of the current candidate.
+The exact-SHA clean-copy and deployment-smoke authority is generated only after each tracked release-candidate commit. Its local record belongs in ignored `private-submission/release-record.json`, preventing a self-referential proof commit. Both the working repository and an independent clean clone passed the identified release gate and production smoke; hosted-origin and public-CI proof remain separate.
 
 ## Gates and remaining risks
 
@@ -56,7 +56,7 @@ No trapped implementation loop occurred. The stale `.next` duplicate cache was r
 
 ## Gate result
 
-`PARTIAL`: the bounded fixture product is locally implemented, current-tree verified, visually inspected, and ready for a final committed-SHA rehearsal. Live-model use and public submission remain separate gates, so the Build Week project itself is not yet submission-complete.
+`LOCAL_RELEASE_VERIFIED_EXTERNAL_GATES_PENDING`: the bounded fixture product is implemented, visually inspected, committed, clean-clone reproduced, and exact-SHA smoke verified. Live-model use, public README/repository/deployment, narrated video, and final Devpost submission remain separate gates, so the Build Week entry itself is not yet submission-complete.
 
 ## Sub-brain status
 
