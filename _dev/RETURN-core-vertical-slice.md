@@ -1,54 +1,58 @@
 # Core vertical slice RETURN
 
-Status: `CORE_FIXTURE_COMPLETE_EXTERNAL_GATES_PENDING`
+Status: `CORE_FIXTURE_COMPLETE_RELEASE_VERIFIED_EXTERNAL_GATES_PENDING`
 
 Date: 2026-07-15 KST
+
 Branch: `codex/core-vertical-slice`
+
 Starting commit: `0b24c866276cfe446fa313bda5ced3eaff052977`
-Verified core commit: `a736390f16f2de62ede91b1cada4af7b661d8915`
+
+Verified implementation commit: `a23faceec08da24bb12d4cd51b219772699affe1`
 
 ## What changed
 
-- Implemented typed participant-intent, style, world, proposal, decision, graph, replay, and simulation contracts.
-- Implemented character-scoped retrieval, deterministic hard validation, creator-controlled canon overlay, canonical hashing, graph projection, and the bounded `idle → watching → signal_seen` simulation.
-- Added fixture and explicitly gated GPT-5.6 Responses adapters. Fixture and live evidence identities cannot cross.
-- Replaced the Day-0 shell with the facilitator-facing Table UI: two local participant intents, style selection, evidence and violation review, accept/edit/reject, rebase, two transitions, graph view, and frozen replay.
-- Added stateless demo/run/decision/transition APIs, executable fixtures, browser tests, privacy scanning, evidence generation, evidence-manifest verification, and a fail-closed sanitized live-capture command.
-- Added source verification and factual submission/evidence documents. No public README or portfolio case-study copy was generated because the approved writing pipeline is stale.
+- Implemented the facilitator-facing Table: two local participant intents, an original creator-owned style profile, evidence and conflict controls, a derived canon/knowledge graph, accept/edit/reject, same-turn rebase, two deterministic transitions, and frozen replay.
+- Added strict participant, style, world, proposal, decision, graph, replay, and simulation contracts plus character-scoped retrieval and named hard validators.
+- Hardened the public creator gate. The server replays fixture authority, accepts only registered overlay v0 / snapshot S0, rejects fabricated proposals and self-hashed injected canon, and preserves unresolved sibling proposals.
+- Added a gated GPT-5.6 Responses adapter restricted to the GPT-5.6 family with Structured Outputs, a 4,096-token ceiling, 90-second timeout, zero SDK retries, typed failures, and fixture/live identity separation.
+- Added a preregistered same-GPT-5.6 AB/BA style probe. Plan, exact request schema, capture, public receipt, blind packet, ratings, and report are hash-bound; failed slots cannot be replaced and public outputs contain no prose or response IDs.
+- Bound future sanitized live evidence to the current World Pack hash, overlay, snapshot, style, and exact request. The live capture reserves a write-once lock before spending a call.
+- Added release evidence, privacy scanning, error-recovery coverage, source verification, and factual Build Week/Devpost documents. No root README or portfolio case study was generated because candidate-mode approval remains explicit.
 
 ## Writing-harness claim boundary
 
-The defensible claim is not that Codex or GPT-5.6 writes better prose than Fable, Opus, or another model. The implemented contribution is to turn default-writing weakness into an explicit production surface: creator-owned style constraints, character-scoped knowledge, world-claim validation, creator approval, deterministic state changes, and frozen replay. Subjective taste remains with the creator; constraints and regressions become inspectable and testable.
+The project takes the familiar comparison “Codex is a weaker writer than Fable or Opus” as a design constraint, not a result to deny. Codex served as the engineering partner that translated tacit narrative standards into explicit style, world, evidence, approval, and replay layers. The creator still owns voice, taste, canon, and final judgment. Until live capture and masked ratings exist, this proves an inspectable mechanism and evaluation path—not improved prose, productivity, or model superiority.
 
 ## Verification
 
-- Current repository release gate: PASS — evidence generation and manifest verification, lint, typecheck, 77 unit/API tests, privacy scan over 129 public candidates, production build, and 6 Playwright checks across desktop Chromium and iPhone/WebKit.
-- Fresh-copy release rehearsal: PASS — `npm ci` installed 395 packages with 0 reported vulnerabilities, then the same 77 tests, privacy scan, production build, and 6 browser checks passed outside the working tree.
-- Source locators: four Perseus references resolved with HTTP 200 and are recorded in `docs/SOURCE-VERIFICATION.md`.
-- Public evidence: six sanitized JSON artifacts plus `artifacts/evidence/manifest.json`; raw live output remains ignored under `artifacts/live/`.
-- Evidence manifest SHA-256: `a6c0769b676228fdcbec6320bd6fdf7de33dc2a86a0eea5521a8b8202b4d76dd`.
-- Missing-environment live capture: fails closed with `configuration_error` and writes no public live artifact.
-- Usage receipt: `_dev/usage-receipt.json`; external verification gate remains pending by contract.
+- Local `npm run verify:release`: PASS — evidence generation/manifest verification, ESLint, TypeScript, 24 Vitest files / 123 tests, privacy scan over 142 public candidates, Next production build, and 8 Playwright checks across desktop Chromium and iPhone/WebKit.
+- Fresh-copy rehearsal: PASS — `npm ci` installed 395 packages with 0 reported vulnerabilities, followed by the same 123 tests, privacy scan, production build, and 8 browser checks.
+- Focused style-integrity suite: 5 files / 32 tests PASS.
+- Adversarial decision check: a self-hashed overlay containing unapproved `rule.creator.injected` returns `409 creator_decision_authority_invalid`.
+- Public evidence: seven sanitized JSON artifacts plus `manifest.json`; manifest SHA-256 `a234acb269df54123261bce7cc103a041cd1e1b30118ae4843921b54cf983431`.
+- Source locators: four Perseus references resolved with HTTP 200; original summaries remain `reference_only` as recorded in `docs/SOURCE-VERIFICATION.md`.
+- `git diff --check`: PASS before the implementation commit. No raw live prose, API key, personal path, private session ID, or Vault content entered the repository.
 
 ## Gates and remaining risks
 
-1. **Real GPT-5.6 evidence:** `OPENAI_API_KEY` is absent. The adapter is mock-tested, but no live-model claim is allowed until `ENABLE_OPENAI_LIVE=true npm run evidence:live` succeeds and the sanitized artifact is verified.
-2. **README and portfolio prose:** `package-project-evidence` audit preflight passed, while write and derive preflights returned `SERVING_STALE`. Vault Claude must refresh the delegate manifest before either surface is generated.
-3. **External release:** final product name, GitHub remote, public CI result, fixture deployment, narrated video, `/feedback` session field, and Devpost submission remain undone.
-4. **Evidence limits:** no remote multiplayer, graph database, embeddings, long-horizon agent simulation, quest automation, users, or measured productivity result exists. Do not imply otherwise.
+1. **Real GPT-5.6 evidence:** no local API key was available, so neither the sanitized live run nor four-call style capture exists. Fixture/protocol evidence must not be relabeled as a live result.
+2. **README and portfolio copy:** `package-project-evidence` audit is certified; write and derive are `SERVING_CANDIDATE`. The skill requires explicit user approval and a rerun with `--allow-candidate`. `juhyeong-voice` remains prohibited.
+3. **External release:** final product name, GitHub remote, public CI, hosted fixture demo, narrated video, private `/feedback` field, and Devpost submission remain undone.
+4. **Evidence limits:** there is no remote multiplayer room, graph database, embeddings, long-horizon agent simulation, quest automation, practitioner result, or measured productivity improvement.
 
 ## Loop report
 
-No trapped loop occurred. The alias validator false positive was fixed with a Unicode-aware token boundary. Earlier fresh-copy failures caused by generated build metadata were resolved with an explicit copy rule and regression test. The final copy's first browser launch was denied by the filesystem sandbox's localhost-binding policy; rerunning the unchanged candidate with the required permission passed. No failure was retried three times without a new hypothesis.
+No trapped loop occurred. Failures were addressed with new falsifiable hypotheses: schema/authority drift, a self-hashed injected base, a hidden-claim graph axis, stale recovery state, and a browser assertion that conflated approved base rules with the proposal rule. No identical failure was retried three times without a new hypothesis.
 
 ## Gate result
 
-`PARTIAL`: the local fixture product is implemented, evidence-backed, and committed locally; live-model and approved public-writing gates remain external blockers. No push, deployment, `/feedback`, or Devpost submission was performed.
+`PARTIAL`: the bounded fixture product is implemented, adversarially audited, committed locally, and reproducible from a clean copy. Live-model, candidate-copy approval, and external submission gates remain outside this commit. No push, deployment, `/feedback`, or Devpost submission was performed.
 
 ## Sub-brain status
 
-Read-only. No Vault wiki, authority document, Progress, Memory, or skill was modified. No new skill candidate: the existing project-evidence workflow covers the reusable packaging task.
+Read-only. No Vault wiki, authority document, Progress, Memory, or skill was modified. No new skill candidate was needed; the existing project-evidence workflow covers public packaging.
 
 ## Next user action
 
-Ask Vault Claude to refresh the `package-project-evidence` write/derive source manifest, and configure a local `OPENAI_API_KEY` separately so the sanitized live-evidence gate can run.
+Configure `OPENAI_API_KEY` locally without pasting it into chat, then report only `키 설정 완료`; the next run will capture and verify the single live GPT-5.6 evidence path before any public claim changes.

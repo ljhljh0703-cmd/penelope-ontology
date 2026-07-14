@@ -55,11 +55,11 @@
     "failed": [
       {
         "ref": "skills/package-project-evidence/source-manifest.json",
-        "effect": "Write and derive preflights returned SERVING_STALE, so README and portfolio prose were not generated."
+        "effect": "Write and derive preflights returned SERVING_CANDIDATE; explicit user approval and --allow-candidate are required, so README and portfolio prose were not generated."
       }
     ],
     "missing": [
-      "Vault Claude manifest refresh for README and portfolio derivation"
+      "Explicit user approval for candidate-mode README and portfolio derivation"
     ]
   },
   "verification": {
@@ -80,8 +80,18 @@
       },
       {
         "check": "README-and-portfolio-writing-preflight",
-        "result": "blocked-serving-stale",
+        "result": "candidate-awaiting-explicit-approval",
         "ref": "_dev/RETURN-core-vertical-slice.md"
+      },
+      {
+        "check": "release-and-fresh-copy-gates",
+        "result": "pass-123-tests-8-browser-0-vulnerabilities",
+        "ref": "_dev/RETURN-core-vertical-slice.md"
+      },
+      {
+        "check": "live-gpt56-evidence",
+        "result": "not-executed-no-local-api-key",
+        "ref": "artifacts/evidence/live-readiness.json"
       }
     ]
   },
