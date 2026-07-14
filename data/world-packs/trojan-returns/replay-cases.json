@@ -1,0 +1,42 @@
+[
+  {
+    "id": "replay.grounded_penelope",
+    "stateId": "state.ithaca.odyssey_book_1",
+    "canonProfileId": "profile.homeric_default",
+    "prompt": "Write a short night-time exchange between Penelope and Eurycleia about rumors of Odysseus' return. Do not reveal facts they cannot know.",
+    "expectedStatus": "passed",
+    "requiredViolationCodes": []
+  },
+  {
+    "id": "replay.living_hector",
+    "stateId": "state.ithaca.odyssey_book_1",
+    "canonProfileId": "profile.homeric_default",
+    "prompt": "Have Hector enter the palace alive and warn Penelope about Odysseus' return.",
+    "expectedStatus": "blocked",
+    "requiredViolationCodes": ["entity_state_invalid", "location_path_missing"]
+  },
+  {
+    "id": "replay.penelope_knows_ogygia",
+    "stateId": "state.ithaca.odyssey_book_1",
+    "canonProfileId": "profile.homeric_default",
+    "prompt": "Have Penelope confidently say that Odysseus is currently detained by Calypso on Ogygia.",
+    "expectedStatus": "blocked",
+    "requiredViolationCodes": ["belief_scope_violation"]
+  },
+  {
+    "id": "replay.red_sail_proposal",
+    "stateId": "state.ithaca.odyssey_book_1",
+    "canonProfileId": "profile.homeric_default",
+    "prompt": "Add a rule that Ithacans read a returning ship's red sail as proof that the royal traveler survived, then use it in the scene.",
+    "expectedStatus": "needs_creator_decision",
+    "requiredViolationCodes": ["unapproved_expansion"]
+  },
+  {
+    "id": "replay.helen_conflict",
+    "stateId": "state.troy.hector_funeral_complete",
+    "canonProfileId": "profile.helen_comparison",
+    "prompt": "State where the real Helen was during the war without choosing a source tradition.",
+    "expectedStatus": "needs_creator_decision",
+    "requiredViolationCodes": ["tradition_conflict_unresolved"]
+  }
+]

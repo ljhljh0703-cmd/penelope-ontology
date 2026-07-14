@@ -1,0 +1,274 @@
+{
+  "schemaVersion": "0.1.0",
+  "meta": {
+    "id": "trojan-returns-demo",
+    "title": "Troy to Ithaca: two fixed moments",
+    "version": "0.1.0",
+    "description": "A deliberately small demo pack covering Hector's funeral and the opening state of the Odyssey.",
+    "sourcePolicy": "original_summaries_no_translation_quotes"
+  },
+  "layers": [
+    {
+      "id": "homeric.iliad",
+      "traditionGroup": "homeric",
+      "sourceWork": "Iliad",
+      "rightsStatus": "public_domain_source"
+    },
+    {
+      "id": "homeric.odyssey",
+      "traditionGroup": "homeric",
+      "sourceWork": "Odyssey",
+      "rightsStatus": "public_domain_source"
+    },
+    {
+      "id": "later_tragedy.euripides_helen",
+      "traditionGroup": "later_tragedy",
+      "sourceWork": "Helen",
+      "rightsStatus": "public_domain_source"
+    },
+    {
+      "id": "creator_canon.v0",
+      "traditionGroup": "creator_canon",
+      "sourceWork": "Creator canon",
+      "rightsStatus": "original_creator_canon"
+    }
+  ],
+  "sources": [
+    {
+      "id": "source.iliad.24",
+      "work": "Iliad",
+      "author": "Homeric tradition",
+      "locator": "Book 24",
+      "url": "https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0134%3Abook%3D24",
+      "editionNote": "Bibliographic reference only; no translation text is copied.",
+      "rightsStatus": "reference_only",
+      "verificationStatus": "source_verify"
+    },
+    {
+      "id": "source.iliad.3",
+      "work": "Iliad",
+      "author": "Homeric tradition",
+      "locator": "Book 3",
+      "url": "https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0134%3Abook%3D3",
+      "editionNote": "Bibliographic reference only; no translation text is copied.",
+      "rightsStatus": "reference_only",
+      "verificationStatus": "source_verify"
+    },
+    {
+      "id": "source.odyssey.1",
+      "work": "Odyssey",
+      "author": "Homeric tradition",
+      "locator": "Book 1",
+      "url": "https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0218%3Abook%3D1",
+      "editionNote": "Bibliographic reference only; no translation text is copied.",
+      "rightsStatus": "reference_only",
+      "verificationStatus": "source_verify"
+    },
+    {
+      "id": "source.helen.566",
+      "work": "Helen",
+      "author": "Euripides",
+      "locator": "Lines 566-596",
+      "url": "https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0100%3Acard%3D566",
+      "editionNote": "Bibliographic reference only; no translation text is copied.",
+      "rightsStatus": "reference_only",
+      "verificationStatus": "source_verify"
+    }
+  ],
+  "entities": [
+    { "id": "odysseus", "kind": "character", "name": "Odysseus", "aliases": ["Ulysses"], "summary": "The absent king of Ithaca." },
+    { "id": "penelope", "kind": "character", "name": "Penelope", "aliases": [], "summary": "Queen of Ithaca, awaiting uncertain news." },
+    { "id": "telemachus", "kind": "character", "name": "Telemachus", "aliases": [], "summary": "Son of Odysseus and Penelope." },
+    { "id": "eurycleia", "kind": "character", "name": "Eurycleia", "aliases": [], "summary": "A trusted member of the Ithacan household." },
+    { "id": "calypso", "kind": "character", "name": "Calypso", "aliases": [], "summary": "A divine figure associated with Ogygia." },
+    { "id": "athena", "kind": "character", "name": "Athena", "aliases": [], "summary": "A goddess who supports Odysseus and Telemachus." },
+    { "id": "hector", "kind": "character", "name": "Hector", "aliases": [], "summary": "A Trojan prince whose funeral closes the Iliad." },
+    { "id": "helen", "kind": "character", "name": "Helen", "aliases": [], "summary": "A figure whose wartime location differs by source tradition." },
+    { "id": "phantom_helen", "kind": "concept", "name": "Phantom Helen", "aliases": [], "summary": "A later-tragedy claim used to demonstrate conflicting traditions." },
+    { "id": "ithaca", "kind": "place", "name": "Ithaca", "aliases": [], "summary": "The home realm of Odysseus." },
+    { "id": "ogygia", "kind": "place", "name": "Ogygia", "aliases": [], "summary": "The island associated with Calypso." },
+    { "id": "troy", "kind": "place", "name": "Troy", "aliases": ["Ilios"], "summary": "The city at the center of the Trojan War narratives." },
+    { "id": "egypt", "kind": "place", "name": "Egypt", "aliases": [], "summary": "The location assigned to Helen in Euripides' later tragedy." }
+  ],
+  "claims": [
+    {
+      "id": "claim.iliad.hector_dead",
+      "layerId": "homeric.iliad",
+      "subjectId": "hector",
+      "predicate": "state",
+      "object": { "kind": "literal", "value": "dead" },
+      "temporalScope": "troy.hector_funeral_complete",
+      "spatialScope": "troy",
+      "epistemicVisibility": ["narrator", "all"],
+      "conflictSetId": null,
+      "status": "asserted",
+      "summary": "Hector is dead by the fixed funeral state.",
+      "sourceIds": ["source.iliad.24"]
+    },
+    {
+      "id": "claim.iliad.hector_funeral_complete",
+      "layerId": "homeric.iliad",
+      "subjectId": "hector",
+      "predicate": "funeral_state",
+      "object": { "kind": "literal", "value": "complete" },
+      "temporalScope": "troy.hector_funeral_complete",
+      "spatialScope": "troy",
+      "epistemicVisibility": ["narrator", "all"],
+      "conflictSetId": null,
+      "status": "asserted",
+      "summary": "The fixed Trojan state begins after Hector's funeral is completed.",
+      "sourceIds": ["source.iliad.24"]
+    },
+    {
+      "id": "claim.odyssey.odysseus_at_ogygia",
+      "layerId": "homeric.odyssey",
+      "subjectId": "odysseus",
+      "predicate": "located_at",
+      "object": { "kind": "entity", "entityId": "ogygia" },
+      "temporalScope": "ithaca.odyssey_book_1",
+      "spatialScope": "ogygia",
+      "epistemicVisibility": ["narrator", "gods", "calypso"],
+      "conflictSetId": null,
+      "status": "asserted",
+      "summary": "At the opening state, the narration places Odysseus with Calypso on Ogygia.",
+      "sourceIds": ["source.odyssey.1"]
+    },
+    {
+      "id": "claim.odyssey.penelope_uncertain_fate",
+      "layerId": "homeric.odyssey",
+      "subjectId": "penelope",
+      "predicate": "believes_fate_of_odysseus",
+      "object": { "kind": "literal", "value": "uncertain" },
+      "temporalScope": "ithaca.odyssey_book_1",
+      "spatialScope": "ithaca",
+      "epistemicVisibility": ["narrator", "penelope", "eurycleia"],
+      "conflictSetId": null,
+      "status": "attributed",
+      "summary": "The demo treats Penelope's knowledge of Odysseus' exact location as unresolved.",
+      "sourceIds": ["source.odyssey.1"]
+    },
+    {
+      "id": "claim.iliad.helen_at_troy",
+      "layerId": "homeric.iliad",
+      "subjectId": "helen",
+      "predicate": "located_at",
+      "object": { "kind": "entity", "entityId": "troy" },
+      "temporalScope": "troy.war",
+      "spatialScope": "troy",
+      "epistemicVisibility": ["narrator", "all"],
+      "conflictSetId": "conflict.helen_wartime_location",
+      "status": "asserted",
+      "summary": "The Iliad layer presents Helen at Troy during the war.",
+      "sourceIds": ["source.iliad.3"]
+    },
+    {
+      "id": "claim.helen.real_helen_in_egypt",
+      "layerId": "later_tragedy.euripides_helen",
+      "subjectId": "helen",
+      "predicate": "located_at",
+      "object": { "kind": "entity", "entityId": "egypt" },
+      "temporalScope": "troy.war",
+      "spatialScope": "egypt",
+      "epistemicVisibility": ["narrator", "helen"],
+      "conflictSetId": "conflict.helen_wartime_location",
+      "status": "asserted",
+      "summary": "Euripides' Helen layer places the real Helen in Egypt while a phantom went to Troy.",
+      "sourceIds": ["source.helen.566"]
+    }
+  ],
+  "events": [
+    {
+      "id": "event.hector_funeral",
+      "phaseId": "troy.hector_funeral_complete",
+      "title": "Hector's funeral is complete",
+      "participantIds": ["hector"],
+      "locationId": "troy",
+      "precedesEventIds": ["event.odyssey_opening"],
+      "summary": "The first fixed point ends the Iliad-facing demo state.",
+      "sourceIds": ["source.iliad.24"]
+    },
+    {
+      "id": "event.odyssey_opening",
+      "phaseId": "ithaca.odyssey_book_1",
+      "title": "The Ithacan household waits",
+      "participantIds": ["penelope", "telemachus", "eurycleia"],
+      "locationId": "ithaca",
+      "precedesEventIds": [],
+      "summary": "The second fixed point supports the knowledge-boundary demo.",
+      "sourceIds": ["source.odyssey.1"]
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule.closed_world",
+      "kind": "world",
+      "description": "Unsupported facts are blocked or isolated as expansion proposals.",
+      "layerId": "creator_canon.v0",
+      "status": "active"
+    },
+    {
+      "id": "rule.character_knowledge",
+      "kind": "knowledge",
+      "description": "A character may assert only claims present in that character's knowledge profile.",
+      "layerId": "creator_canon.v0",
+      "status": "active"
+    }
+  ],
+  "beliefs": [
+    {
+      "characterId": "penelope",
+      "knownClaimIds": [],
+      "uncertainClaimIds": ["claim.odyssey.penelope_uncertain_fate"]
+    },
+    {
+      "characterId": "eurycleia",
+      "knownClaimIds": [],
+      "uncertainClaimIds": ["claim.odyssey.penelope_uncertain_fate"]
+    }
+  ],
+  "states": [
+    {
+      "id": "state.troy.hector_funeral_complete",
+      "phaseId": "troy.hector_funeral_complete",
+      "locationId": "troy",
+      "presentEntityIds": ["hector", "helen"],
+      "deceasedEntityIds": ["hector"],
+      "canonVersion": "0.1.0"
+    },
+    {
+      "id": "state.ithaca.odyssey_book_1",
+      "phaseId": "ithaca.odyssey_book_1",
+      "locationId": "ithaca",
+      "presentEntityIds": ["penelope", "telemachus", "eurycleia"],
+      "deceasedEntityIds": ["hector"],
+      "canonVersion": "0.1.0"
+    }
+  ],
+  "canonProfiles": [
+    {
+      "id": "profile.homeric_default",
+      "activeLayerIds": ["homeric.iliad", "homeric.odyssey", "creator_canon.v0"],
+      "conflictResolutions": {}
+    },
+    {
+      "id": "profile.helen_comparison",
+      "activeLayerIds": ["homeric.iliad", "later_tragedy.euripides_helen", "creator_canon.v0"],
+      "conflictResolutions": {}
+    }
+  ],
+  "defaultStateId": "state.ithaca.odyssey_book_1",
+  "defaultCanonProfileId": "profile.homeric_default",
+  "expansionPolicy": {
+    "mode": "creator_approval_required",
+    "allowNewEntities": true,
+    "allowNewRules": true,
+    "approvalActions": ["accept", "edit", "reject"]
+  },
+  "replayCaseIds": [
+    "replay.grounded_penelope",
+    "replay.living_hector",
+    "replay.penelope_knows_ogygia",
+    "replay.red_sail_proposal",
+    "replay.helen_conflict"
+  ]
+}
