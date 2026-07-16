@@ -58,6 +58,8 @@ npm run smoke:deployment -- http://127.0.0.1:3210/ <the-same-40-character-SHA>
 
 Local and hosted smoke both require the exact 40-character lowercase Git SHA; `local-unset` or another friendly label can never produce release evidence. For a hosted origin, pass its HTTPS root URL and exact deployed commit SHA. Redirects are rejected. The cache-busted health response must report that same build identity. The smoke gate checks the public fixture boundary, all declared baseline security headers, health flags, grounded and conflict proofs, the proposal and creator gate, fresh approved-overlay replay, exact S0r→S1→S2 snapshot/transition hash continuity, overlay/canon continuity, and the mandatory 403 denial of public live requests. The `deployment-smoke` GitHub workflow exposes the same check as a manual action with required `base_url` and `expected_sha` inputs.
 
+The health response must include a boolean `liveEvidenceReadinessRecorded` signal. Both `true` and an honest `false` are valid deployment states: this smoke proves the deployed fixture and its reporting contract, not completion of a private live-model trace. `submission:check` owns that separate live-evidence gate.
+
 ## What GPT-5.6 and Codex do
 
 GPT-5.6 is bounded to structured candidates: prose, claims, actions, proposals, and trace metadata. Deterministic code—not the model—owns identity, knowledge, time, location, source-tradition, canon-expansion, creator-decision, state-transition, and replay checks.

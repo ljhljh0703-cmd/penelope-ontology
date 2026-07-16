@@ -137,7 +137,7 @@ describe("deployment smoke script URL gate", () => {
     expect(result.stderr).toContain("expected build");
   });
 
-  it("refuses to certify a deployment without a recorded live-evidence readiness", async () => {
+  it("continues past health for an honest false live-evidence readiness signal", async () => {
     const expectedSha = "c".repeat(40);
     const origin = await listen(
       createServer((request, response) => {
@@ -157,6 +157,11 @@ describe("deployment smoke script URL gate", () => {
           }));
           return;
         }
+        if (request.url?.startsWith("/api/demo")) {
+          response.writeHead(503, { "content-type": "application/json" });
+          response.end("{}");
+          return;
+        }
         response.writeHead(200, {
           "content-type": "text/html",
           "x-content-type-options": "nosniff",
@@ -170,6 +175,42 @@ describe("deployment smoke script URL gate", () => {
     const result = await runAsync(origin, expectedSha);
     expect(result.status).toBe(1);
     expect(result.stdout).not.toContain("DEPLOYMENT_SMOKE_PASS");
-    expect(result.stderr).toContain("live-evidence");
+    expect(result.stderr).not.toContain("Health endpoint");
+    expect(result.stderr).toContain("Demo endpoint returned 503");
+  });
+
+  it("refuses to certify a deployment without a boolean live-evidence readiness signal", async () => {
+    const expectedSha = "d".repeat(40);
+    const origin = await listen(
+      createServer((request, response) => {
+        if (request.url?.startsWith("/api/health")) {
+          response.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
+          response.end(JSON.stringify({
+            status: "ok",
+            buildSha: expectedSha,
+            publicMode: "fixture",
+            liveModelImplemented: true,
+            corePipelineImplemented: true,
+            frozenReplayImplemented: true,
+          }));
+          return;
+        }
+        response.writeHead(200, {
+          "content-type": "text/html",
+          "x-content-type-options": "nosniff",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        });
+        response.end("FIXTURE MODE · NO LIVE CALL");
+      }),
+    );
+
+    const result = await runAsync(origin, expectedSha);
+    expect(result.status).toBe(1);
+    expect(result.stdout).not.toContain("DEPLOYMENT_SMOKE_PASS");
+    expect(result.stderr).toContain("Health endpoint");
   });
 });

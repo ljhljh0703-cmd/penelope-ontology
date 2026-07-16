@@ -54,7 +54,7 @@ Implemented and fixture-verified:
 - a fail-closed Myth Atlas intake that accepted packaging revision `v1.0.1` with manifest `schemaVersion: "1.0.0"` only as `quarantined_private_reference` after schema, regular-file, byte, and SHA-256 checks across 16 external assets totaling 2,489,820 bytes
 - a deterministic, path-free Myth Atlas compatibility report that binds that private intake receipt to the registered demo World Pack while keeping runtime, model-input, canon, and public eligibility at `false` / zero until explicit mappings and review gates exist
 - a preregistered same-GPT-5.6 style-control AB/BA protocol with no automatic retries, condition-masked creator ratings, and a write-once public report
-- an exact-SHA release rehearsal and deployment smoke reproduced for the last committed candidate in both the working repository and a clean clone; the current uncommitted tree requires a new commit and recertification before that ignored local release record becomes current authority again
+- a post-commit exact-SHA release rehearsal and deployment smoke whose per-commit result is stored only in ignored `private-submission/release-record.json`; any tracked change invalidates that record until the new HEAD is recertified
 
 The public surface is fixture-only. It demonstrates the product flow without spending API credits or presenting fixture output as a live model response.
 

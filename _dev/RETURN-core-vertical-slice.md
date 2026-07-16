@@ -36,7 +36,7 @@ The project treats familiar skepticism about generic default Codex prose as a de
 
 - Evidence generation and seven-file manifest verification: PASS.
 - ESLint and TypeScript with incremental cache disabled: PASS.
-- Vitest: 60 files / 428 tests PASS.
+- Vitest: 60 files / 429 tests PASS.
 - Adversarial evidence, live-bundle, submission-collector, privacy, and generated-cache regressions are included in the full suite.
 - Privacy scan: 237 public candidates PASS, including malformed/trailing PNG payloads, UTF-16 text, unknown-binary printable strings, and textual/EXIF metadata.
 - Next production build: PASS.
@@ -44,9 +44,9 @@ The project treats familiar skepticism about generic default Codex prose as a de
 - Visual inspection: desktop candidate, mobile candidate, and completed desktop flow with the review packet open show no clipped controls, overlap, or fixture/live ambiguity. Five public-safe 1440×900 gallery captures were inspected and bound to `docs/assets/demo/manifest.json` by SHA-256; the release gate also rejects duplicate decoded pixels hidden behind different PNG compression.
 - `git diff --check`: PASS. No raw live prose, API key, personal absolute path, private session ID, Vault content, or private story asset entered the repository.
 
-The verification results above include the CLI debt fixes and prove the full local dirty tree through evidence, lint, typecheck, tests, privacy, build, and trace privacy. The latest product-surface browser gate remains 10/10, but exact-SHA fresh-copy browser proof is pending. These results do not prove a committed exact-SHA release, public CI, hosted deployment, or a live model result.
+The verification results above include the CLI debt fixes and health-signal correction and prove the synchronized source tree through evidence, lint, typecheck, tests, privacy, build, and trace privacy. The product-surface browser gate remains 10/10. This tracked RETURN does not self-certify a commit SHA, public CI, hosted deployment, or a live model result.
 
-The exact-SHA clean-copy and deployment-smoke authority is generated only after each tracked release-candidate commit. Its local record belongs in ignored `private-submission/release-record.json`, preventing a self-referential proof commit. An earlier candidate passed that gate in both the working repository and an independent clean clone; the current dirty tree has not. Hosted-origin and public-CI proof remain separate.
+The exact-SHA clean-copy and deployment-smoke authority is generated only after each tracked release-candidate commit. Its local record belongs in ignored `private-submission/release-record.json`, preventing a self-referential proof commit; any SHA mismatch invalidates it. Hosted-origin and public-CI proof remain separate.
 
 ## Gates and remaining risks
 

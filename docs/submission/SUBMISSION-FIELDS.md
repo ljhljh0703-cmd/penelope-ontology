@@ -27,7 +27,7 @@ The answer is the harness. Style constraints become registered inputs; world cla
 | TypeScript 6.0.3 | production source and typecheck | include |
 | Next.js 16.2.10 + React 19.2.7 | production application and build | include |
 | Zod 4.4.3 | strict runtime contracts and Structured Output schema | include |
-| Vitest 4.1.10 | 46 files / 344 tests in the latest current-tree gate | include only after the current tree is committed and recertified |
+| Vitest 4.1.10 | 60 files / 429 tests in the latest local gate | include only when the ignored exact-SHA release record matches clean HEAD |
 | Playwright 1.61.1 | Chromium desktop and WebKit mobile production checks | include |
 | GitHub Actions | pinned CI and deployment-smoke workflows exist | include after public CI runs |
 

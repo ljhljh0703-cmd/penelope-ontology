@@ -158,7 +158,7 @@ export const smokeDeployment = async (baseUrl, expectedSha) => {
     health.buildSha !== expectedSha ||
     health.publicMode !== "fixture" ||
     health.liveModelImplemented !== true ||
-    health.liveEvidenceReadinessRecorded !== true ||
+    typeof health.liveEvidenceReadinessRecorded !== "boolean" ||
     health.corePipelineImplemented !== true ||
     health.frozenReplayImplemented !== true
   ) {
