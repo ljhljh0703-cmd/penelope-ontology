@@ -6,9 +6,20 @@ For the current status, deadline plan, Go/No-Go gates, and next Codex task bound
 
 ## Product in one sentence
 
-A rehearsal workbench that traces a registered fixture bundle—or gated live intent bundle—through a creator's world and style, shows the evidence it used, and applies only creator-approved changes to the next state.
+**Penelope Ontology carries a creator's choice through character, world, and prose until the story pays it off.**
 
-The primary users are professional GMs, narrative production teams, and game scene or quest designers who spend time reconciling multiple intents, generic model prose, and plausible-sounding continuity errors. Writers working inside a bounded canon are an adjacent audience, not a separately validated user segment. The product does not claim that a language model “remembers the world” or naturally owns the creator's voice. It builds a visible control path around the model:
+The primary users are professional GMs, narrative production teams, and game scene or quest designers who need a story to keep moving without losing character knowledge, world facts, creator-owned style, or responsibility for an earlier choice. Writers working inside a bounded canon are an adjacent audience, not a separately validated user segment. The product does not claim that a language model “remembers the world” or naturally owns the creator's voice. Its story-first path is:
+
+```text
+bounded choice or direct action
+→ causal resolution
+→ scoped character/world knowledge + creator style
+→ next-scene prose
+→ consequence echo
+→ three-scene small-arc payoff
+```
+
+The product opens on the Story Workbench at `/` (`/story` remains a direct alias). The original Table rehearsal remains a second, more forensic control surface at `/table`:
 
 ```text
 registered fixture ParticipantIntent[2] / gated live ParticipantIntent[]
@@ -42,6 +53,9 @@ In other words, this is not a demo of an AI inventing a sentence. It is a compac
 
 Implemented and fixture-verified:
 
+- a story-first `/story` workbench that opens under pressure, accepts a real branch or direct action, shows causal changes, and carries the selected consequence through a bounded three-scene arc
+- a typed story spine, character drives, creator-owned prose profile, scene contracts, resolution envelopes, scoped knowledge, causal ledger, fail-forward path, and commit-after-validation runtime
+- a one-command fixture or ChatGPT-authenticated Codex CLI story demo: `npm run story:demo -- --transport <fixture|codex_cli> --branch <quiet|bell>`
 - a Next.js Table workbench that replays one registered, frozen two-intent fixture with one original creator-owned style profile
 - strict World Pack, model draft, overlay, decision, graph, simulation, and replay contracts
 - deterministic character-scoped retrieval, hard validation, provenance graph, creator decision, hashing, and two-step transition
@@ -51,16 +65,20 @@ Implemented and fixture-verified:
 - a request-hash-bound primary approval, no-cost preflight, and one explicit `retry-1` path that opens only after a retryable typed failure and a separate approval
 - a private creator review that exposes generated prose locally, accepts only `accept` / display-only `edit` / `reject`, and publishes only prose-free harness evidence
 - fixture/live evidence separation, privacy scanning, browser tests, and generated public evidence artifacts
+- actual-route Story Workbench browser coverage on desktop and mobile: 2/2 checks passed without mocking the story API
 - a fail-closed Myth Atlas intake that accepted packaging revision `v1.0.1` with manifest `schemaVersion: "1.0.0"` only as `quarantined_private_reference` after schema, regular-file, byte, and SHA-256 checks across 16 external assets totaling 2,489,820 bytes
 - a deterministic, path-free Myth Atlas compatibility report that binds that private intake receipt to the registered demo World Pack while keeping runtime, model-input, canon, and public eligibility at `false` / zero until explicit mappings and review gates exist
 - a preregistered same-GPT-5.6 style-control AB/BA protocol with no automatic retries, condition-masked creator ratings, and a write-once public report
 - a post-commit exact-SHA release rehearsal and deployment smoke whose per-commit result is stored only in ignored `private-submission/release-record.json`; any tracked change invalidates that record until the new HEAD is recertified
 
-The public surface is fixture-only. It demonstrates the product flow without spending API credits or presenting fixture output as a live model response.
+The public reviewer surfaces default to fixtures. The Story Workbench live selector requires the explicit server flag, a 32-byte-or-longer private token, and a loopback host; the token stays in tab memory and is sent only as a request header. Fixture output is never presented as a live model response.
+
+Separately from the historical approval-bound evidence attempts below, one user-authorized Story Workbench run used the ChatGPT-authenticated bundled Codex CLI and requested `gpt-5.6-sol`. It generated Scene 2 and Scene 3 consecutively, passed the story schema, safe-input scope, typed and bounded semantic action guards, causal-echo, and closure gates, and completed the session. The final candidate output hashes are `e00dec6e24c3b13f241f3b763f88816eb09ed814569fbacaa73b63aa487eefbf` and `4f2ad711ab0199a425efd17e12bba7bee856aa0b2d4f3f62cf617b04966ebf1f`. This transport does not independently report the serving model or Responses API identity, so `actualModel` and `responseId` remain `null`. The creator's prose verdict is still pending.
 
 Not verified or released yet:
 
-- a real GPT-5.6 call and sanitized live-response metadata from either live transport; no Responses API or Codex CLI generation has been captured yet, and the two evidence types are not interchangeable
+- actual GPT-5.6 serving-model identity or a Responses API call: the Story Workbench proves a completed Codex CLI generation requesting `gpt-5.6-sol`, not the underlying model identity, a Responses API response, or a submission-ready sanitized live-evidence bundle
+- creator acceptance of the final live story candidate; automated story gates passed, but literary quality remains a human decision
 - the four-call style capture and creator ratings; the public readiness artifact currently says `not_executed`
 - Myth Atlas public/canon acceptance: the private intake carries producer-reported counts of ten exact-passage candidates, five `video_reported` items, and six pending items, with creator-review, rights, culture, provenance, video, and pending-item warnings still open
 - a public hosted deployment
@@ -82,9 +100,31 @@ Fixture mode is the default and does not require an API key. The public route re
 
 ChatGPT login for Codex CLI does not provide a general OpenAI API credential. This repository therefore keeps two independent live-evidence transports: the Responses API path still requires authorized API access, while the Codex CLI path uses the local ChatGPT-authenticated Codex allowance and requests `gpt-5.6-sol`. A CLI capture is CLI evidence only; it must never be relabeled as a Responses API response. Do not copy `~/.codex/auth.json` or treat it as an API key.
 
-### Codex CLI capture
+### Story Workbench Codex CLI demo
 
-The CLI path used a private, gitignored review packet containing the exact registered model input, prompt, strict output schema, reviewed command identity, and execution contract. The packet also records SHA-256 bindings for those objects, the registered request, the World Pack, and the exact predecessor receipt for retry. The sequence below documents the consumed workflow; both registered CLI attempts are terminal, so do not execute it again:
+The user-authorized product lane can run the complete quiet branch with one command:
+
+```bash
+npm run story:demo -- --transport codex_cli --branch quiet
+```
+
+It uses the ChatGPT-authenticated bundled Codex CLI, strict structured output, an ephemeral read-only execution, and no tools. Scene 1 is the registered opening; Scenes 2 and 3 are generated in sequence and committed only after the runtime validates scope, actor ownership, reserved-next-action boundaries, causal echo, and small-arc closure. The final unedited candidate and exact hashes are recorded in [`STORY-LIVE-CREATOR-REVIEW.md`](./STORY-LIVE-CREATOR-REVIEW.md). Label this evidence as **Codex CLI story generation requesting `gpt-5.6-sol`**. Do not shorten that to “GPT-5.6 generated” while `actualModel` remains unreported, and do not treat automated acceptance as the creator's prose verdict.
+
+The one-command demo invokes the CLI directly and needs no HTTP token. To use the **Live Codex** selector in the local browser, generate a private token, place the flag and token in `.env.local`, restart the development server, and enter the same token into the page's password field:
+
+```bash
+openssl rand -hex 32
+# .env.local — never commit this file
+PENELOPE_STORY_CODEX_CLI_ENABLED=1
+PENELOPE_STORY_CODEX_CLI_TOKEN=<generated-token>
+npm run dev
+```
+
+The server requires the flag, the bounded token, and a loopback host. The page keeps the presented token only in tab memory, sends it in `x-penelope-story-token`, and excludes it from story JSON and receipts.
+
+### Legacy approval-bound Codex CLI evidence lane
+
+Before the Story Workbench existed, the submission evidence lane used a private, gitignored review packet containing the exact registered model input, prompt, strict output schema, reviewed command identity, and execution contract. The packet also records SHA-256 bindings for those objects, the registered request, the World Pack, and the exact predecessor receipt for retry. The sequence below documents the consumed workflow; both registered CLI attempts are terminal, so do not execute it again:
 
 ```bash
 npm run evidence:codex-cli:review
@@ -142,7 +182,7 @@ npm run evidence
 npm run evidence:verify
 ```
 
-These commands and `npm run eval:style:capture` load `.env.local` explicitly on Node 22; they do not require exporting the key into the parent shell. Never commit `.env.local`. Before dispatch, capture writes a prose-free recovery sentinel. Every normal success or failure replaces that sentinel with an append-only ignored receipt under `artifacts/live/live-capture-attempts/`; if receipt persistence itself fails, the sentinel and exclusive lock remain for manual recovery instead of letting the call disappear. A completed raw-and-sanitized pair and both creator-decision outputs are write-once. Generated prose, response identity, and the local decision record remain ignored; public evidence contains only bounded status, hashes, IDs, counts, and transition receipts. Until a real call is captured, fixture output must not be described as GPT-5.6 output.
+These commands and `npm run eval:style:capture` load `.env.local` explicitly on Node 22; they do not require exporting the key into the parent shell. Never commit `.env.local`. Before dispatch, capture writes a prose-free recovery sentinel. Every normal success or failure replaces that sentinel with an append-only ignored receipt under `artifacts/live/live-capture-attempts/`; if receipt persistence itself fails, the sentinel and exclusive lock remain for manual recovery instead of letting the call disappear. A completed raw-and-sanitized pair and both creator-decision outputs are write-once. Generated prose, response identity, and the local decision record remain ignored; public evidence contains only bounded status, hashes, IDs, counts, and transition receipts. Until a Responses API call is captured, fixture output and Codex CLI output must not be described as a Responses API or independently verified GPT-5.6 response.
 
 Localization is a post-submission sequence, not a current capability claim: Korean first, then Japanese, then Chinese. Each locale must receive a new request hash, locale-specific style fixtures and script checks, and human review evidence. Machine IDs and canonical rule meaning remain language-neutral; localized presentation belongs in non-authoritative display text.
 
@@ -167,10 +207,11 @@ The style evaluation is documented in [`STYLE-ABLATION-PROTOCOL.md`](./STYLE-ABL
 
 ## Repository map
 
-- `app/`: Table workbench and stateless HTTP endpoints
+- `app/`: Story and Table workbenches plus stateless HTTP endpoints
+- `components/story/`: story-first prose, choice, consequence, and provenance surface
 - `components/table/`: workbench state machine and accessible graph view
-- `src/application/`: run orchestration and frozen replay
-- `src/domain/`: deterministic retrieval, validation, graph, overlay, and simulation core
+- `src/application/`: story-turn orchestration, run orchestration, and frozen replay
+- `src/domain/`: story scope/resolution plus deterministic retrieval, validation, graph, overlay, and simulation core
 - `src/contracts/`: structured model and HTTP contracts
 - `src/ports/`: model boundary
 - `src/adapters/`: filesystem, fixture, and gated GPT-5.6 adapters
@@ -184,7 +225,7 @@ The style evaluation is documented in [`STYLE-ABLATION-PROTOCOL.md`](./STYLE-ABL
 
 ## Why this is not README.md yet
 
-This file remains the technical entry point because the `package-project-evidence` write preflight currently reports `SERVING_STALE` after detecting changed README-authority hashes. The executable Evidence Packet exists, but the README pipeline must be refreshed before generation. The user's prohibition on `juhyeong-voice` also remains binding. Live GPT-5.6 evidence is a separate pending gate.
+This file remains the technical entry point because the `package-project-evidence` write preflight currently reports `SERVING_STALE` after detecting changed README-authority hashes. The executable Evidence Packet exists, but the README pipeline must be refreshed before generation. The user's prohibition on `juhyeong-voice` also remains binding. Actual serving-model proof, creator prose acceptance, and submission-ready live evidence remain separate pending gates.
 
 ## Official OpenAI implementation sources
 

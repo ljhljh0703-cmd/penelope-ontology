@@ -209,6 +209,11 @@
       "characterId": "eurycleia",
       "knownClaimIds": [],
       "uncertainClaimIds": ["claim.odyssey.penelope_uncertain_fate"]
+    },
+    {
+      "characterId": "telemachus",
+      "knownClaimIds": [],
+      "uncertainClaimIds": ["claim.odyssey.penelope_uncertain_fate"]
     }
   ],
   "states": [

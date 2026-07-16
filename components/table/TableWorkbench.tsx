@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import type { CanonOverlay } from "@/src/contracts/canon-overlay";
 import type { CreatorDecision } from "@/src/contracts/creator-decision";
 import type { CreatorDecisionResult } from "@/src/contracts/creator-decision";
@@ -459,6 +460,15 @@ export function TableWorkbench() {
         <div className="responsibility-contract" data-testid="responsibility-contract">
           <strong>Model proposes · Harness verifies · Creator decides</strong>
           <p>The creator owns the style profile, canon changes, and every final release decision.</p>
+        </div>
+        <div className="story-workbench-entry">
+          <div>
+            <strong>Want the story, not the receipts?</strong>
+            <p>Carry one choice through pressure, consequence, and a three-scene payoff.</p>
+          </div>
+          <Link href="/story" className="button primary" data-testid="enter-story-workbench">
+            Enter Story Workbench <span aria-hidden="true">→</span>
+          </Link>
         </div>
         <dl className="run-strip">
           <div><dt>World Pack</dt><dd>{bootstrap.worldPack.label}</dd></div>

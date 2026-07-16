@@ -17,7 +17,7 @@ export const LIVE_RED_SAIL_RETRY_ATTEMPT_ID = "live-gpt56-retry-1";
 export const LIVE_RED_SAIL_REQUEST_SHA256 =
   "b341c779b81a03bda66a5d3c6c18146df7bb92750e49d594a161fac7e07fc1c7";
 export const LIVE_RED_SAIL_WORLD_PACK_SHA256 =
-  "8e73033c7f67e6fc501b893dd905157fde6dfb746c757f74ed017c1639167f57";
+  "22a97e0d2328dcf7b8a8a99605c7e72dd1d74455f99bf9e3ca8c0fcf30af94eb";
 
 /**
  * Public-domain, synthetic preregistration for the single paid live-evidence call.

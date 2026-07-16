@@ -213,6 +213,33 @@ a:focus-visible,
   font-size: 12px;
 }
 
+.story-workbench-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px;
+  color: var(--paper);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+}
+
+.story-workbench-entry strong {
+  font-size: 15px;
+}
+
+.story-workbench-entry p {
+  margin: 4px 0 0;
+  color: rgba(243, 239, 229, 0.7);
+  font-size: 12px;
+}
+
+.story-workbench-entry .button {
+  flex: 0 0 auto;
+  color: var(--ink);
+  text-decoration: none;
+}
+
 .run-strip {
   display: grid;
   grid-template-columns: 1.8fr 0.6fr 0.6fr 1fr 0.8fr;
@@ -1740,6 +1767,7 @@ select:disabled {
   }
 
   .responsibility-contract,
+  .story-workbench-entry,
   .style-receipt-heading {
     align-items: flex-start;
     flex-direction: column;

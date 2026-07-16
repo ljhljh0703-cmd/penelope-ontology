@@ -1,0 +1,415 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "story.red_sail_trilogy",
+  "title": "The Red Sail Trilogy",
+  "worldPackId": "trojan-returns-demo",
+  "worldPackVersion": "0.2.0",
+  "baseCanonHash": "15fe0c8edf47d0a78322b08d33a598036b7498b7a2fb6ee2f90c64da01327806",
+  "baseStateHash": "ffc558f0c9bd9139cd18c7408cb393b405d75698cc412d35cf345b1c5094f50e",
+  "focalEntityId": "penelope",
+  "participantId": "participant.story.creator",
+  "opening": {
+    "resolution": {
+      "resolutionId": "resolution.red_sail_seen",
+      "choiceId": "choice.world.red_sail_appears",
+      "authority": { "kind": "world_rule", "evidenceRefs": ["rule.world.red_sail_appears"] },
+      "outcome": "success",
+      "actionTypeId": "action.observe_red_sail",
+      "targetEntityIds": ["ithaca", "penelope", "telemachus"],
+      "effects": [
+        { "effectId": "effect.red_sail.seen", "kind": "flag_set", "entityId": "ithaca", "flagId": "red_sail_seen", "value": true }
+      ],
+      "openedDebtEffectIds": [],
+      "resolvedDebtEffectIds": [],
+      "evidenceClaimIds": [],
+      "evidenceRuleIds": ["rule.world.red_sail_appears"],
+      "summary": "A red sail appears beyond the reef and forces Ithaca to choose how much meaning and force to give an unverified signal."
+    },
+    "contract": {
+      "sceneNumber": 1,
+      "focalCharacterId": "penelope",
+      "presentSpeakerIds": ["penelope", "telemachus", "eurycleia"],
+      "goal": "Keep the sighting from becoming proof before Ithaca has chosen how to test it.",
+      "opposition": "The hall wants certainty and Telemachus wants immediate action.",
+      "inheritedConsequenceIds": [],
+      "requiredDramaticTurn": "Penelope faces the bell rope and an unlit covered lamp as two incompatible ways to answer the signal.",
+      "stateDeltaEffectIds": ["effect.red_sail.seen"],
+      "forwardPressure": "Choose public force and rumor, or private observation and personal risk.",
+      "closedThreadIds": [],
+      "openedThreadIds": ["thread.red_sail_question"],
+      "openedObligationIds": [],
+      "paidObligationIds": [],
+      "actionBoundary": {
+        "performedAction": { "choiceId": "choice.world.red_sail_appears", "actionTypeId": "action.observe_red_sail", "actorEntityId": null },
+        "underwayActions": [],
+        "reservedNextActions": [
+          { "choiceId": "choice.keep_quiet_watch", "actionTypeId": "action.keep_quiet_watch", "actorEntityId": "penelope" },
+          { "choiceId": "choice.ring_public_bell", "actionTypeId": "action.ring_public_bell", "actorEntityId": "penelope" }
+        ]
+      }
+    },
+    "draft": {
+      "title": "The Signal",
+      "prose": "The loom stops before the messenger finishes. A red sail is holding beyond the western reef, neither entering nor turning away. The hall fills the silence with Odysseus's name before any lookout can say whose ship it is. Penelope presses the shuttle flat against the cloth. A color can summon hope faster than any king can cross the sea. Telemachus steps forward, already measuring walls, guards, and the distance to the harbor.\n\n“Ring the bell,” Telemachus says. “If the ship is a threat, let it find Ithaca awake.”\n\n“If it is not,” Penelope answers, “the bell will still have taught every suitor what rumor can command.”\n\nEurycleia sets an unlit covered lamp beside the bell rope. One choice gathers defenders and gives the whole island a story. The other keeps the story contained but asks Telemachus to carry the watch with fewer hands. Penelope looks from the rope to the dark lamp. Outside, the red sail does not move.",
+      "segments": [
+        { "segmentId": "segment.scene1.narration_1", "kind": "narration", "speakerId": null, "text": "The loom stops before the messenger finishes. A red sail is holding beyond the western reef, neither entering nor turning away. The hall fills the silence with Odysseus's name before any lookout can say whose ship it is. Penelope presses the shuttle flat against the cloth. A color can summon hope faster than any king can cross the sea. Telemachus steps forward, already measuring walls, guards, and the distance to the harbor.", "groundingClaimIds": [], "echoedEffectIds": [] },
+        { "segmentId": "segment.scene1.telemachus", "kind": "dialogue", "speakerId": "telemachus", "text": "“Ring the bell,” Telemachus says. “If the ship is a threat, let it find Ithaca awake.”", "groundingClaimIds": [], "echoedEffectIds": [] },
+        { "segmentId": "segment.scene1.penelope", "kind": "dialogue", "speakerId": "penelope", "text": "“If it is not,” Penelope answers, “the bell will still have taught every suitor what rumor can command.”", "groundingClaimIds": ["claim.odyssey.penelope_uncertain_fate"], "echoedEffectIds": [] },
+        { "segmentId": "segment.scene1.narration_2", "kind": "narration", "speakerId": null, "text": "Eurycleia sets an unlit covered lamp beside the bell rope. One choice gathers defenders and gives the whole island a story. The other keeps the story contained but asks Telemachus to carry the watch with fewer hands. Penelope looks from the rope to the dark lamp. Outside, the red sail does not move.", "groundingClaimIds": [], "echoedEffectIds": [] }
+      ],
+      "suggestedContinuations": [
+        { "choiceId": "choice.keep_quiet_watch", "actionTypeId": "action.keep_quiet_watch", "actorEntityId": "penelope", "label": "Keep a quiet watch", "intent": "Do not ring the bell. Put one covered lamp beneath the western wall and watch before the ship learns it is watched.", "source": "suggested" },
+        { "choiceId": "choice.ring_public_bell", "actionTypeId": "action.ring_public_bell", "actorEntityId": "penelope", "label": "Ring the public bell", "intent": "Call the harbor guard in force, accepting that the whole island will own the rumor.", "source": "suggested" }
+      ],
+      "actionBoundary": {
+        "performedAction": { "choiceId": "choice.world.red_sail_appears", "actionTypeId": "action.observe_red_sail", "actorEntityId": null },
+        "underwayActions": [],
+        "reservedNextActions": [
+          { "choiceId": "choice.keep_quiet_watch", "actionTypeId": "action.keep_quiet_watch", "actorEntityId": "penelope" },
+          { "choiceId": "choice.ring_public_bell", "actionTypeId": "action.ring_public_bell", "actorEntityId": "penelope" }
+        ]
+      },
+      "centralQuestionClosed": false,
+      "residualHook": "How should Ithaca test the red sail without mistaking it for proof?"
+    }
+  },
+  "spine": {
+    "premise": "On one night in Ithaca, a red sail tests whether caution can become action without becoming false proof.",
+    "dramaticQuestion": "Can Ithaca act on a signal without mistaking it for proof?",
+    "targetEnding": "The threat is resolved, the red sail remains a signal rather than proof, and the human or political cost of the chosen policy is acknowledged.",
+    "maximumSceneCount": 3,
+    "currentBeat": 0,
+    "openThreads": [
+      { "threadId": "thread.red_sail_question", "question": "What does the red sail mean, and can Ithaca respond without declaring a return?", "openedInScene": 1, "payoffByScene": 3, "status": "open" },
+      { "threadId": "thread.hidden_watcher", "question": "Who answers the covered lamp from the hills?", "openedInScene": 2, "payoffByScene": 3, "status": "dormant" },
+      { "threadId": "thread.signal_ambiguity", "question": "Did the public alarm reveal the ship's intent or only amplify rumor?", "openedInScene": 2, "payoffByScene": 3, "status": "dormant" }
+    ],
+    "mustPayOffObligations": [
+      { "obligationId": "obligation.quiet_watch_cost", "sourceChoiceId": "choice.keep_quiet_watch", "description": "Return both the protection and the human cost created by Penelope's silence.", "payoffByScene": 3, "status": "dormant" },
+      { "obligationId": "obligation.signal_not_proof", "sourceChoiceId": "choice.keep_quiet_watch", "description": "Resolve the threat without treating the red sail as proof of Odysseus's return.", "payoffByScene": 3, "status": "dormant" },
+      { "obligationId": "obligation.public_alarm_cost", "sourceChoiceId": "choice.ring_public_bell", "description": "Return both the protection and the ambiguity created by making the signal public.", "payoffByScene": 3, "status": "dormant" }
+    ],
+    "forbiddenResolutions": [
+      "Do not reveal Odysseus's exact location to Penelope.",
+      "Do not make the red sail proof of Odysseus's return.",
+      "Do not solve the danger through an unearned divine intervention."
+    ]
+  },
+  "characterDrives": [
+    { "characterId": "penelope", "desire": "Protect Ithaca from hope becoming a political weapon.", "fear": "A public rumor will hand the suitors a crisis they can exploit.", "tactic": "Convert uncertainty into small, reversible tests.", "redLine": "She will not name a signal as proof of Odysseus's return.", "relationshipPressure": "Her caution asks Telemachus to carry risks she cannot publicly explain." },
+    { "characterId": "telemachus", "desire": "Act as Ithaca's heir rather than remain a waiting son.", "fear": "His mother will mistake every initiative for reckless hope.", "tactic": "Turn Penelope's tests into concrete field action.", "redLine": "He will not let uncertainty become an excuse for paralysis.", "relationshipPressure": "He wants Penelope's trust before he has earned her certainty." },
+    { "characterId": "eurycleia", "desire": "Keep the household intact while mother and son test one another.", "fear": "A private fracture will become public weakness.", "tactic": "Carry orders quietly and make emotion actionable.", "redLine": "She will not feed the hall an unverified return story.", "relationshipPressure": "She sees the cost each imposes on the other and refuses to sentimentalize it." }
+  ],
+  "styleProfile": {
+    "styleProfileId": "style.red_sail_live",
+    "label": "Playable mythic restraint",
+    "pointOfView": "limited_third",
+    "tense": "present",
+    "rhythm": "Use measured clauses under reflection and short sentences when a test changes the danger.",
+    "dialogueAndSubtext": "Characters argue through practical choices; dialogue must reveal desire without explaining the ontology.",
+    "recurringImages": ["covered lamp"],
+    "forbiddenHabits": [
+      "Do not call uncertainty destiny.",
+      "Do not explain a feeling immediately after dialogue already implies it.",
+      "Do not give a focal character any fact outside the supplied allowed knowledge.",
+      "Do not state a character's knowledge boundary as report or ontology language; show what the character refuses to conclude.",
+      "Do not summarize uncertainty with abstract narrator phrases such as 'remains beyond what she can conclude'; stage refusal or doubt through action and dialogue.",
+      "Keep geography continuous: show how a character reaches any new vantage, person, or clue.",
+      "Use at most one recurring image in a scene, and never turn that image into a convenient tool merely to satisfy the style profile."
+    ],
+    "microExamples": [
+      { "constraint": "Make caution active, not passive.", "example": "She does not deny the signal. She makes it survive a test." },
+      { "constraint": "End on playable pressure.", "example": "The answering lamp moves before the ship does." }
+    ]
+  },
+  "ontology": {
+    "knownEntityIds": ["penelope", "telemachus", "eurycleia", "ithaca"],
+    "activeClaimIds": ["claim.odyssey.odysseus_at_ogygia", "claim.odyssey.penelope_uncertain_fate"],
+    "activeRuleIds": ["rule.world.red_sail_appears"],
+    "actionTypeIds": ["action.observe_red_sail", "action.keep_quiet_watch", "action.ring_public_bell", "action.move_decoy_lamp", "action.confront_watcher", "action.sweep_harbor", "action.question_spy", "action.record_debt", "action.direct_attempt"],
+    "relationAxisIds": ["trust"],
+    "resourceIds": [],
+    "flagIds": ["red_sail_seen", "watch_mode_quiet", "watch_mode_public", "public_rumor_contained", "public_rumor_spread", "hidden_observer_confirmed", "ship_observer_coordinated", "signal_ambiguous", "spy_captured", "spy_escaped", "harbor_safe", "central_question_closed"],
+    "clockIds": ["telemachus_exposure", "suitor_suspicion", "signal_ambiguity"],
+    "debtKindIds": ["owed_explanation"]
+  },
+  "choices": [
+    { "choiceId": "choice.keep_quiet_watch", "actionTypeId": "action.keep_quiet_watch", "actorEntityId": "penelope", "label": "Keep a quiet watch", "intent": "Do not ring the bell. Put one covered lamp beneath the western wall and watch before the ship learns it is watched.", "source": "suggested" },
+    { "choiceId": "choice.ring_public_bell", "actionTypeId": "action.ring_public_bell", "actorEntityId": "penelope", "label": "Ring the public bell", "intent": "Call the harbor guard in force, accepting that the whole island will own the rumor.", "source": "suggested" },
+    { "choiceId": "choice.move_decoy_lamp", "actionTypeId": "action.move_decoy_lamp", "actorEntityId": "penelope", "label": "Move the decoy lamp", "intent": "Move the covered lamp to the east gate and use the watcher's response to expose the coordination.", "source": "suggested" },
+    { "choiceId": "choice.confront_watcher", "actionTypeId": "action.confront_watcher", "actorEntityId": "telemachus", "label": "Confront the watcher", "intent": "Break cover and seize the watcher before the ship can read another signal.", "source": "suggested" },
+    { "choiceId": "choice.sweep_harbor", "actionTypeId": "action.sweep_harbor", "actorEntityId": "telemachus", "label": "Sweep the public harbor", "intent": "Use the assembled guard to force the ship away and search the crowd for whoever answered it.", "source": "suggested" },
+    { "choiceId": "choice.question_spy", "actionTypeId": "action.question_spy", "actorEntityId": "telemachus", "label": "Question the captured spy", "intent": "Begin the next arc by discovering who paid for the false opening.", "source": "suggested" },
+    { "choiceId": "choice.record_debt", "actionTypeId": "action.record_debt", "actorEntityId": "penelope", "label": "Record what the silence cost", "intent": "Mark the resolved danger without turning the red sail into proof of a return.", "source": "suggested" }
+  ],
+  "fixtureTurns": [
+    {
+      "branchId": "branch.quiet.scene2",
+      "sceneNumber": 2,
+      "priorChoiceIds": [],
+      "acceptedChoiceIds": ["choice.keep_quiet_watch"],
+      "defaultChoiceId": "choice.keep_quiet_watch",
+      "resolution": {
+        "resolutionId": "resolution.quiet_watch",
+        "choiceId": "choice.keep_quiet_watch",
+        "authority": { "kind": "user_choice", "evidenceRefs": ["choice.keep_quiet_watch"] },
+        "outcome": "success_with_cost",
+        "actionTypeId": "action.keep_quiet_watch",
+        "targetEntityIds": ["penelope", "telemachus", "ithaca"],
+        "effects": [
+          { "effectId": "effect.watch_mode.quiet", "kind": "flag_set", "entityId": "ithaca", "flagId": "watch_mode_quiet", "value": true },
+          { "effectId": "effect.rumor.contained", "kind": "flag_set", "entityId": "ithaca", "flagId": "public_rumor_contained", "value": true },
+          { "effectId": "effect.telemachus.exposure.1", "kind": "clock_delta", "clockId": "telemachus_exposure", "delta": 1 },
+          { "effectId": "effect.debt.penelope_to_telemachus", "kind": "debt_open", "debtorEntityId": "penelope", "creditorEntityId": "telemachus", "debtKindId": "owed_explanation", "weight": 40 },
+          { "effectId": "effect.hidden_observer.confirmed", "kind": "flag_set", "entityId": "ithaca", "flagId": "hidden_observer_confirmed", "value": true },
+          { "effectId": "effect.coordination.probable", "kind": "flag_set", "entityId": "ithaca", "flagId": "ship_observer_coordinated", "value": true }
+        ],
+        "openedDebtEffectIds": ["effect.debt.penelope_to_telemachus"],
+        "resolvedDebtEffectIds": [],
+        "evidenceClaimIds": [],
+        "evidenceRuleIds": [],
+        "summary": "Silence contains the rumor and turns the answering light into meaningful evidence, but Telemachus carries the private watch and its danger."
+      },
+      "contract": {
+        "sceneNumber": 2,
+        "focalCharacterId": "telemachus",
+        "presentSpeakerIds": ["telemachus"],
+        "goal": "Test the red sail without broadcasting belief and identify whether the hill light is deliberate.",
+        "opposition": "The silence that protects the test also leaves Telemachus exposed.",
+        "inheritedConsequenceIds": ["effect.red_sail.seen"],
+      "requiredDramaticTurn": "Telemachus finds fresh lamp oil in a separate stone signal niche beneath the western wall, confirming a hidden watcher just as the red-sailed ship turns toward the harbor.",
+        "stateDeltaEffectIds": ["effect.watch_mode.quiet", "effect.rumor.contained", "effect.telemachus.exposure.1", "effect.debt.penelope_to_telemachus", "effect.hidden_observer.confirmed", "effect.coordination.probable"],
+        "forwardPressure": "The ship is approaching an opening that only the hidden watcher promised.",
+        "closedThreadIds": [],
+        "openedThreadIds": ["thread.hidden_watcher"],
+        "openedObligationIds": ["obligation.quiet_watch_cost", "obligation.signal_not_proof"],
+        "paidObligationIds": [],
+        "actionBoundary": {
+          "performedAction": { "choiceId": "choice.keep_quiet_watch", "actionTypeId": "action.keep_quiet_watch", "actorEntityId": "penelope" },
+          "underwayActions": [],
+          "reservedNextActions": [
+            { "choiceId": "choice.move_decoy_lamp", "actionTypeId": "action.move_decoy_lamp", "actorEntityId": "penelope" }
+          ]
+        }
+      },
+      "draft": {
+        "title": "The Cost",
+        "prose": "Penelope leaves the bell untouched. One covered lamp rises beneath the western wall, and the hall receives no story it can repeat. Telemachus finds only two guards at the harbor and no crowd from which to borrow courage. Beyond the reef, the red sail is a dark wound against the moonlit sea. Their lamp rises once. The ship gives no answer. Instead, a flame opens among the olives above them. Telemachus understands what his mother bought with silence. Had the bell rung, any shepherd or suitor might be repeating the signal. Now the answering light has intention, and intention has made him its nearest witness.\n\n“Keep your eyes on the water,” he tells the guards.\n\nHe takes the hill path alone, not because it is safe, but because a public search would teach the watcher how much the palace knows. Halfway up, he finds fresh lamp oil on a stone and hears sandals strike the path ahead. Then the red-sailed ship turns toward the harbor, as if the hidden light has declared the coast clear.",
+        "segments": [
+          { "segmentId": "segment.scene2.quiet.narration_1", "kind": "narration", "speakerId": null, "text": "Penelope leaves the bell untouched. One covered lamp rises beneath the western wall, and the hall receives no story it can repeat. Telemachus finds only two guards at the harbor and no crowd from which to borrow courage. Beyond the reef, the red sail is a dark wound against the moonlit sea. Their lamp rises once. The ship gives no answer. Instead, a flame opens among the olives above them. Telemachus understands what his mother bought with silence. Had the bell rung, any shepherd or suitor might be repeating the signal. Now the answering light has intention, and intention has made him its nearest witness.", "groundingClaimIds": ["claim.odyssey.penelope_uncertain_fate"], "echoedEffectIds": ["effect.red_sail.seen", "effect.watch_mode.quiet", "effect.rumor.contained"] },
+          { "segmentId": "segment.scene2.quiet.telemachus", "kind": "dialogue", "speakerId": "telemachus", "text": "“Keep your eyes on the water,” he tells the guards.", "groundingClaimIds": [], "echoedEffectIds": ["effect.telemachus.exposure.1"] },
+          { "segmentId": "segment.scene2.quiet.narration_2", "kind": "narration", "speakerId": null, "text": "He takes the hill path alone, not because it is safe, but because a public search would teach the watcher how much the palace knows. Halfway up, he finds fresh lamp oil on a stone and hears sandals strike the path ahead. Then the red-sailed ship turns toward the harbor, as if the hidden light has declared the coast clear.", "groundingClaimIds": [], "echoedEffectIds": ["effect.hidden_observer.confirmed", "effect.coordination.probable"] }
+        ],
+        "suggestedContinuations": [
+          { "choiceId": "choice.move_decoy_lamp", "actionTypeId": "action.move_decoy_lamp", "actorEntityId": "penelope", "label": "Move the decoy lamp", "intent": "Move the covered lamp to the east gate and use the watcher's response to expose the coordination.", "source": "suggested" }
+        ],
+        "actionBoundary": {
+          "performedAction": { "choiceId": "choice.keep_quiet_watch", "actionTypeId": "action.keep_quiet_watch", "actorEntityId": "penelope" },
+          "underwayActions": [],
+          "reservedNextActions": [
+            { "choiceId": "choice.move_decoy_lamp", "actionTypeId": "action.move_decoy_lamp", "actorEntityId": "penelope" }
+          ]
+        },
+        "centralQuestionClosed": false,
+        "residualHook": "Can Penelope turn the private signal against both watcher and ship before Telemachus is exposed?"
+      }
+    },
+    {
+      "branchId": "branch.bell.scene2",
+      "sceneNumber": 2,
+      "priorChoiceIds": [],
+      "acceptedChoiceIds": ["choice.ring_public_bell"],
+      "defaultChoiceId": "choice.ring_public_bell",
+      "resolution": {
+        "resolutionId": "resolution.public_bell",
+        "choiceId": "choice.ring_public_bell",
+        "authority": { "kind": "user_choice", "evidenceRefs": ["choice.ring_public_bell"] },
+        "outcome": "success_with_cost",
+        "actionTypeId": "action.ring_public_bell",
+        "targetEntityIds": ["penelope", "telemachus", "ithaca"],
+        "effects": [
+          { "effectId": "effect.watch_mode.public", "kind": "flag_set", "entityId": "ithaca", "flagId": "watch_mode_public", "value": true },
+          { "effectId": "effect.rumor.spread", "kind": "flag_set", "entityId": "ithaca", "flagId": "public_rumor_spread", "value": true },
+          { "effectId": "effect.signal.ambiguous", "kind": "flag_set", "entityId": "ithaca", "flagId": "signal_ambiguous", "value": true },
+          { "effectId": "effect.signal_ambiguity.1", "kind": "clock_delta", "clockId": "signal_ambiguity", "delta": 2 },
+          { "effectId": "effect.suitor_suspicion.bell", "kind": "clock_delta", "clockId": "suitor_suspicion", "delta": 2 }
+        ],
+        "openedDebtEffectIds": [],
+        "resolvedDebtEffectIds": [],
+        "evidenceClaimIds": [],
+        "evidenceRuleIds": [],
+        "summary": "The public bell gives the harbor force and lowers immediate exposure, but rumor spreads and every answering light becomes ambiguous."
+      },
+      "contract": {
+        "sceneNumber": 2,
+        "focalCharacterId": "penelope",
+        "presentSpeakerIds": ["penelope", "telemachus"],
+        "goal": "Use public force to deny the unknown ship an easy harbor.",
+        "opposition": "The same alarm that gathers defenders lets suitors and spies manufacture confirming signals.",
+        "inheritedConsequenceIds": ["effect.red_sail.seen"],
+        "requiredDramaticTurn": "Three unrelated lamps answer the public bell, making the ship's intended contact impossible to identify.",
+        "stateDeltaEffectIds": ["effect.watch_mode.public", "effect.rumor.spread", "effect.signal.ambiguous", "effect.signal_ambiguity.1", "effect.suitor_suspicion.bell"],
+        "forwardPressure": "The guard can sweep the harbor, but the original watcher may disappear inside the crowd.",
+        "closedThreadIds": [],
+        "openedThreadIds": ["thread.signal_ambiguity"],
+        "openedObligationIds": ["obligation.public_alarm_cost"],
+        "paidObligationIds": [],
+        "actionBoundary": {
+          "performedAction": { "choiceId": "choice.ring_public_bell", "actionTypeId": "action.ring_public_bell", "actorEntityId": "penelope" },
+          "underwayActions": [],
+          "reservedNextActions": [
+            { "choiceId": "choice.sweep_harbor", "actionTypeId": "action.sweep_harbor", "actorEntityId": "telemachus" }
+          ]
+        }
+      },
+      "draft": {
+        "title": "The Alarm",
+        "prose": "Penelope pulls the bell rope. Bronze breaks the night, and Ithaca answers with feet, torches, and names shouted before orders can catch them. Telemachus reaches the harbor behind twenty guards instead of two. The red-sailed ship stops outside bow range. That is the bell's gift: walls with witnesses, spears with numbers, and no lonely heir on the western path. Its cost arrives just as quickly. A lamp flares above the olives. Then another answers from a shepherd's ridge, and a third from a suitor's courtyard where men are already calling the ship a sign. Any one of them might be the contact. All of them now know the palace is watching.\n\n“The bell bought bodies, not truth,” Penelope says.\n\nThe ship does not need to enter to divide the harbor; the bell has carried its color inland. Telemachus asks for a full sweep before the crowd erases every footprint. Behind him, one hooded figure leaves the quay with the rush of frightened servants.",
+        "segments": [
+          { "segmentId": "segment.scene2.bell.narration_1", "kind": "narration", "speakerId": null, "text": "Penelope pulls the bell rope. Bronze breaks the night, and Ithaca answers with feet, torches, and names shouted before orders can catch them. Telemachus reaches the harbor behind twenty guards instead of two. The red-sailed ship stops outside bow range. That is the bell's gift: walls with witnesses, spears with numbers, and no lonely heir on the western path. Its cost arrives just as quickly. A lamp flares above the olives. Then another answers from a shepherd's ridge, and a third from a suitor's courtyard where men are already calling the ship a sign. Any one of them might be the contact. All of them now know the palace is watching.", "groundingClaimIds": [], "echoedEffectIds": ["effect.red_sail.seen", "effect.watch_mode.public", "effect.rumor.spread", "effect.signal.ambiguous"] },
+          { "segmentId": "segment.scene2.bell.penelope", "kind": "dialogue", "speakerId": "penelope", "text": "“The bell bought bodies, not truth,” Penelope says.", "groundingClaimIds": ["claim.odyssey.penelope_uncertain_fate"], "echoedEffectIds": ["effect.rumor.spread", "effect.signal.ambiguous"] },
+          { "segmentId": "segment.scene2.bell.narration_2", "kind": "narration", "speakerId": null, "text": "The ship does not need to enter to divide the harbor; the bell has carried its color inland. Telemachus asks for a full sweep before the crowd erases every footprint. Behind him, one hooded figure leaves the quay with the rush of frightened servants.", "groundingClaimIds": [], "echoedEffectIds": ["effect.signal_ambiguity.1", "effect.suitor_suspicion.bell"] }
+        ],
+        "suggestedContinuations": [
+          { "choiceId": "choice.sweep_harbor", "actionTypeId": "action.sweep_harbor", "actorEntityId": "telemachus", "label": "Sweep the public harbor", "intent": "Use the assembled guard to force the ship away and search the crowd for whoever answered it.", "source": "suggested" }
+        ],
+        "actionBoundary": {
+          "performedAction": { "choiceId": "choice.ring_public_bell", "actionTypeId": "action.ring_public_bell", "actorEntityId": "penelope" },
+          "underwayActions": [],
+          "reservedNextActions": [
+            { "choiceId": "choice.sweep_harbor", "actionTypeId": "action.sweep_harbor", "actorEntityId": "telemachus" }
+          ]
+        },
+        "centralQuestionClosed": false,
+        "residualHook": "Can public force secure the harbor before rumor hides the original watcher?"
+      }
+    },
+    {
+      "branchId": "branch.bell.scene3",
+      "sceneNumber": 3,
+      "priorChoiceIds": ["choice.ring_public_bell"],
+      "acceptedChoiceIds": ["choice.sweep_harbor"],
+      "defaultChoiceId": "choice.sweep_harbor",
+      "resolution": {
+        "resolutionId": "resolution.sweep_harbor",
+        "choiceId": "choice.sweep_harbor",
+        "authority": { "kind": "user_choice", "evidenceRefs": ["choice.sweep_harbor"] },
+        "outcome": "success_with_cost",
+        "actionTypeId": "action.sweep_harbor",
+        "targetEntityIds": ["penelope", "telemachus", "ithaca"],
+        "effects": [
+          { "effectId": "effect.harbor.safe.bell", "kind": "flag_set", "entityId": "ithaca", "flagId": "harbor_safe", "value": true },
+          { "effectId": "effect.spy.escaped", "kind": "flag_set", "entityId": "ithaca", "flagId": "spy_escaped", "value": true },
+          { "effectId": "effect.question.closed.bell", "kind": "flag_set", "entityId": "ithaca", "flagId": "central_question_closed", "value": true },
+          { "effectId": "effect.suitor_suspicion.after_bell", "kind": "clock_delta", "clockId": "suitor_suspicion", "delta": 1 }
+        ],
+        "openedDebtEffectIds": [],
+        "resolvedDebtEffectIds": [],
+        "evidenceClaimIds": [],
+        "evidenceRuleIds": [],
+        "summary": "The public guard forces the ship away and secures the harbor, but the original watcher escapes inside the alarm and the suitors inherit the rumor."
+      },
+      "contract": {
+        "sceneNumber": 3,
+        "focalCharacterId": "telemachus",
+        "presentSpeakerIds": ["telemachus", "penelope"],
+        "goal": "Use the assembled guard to secure the harbor before the public signal loses all operational value.",
+        "opposition": "The crowd protects Ithaca from the ship while giving the hidden watcher cover.",
+        "inheritedConsequenceIds": ["effect.watch_mode.public", "effect.rumor.spread", "effect.signal.ambiguous"],
+        "requiredDramaticTurn": "The ship retreats before the guard line, but the hooded watcher escapes through the very crowd the bell created.",
+        "stateDeltaEffectIds": ["effect.harbor.safe.bell", "effect.spy.escaped", "effect.question.closed.bell", "effect.suitor_suspicion.after_bell"],
+        "forwardPressure": "By dawn, every suitor has a different account of what the red sail proved.",
+        "closedThreadIds": ["thread.red_sail_question", "thread.signal_ambiguity"],
+        "openedThreadIds": [],
+        "openedObligationIds": [],
+        "paidObligationIds": ["obligation.public_alarm_cost"],
+        "actionBoundary": {
+          "performedAction": { "choiceId": "choice.sweep_harbor", "actionTypeId": "action.sweep_harbor", "actorEntityId": "telemachus" },
+          "underwayActions": [],
+          "reservedNextActions": []
+        }
+      },
+      "draft": {
+        "title": "The Public Price",
+        "prose": "Telemachus divides the guard into lines and drives the crowd back from the water. The red-sailed ship sees an armed harbor instead of an opening. It turns before dawn, oars biting hard enough to show that caution, not welcome, brought it near Ithaca. The bell has done what Penelope asked of it: no sailor reaches the quay, and no son climbs an unlit hill alone. Yet the hooded figure is gone. Ten witnesses point in ten directions. One swears the stranger carried oil; another insists the man was only a servant fleeing the spears. Around them, the suitors repeat the alarm as if repetition could make the sail a prophecy.\n\n“The harbor is safe,” Penelope says. “Nothing else is proved.”\n\nTelemachus looks at the guards who protected him and the trampled path that protected their enemy. Public force paid its debt in bodies present, but charged Ithaca in certainty lost. By sunrise, the ship is gone and the rumor remains, waiting for someone powerful enough to use it.",
+        "segments": [
+          { "segmentId": "segment.scene3.bell.narration_1", "kind": "narration", "speakerId": null, "text": "Telemachus divides the guard into lines and drives the crowd back from the water. The red-sailed ship sees an armed harbor instead of an opening. It turns before dawn, oars biting hard enough to show that caution, not welcome, brought it near Ithaca. The bell has done what Penelope asked of it: no sailor reaches the quay, and no son climbs an unlit hill alone. Yet the hooded figure is gone. Ten witnesses point in ten directions. One swears the stranger carried oil; another insists the man was only a servant fleeing the spears. Around them, the suitors repeat the alarm as if repetition could make the sail a prophecy.", "groundingClaimIds": [], "echoedEffectIds": ["effect.watch_mode.public", "effect.rumor.spread", "effect.signal.ambiguous"] },
+          { "segmentId": "segment.scene3.bell.penelope", "kind": "dialogue", "speakerId": "penelope", "text": "“The harbor is safe,” Penelope says. “Nothing else is proved.”", "groundingClaimIds": ["claim.odyssey.penelope_uncertain_fate"], "echoedEffectIds": ["effect.harbor.safe.bell"] },
+          { "segmentId": "segment.scene3.bell.narration_2", "kind": "narration", "speakerId": null, "text": "Telemachus looks at the guards who protected him and the trampled path that protected their enemy. Public force paid its debt in bodies present, but charged Ithaca in certainty lost. By sunrise, the ship is gone and the rumor remains, waiting for someone powerful enough to use it.", "groundingClaimIds": [], "echoedEffectIds": ["effect.spy.escaped", "effect.question.closed.bell"] }
+        ],
+        "suggestedContinuations": [],
+        "actionBoundary": {
+          "performedAction": { "choiceId": "choice.sweep_harbor", "actionTypeId": "action.sweep_harbor", "actorEntityId": "telemachus" },
+          "underwayActions": [],
+          "reservedNextActions": []
+        },
+        "centralQuestionClosed": true,
+        "residualHook": "Which suitor will turn the public rumor into a claim of power?"
+      }
+    },
+    {
+      "branchId": "branch.quiet.scene3",
+      "sceneNumber": 3,
+      "priorChoiceIds": ["choice.keep_quiet_watch"],
+      "acceptedChoiceIds": ["choice.move_decoy_lamp"],
+      "defaultChoiceId": "choice.move_decoy_lamp",
+      "resolution": {
+        "resolutionId": "resolution.move_decoy_lamp",
+        "choiceId": "choice.move_decoy_lamp",
+        "authority": { "kind": "user_choice", "evidenceRefs": ["choice.move_decoy_lamp"] },
+        "outcome": "success_with_cost",
+        "actionTypeId": "action.move_decoy_lamp",
+        "targetEntityIds": ["penelope", "telemachus", "eurycleia", "ithaca"],
+        "effects": [
+          { "effectId": "effect.spy.captured", "kind": "flag_set", "entityId": "ithaca", "flagId": "spy_captured", "value": true },
+          { "effectId": "effect.harbor.safe", "kind": "flag_set", "entityId": "ithaca", "flagId": "harbor_safe", "value": true },
+          { "effectId": "effect.debt.penelope_to_telemachus.resolved", "kind": "debt_resolve", "debtEffectId": "effect.debt.penelope_to_telemachus" },
+          { "effectId": "effect.question.closed", "kind": "flag_set", "entityId": "ithaca", "flagId": "central_question_closed", "value": true }
+        ],
+        "openedDebtEffectIds": [],
+        "resolvedDebtEffectIds": ["effect.debt.penelope_to_telemachus"],
+        "evidenceClaimIds": [],
+        "evidenceRuleIds": [],
+        "summary": "The moved lamp exposes the watcher and denies the ship its opening. Penelope names the cost without converting the signal into proof."
+      },
+      "contract": {
+        "sceneNumber": 3,
+        "focalCharacterId": "penelope",
+        "presentSpeakerIds": ["penelope", "telemachus", "eurycleia"],
+        "goal": "Use the coordination itself as a test that protects the harbor and settles the red-sail question.",
+        "opposition": "The watcher can escape and Telemachus remains exposed unless the false opening is convincing.",
+        "inheritedConsequenceIds": ["effect.watch_mode.quiet", "effect.debt.penelope_to_telemachus", "effect.hidden_observer.confirmed", "effect.coordination.probable"],
+        "requiredDramaticTurn": "The watcher follows the moved lamp, revealing himself while the ship retreats from the false opening.",
+        "stateDeltaEffectIds": ["effect.spy.captured", "effect.harbor.safe", "effect.debt.penelope_to_telemachus.resolved", "effect.question.closed"],
+        "forwardPressure": "The captured spy still refuses to name the suitor who paid him.",
+        "closedThreadIds": ["thread.red_sail_question", "thread.hidden_watcher"],
+        "openedThreadIds": [],
+        "openedObligationIds": [],
+        "paidObligationIds": ["obligation.quiet_watch_cost", "obligation.signal_not_proof"],
+        "actionBoundary": {
+          "performedAction": { "choiceId": "choice.move_decoy_lamp", "actionTypeId": "action.move_decoy_lamp", "actorEntityId": "penelope" },
+          "underwayActions": [],
+          "reservedNextActions": []
+        }
+      },
+      "draft": {
+        "title": "The Payoff",
+        "prose": "Penelope waits beside the east gate as Eurycleia uncovers the moved lamp. Across the slope, the hidden flame answers. A shadow breaks from the olives and runs toward the false opening. Telemachus rises from the wall below, with two guards close enough to close the road. Penelope watches them take the runner before he reaches the bend. Beyond the gate, the red-sailed ship checks its approach, finds no harbor light where its ally promised one, and heels back into the dark. Silence has become a test, and the test has held.\n\n“You were alone because I chose silence,” Penelope says when Telemachus returns.\n\n“And we found the hand behind the signal because you did,” he answers.\n\nBy dawn, Ithaca has neither a returned king nor a new rumor. It has a captured spy, a safer harbor, and the cost named between mother and son. Penelope knots a red thread into the cloth—not as proof of Odysseus, but as a debt the house will remember. The prisoner still refuses to name the suitor who paid him.",
+        "segments": [
+          { "segmentId": "segment.scene3.quiet.narration_1", "kind": "narration", "speakerId": null, "text": "Penelope waits beside the east gate as Eurycleia uncovers the moved lamp. Across the slope, the hidden flame answers. A shadow breaks from the olives and runs toward the false opening. Telemachus rises from the wall below, with two guards close enough to close the road. Penelope watches them take the runner before he reaches the bend. Beyond the gate, the red-sailed ship checks its approach, finds no harbor light where its ally promised one, and heels back into the dark. Silence has become a test, and the test has held.", "groundingClaimIds": [], "echoedEffectIds": ["effect.watch_mode.quiet", "effect.hidden_observer.confirmed", "effect.coordination.probable", "effect.spy.captured", "effect.harbor.safe"] },
+          { "segmentId": "segment.scene3.quiet.penelope", "kind": "dialogue", "speakerId": "penelope", "text": "“You were alone because I chose silence,” Penelope says when Telemachus returns.", "groundingClaimIds": [], "echoedEffectIds": ["effect.debt.penelope_to_telemachus"] },
+          { "segmentId": "segment.scene3.quiet.telemachus", "kind": "dialogue", "speakerId": "telemachus", "text": "“And we found the hand behind the signal because you did,” he answers.", "groundingClaimIds": [], "echoedEffectIds": ["effect.debt.penelope_to_telemachus.resolved"] },
+          { "segmentId": "segment.scene3.quiet.narration_2", "kind": "narration", "speakerId": null, "text": "By dawn, Ithaca has neither a returned king nor a new rumor. It has a captured spy, a safer harbor, and the cost named between mother and son. Penelope knots a red thread into the cloth—not as proof of Odysseus, but as a debt the house will remember. The prisoner still refuses to name the suitor who paid him.", "groundingClaimIds": ["claim.odyssey.penelope_uncertain_fate"], "echoedEffectIds": ["effect.question.closed"] }
+        ],
+        "suggestedContinuations": [],
+        "actionBoundary": {
+          "performedAction": { "choiceId": "choice.move_decoy_lamp", "actionTypeId": "action.move_decoy_lamp", "actorEntityId": "penelope" },
+          "underwayActions": [],
+          "reservedNextActions": []
+        },
+        "centralQuestionClosed": true,
+        "residualHook": "Who hired the captured spy?"
+      }
+    }
+  ]
+}

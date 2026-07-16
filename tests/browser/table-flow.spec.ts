@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("fixture Table completes proposal, approval, rebase, and exactly two transitions", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/table");
 
   await expect(page.getByTestId("fixture-mode")).toContainText("FIXTURE MODE");
   await expect(page.getByTestId("participant-intent-0")).toBeVisible();
@@ -172,7 +172,7 @@ test("fixture Table completes proposal, approval, rebase, and exactly two transi
 });
 
 test("creator edits display wording without changing locked semantics", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/table");
   await page.getByTestId("run-candidate").click();
 
   const semanticDescription = page.getByTestId("proposal-semantic-description");
@@ -205,7 +205,7 @@ test("creator edits display wording without changing locked semantics", async ({
 });
 
 test("reject preserves the initial overlay and state", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/table");
   await page.getByTestId("run-candidate").click();
   await expect(page.getByTestId("decision-reject")).toBeVisible();
   await page.getByTestId("decision-reject").click();
@@ -217,7 +217,7 @@ test("reject preserves the initial overlay and state", async ({ page }) => {
 });
 
 test("a failed decision replay never advances the visible canon or state", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/table");
   await page.getByTestId("run-candidate").click();
   await expect(page.getByTestId("decision-accept")).toBeVisible();
   await page.route("**/api/decisions", async (route) => {
@@ -245,7 +245,7 @@ test("a failed decision replay never advances the visible canon or state", async
 test("a transition error can restart from the registered base without stale decision UI", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/table");
   await page.getByTestId("run-candidate").click();
   await page.getByTestId("decision-accept").click();
   await expect(page.getByTestId("overlay-version")).toHaveText("v1");

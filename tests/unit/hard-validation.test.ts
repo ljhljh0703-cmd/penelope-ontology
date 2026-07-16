@@ -96,6 +96,38 @@ describe("hard validation against frozen fixtures", () => {
     expect(penelope?.uncertainClaimIds).not.toContain("claim.odyssey.odysseus_at_ogygia");
   });
 
+  it("blocks a hidden relational fact in dialogue even when the model omits its claim id", async () => {
+    const { draft, context } = await loadValidationFixture("draft.grounded_penelope");
+    const candidate = {
+      ...draft,
+      mentionedEntityIds: [
+        ...draft.mentionedEntityIds,
+        "calypso",
+        "ogygia",
+      ],
+      utterances: draft.utterances.map((utterance, index) =>
+        index === 0
+          ? {
+              ...utterance,
+              text: "Odysseus is on Ogygia with Calypso.",
+              assertedClaimIds: [],
+              certainty: "certain" as const,
+            }
+          : utterance,
+      ),
+    };
+
+    const violations = validateDraft(candidate, context);
+
+    expect(statusForViolations(violations)).toBe("blocked");
+    expect(violations).toContainEqual(
+      expect.objectContaining({
+        code: "belief_scope_violation",
+        evidenceIds: ["claim.odyssey.odysseus_at_ogygia", "penelope"],
+      }),
+    );
+  });
+
   it("routes the unresolved Helen traditions to creator decision", async () => {
     const result = await validateFixture("draft.helen_conflict");
     expect(result.status).toBe("needs_creator_decision");

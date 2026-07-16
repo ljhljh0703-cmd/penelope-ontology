@@ -2,7 +2,7 @@
 
 ## Role split
 
-The user owns product direction, original style constraints, scope acceptance, canon decisions, subjective prose judgment, and final submission. Codex served as the engineering partner that converted those tacit standards into contracts, deterministic code, UI, tests, technical documents, demo scripts, and sanitized evidence artifacts. The implemented GPT-5.6 adapter is the bounded runtime boundary for requesting a structured narrative candidate from selected character views, participant intents, and a creator-owned style profile. No real GPT-5.6 response has been captured yet. A second-model soft review is deferred from this MVP.
+The user owns product direction, original style constraints, scope acceptance, canon decisions, subjective prose judgment, and final submission. Codex served as the engineering partner that converted those tacit standards into contracts, deterministic code, UI, tests, technical documents, demo scripts, and sanitized evidence artifacts. The implemented Responses adapter is the bounded API boundary for requesting a structured narrative candidate from selected character views, participant intents, and a creator-owned style profile; no Responses API call has been captured yet. Separately, the user-authorized Story Workbench lane completed one two-turn story run through the ChatGPT-authenticated Codex CLI while requesting `gpt-5.6-sol`. That transport did not independently report the serving model or response identity, and the creator has not yet accepted the prose. A second-model soft review is deferred from this MVP.
 
 No other generative asset tool is part of the project. Open-source packages and public-domain source references are dependencies, not Codex-created assets, and must be credited normally.
 
@@ -24,6 +24,18 @@ The output schema requires:
 
 Application-side Zod parsing and deterministic validation still run after schema-constrained generation. Schema adherence is not equivalent to world consistency or literary quality. Live model wording is nondeterministic; deterministic claims apply to retrieval, validation, graph derivation, selected action transitions, hashes, and fixture replay.
 
+## Story Workbench Codex CLI generation
+
+The story-first lane uses one command for a complete bounded branch:
+
+```bash
+npm run story:demo -- --transport codex_cli --branch quiet
+```
+
+Scene 1 is registered. The CLI generates Scenes 2 and 3 consecutively from the active story spine, selected choice, creator-owned style profile, scoped knowledge, character drives, and provisional causal ledger. Each turn must pass strict output parsing, exact next-choice bounds, actor ownership, safe-input knowledge scope, bounded semantic guards for every registered Red-Sail reserved action, causal echo, and final closure before the session commits. The machine-validated review candidate output hashes are `e00dec6e24c3b13f241f3b763f88816eb09ed814569fbacaa73b63aa487eefbf` and `4f2ad711ab0199a425efd17e12bba7bee856aa0b2d4f3f62cf617b04966ebf1f`.
+
+This proves a completed **Codex CLI story-generation transport** requesting `gpt-5.6-sol`. It does not prove that `gpt-5.6-sol` was the actual serving model: `actualModel` and `responseId` remain `null`. The generated scenes were not manually edited, but machine acceptance is not a literary verdict; creator review remains pending in [`STORY-LIVE-CREATOR-REVIEW.md`](./STORY-LIVE-CREATOR-REVIEW.md).
+
 Official sources:
 
 - [Using GPT-5.6](https://developers.openai.com/api/docs/guides/latest-model)
@@ -43,8 +55,8 @@ Deterministic code checks only objective constraints; the creator scores subject
 
 ## Evidence boundary
 
-Fixture mode is for deterministic development and the public judge-facing replay. The public run route rejects live requests before orchestration; a real call is available only through the explicitly invoked local evidence command. Live evidence is the only acceptable basis for “GPT-5.6 integrated,” and none exists yet. Sanitized public logs under `artifacts/evidence/` may record requested model, actual model, status, token counts, validator result, content hashes, and a hashed response ID. They must not record API keys, raw response IDs, raw private prompts, personal paths, or private world content. Raw live records remain under ignored `artifacts/live/`.
+Fixture mode is for deterministic development and the public judge-facing replay. The public Table route rejects live requests before orchestration; the Story Workbench additionally permits HTTP Codex CLI generation only behind an explicit server flag, a bounded private token, and a loopback host. The completed Story Workbench run is product-generation evidence, not an accepted result from the legacy approval-bound evidence lane and not a Responses API trace. It therefore supports the narrow claim “Codex CLI story generation requesting `gpt-5.6-sol`,” not “GPT-5.6 integrated.” Sanitized public logs under `artifacts/evidence/` may record requested model, actual model, status, token counts, validator result, content hashes, and a hashed response ID. They must not record API keys, local authorization tokens, raw response IDs, raw private prompts, personal paths, or private world content. Raw legacy live records remain under ignored `artifacts/live/`; the bounded final prose candidate is intentionally exposed only in its dedicated creator-review document.
 
 ## Codex evidence
 
-The core vertical slice was implemented in a clean Codex task containing only public-safe repository context. The repository records changed files and verification. `/feedback` remains an external submission step: its session ID must stay out of the public repository and be entered only in a gitignored private submission record and the Devpost form.
+The core vertical slice and story-first extension were implemented in Codex tasks containing only public-safe repository context. Codex converted the creator's causal and prose expectations into typed story contracts, a fail-forward runtime, local-only CLI transport, actual-route browser checks, and a creator-review packet. The repository records changed files and verification. `/feedback` remains an external submission step: its session ID must stay out of the public repository and be entered only in a gitignored private submission record and the Devpost form.

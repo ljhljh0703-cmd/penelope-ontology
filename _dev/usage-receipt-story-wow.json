@@ -1,0 +1,88 @@
+{
+  "type": "UsageReceipt",
+  "schema_version": "1.0",
+  "date": "2026-07-16",
+  "task": "Penelope story-first WOW vertical slice implementation and evidence audit",
+  "agent": "codex",
+  "model": "GPT-5",
+  "platform": "Codex Desktop",
+  "project": "Penelope Ontology",
+  "session_id": "codex-desktop-story-wow-2026-07-16",
+  "source_return": "_dev/RETURN-story-wow.md",
+  "route": {
+    "intent": "project-evidence-package",
+    "method": "router",
+    "match": "manual",
+    "entry_point": "skills/package-project-evidence/SKILL.md",
+    "based_on": [
+      "AGENTS.md",
+      "skills/package-project-evidence/SKILL.md"
+    ],
+    "selected_skills": [
+      {
+        "id": "package-project-evidence",
+        "version": "1.0",
+        "source_ref": "skills/package-project-evidence/SKILL.md",
+        "source_sha256": "4dbeba040601cbacf3c70469d3947d77d99cf41509e582e5f34b7b0146336a85",
+        "reason": "Public product and writing claims were held behind repository, live-transport, browser, privacy, and creator-review evidence."
+      }
+    ],
+    "loaded": [
+      {
+        "ref": "skills/package-project-evidence/SKILL.md",
+        "sha256": "4dbeba040601cbacf3c70469d3947d77d99cf41509e582e5f34b7b0146336a85",
+        "role": "entry_point"
+      }
+    ]
+  },
+  "knowledge": {
+    "used": [
+      {
+        "ref": "skills/package-project-evidence/SKILL.md",
+        "effect": "Kept live transport proof, actual-model proof, automated story acceptance, and creator prose acceptance as separate claims."
+      }
+    ],
+    "failed": [],
+    "missing": [
+      "README write adapter certification",
+      "creator prose verdict",
+      "independent serving-model identity"
+    ]
+  },
+  "verification": {
+    "result": "pass",
+    "gate": "pending",
+    "first_pass": false,
+    "retries": 1,
+    "evidence": [
+      {
+        "check": "source-manifest-audit",
+        "result": "pass",
+        "ref": "source-manifest.json"
+      },
+      {
+        "check": "full-repository-verify",
+        "result": "pass",
+        "ref": "_dev/RETURN-story-wow.md"
+      },
+      {
+        "check": "actual-story-api-browser",
+        "result": "pass",
+        "ref": "tests/browser/story-real-api.spec.ts"
+      },
+      {
+        "check": "live-story-creator-review",
+        "result": "pending",
+        "ref": "docs/STORY-LIVE-CREATOR-REVIEW.md"
+      }
+    ]
+  },
+  "privacy": {
+    "mode": "metadata_only",
+    "redactions": [
+      "Raw Codex CLI stdout and stderr were not persisted; only byte counts and hashes are reported.",
+      "No API credential, personal path, or conversation transcript is included.",
+      "Actual serving-model identity remains unreported rather than inferred."
+    ]
+  }
+}

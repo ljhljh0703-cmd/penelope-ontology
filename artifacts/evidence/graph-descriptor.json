@@ -91,7 +91,8 @@
         "status": "active",
         "toNodeId": "literal.claim.odyssey.penelope_uncertain_fate",
         "visibleToIds": [
-          "penelope"
+          "penelope",
+          "telemachus"
         ],
         "visualState": "active_evidence"
       },
@@ -273,7 +274,7 @@
       }
     ]
   },
-  "approvedDescriptorDigest": "fbedd6d7a4662987d183a52db6afd74b8e2a3ef65af709242fd92b00442d1fa9",
+  "approvedDescriptorDigest": "09119dd6ea67840baa745c71b56613ab63eec18f85aa82abadaa5e5350e51c11",
   "approvedEdgeCount": 7,
   "approvedEdgeStatuses": {
     "active": 4,
@@ -559,7 +560,8 @@
         "status": "active",
         "toNodeId": "literal.claim.odyssey.penelope_uncertain_fate",
         "visibleToIds": [
-          "penelope"
+          "penelope",
+          "telemachus"
         ],
         "visualState": "active_evidence"
       },
@@ -764,7 +766,7 @@
       }
     ]
   },
-  "descriptorDigest": "68ce384e1f71a0818cb4125a06fd07d46ae87b77a28baa61e7ad95d0aa5dffca",
+  "descriptorDigest": "b19edf9635306497ee8ff5730f77d0c646059f109afa8f116304f098dc5fae9c",
   "edgeCount": 8,
   "edgeStatuses": {
     "active": 4,

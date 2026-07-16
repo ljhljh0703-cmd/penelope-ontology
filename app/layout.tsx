@@ -2,16 +2,16 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Penelope Ontology — Table Rehearsal",
+  title: "The Red Sail Trilogy — Penelope Ontology",
   description:
-    "A fixture-mode narrative rehearsal workbench with character-scoped evidence, creator-gated canon, and bounded state transitions.",
+    "A creator-owned story harness that carries choices through character, world state, consequence, and payoff.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>
-        <a className="skip-link" href="#main-content">Skip to Table workbench</a>
+        <a className="skip-link" href="#main-content">Skip to workbench</a>
         {children}
       </body>
     </html>

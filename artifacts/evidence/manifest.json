@@ -3,7 +3,7 @@
     {
       "bytes": 3784,
       "path": "artifacts/evidence/evidence-packet.json",
-      "sha256": "2ced2af557633322fbf3973223e992a6c114341b317ad4d1c7a813e1be9d6271"
+      "sha256": "663d9e9f17c6b0da88c1ca199f683f6976c8b274a0d04b0d05527a19a05e78f3"
     },
     {
       "bytes": 4675,
@@ -11,9 +11,9 @@
       "sha256": "805ce520292bffe4a492ff990c88d3c54402585c7591a272814880dad8c224b5"
     },
     {
-      "bytes": 22941,
+      "bytes": 22989,
       "path": "artifacts/evidence/graph-descriptor.json",
-      "sha256": "2a4ee18edcfb7bf9b5e83929302e76a874acecbf9c8ce195f5fa3ece5c578e7a"
+      "sha256": "31e533e5c83942936427876af89597b9dcfdb7206b628280df647654a5606882"
     },
     {
       "bytes": 394,

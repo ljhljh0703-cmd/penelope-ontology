@@ -32,6 +32,18 @@ const mentionsRegisteredName = (prose: string, name: string): boolean =>
     "iu",
   ).test(prose);
 
+const mentionedEntityIdsIn = (
+  prose: string,
+  context: ValidationContext,
+): Set<string> =>
+  new Set(
+    context.pack.entities
+      .filter(({ name, aliases }) =>
+        [name, ...aliases].some((alias) => mentionsRegisteredName(prose, alias)),
+      )
+      .map(({ id }) => id),
+  );
+
 const validateStyle = (draft: ModelDraft, context: ValidationContext): HardViolation[] => {
   const violations: HardViolation[] = [];
   const constraintIds = new Set(context.styleProfile.constraints.map(({ id }) => id));
@@ -109,7 +121,7 @@ const validateAliasesAndEntities = (
   const violations: HardViolation[] = [];
   const entities = new Map(context.pack.entities.map((entity) => [entity.id, entity]));
   const reported = new Set(draft.mentionedEntityIds);
-  const prose = draft.narrative;
+  const prose = [draft.narrative, ...draft.utterances.map(({ text }) => text)].join("\n");
 
   for (const id of reported) {
     if (!entities.has(id)) {
@@ -259,6 +271,24 @@ const validateClaimsAndKnowledge = (
       ...(view?.knownClaimIds ?? []),
       ...(view?.uncertainClaimIds ?? []),
     ]);
+    const mentionedEntityIds = mentionedEntityIdsIn(utterance.text, context);
+    const undeclaredRelationalClaims = allClaims(context).filter(
+      (claim) =>
+        claim.object.kind === "entity" &&
+        mentionedEntityIds.has(claim.subjectId) &&
+        mentionedEntityIds.has(claim.object.entityId) &&
+        !utterance.assertedClaimIds.includes(claim.id),
+    );
+
+    for (const claim of undeclaredRelationalClaims) {
+      violations.push(
+        violation(
+          visible.has(claim.id) ? "unsupported_claim" : "belief_scope_violation",
+          `${utterance.speakerId} states relational claim ${claim.id} without declaring grounded evidence.`,
+          [utterance.speakerId, claim.id],
+        ),
+      );
+    }
     for (const claimId of utterance.assertedClaimIds) {
       if (!visible.has(claimId)) {
         violations.push(

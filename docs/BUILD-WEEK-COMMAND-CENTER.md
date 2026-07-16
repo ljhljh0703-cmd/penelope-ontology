@@ -1,7 +1,7 @@
 # Build Week command center
 
-Status snapshot: **2026-07-16 KST**
-Current state: **Penelope Ontology is name-locked and its fixture vertical slice remains locally verified. The primary ChatGPT-authenticated `gpt-5.6-sol` CLI authority ended in a nonzero process failure. Its separately approved `retry-1` passed preflight and dispatched once; the child exited zero after five parseable JSONL envelopes, but the adapter terminally rejected an unrecognized event or item type. The immutable receipt is `retryable: false` and contains no accepted usage, raw capture, sanitized public result, actual model identity, or response provenance. The exact unknown type was not retained by that pre-patch receipt; bounded event-type observations now protect only future failures. Both CLI authorities are consumed and no `retry-2` exists. Tracked docs do not self-certify exact HEAD; post-commit clean-copy authority lives only in the ignored release record. External submission gates remain.**
+Status snapshot: **2026-07-17 KST**
+Current state: **Penelope Ontology now has a story-first vertical slice in addition to the original Table rehearsal. A user-authorized one-command Story Workbench run generated Scene 2 and Scene 3 consecutively through the ChatGPT-authenticated bundled Codex CLI, requested `gpt-5.6-sol`, passed automated story gates, and completed the bounded session. Its final output hashes are `e00dec6e…` and `4f2ad711…`; `actualModel` and `responseId` remain null, and the creator prose verdict is pending. This new product lane does not rewrite the legacy approval-bound evidence history: primary remains a nonzero process failure, `retry-1` remains a terminal event-stream rejection, both authorities are consumed, and neither produced accepted submission evidence. External release and submission gates remain.**
 
 Official submission deadline: **2026-07-22 09:00 KST** (2026-07-21 17:00 PDT).
 Internal submission freeze: **2026-07-21 23:00 KST**. The final ten hours are emergency buffer, not feature time.
@@ -9,6 +9,17 @@ Internal submission freeze: **2026-07-21 23:00 KST**. The final ten hours are em
 ## Approved product proof
 
 **Penelope Ontology** serves professional GMs, narrative production teams, and game scene or quest designers under Work & Productivity. It succeeds only if this vertical slice works end to end:
+
+```text
+bounded choice or direct action
+→ causal resolution
+→ scoped world/character knowledge + creator style
+→ next-scene prose
+→ consequence echo
+→ bounded three-scene payoff
+```
+
+The Red-Sail story demo is the `/` product entrance (`/story` remains an alias). It opens under pressure, makes two genuine branches available, and lets unsupported direct action fail forward with an explicit cost and progress. Dice, items, conditions, and GM rulings are optional resolution inputs, not the product's center. The original Table rehearsal remains at `/table` as the forensic canon/simulation proof:
 
 ```text
 registered frozen ParticipantIntent[2] fixture / gated facilitator-collected live intents
@@ -43,19 +54,23 @@ The primary demo is not “AI writes mythology” and not four unrelated error c
 | Scope decision | verified | user approved A scope, Work & Productivity audience expansion, and remote-multiplayer No-Go on 2026-07-15 |
 | Local repository | expanded local tree verified; exact-SHA status externalized | the branch is `codex/core-vertical-slice`; the full local gate passes after CLI debt closure, while post-commit clean-copy authority must be checked in the ignored release record rather than inferred from this tracked file |
 | Core contracts and deterministic engine | verified | eight demo-critical contract groups plus retrieval, validation, registered public-fixture authority, overlay, graph, simulation, exact-overlay replay, and transition-authority tests |
+| Story Workbench | verified runtime and fixture flow | `/story` carries a branch or direct action through causal resolution, scoped generation, consequence echo, and three-scene closure; two fixture branches and fail-forward are tested |
+| Story actual-route browser flow | verified | 2/2 desktop/mobile Playwright checks use the real story API routes; route-mocked interaction checks are separate |
+| Story Codex CLI candidate | generated; creator verdict pending | one command generated two consecutive scenes and completed the quiet branch. Output hashes are `e00dec6e24c3b13f241f3b763f88816eb09ed814569fbacaa73b63aa487eefbf` and `4f2ad711ab0199a425efd17e12bba7bee856aa0b2d4f3f62cf617b04966ebf1f`; requested model `gpt-5.6-sol`, actual model and response ID unknown |
 | Table product surface | verified fixture-only | registered frozen two-intent lineage, visible style receipt and knowledge boundary, creator gate before the collapsed graph, production review packet, fresh 4/4 approved-overlay replay, S0r, and two steps are visible without JSON editing |
-| Source-tree local gate | verified at this documentation sync | seven-file evidence manifest, lint, non-incremental typecheck, 60 Vitest files / 429 tests, 237-file privacy scan, production build, and 10 clean trace manifests pass; the product-surface browser gate is 10/10, while the per-commit exact-SHA result is read only from the ignored release record |
+| Source-tree local gate | verified on current uncommitted tree | evidence generation/verification, lint, typecheck, 70 Vitest files / 532 tests, 284-file privacy scan, production build, and 22/22 browser checks pass; per-commit exact-SHA authority remains pending until commit |
 | Production visual inspection | verified current tree | desktop candidate, mobile candidate, and desktop completed flow show frozen inputs, knowledge table, style receipt, creator gate before graph, two-step chain, and opened review packet without overlap or clipped controls |
 | Fresh-copy rehearsal | mechanism verified; per-commit result externalized | every final tracked candidate must reinstall from the lockfile and rerun evidence, lint, typecheck, Vitest, privacy, identified production build, and both browser projects; the resulting SHA belongs in the ignored release record because this tracked row cannot self-certify its own commit |
 | Deployment smoke | mechanism verified; per-commit result externalized | every release commit must pass cache-busted exact-SHA identity, security-header, typed health-signal, fixture-authority, approved-overlay replay, two-step transition, and public-live denial checks; the result belongs in the ignored release record and no hosted origin exists yet |
-| Live GPT-5.6 | two transport mechanisms implemented; both CLI authorities terminal without evidence | the Responses path retains strict Structured Outputs, request-bound approval, fresh preflight, recovery records, atomic writes, and a separately approved fixed retry. The ChatGPT-authenticated Codex CLI path binds model input, prompt, schema, execution contract, request, and World Pack, runs ephemeral/read-only without tools, and consumes each authority with a terminal receipt. Primary exited nonzero. `retry-1` was approved, passed preflight, dispatched, exited zero, then failed closed on `codex_cli_event_type_unrecognized`; five JSONL envelopes and thread/turn start were observed, but no accepted usage, raw capture, sanitized result, actual model, or response ID was retained. The exact unknown type is unrecoverable from the pre-patch receipt. Raw CLI material stays private, CLI evidence cannot be relabeled as Responses evidence, and no further CLI attempt is authorized |
+| Independently verified GPT-5.6 | blocked | the Responses path has not run. The Story Workbench proves Codex CLI generation requesting `gpt-5.6-sol`, but that transport leaves `actualModel` and `responseId` null. The historical approval-bound CLI attempts remain terminal failures and cannot be rewritten as success |
+| Legacy approval-bound CLI evidence | blocked and closed | primary exited nonzero; approved `retry-1` exited zero but failed closed on `codex_cli_event_type_unrecognized`, retained no accepted result/usage/provenance, consumed the final authority, and opened no `retry-2` |
 | Myth Atlas intake | corrected handoff privately quarantined; analysis started; public/canon blocked | Myth Atlas packaging revision `v1.0.1` uses manifest `schemaVersion: "1.0.0"` and was accepted only as `quarantined_private_reference` after schema and byte-integrity checks across 16 assets totaling 2,489,820 bytes. A deterministic compatibility run bound the intake receipt to the registered demo World Pack and returned `analysis_only_no_import`, with runtime/model/canon/public eligibility all false and zero. It reports ten exact-passage candidates, five `video_reported` items, and six pending items; creator-review, rights, culture, producer-provenance, video, and pending-item warnings remain, and no asset was imported into a World Pack or canon |
 | Style controllability probe | protocol and local/public proof chain verified; live result blocked | same-model AB/BA schedule, no-retry capture, masked rubric, integrity hashes, and the focused style-evaluation suite pass; any future measured claim must recompute its tracked receipt/report from the ignored raw capture, masked packet, and creator ratings and bind the exact plan, readiness, and manifest. Four live calls and creator ratings do not yet exist |
 | Quest production extension | target only | no `QuestSpec`, linter, generator, evaluation, or user proof exists |
 | Release evidence | local mechanism verified; external release pending | seven sanitized evidence artifacts plus manifest exist; the README writing pipeline is `SERVING_STALE` and must be refreshed before generation; per-commit local SHA status is externalized to the ignored record, while public remote, CI, hosted deployment, video, `/feedback`, and final submission remain |
 | Submission readiness gate | mechanism verified; result blocked | `submission:check` recomputes local SHA and canonical child manifests, verifies the live sanitized-result/receipt/current-authority bundle, enforces ignored private-record paths, reruns privacy, and live-checks public remote HEAD, the exact `.github/workflows/ci.yml` push run, allowlisted hosted exact-SHA smoke, named Devpost page, and YouTube metadata while redacting private values; the post-submit phase additionally binds human-attested fields copied after an authenticated owner view or plugin-assisted check to the final name, track, description hash, repository, demo, and video |
 
-Passing fixture and fresh-copy checks proves the bounded local product path and its deterministic invariants. It does not prove live model use, quest support, user productivity, hosted reviewer access, or final submission.
+Passing fixture and fresh-copy checks proves the bounded local product path and its deterministic invariants. The Story Workbench additionally proves a completed Codex CLI generation under a requested-model flag. Neither proves the actual serving model, GPT-5.6 attribution, creator prose acceptance, quest support, user productivity, hosted reviewer access, or final submission.
 
 ## Critical path
 
@@ -90,11 +105,19 @@ Implement accept/edit/reject, stale-decision rejection, additive overlay, same-t
 
 ### Gate 3 — Live GPT-5.6 and Table product surface
 
-**Status: PARTIAL.** The frozen Table surface and current desktop/mobile production-browser checks pass. The Responses adapter retains its tested request-bound approval/preflight, maximum-one retry, private creative review, and deterministic finalization. The Codex CLI path implements exact private review, authority-hash approval, isolated no-tool execution, immutable terminal receipts, separate sanitized evidence, and bounded process diagnostics. Primary ended in `codex_cli_process_failed`. The separately approved `retry-1` passed preflight and dispatched once, then terminally failed closed on an unrecognized event/item type after a zero process exit. No accepted model result, usage, raw record, sanitized evidence, actual model identity, or response provenance exists. The exact unknown type is unrecoverable because the immutable receipt predates the observation-field patch. No further CLI dispatch is authorized.
+**Status: PARTIAL.** The frozen Table surface passes. The Story Workbench fixture flow and real-route desktop/mobile browser checks pass, and a separate user-authorized Codex CLI product run generated two consecutive scenes and completed the quiet branch. The transport records only the requested `gpt-5.6-sol`; actual model identity and response provenance remain unknown, and creator prose approval is pending. The historical approval-bound evidence path remains closed exactly as recorded: primary `codex_cli_process_failed`, `retry-1` terminally rejected an unrecognized event/item type, and no further attempt is authorized.
+
+The current Story Workbench command is:
+
+```bash
+npm run story:demo -- --transport codex_cli --branch quiet
+```
+
+It is not a retry of either historical evidence authority and does not produce Responses API identity. Its narrow claim is a completed ChatGPT-authenticated Codex CLI story run requesting `gpt-5.6-sol`.
 
 Connect the Responses API using strict `text.format` Structured Outputs, keep refusals distinct from schema errors, expose the gated live run path, and build the single-page Table flow around a registered frozen two-intent fixture, selected style profile, visible style and knowledge receipts, graph view, creator decision, state timeline, review packet, and replay panel. Arbitrary free-text inputs are not exposed by the fixture surface.
 
-The public route and reviewer deployment are fixture-only. Every public `modelMode: live` request is rejected before orchestration. A Responses API call is available only through its explicitly invoked local evidence command with `OPENAI_API_KEY` and an enable flag; the independent Codex CLI command uses ChatGPT authentication and a separate evidence identity. Live model text is nondeterministic; only selected structured-output processing, validators, graph descriptors, transitions, and fixture replay carry deterministic claims.
+The public Table route and reviewer deployment are fixture-only. Every public `modelMode: live` request is rejected before orchestration; the Story Workbench's HTTP Codex CLI option additionally requires the server enable flag, a bounded private bearer token, and a loopback host. The token stays in tab memory, travels only in a private header, and never enters story JSON. A Responses API call is available only through its explicitly invoked local evidence command with `OPENAI_API_KEY` and an enable flag; the legacy approval-bound Codex CLI command uses ChatGPT authentication and a separate evidence identity. Live model text is nondeterministic; only selected structured-output processing, validators, graph descriptors, transitions, and fixture replay carry deterministic claims.
 
 The independent CLI sequence is:
 
@@ -123,7 +146,7 @@ The creator inspects the ignored packet before supplying its combined authority 
 
 ### Gate 4 — Evidence and release
 
-**Status: PARTIAL.** The expanded local tree passes fixture Evidence Packet, lint, non-incremental typecheck, 60 files / 429 tests, privacy, and production build after the CLI debt fixes and health-signal correction; the desktop/mobile browser gate remains 10/10. Exact-SHA clean-copy and local deployment-smoke proof is intentionally externalized to the ignored post-commit release record. Final readiness remains blocked by README approval, live GPT-5.6 evidence, public remote/CI/hosted deployment, video, `/feedback`, and Devpost confirmation.
+**Status: PARTIAL.** The current story-expanded tree passes evidence regeneration and verification, lint, typecheck, 70 Vitest files / 532 tests, a 284-file privacy scan, and the production build. The complete browser suite passes 22/22 on desktop/mobile; its Story subset passes 12/12, including 2/2 actual-route flows without route interception. Exact-SHA clean-copy and deployment smoke remain pending until this tree is committed; prior pre-story results cannot certify the new commit. Final readiness remains blocked by README approval, independently attributable GPT-5.6 evidence, creator prose verdict, public remote/CI/hosted deployment, video, `/feedback`, and Devpost confirmation.
 
 Run frozen evaluation, publish sanitized evidence, build the Evidence Packet, and derive README, Devpost copy, video claims, and later portfolio copy from the same claim ledger.
 
@@ -147,6 +170,7 @@ Run frozen evaluation, publish sanitized evidence, build the Evidence Packet, an
 
 Included now:
 
+- story-first three-scene Red-Sail loop with two real branches, direct-action fail-forward, causal echo, creator-owned style, and small-arc closure
 - registered frozen two-intent fixture with explicit lineage; arbitrary facilitator-collected composition remains at the gated live boundary
 - original creator-owned style profile carried as a registered harness input and referenced through stable IDs; one deterministic bound is checked while six constraints remain creator-reviewed
 - derived canon/knowledge graph view
@@ -172,9 +196,11 @@ Remote multiplayer, graph DB, embeddings, and long-horizon simulation do not reo
 
 ## Codex task boundary
 
-The core was built in this public-safe task on `codex/core-vertical-slice` using `_dev/CORE-BUILD-DISPATCH.md`. Private planning conversation and personal paths remain outside source. `/feedback` is now an external submission action: store its ID only in a gitignored private record and Devpost.
+The core was built in this public-safe task on `codex/core-vertical-slice` using `_dev/CORE-BUILD-DISPATCH.md`; the story-first extension is isolated on `codex/story-wow-vertical-slice` under `_dev/STORY-WOW-DISPATCH.md`. Private planning conversation and personal paths remain outside source. `/feedback` is now an external submission action: store its ID only in a gitignored private record and Devpost.
 
 The exact-authority CLI adapter and evidence-manifest integration pass current-tree recertification after debt fixes. Primary was consumed by one process-level failure. The separately approved `retry-1` passed preflight and dispatched once, then terminally failed at event-stream compatibility without producing accepted live evidence. Neither authority can be reused and no `retry-2` exists. Myth Atlas stays on a separate intake boundary: the initial free-form manifest was rejected, while corrected packaging revision `v1.0.1` with manifest schema `1.0.0` is now quarantined as private reference only. Its 16 assets and reported 10/5/6 evidence counts do not authorize World Pack import, public evidence, or canon.
+
+The later Story Workbench run is a distinct user-authorized product-generation lane, not a repair or relabeling of those receipts. Its automated evidence supports scene continuity and transport completion; its serving-model identity and creator writing verdict remain explicitly open.
 
 ## Portfolio asset path
 

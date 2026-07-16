@@ -11,6 +11,7 @@
     "dev": "next dev",
     "build": "next build",
     "benchmark:causal": "node --import tsx scripts/benchmark-causal-runtime.ts",
+    "story:demo": "node --import tsx scripts/run-story-demo.ts",
     "postbuild": "node scripts/verify-next-trace-privacy.mjs",
     "prebuild:identified": "node scripts/assert-clean-build.mjs",
     "build:identified": "next build",
