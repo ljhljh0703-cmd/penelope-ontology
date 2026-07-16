@@ -56,7 +56,7 @@ Two failed gates and three independent-verifier findings were corrected and reta
 
 ## Gates at scaffold time
 
-- README generation was blocked by a stale package manifest at scaffold time; current write/derive preflights are `SERVING_CANDIDATE` and still require explicit user approval.
+- README generation was blocked by a stale package manifest at scaffold time; the current approved writing pipeline reports `SERVING_STALE` and must be refreshed before generation.
 - mythology locator/rights handling later closed as `verified` / `reference_only`; see `docs/SOURCE-VERIFICATION.md`.
 - no real GPT-5.6 call has been made.
 - no public repository, deployment, demo video, `/feedback` ID, or Devpost submission exists yet.

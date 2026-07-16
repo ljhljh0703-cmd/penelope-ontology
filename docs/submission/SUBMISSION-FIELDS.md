@@ -4,18 +4,18 @@ Status: **fixture-safe draft complete; live evidence and external URLs pending**
 
 ## Identity
 
-- **Project name candidate:** Narrative Knowledge Harness
+- **Project name:** Penelope Ontology
 - **Track:** Work & Productivity
-- **One-line description:** A creator-controlled narrative rehearsal harness that turns raw AI prose into an inspectable scene candidate—bounded by style, character knowledge, canon approval, and replayable state transitions.
+- **One-line description:** A creator-controlled rehearsal harness for AI-proposed scene candidates—bounded by style, character knowledge, canon approval, and replayable state transitions.
 - **Primary users:** professional game masters, narrative production teams, and game scene or quest designers
 
-The name remains a candidate until creator approval. Do not rename the repository, Devpost page, video, or hosted product independently.
+The creator approved the name on 2026-07-15. Keep **Penelope Ontology** identical across the repository UI, Devpost page, video, and hosted product; the existing repository slug may remain technical.
 
 ## Core story
 
 Writing-first systems may feel more distinctive than generic default Codex prose. This project does not answer that perception with a cherry-picked paragraph or an unsupported model ranking. It asks a production question instead: can voice and world coherence move out of a model's accidental personality and into a creator-owned contract?
 
-The answer is the harness. Style constraints become registered inputs; world claims and character knowledge become scoped evidence; new lore stops at a creator gate; approved changes rerun deterministic controls and state transitions. The model proposes, the harness constrains and traces, and the creator decides. Distinctive writing is therefore treated as a reviewable production process rather than a lucky one-shot output.
+The answer is the harness. Style constraints become registered inputs; world claims and character knowledge become scoped evidence; new lore stops at a creator gate; approved changes rerun deterministic controls and state transitions. The model proposes, the harness constrains and traces, and the creator decides. Style adherence therefore becomes a reviewable production process rather than a lucky one-shot output; distinctiveness remains the creator's judgment.
 
 ## Built with
 
@@ -27,7 +27,7 @@ The answer is the harness. Style constraints become registered inputs; world cla
 | TypeScript 6.0.3 | production source and typecheck | include |
 | Next.js 16.2.10 + React 19.2.7 | production application and build | include |
 | Zod 4.4.3 | strict runtime contracts and Structured Output schema | include |
-| Vitest 4.1.10 | 30 files / 156 tests | include |
+| Vitest 4.1.10 | 46 files / 344 tests in the latest current-tree gate | include only after the current tree is committed and recertified |
 | Playwright 1.61.1 | Chromium desktop and WebKit mobile production checks | include |
 | GitHub Actions | pinned CI and deployment-smoke workflows exist | include after public CI runs |
 
@@ -55,8 +55,10 @@ Before copying into Devpost, verify all five conditions:
 1. `artifacts/evidence/live-readiness.json` agrees with every GPT-5.6 sentence.
 2. README, Devpost copy, narration, and visible UI use the same project name and claim boundary.
 3. Public repository HEAD equals hosted `/api/health` `buildSha`.
-4. The video shows the actual fixture/live badge and contains spoken narration.
+4. The video shows the actual fixture/live badge, demonstrates the product, and audibly explains Codex and GPT-5.6 use in under three minutes.
 5. No key, raw response ID, personal path, private Codex conversation, or `/feedback` ID appears in public material.
+
+Record verified external fields only in gitignored `private-submission/submission-record.json`, using `SUBMISSION-RECORD.example.json` as the shape. `/feedback` must be the Codex session UUID, never a label or placeholder. Run `npm run submission:check` before submission and `npm run submission:check:post` after an authenticated owner view or the Devpost plugin reads the submitted state back. For that final readback, fill the exact project name, track, SHA-256 of the final Devpost description file, repository URL, hosted demo URL, and video URL. The verifier reports check IDs only and never echoes the private record values. A measured style-effect claim is controlled by tracked `CLAIM-CONTRACT.json`; changing only the private record cannot bypass or activate that proof requirement.
 
 Regenerate the gallery against a running production server with:
 

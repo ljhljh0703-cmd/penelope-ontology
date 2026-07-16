@@ -3,9 +3,11 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  assertLiveHarnessCaptureBinding,
   assertLiveEvidenceAuthorityBinding,
   buildPreservedEvidenceManifestEntry,
 } from "@/scripts/generate-evidence";
+import { LiveHarnessEvidenceSchema } from "@/src/evidence/live-harness-evidence";
 import { SanitizedLiveEvidenceSchema } from "@/src/evidence/sanitize-live-evidence";
 import { sha256Canonical } from "@/src/domain/canonical-json";
 import { buildPublicEvidence } from "@/src/evidence/build-public-evidence";
@@ -163,7 +165,9 @@ describe("sanitized public evidence", () => {
       modelOutcome: "completed",
       captureOutcome: "persisted",
       errorCode: null,
+      retryable: null,
       responseIdSha256: liveEvidence.responseIdSha256,
+      sanitizedEvidenceSha256: sha256Canonical(liveEvidence),
       inputTokens: liveEvidence.inputTokens,
       outputTokens: liveEvidence.outputTokens,
       rawPersisted: true,
@@ -179,5 +183,83 @@ describe("sanitized public evidence", () => {
         liveEvidence,
       ),
     ).toThrow("not bound");
+  });
+
+  it("binds creator-harness proof to the exact sanitized live draft", () => {
+    const hash = "a".repeat(64);
+    const liveEvidence = SanitizedLiveEvidenceSchema.parse({
+      schemaVersion: 1,
+      evidenceType: "live_sanitized",
+      capturedAt: "2026-07-15T00:00:01.000Z",
+      authority: {
+        worldPackId: "trojan-returns-demo",
+        worldPackVersion: "0.2.0",
+        worldPackSha256: hash,
+        styleProfileId: "style.table_ready_mythic",
+        overlayId: "creator_canon",
+        overlayVersion: 0,
+        overlayHash: hash,
+        scenarioId: "scenario.harbor_watch",
+        baseStateId: "state.ithaca.odyssey_book_1",
+        requestSha256: hash,
+      },
+      requestedModel: "gpt-5.6",
+      actualModel: "gpt-5.6-test",
+      inputTokens: 10,
+      outputTokens: 8,
+      responseIdSha256: hash,
+      runId: `run.${"a".repeat(20)}`,
+      runStatus: "needs_creator_decision",
+      hardViolationCodes: ["unapproved_expansion"],
+      draftDigest: hash,
+      graphDigest: hash,
+      currentStateHash: hash,
+      proposedStateHash: hash,
+      rawResponsePersistedPublicly: false,
+    });
+    const harness = LiveHarnessEvidenceSchema.parse({
+      schemaVersion: 1,
+      evidenceType: "live_creator_harness",
+      scenarioContractId: "live.trojan_returns.red_sail_proposal.v1",
+      finalizationStatus: "rejected",
+      requestSha256: hash,
+      runId: liveEvidence.runId,
+      liveDraftSha256: hash,
+      proposal: {
+        id: "proposal.red_sail_signal",
+        proposalHash: hash,
+      },
+      decision: { action: "reject", decisionSha256: hash },
+      baseAuthority: {
+        overlayId: "creator_canon",
+        overlayVersion: 0,
+        overlayHash: hash,
+        stateHash: hash,
+        turnIndex: 0,
+      },
+      finalAuthority: {
+        overlayId: "creator_canon",
+        overlayVersion: 0,
+        overlayHash: hash,
+        stateHash: hash,
+        turnIndex: 0,
+      },
+      rebasedStateHash: null,
+      replay: null,
+      transitions: [],
+      transitionChainSha256: null,
+      rawNarrativePublic: false,
+      creatorDecisionTextPublic: false,
+    });
+
+    expect(() =>
+      assertLiveHarnessCaptureBinding(harness, liveEvidence),
+    ).not.toThrow();
+    expect(() =>
+      assertLiveHarnessCaptureBinding(
+        { ...harness, liveDraftSha256: "b".repeat(64) },
+        liveEvidence,
+      ),
+    ).toThrow(/not bound/u);
   });
 });

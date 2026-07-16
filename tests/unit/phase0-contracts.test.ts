@@ -199,10 +199,33 @@ describe("Phase 0 contracts", () => {
       RunRequestSchema.safeParse({ ...base, modelMode: "fixture", draftFixtureId: "draft.grounded_penelope" })
         .success,
     ).toBe(true);
-    expect(RunRequestSchema.safeParse({ ...base, modelMode: "live" }).success).toBe(true);
+    expect(RunRequestSchema.safeParse({ ...base, modelMode: "live" }).success).toBe(false);
     expect(
-      RunRequestSchema.safeParse({ ...base, modelMode: "live", draftFixtureId: "draft.grounded_penelope" })
+      RunRequestSchema.safeParse({ ...base, modelMode: "live", outputLocale: "en" })
         .success,
+    ).toBe(true);
+    for (const outputLocale of ["ko", "ja", "zh", "fr"] as const) {
+      expect(
+        RunRequestSchema.safeParse({ ...base, modelMode: "live", outputLocale })
+          .success,
+      ).toBe(false);
+    }
+    expect(
+      RunRequestSchema.safeParse({
+        ...base,
+        modelMode: "live",
+        outputLocale: "en",
+        draftFixtureId: "draft.grounded_penelope",
+      })
+        .success,
+    ).toBe(false);
+    expect(
+      RunRequestSchema.safeParse({
+        ...base,
+        modelMode: "fixture",
+        outputLocale: "en",
+        draftFixtureId: "draft.grounded_penelope",
+      }).success,
     ).toBe(false);
   });
 

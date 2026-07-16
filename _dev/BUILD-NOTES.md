@@ -66,8 +66,8 @@ This file records implementation-time decisions without interrupting the critica
 
 - `OPENAI_API_KEY` is currently absent from the process environment. Live GPT-5.6 evidence cannot be produced until a key is supplied locally; implementation and fixture verification continue meanwhile.
 - Browser smoke is complete: all 8 Table-flow checks pass across desktop Chromium and iPhone/WebKit.
-- `package-project-evidence` audit mode is certified. The latest write and derive preflights both return `SERVING_CANDIDATE`, not PASS; the skill requires explicit user approval and a rerun with `--allow-candidate`. Do not create README.md or portfolio copy before that approval. The user's ban on `juhyeong-voice` remains independent and binding.
-- Final product name remains intentionally unlocked. The technical label stays `Narrative Knowledge Harness` until the user names it.
+- `package-project-evidence` audit mode is certified. The approved README writing pipeline currently reports `SERVING_STALE`; refresh its authority hashes before generating README.md. The user's ban on `juhyeong-voice` remains independent and binding.
+- The creator approved **Penelope Ontology** as the final product name on 2026-07-15. The name is now fixed across the repository UI and submission copy; external Devpost, hosted demo, and video parity still require readback.
 
 ## 2026-07-15 — Release and authority hardening
 
@@ -102,8 +102,8 @@ This file records implementation-time decisions without interrupting the critica
 - Claim visibility/source ID arrays remain order-sensitive in edit authority. This is fail-closed and no claim-edit UI exists; normalize only if a future semantic migration contract treats equivalent set order as editable.
 - `OPENAI_API_KEY` and `ENABLE_OPENAI_LIVE=true` are still absent, so one sanitized GPT-5.6 integration trace and the four-call style probe remain unexecuted.
 - `portfolio-refiner` refine preflight returned `SERVING_STALE` because the feedback dependency hash changed. No canonical portfolio copy was produced, and `juhyeong-voice` was not read or applied.
-- README write/derive remains `SERVING_CANDIDATE` under `package-project-evidence`; public README generation still requires explicit user approval plus an `--allow-candidate` rerun.
-- Product naming, public remote/CI, hosted demo, narrated YouTube video, private `/feedback` field, and final Devpost submission remain external release work.
+- README writing remains `SERVING_STALE` under `package-project-evidence`; refresh the approved authority path before public README generation.
+- **Penelope Ontology** naming is approved. Public remote/CI, external name parity, hosted demo, narrated YouTube video, private `/feedback` field, and final Devpost submission remain external release work.
 
 ## 2026-07-15 — Fixture truthfulness and live-capture hardening
 
@@ -132,7 +132,7 @@ This file records implementation-time decisions without interrupting the critica
 - TypeScript with incremental cache disabled: PASS.
 - `git diff --check`: PASS.
 - Desktop/mobile Table browser suite from the UI lane: 10/10 PASS before final combined recertification.
-- A duplicate generated `.next` cache was deleted once before recertification. The failure had a specific stale-cache hypothesis; no identical blind retry occurred and the loop sentinel did not fire.
+- A duplicate generated `.next` cache was deleted once before recertification as a historical cleanup. That cleanup is not the current normalizer: the replacement only validates byte identity and path safety, relies on a narrow generated-file exclusion, and never deletes files. The failure had a specific stale-cache hypothesis; no identical blind retry occurred and the loop sentinel did not fire.
 
 Combined current-tree recertification after the authority fixes:
 
@@ -149,7 +149,7 @@ Combined current-tree recertification after the authority fixes:
 
 - A real GPT-5.6 trace is still required before the submission may say arbitrary participant intents produced the candidate or add GPT-5.6 to completed live-use claims.
 - The four-call same-model style probe remains optional evidence beyond the minimum one-call integration gate; without it, the UI and copy must continue to say `Live AB/BA not measured`.
-- Root README generation remains behind the explicit `SERVING_CANDIDATE` approval gate. Final naming, remote, hosted demo, video, private `/feedback` field, and Devpost submission remain external actions.
+- Root README generation is blocked by a `SERVING_STALE` writing pipeline. **Penelope Ontology** naming is approved; remote, external name parity, hosted demo, video, private `/feedback` field, and Devpost submission remain external actions.
 
 ## 2026-07-15 — Post-commit release reconciliation
 
@@ -158,3 +158,47 @@ Combined current-tree recertification after the authority fixes:
 - The current exact commit cannot be written into a tracked file without changing that commit. `private-submission/release-record.json` therefore remains the post-commit authority and is refreshed only after the final tracked candidate is verified.
 - User-dependent choices are isolated in `_dev/PENDING-EXTERNAL-DECISIONS.md`; submission-copy fields are isolated in `docs/submission/SUBMISSION-FIELDS.md`.
 - No loop sentinel fired. This is one planned reconciliation commit followed by one post-commit recertification; no tracked file is edited after that proof.
+
+## 2026-07-15 — Submission closure gate
+
+- A final checklist could drift from actual release state, so the project now has distinct `pre-submit` and `post-submit` machine gates instead of treating a manually checked box as proof.
+- The gate parses a strict gitignored submission record, recomputes release and gallery manifest hashes, requires the release-record SHA to equal clean Git HEAD, reruns the public privacy scan, and reuses the full live-evidence predicate.
+- When external locators exist, it checks the public GitHub branch head, the exact GitHub Actions `verify` check identity, hosted exact-SHA deployment smoke, named Devpost page reachability, and public YouTube metadata under 180 seconds. Product/Codex/GPT narration content and final Devpost submission remain explicit owner/plugin receipts because their meaning cannot be inferred safely from a URL alone.
+- Output contains stable check IDs only. It never echoes repository, deployment, video, or feedback values. `private-submission/` and `artifacts/live/` must remain untracked.
+- The style AB/BA gate is conditional: it becomes mandatory only when `measuredStyleControl` is enabled. The default evidence-safe submission makes no measured prose-improvement claim.
+- The first current run is intentionally BLOCKED on the same external gates already recorded in the command center. That failure is correct behavior, not an implementation loop.
+- Initial current-tree verification after adding the gate: evidence 7/7, ESLint, non-incremental TypeScript, 31 Vitest files / 161 tests, privacy scan over 169 public candidates, and the Next production build all PASS.
+- An adversarial collector audit then closed six false-PASS paths: stale hard-coded test counts, arbitrary record paths, URL-only Devpost completion, top-level-only manifests, third-party `verify` checks, and substring-only project-name parity.
+
+### Adversarial submission-gate closure
+
+1. The evidence verifier previously reduced manifest entries to basenames, allowing a `../` locator to hash a different file. Manifest paths are now canonical `artifacts/evidence/<name>.json` locators; directory and child symlinks, duplicates, malformed counts, and path escapes fail closed. A reproduced traversal fixture is permanently tested.
+2. Live readiness previously trusted booleans and hash-shaped strings. Health and submission gates now open the readiness, sanitized result, capture receipt, and manifest; hash their exact bytes; validate strict schemas; rebind the completed receipt; and recompute the expected authority from the current World Pack, overlay, snapshot, and live request.
+3. An earlier deletion-based `.next/types` design could have followed a directory symlink outside the repository. Its replacement is read-only: the normalizer realpath-checks both generated roots, rejects symlinked roots or leaves, and verifies duplicate/canonical byte identity without deleting either file; TypeScript excludes only the exact generated duplicate pattern after validation. Its CLI uses a distinct error exit from a normal readiness block.
+4. Evidence-manifest file counts are dynamic, so the truthful count can advance from seven to nine or more after live/style artifacts. The release record must equal the actual manifest length.
+5. Gallery verification now requires the five exact expected screenshots in order, distinct file hashes and decoded-pixel hashes, complete CRC-valid and zlib-decodable 1440×900 RGB PNGs, no textual/EXIF metadata, and both visual and privacy inspection receipts. Recompressing one image five ways cannot satisfy the gate. Visible screenshot content remains a human inspection boundary.
+6. Measured style claims are controlled by tracked `docs/submission/CLAIM-CONTRACT.json`; changing the ignored receipt alone cannot suppress the AB/BA proof gate. If enabled, the gate binds the exact plan, four-call sanitized receipt, report, readiness, and manifest, checks score ranges and internal totals, and rejects readiness-only self-report. The default remains mechanism-only and makes no measured prose-effect claim.
+7. `/feedback` accepts only a Codex-session UUID shape. Hosted smoke accepts only supported public deployment-provider origins. Post-submit Devpost readback must match the final name, track, description file SHA-256, repository, hosted demo, and video.
+8. Release-copy scanning separates the allowed Fable/Opus perception-led brief from outcome claims. It rejects prose/style improvement assertions, comparative-gap claims, and cross-model superiority while requiring every current public copy surface to remain mechanism-only under the default claim contract.
+9. Manifest proof now requires every public evidence child to be a tracked regular file whose working bytes equal its release-HEAD blob. Only the seven baseline artifacts and complete live/style optional groups are registered; ignored children, working-tree-only replacements, partial groups, and invented claim JSON fail closed.
+10. The completed live-capture receipt commits to the canonical sanitized result, so one request/response receipt cannot certify contradictory run status, violation, draft, graph, or state summaries. Public PNG scanning now rejects malformed chunks, CRC failures, bytes after exact IEND, UTF-16 secrets, and printable sensitive strings embedded in unknown binaries.
+11. Recertification at that point in the closure sequence: evidence 7/7, ESLint, non-incremental TypeScript, 37 Vitest files / 203 tests, privacy scan over 179 public candidates, and Next production build all PASS. The later current-tree authority is recorded below.
+12. Public live evidence no longer self-certifies from tracked files alone. The final gate requires the ignored raw run and exactly one matching ignored attempt receipt, recomputes the sanitized result against the current World Pack and request, and requires canonical equality with the tracked public evidence. The style gate likewise recomputes its public receipt and report from the ignored raw capture, masked packet, and creator ratings.
+13. **Superseded diagnosis.** The initial PATH-based probe used stale `codex-cli 0.142.5`, so its failure did not prove ChatGPT-account or model incompatibility. The creator stopped the speculative schema/auth loop and required a direct executable/version matrix. The ChatGPT app-bundled `codex-cli 0.144.2` reached `gpt-5.6-sol` under the same login. The root cause was executable identity/version selection; this correction must not be rewritten as an agent-only discovery.
+
+## 2026-07-15 — Name lock and current-tree truth reconciliation
+
+- The creator approved **Penelope Ontology**. Product UI, metadata, Devpost draft, submission fields, and narration use the same name. The name describes the structured world/knowledge/governance product; the implementation still calls its derived visualization a canon/knowledge graph and does not claim RDF/OWL, a graph database, or formal Semantic Web compliance.
+- The latest current-tree gate reported evidence 7/7, ESLint, non-incremental TypeScript, 46 Vitest files / 344 tests, privacy scan over 199 public candidates, production build with 10 clean Next trace manifests, and 10 production-browser checks PASS.
+- The working tree contains uncommitted changes. Exact-SHA clean-clone and deployment proof belongs to the earlier committed candidate until the current tree is committed and recertified.
+- $100 Build Week Codex credits are user-reported received. API-platform credit/key applicability is separate. A Codex CLI dispatch occurred later, but no model result, usage, provenance, raw capture, or sanitized evidence was accepted.
+- The approved README writing pipeline reports `SERVING_STALE`; no root README was created or edited.
+
+## 2026-07-16 — CLI retry terminal truth and debt closure
+
+- The separately approved `retry-1` used the app-bundled `codex-cli 0.144.2`, passed preflight, and dispatched once. The process exited zero after five parseable JSONL envelopes with thread/turn start, then failed closed on `codex_cli_event_type_unrecognized`.
+- The immutable pre-patch receipt is `retryable: false` and contains no accepted usage, raw capture, sanitized evidence, actual model, or response ID. It did not retain the exact unknown event/item type, so that subtype is unrecoverable. No `retry-2` exists.
+- Receipt-reader compatibility now supplies empty observation defaults without rewriting or rehashing the immutable receipt. New failures still emit up to sixteen safe event/item-type pairs plus overflow state explicitly.
+- Evidence reconstruction now recovers the exact reviewed command identity from the private review packet instead of defaulting to the current PATH command. The retry authority remains bound to the exact primary receipt bytes; whitespace-only drift is tested and rejected.
+- Codex CLI version gating now follows SemVer prerelease precedence. Command override failures use an allowlisted typed error across review, approval, preflight, and capture instead of collapsing into `unexpected_failure`.
+- Focused verification passed at 7 files / 54 tests. After truth-surface synchronization, the full current-tree gate also passed: evidence 7/7, ESLint, non-incremental TypeScript, 60 Vitest files / 428 tests, privacy scan over 237 public candidates, production build, and 10 clean Next trace manifests. Exact-SHA fresh-copy recertification remains next.

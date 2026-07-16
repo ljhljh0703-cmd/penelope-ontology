@@ -2,6 +2,12 @@
 
 The demo uses `trojan-returns-demo@0.2.0`, one original creator-owned style profile, and the bounded `harbor_watch` simulation scenario. It does not claim coverage of Greek mythology outside the active pack, actual remote collaboration, or model-vendor writing superiority.
 
+## Why the Red-Sail test matters
+
+The original red-sail convention is deliberately absent from the source canon. It is therefore a compact stress test, not decorative lore. Two participants contribute different but compatible intentions: Penelope preserves the distinction between a signal and proof, while Telemachus proposes a cautious action. The model must compose both without announcing an unsupported return, disguising an invention as retrieved canon, or changing state before creator approval.
+
+The same proposal also has an observable downstream effect. Rejecting it leaves both canon and `harbor_watch` unchanged. Accepting it adds one versioned creator rule, passes the frozen safety replays, and unlocks exactly two validated transitions: `idle → watching → signal_seen`. One small scene therefore demonstrates intent composition, epistemic restraint, explicit world expansion, creator authority, and simulation consequence in a single inspectable chain.
+
 ## 1. Table setup: people, characters, and style stay separate
 
 The public primary flow loads two registered, frozen synthetic participant intents. They are non-editable because this fixture is a replay, not an arbitrary text composer:
@@ -81,4 +87,4 @@ After the two-step scenario, all unchanged control cases retain their exact expe
 
 The repository preregisters one fixed Penelope/Eurycleia case as two AB/BA pairs. Model, brief, character-scoped evidence, participant intents, output schema, and reasoning effort remain constant. Only `creatorStyleBundle` changes between `default_instruction_control` and `profiled`. Automatic retries and replacement calls are disabled. Objective checks cover registered deterministic constraints; viewpoint, tense, dialogue, cadence, playable uncertainty, and knowledge restraint use a condition-masked creator rubric.
 
-The protocol and evaluator are implemented, but no live four-call capture exists yet. A result may appear in the demo only after the write-once public report is finalized. Even a `supported_on_probe` result would demonstrate limited same-model controllability on this synthetic case; it would not prove that Codex or GPT-5.6 writes better than Fable, Opus, or any other system.
+The protocol and evaluator are implemented, but no live four-call capture exists yet. A result may appear in the demo only after the write-once public report is finalized. Even a `supported_on_probe` result would demonstrate limited same-model controllability on this synthetic case; it would establish no cross-model writing result.

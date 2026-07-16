@@ -53,6 +53,8 @@ One web page must demonstrate all of the following with the same small World Pac
 
 The hosted demo exposes fixture mode only. Live GPT-5.6 mode is a controlled local/server evidence path, not an unauthenticated public endpoint.
 
+The Build Week live-evidence request is English-only and includes `outputLocale: "en"` in its approval hash. Localization is sequenced after submission: Korean, then Japanese, then Chinese. A locale is not considered supported until it has its own request contract, style fixtures, script checks, and human review evidence; canonical IDs and rule meaning remain stable across localized display text.
+
 ## Success measures
 
 - unsupported claim rate

@@ -30,6 +30,9 @@
 | D-026 | Creator edit may change non-authoritative display wording, never semantic rule or claim fields | A creator can improve presentation without using one proposal approval to retarget identity, kind, semantic description, entities, scope, visibility, conflict, or sources | A separately reviewed semantic migration contract exists |
 | D-027 | Stateless transition APIs validate an exact authorized state chain, not wall-clock session occurrence | The fixture demo has no accounts, room state, or database; UI sequencing and snapshot authority are evidence, while per-session occurrence would require signed receipts or persistence | Remote rooms or persistent sessions enter scope |
 | D-028 | The public fixture replays one registered, frozen two-intent bundle; arbitrary facilitator text belongs only to the gated live path | An editable fixture UI implied causal composition even though the adapter selects a fixed draft ID. Freezing the registered inputs restores evidence honesty while retaining lineage, creator gate, and replay proof | A sanitized live run proves arbitrary-intent generation, or a separately registered multi-preset fixture contract is implemented and tested |
+| D-029 | The approved product name is **Penelope Ontology** | Penelope embodies the product's refusal to confuse a signal with proof and generated prose with canon; “Ontology” names the structured world, knowledge, and creator-governance layer without reducing the product to a test utility | Commercial naming clearance or a creator-directed rebrand |
+
+The D-029 brand decision does not reopen D-023. Public and technical copy may call the product **Penelope Ontology**, but the implemented visualization remains a derived canon/knowledge graph; no graph database, RDF/OWL layer, or formal semantic-ontology compliance is claimed.
 
 ## Rejected now
 

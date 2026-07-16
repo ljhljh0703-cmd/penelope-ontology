@@ -27,6 +27,7 @@ const draft = ModelDraftSchema.parse(
 
 const request = RunRequestSchema.parse({
   modelMode: "live",
+  outputLocale: "en",
   overlay: readJson("data/world-packs/trojan-returns/overlays/overlay.v0.json"),
   snapshot: readJson("data/world-packs/trojan-returns/snapshots/s0.json"),
   styleProfileId: "style.table_ready_mythic",
@@ -170,9 +171,16 @@ describe("OpenAI narrative model adapter", () => {
     expect(Object.keys(modelInput).sort()).toEqual([
       "brief",
       "evidence",
+      "outputLocale",
       "participantIntents",
       "styleProfile",
+      "taskType",
     ]);
+    expect(modelInput.taskType).toBe("scene");
+    expect(modelInput.outputLocale).toBe("en");
+    expect(body.instructions).toContain(
+      "Write every human-readable generated text field in the requested outputLocale",
+    );
     expect(Object.keys(modelInput.evidence as Record<string, unknown>).sort()).toEqual([
       "characterViews",
       "context",

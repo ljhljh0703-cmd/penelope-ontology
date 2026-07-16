@@ -25,6 +25,14 @@ import {
   type LiveCaptureAttemptReceipt,
   type LiveCaptureOutcome,
 } from "@/src/evidence/live-capture-contracts";
+import {
+  LIVE_RED_SAIL_CAPTURE_ATTEMPT_ID,
+  LIVE_RED_SAIL_REQUEST_SHA256,
+  LIVE_RED_SAIL_RETRY_ATTEMPT_ID,
+  LIVE_RED_SAIL_SCENARIO_CONTRACT,
+  LIVE_RED_SAIL_WORLD_PACK_SHA256,
+  evaluateLiveRedSailRunResult,
+} from "@/src/evidence/live-scenario-contract";
 import { sanitizeLiveEvidence } from "@/src/evidence/sanitize-live-evidence";
 
 type LiveRunRequest = Extract<RunRequest, { modelMode: "live" }>;
@@ -58,6 +66,8 @@ export type CaptureLiveEvidenceOptions = {
   sanitize?: typeof sanitizeLiveEvidence;
 };
 
+export type RegisteredLiveCaptureMode = "primary" | "retry";
+
 const nodeFileSystem: LiveEvidenceFileSystem = {
   access,
   link,
@@ -68,6 +78,21 @@ const nodeFileSystem: LiveEvidenceFileSystem = {
 
 const pretty = (value: unknown): string =>
   `${JSON.stringify(JSON.parse(canonicalJson(value)), null, 2)}\n`;
+
+export const sanitizeRegisteredLiveEvidence: typeof sanitizeLiveEvidence = (
+  result,
+  capturedAt,
+  authority,
+) => {
+  const verdict = evaluateLiveRedSailRunResult(result);
+  if (!verdict.ok) {
+    throw new LiveEvidenceCaptureError(
+      "live_scenario_contract_failed",
+      "The live result did not satisfy the preregistered scenario contract.",
+    );
+  }
+  return sanitizeLiveEvidence(result, capturedAt, authority);
+};
 
 const isMissing = (error: unknown): boolean =>
   error instanceof Error && "code" in error && error.code === "ENOENT";
@@ -295,6 +320,7 @@ export const captureLiveEvidence = async ({
   let errorCode: string | null = "live_run_threw";
   let rawPersisted = false;
   let publicPersisted = false;
+  let sanitizedEvidenceSha256: string | null = null;
   let primaryError: unknown = null;
   let receipt: LiveCaptureAttemptReceipt | null = null;
   let receiptError: unknown = null;
@@ -350,6 +376,7 @@ export const captureLiveEvidence = async ({
         }
 
         if (sanitized !== null) {
+          sanitizedEvidenceSha256 = sha256Canonical(sanitized);
           try {
             await atomicWriteOnce({
               targetPath: paths.rawPath,
@@ -432,7 +459,12 @@ export const captureLiveEvidence = async ({
         modelOutcome: result?.modelOutcome.outcome ?? "not_returned",
         captureOutcome,
         errorCode,
+        retryable:
+          result && result.modelOutcome.outcome !== "completed"
+            ? result.modelOutcome.error.retryable
+            : null,
         responseIdSha256: responseId ? sha256Text(responseId) : null,
+        sanitizedEvidenceSha256,
         inputTokens: trace?.inputTokens ?? null,
         outputTokens: trace?.outputTokens ?? null,
         rawPersisted,
@@ -500,14 +532,78 @@ export const captureLiveEvidence = async ({
   };
 };
 
-const main = async (): Promise<void> => {
+export const captureRegisteredLiveEvidence = async (
+  options: Omit<CaptureLiveEvidenceOptions, "attemptId" | "sanitize"> & {
+    mode?: RegisteredLiveCaptureMode;
+  },
+): Promise<CaptureLiveEvidenceResult> => {
+  const { mode = "primary", ...captureOptions } = options;
+  if (
+    sha256Canonical(captureOptions.request) !== LIVE_RED_SAIL_REQUEST_SHA256 ||
+    captureOptions.worldPackId !== LIVE_RED_SAIL_SCENARIO_CONTRACT.worldPack.id ||
+    captureOptions.worldPackSha256 !== LIVE_RED_SAIL_WORLD_PACK_SHA256
+  ) {
+    throw new LiveEvidenceCaptureError(
+      "live_registered_authority_mismatch",
+      "The paid capture does not match the preregistered live authority.",
+    );
+  }
+  return captureLiveEvidence({
+    ...captureOptions,
+    attemptId:
+      mode === "primary"
+        ? LIVE_RED_SAIL_CAPTURE_ATTEMPT_ID
+        : LIVE_RED_SAIL_RETRY_ATTEMPT_ID,
+    sanitize: sanitizeRegisteredLiveEvidence,
+  });
+};
+
+export class LiveCaptureCliError extends Error {
+  constructor(readonly code: "arguments_invalid") {
+    super(code);
+    this.name = "LiveCaptureCliError";
+  }
+}
+
+export const parseLiveCaptureArgs = (
+  args: readonly string[],
+): RegisteredLiveCaptureMode => {
+  if (args.length === 0) return "primary";
+  if (args.length === 1 && args[0] === "--retry") return "retry";
+  throw new LiveCaptureCliError("arguments_invalid");
+};
+
+const registeredAttemptIdFor = (mode: RegisteredLiveCaptureMode) =>
+  mode === "primary"
+    ? LIVE_RED_SAIL_CAPTURE_ATTEMPT_ID
+    : LIVE_RED_SAIL_RETRY_ATTEMPT_ID;
+
+type RegisteredLiveExecutionInput = {
+  root: string;
+  env: Environment;
+  mode: RegisteredLiveCaptureMode;
+};
+
+type RegisteredLivePreflight = (
+  input: RegisteredLiveExecutionInput,
+) => Promise<unknown>;
+
+type RegisteredLiveDispatch = (
+  input: RegisteredLiveExecutionInput,
+) => Promise<void>;
+
+const dispatchRegisteredLiveCapture: RegisteredLiveDispatch = async ({
+  root,
+  env,
+  mode,
+}) => {
   const [worldPack, overlay, snapshot] = await Promise.all([
     loadDemoWorldPack(),
     loadOverlayFixture("overlay.v0"),
     loadSnapshotFixture("snapshot.s0"),
   ]);
   const liveModel = createOpenAiNarrativeModel({
-    env: process.env,
+    env,
     styleProfiles: worldPack.styleProfiles,
   });
   const run = createRunOrchestrator({
@@ -520,18 +616,123 @@ const main = async (): Promise<void> => {
     snapshot,
     styleProfileId: worldPack.defaultStyleProfileId,
   });
-  await captureLiveEvidence({
-    root: process.cwd(),
-    env: process.env,
+  await captureRegisteredLiveEvidence({
+    root,
+    env,
     request,
     worldPackId: worldPack.meta.id,
     worldPackSha256: sha256Canonical(worldPack),
     run,
+    mode,
   });
-  process.stdout.write(
-    "LIVE_EVIDENCE_CAPTURED raw=artifacts/live/live-run.json public=artifacts/evidence/live-sanitized.json\n",
-  );
-  process.stdout.write("Run `npm run evidence` to refresh readiness and the evidence manifest.\n");
+};
+
+export const executeRegisteredLiveCapture = async ({
+  root,
+  env,
+  mode,
+  preflight,
+  dispatch = dispatchRegisteredLiveCapture,
+}: RegisteredLiveExecutionInput & {
+  preflight?: RegisteredLivePreflight;
+  dispatch?: RegisteredLiveDispatch;
+}): Promise<void> => {
+  const preflightLive =
+    preflight ??
+    (async (input: RegisteredLiveExecutionInput) => {
+      const { preflightLiveEvidence } = await import(
+        "@/src/evidence/live-preflight"
+      );
+      await preflightLiveEvidence(input);
+    });
+  await preflightLive({ root, env, mode });
+  await dispatch({ root, env, mode });
+};
+
+const PUBLIC_LIVE_CAPTURE_FAILURE_CODES = new Set([
+  "arguments_invalid",
+  "configuration_invalid",
+  "approval_missing",
+  "approval_invalid",
+  "retry_approval_missing",
+  "retry_approval_invalid",
+  "retry_receipt_missing",
+  "retry_receipt_invalid",
+  "repository_root_invalid",
+  "registered_input_invalid",
+  "registered_hash_mismatch",
+  "authority_mismatch",
+  "capture_path_unsafe",
+  "private_path_not_ignored",
+  "public_path_ignored",
+  "capture_target_exists",
+  "live_attempt_id_invalid",
+  "live_evidence_already_exists",
+  "live_capture_in_progress",
+  "live_capture_lock_release_failed",
+  "live_attempt_recovery_write_failed",
+  "live_run_threw",
+  "live_model_typed_failure",
+  "fixture_result_rejected",
+  "live_evidence_sanitization_failed",
+  "raw_live_evidence_target_exists",
+  "raw_live_evidence_write_failed",
+  "public_live_evidence_target_exists",
+  "public_live_evidence_write_failed",
+  "live_evidence_pair_rollback_failed",
+  "live_attempt_receipt_write_failed",
+  "live_attempt_recovery_release_failed",
+  "live_capture_incomplete",
+  "live_registered_authority_mismatch",
+]);
+
+const stableFailureCode = (error: unknown): string => {
+  let candidate: string | null = null;
+  if (error instanceof LiveEvidenceCaptureError || error instanceof LiveCaptureCliError) {
+    candidate = error.code;
+  }
+  if (
+    candidate === null &&
+    error instanceof Error &&
+    error.name === "LivePreflightError" &&
+    "code" in error &&
+    typeof error.code === "string"
+  ) {
+    candidate = error.code;
+  }
+  return candidate !== null && PUBLIC_LIVE_CAPTURE_FAILURE_CODES.has(candidate)
+    ? candidate
+    : "unexpected_failure";
+};
+
+export const runLiveCaptureCli = async ({
+  args = [],
+  root = process.cwd(),
+  env = process.env,
+  execute = executeRegisteredLiveCapture,
+  stdout = process.stdout,
+  stderr = process.stderr,
+}: {
+  args?: readonly string[];
+  root?: string;
+  env?: Environment;
+  execute?: typeof executeRegisteredLiveCapture;
+  stdout?: Pick<NodeJS.WriteStream, "write">;
+  stderr?: Pick<NodeJS.WriteStream, "write">;
+} = {}): Promise<number> => {
+  try {
+    const mode = parseLiveCaptureArgs(args);
+    await execute({ root, env, mode });
+    stdout.write(
+      `${JSON.stringify({ schemaVersion: 1, evidenceType: "live_capture", captured: true, mode, attemptId: registeredAttemptIdFor(mode) })}\n`,
+    );
+    return 0;
+  } catch (error) {
+    stderr.write(
+      `${JSON.stringify({ schemaVersion: 1, evidenceType: "live_capture", captured: false, code: stableFailureCode(error) })}\n`,
+    );
+    return 1;
+  }
 };
 
 export const isDirectExecution = (
@@ -542,9 +743,7 @@ export const isDirectExecution = (
   path.resolve(entryPath) === path.resolve(fileURLToPath(moduleUrl));
 
 if (isDirectExecution(import.meta.url)) {
-  void main().catch((error: unknown) => {
-    const message = error instanceof Error ? error.message : "Unknown live evidence failure.";
-    process.stderr.write(`LIVE_EVIDENCE_FAILED ${message}\n`);
-    process.exitCode = 1;
+  void runLiveCaptureCli({ args: process.argv.slice(2) }).then((exitCode) => {
+    process.exitCode = exitCode;
   });
 }

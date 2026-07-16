@@ -22,6 +22,8 @@ const RunRequestBaseFields = {
   participantIntents: ParticipantIntentSetSchema,
 } as const;
 
+export const OutputLocaleSchema = z.literal("en");
+
 export const FixtureRunRequestSchema = z
   .object({
     ...RunRequestBaseFields,
@@ -34,6 +36,7 @@ export const LiveRunRequestSchema = z
   .object({
     ...RunRequestBaseFields,
     modelMode: z.literal("live"),
+    outputLocale: OutputLocaleSchema,
   })
   .strict();
 
@@ -114,6 +117,7 @@ export const RunResultSchema = z
 
 export type RunRequest = z.infer<typeof RunRequestSchema>;
 export type FixtureRunRequest = z.infer<typeof FixtureRunRequestSchema>;
+export type OutputLocale = z.infer<typeof OutputLocaleSchema>;
 export type ModelTrace = z.infer<typeof ModelTraceSchema>;
 export type RunResult = z.infer<typeof RunResultSchema>;
 export type HardViolation = z.infer<typeof HardViolationSchema>;

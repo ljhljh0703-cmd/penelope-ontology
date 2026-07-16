@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "final": {
+    "projectName": null,
+    "track": "Work & Productivity",
+    "descriptionFinal": false
+  },
+  "publicRepository": {
+    "url": null,
+    "branch": "main"
+  },
+  "hostedDemo": {
+    "url": null
+  },
+  "video": {
+    "url": null,
+    "narrationConfirmed": false,
+    "productDemoConfirmed": false,
+    "codexUseExplained": false,
+    "gpt56UseExplained": false
+  },
+  "feedback": {
+    "sessionId": null
+  },
+  "devpost": {
+    "projectUrl": "https://devpost.com/software/narrative-ontology-harness",
+    "trackConfirmed": false,
+    "submittedAt": null,
+    "submissionUrl": null,
+    "submissionReadbackMethod": null,
+    "readback": {
+      "projectName": null,
+      "track": null,
+      "descriptionSha256": null,
+      "repositoryUrl": null,
+      "hostedDemoUrl": null,
+      "videoUrl": null
+    }
+  },
+  "claims": {
+    "measuredStyleControl": false
+  }
+}

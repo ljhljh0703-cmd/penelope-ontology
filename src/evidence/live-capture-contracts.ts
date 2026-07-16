@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ModelOutcomeKindSchema } from "@/src/contracts/model-outcome";
+import { sha256Canonical } from "@/src/domain/canonical-json";
 import type { SanitizedLiveEvidence } from "@/src/evidence/sanitize-live-evidence";
 
 export const LiveCaptureOutcomeSchema = z.enum([
@@ -31,7 +32,9 @@ export const LiveCaptureAttemptReceiptSchema = z
     modelOutcome: z.union([ModelOutcomeKindSchema, z.literal("not_returned")]),
     captureOutcome: LiveCaptureOutcomeSchema,
     errorCode: z.string().regex(/^[a-z0-9_]{1,80}$/).nullable(),
+    retryable: z.boolean().nullable(),
     responseIdSha256: z.string().regex(/^[a-f0-9]{64}$/).nullable(),
+    sanitizedEvidenceSha256: z.string().regex(/^[a-f0-9]{64}$/).nullable(),
     inputTokens: z.number().int().nonnegative().nullable(),
     outputTokens: z.number().int().nonnegative().nullable(),
     rawPersisted: z.boolean(),
@@ -70,6 +73,7 @@ export const assertCompletedLiveCaptureReceiptBinding = (
     receipt.captureOutcome === "persisted" &&
     receipt.errorCode === null &&
     receipt.responseIdSha256 === liveEvidence.responseIdSha256 &&
+    receipt.sanitizedEvidenceSha256 === sha256Canonical(liveEvidence) &&
     receipt.inputTokens === liveEvidence.inputTokens &&
     receipt.outputTokens === liveEvidence.outputTokens &&
     receipt.rawPersisted === true &&

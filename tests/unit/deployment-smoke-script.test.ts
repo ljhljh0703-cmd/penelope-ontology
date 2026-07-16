@@ -114,6 +114,8 @@ describe("deployment smoke script URL gate", () => {
             status: "ok",
             buildSha: "different-build",
             publicMode: "fixture",
+            liveModelImplemented: true,
+            liveEvidenceReadinessRecorded: true,
             corePipelineImplemented: true,
             frozenReplayImplemented: true,
           }));
@@ -133,5 +135,41 @@ describe("deployment smoke script URL gate", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).not.toContain("DEPLOYMENT_SMOKE_PASS");
     expect(result.stderr).toContain("expected build");
+  });
+
+  it("refuses to certify a deployment without a recorded live-evidence readiness", async () => {
+    const expectedSha = "c".repeat(40);
+    const origin = await listen(
+      createServer((request, response) => {
+        if (request.url?.startsWith("/api/health")) {
+          response.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
+          response.end(JSON.stringify({
+            status: "ok",
+            buildSha: expectedSha,
+            publicMode: "fixture",
+            liveModelImplemented: true,
+            liveEvidenceReadinessRecorded: false,
+            corePipelineImplemented: true,
+            frozenReplayImplemented: true,
+          }));
+          return;
+        }
+        response.writeHead(200, {
+          "content-type": "text/html",
+          "x-content-type-options": "nosniff",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        });
+        response.end("FIXTURE MODE · NO LIVE CALL");
+      }),
+    );
+
+    const result = await runAsync(origin, expectedSha);
+    expect(result.status).toBe(1);
+    expect(result.stdout).not.toContain("DEPLOYMENT_SMOKE_PASS");
+    expect(result.stderr).toContain("live-evidence");
   });
 });

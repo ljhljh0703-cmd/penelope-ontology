@@ -12,6 +12,15 @@ if (!/^[A-Za-z0-9._-]{7,64}$/.test(buildCommitSha)) {
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  outputFileTracingExcludes: {
+    "/*": [
+      "./private-submission/**/*",
+      "./artifacts/live/**/*",
+      "./.env",
+      "./.env.local",
+      "./.env.*.local",
+    ],
+  },
   env: {
     BUILD_COMMIT_SHA: buildCommitSha,
   },

@@ -1,11 +1,12 @@
 # Repository operating contract
 
-This repository is the public-safe Build Week workspace for a narrative knowledge harness. Read this file and `_dev/CORE-BUILD-DISPATCH.md` before implementing the core slice.
+This repository is the public-safe Build Week workspace for **Penelope Ontology**. Read this file and `_dev/CORE-BUILD-DISPATCH.md` before implementing the core slice.
 
 ## Product boundary
 
 - Track: Work & Productivity.
-- Working technical label: Narrative Knowledge Harness. Do not invent or lock a final brand name.
+- Final product name: **Penelope Ontology**, approved by the creator on 2026-07-15.
+- Product description: a creator-governed narrative ontology and rehearsal harness. The brand name does not imply a graph database or a standards-compliant Semantic Web ontology; the implemented visualization remains a derived canon/knowledge graph under D-023.
 - Primary users: professional GMs, narrative production teams, and game scenario or quest designers.
 - Core slice: registered frozen two-intent public rehearsal / gated facilitator-collected live intents + creator-owned style profile → character-scoped retrieval → structured draft → hard validation → creator decision → canon overlay and deterministic state transition → canon/knowledge graph view → frozen replay.
 - Default policy: closed world. Unsupported facts are blocked or surfaced as expansion proposals.
@@ -40,6 +41,15 @@ npm run verify
 
 Live GPT-5.6 smoke tests are manual and must be reported separately. Never claim a live integration from fixture-only evidence.
 
+The final submission gates are separate and fail closed:
+
+```bash
+npm run submission:check
+npm run submission:check:post
+```
+
+They read private external fields only from gitignored `private-submission/` records and print stable check IDs, never URLs, credentials, or the `/feedback` value.
+
 ## Current phase
 
-Core fixture vertical slice and post-core truth audit verified. Participant/style contracts, deterministic retrieval and validators, registered public-fixture authority, world-aware creator gate, style and knowledge receipts, graph descriptors, two-step simulation, replay engine, gated GPT-5.6 adapter and capture transaction, Table UI, sanitized fixture evidence, preregistered style-ablation protocol, production build, browser smoke, exact-SHA deployment smoke, and clean-clone release rehearsal exist. The post-commit authority is recorded outside tracked source in `private-submission/release-record.json` so proof does not create a self-referential commit. A real GPT-5.6 trace, four-call style capture and creator ratings, final README, public remote/deployment, video, `/feedback` field, and Devpost submission remain separate release gates. Never promote fixture or protocol evidence into a live-model result.
+Core fixture vertical slice and post-core truth audit verified. Participant/style contracts, deterministic retrieval and validators, registered public-fixture authority, world-aware creator gate, style and knowledge receipts, graph descriptors, two-step simulation, replay engine, gated GPT-5.6 adapters, Table UI, sanitized fixture evidence, preregistered style-ablation protocol, production build, browser smoke, exact-SHA deployment smoke, clean-clone release rehearsal, and a fail-closed submission-readiness gate exist. The primary Codex CLI authority was consumed by a nonzero process failure. A separately approved `retry-1` passed preflight and dispatched once; the child exited zero after five parseable JSONL envelopes, but the adapter terminally rejected an unrecognized event or item type. The immutable receipt records `codex_cli_event_type_unrecognized` and `retryable: false`, but no accepted usage, raw capture, sanitized result, actual model identity, or response provenance. Its pre-patch diagnostics do not contain the exact unknown type; the later bounded event-type fields are a future-failure safeguard only. Both CLI authorities are consumed and no `retry-2` exists. Tracked documents never self-certify their own release commit; exact-SHA clean-copy authority must be read from the gitignored `private-submission/release-record.json` generated after the final tracked commit. One sanitized real GPT-5.6 trace remains required. The four-call style capture and creator ratings are optional unless `docs/submission/CLAIM-CONTRACT.json` enables `measuredStyleControl`; without them, every public surface must continue to say live AB/BA is not measured. Final README, public remote/deployment, video, `/feedback` field, and Devpost submission remain separate release gates. Never promote fixture, protocol, approval, dispatch, or failed-attempt evidence into a live-model result.

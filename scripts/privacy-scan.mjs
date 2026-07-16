@@ -4,6 +4,7 @@ import { lstatSync, readdirSync, readFileSync, readlinkSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { inflateSync } from "node:zlib";
 
 const EXIT_FINDINGS = 1;
 const EXIT_USAGE = 2;
@@ -23,6 +24,23 @@ const JSON_ROLE_FIELD = '"' + "role" + '"';
 const JSON_CONTENT_FIELD = '"' + "content" + '"';
 const JSON_USER_VALUE = '"' + "user" + '"';
 const JSON_ASSISTANT_VALUE = '"' + "assistant" + '"';
+const PNG_SIGNATURE = "89504e470d0a1a0a";
+const PNG_ALLOWED_CHUNKS = new Set(["IHDR", "IDAT", "IEND"]);
+const CRC32_TABLE = Array.from({ length: 256 }, (_, index) => {
+  let value = index;
+  for (let bit = 0; bit < 8; bit += 1) {
+    value = (value & 1) === 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+  }
+  return value >>> 0;
+});
+
+const crc32 = (buffer) => {
+  let value = 0xffffffff;
+  for (const byte of buffer) {
+    value = CRC32_TABLE[(value ^ byte) & 0xff] ^ (value >>> 8);
+  }
+  return (value ^ 0xffffffff) >>> 0;
+};
 
 const SECRET_TOKEN_PATTERNS = [
   { code: "secret_openai_key", pattern: OPENAI_KEY },
@@ -179,6 +197,87 @@ const scanText = (text) => {
   return findings;
 };
 
+const scanBinaryMetadata = (buffer) => {
+  if (buffer.length < 8 || buffer.subarray(0, 8).toString("hex") !== PNG_SIGNATURE) {
+    return [];
+  }
+  const compressed = [];
+  let offset = 8;
+  let sawHeader = false;
+  let sawData = false;
+  let sawEnd = false;
+  try {
+    while (offset < buffer.length) {
+      if (offset + 12 > buffer.length || sawEnd) {
+        throw new Error("invalid PNG chunk boundary");
+      }
+      const length = buffer.readUInt32BE(offset);
+      const end = offset + 12 + length;
+      if (end > buffer.length) throw new Error("invalid PNG chunk length");
+      const typeBuffer = buffer.subarray(offset + 4, offset + 8);
+      const type = typeBuffer.toString("ascii");
+      if (!/^[A-Za-z]{4}$/.test(type)) throw new Error("invalid PNG chunk type");
+      const data = buffer.subarray(offset + 8, offset + 8 + length);
+      const expectedCrc = buffer.readUInt32BE(offset + 8 + length);
+      if (crc32(Buffer.concat([typeBuffer, data])) !== expectedCrc) {
+        throw new Error("invalid PNG chunk CRC");
+      }
+      if (!PNG_ALLOWED_CHUNKS.has(type)) {
+        return [{
+          line: 1,
+          code: "png_unapproved_chunk",
+          message: "a public PNG contains an unapproved ancillary or metadata chunk",
+        }];
+      }
+      if (!sawHeader) {
+        if (type !== "IHDR" || length !== 13) throw new Error("missing PNG header");
+        sawHeader = true;
+      } else if (type === "IHDR") {
+        throw new Error("duplicate PNG header");
+      }
+      if (type === "IDAT") {
+        if (sawEnd) throw new Error("PNG data after end");
+        sawData = true;
+        compressed.push(Buffer.from(data));
+      }
+      if (type === "IEND") {
+        if (!sawData || length !== 0 || end !== buffer.length) {
+          throw new Error("invalid PNG end");
+        }
+        sawEnd = true;
+      }
+      offset = end;
+    }
+    if (!sawHeader || !sawData || !sawEnd || offset !== buffer.length) {
+      throw new Error("incomplete PNG structure");
+    }
+  } catch {
+    return [{
+      line: 1,
+      code: "png_invalid_structure",
+      message: "a public PNG has malformed chunks or bytes after its exact end",
+    }];
+  }
+  try {
+    const source = Buffer.concat(compressed);
+    const inflated = inflateSync(source, { info: true, maxOutputLength: 64 * 1024 * 1024 });
+    if (inflated.engine.bytesWritten !== source.length) {
+      return [{
+        line: 1,
+        code: "png_trailing_payload",
+        message: "a public PNG contains bytes after its compressed pixel stream",
+      }];
+    }
+  } catch {
+    return [{
+      line: 1,
+      code: "png_invalid_stream",
+      message: "a public PNG has an invalid or oversized compressed pixel stream",
+    }];
+  }
+  return [];
+};
+
 const scanFile = (root, relativePath) => {
   const absolutePath = resolve(root, relativePath);
   const stat = lstatSync(absolutePath);
@@ -188,7 +287,50 @@ const scanFile = (root, relativePath) => {
   }
   if (!stat.isFile()) return findings;
   const buffer = readFileSync(absolutePath);
-  if (buffer.subarray(0, 8192).includes(0)) return findings;
+  if (buffer.subarray(0, 8).toString("hex") === PNG_SIGNATURE) {
+    return [...findings, ...scanBinaryMetadata(buffer)];
+  }
+  if (buffer.length >= 2 && buffer[0] === 0xff && buffer[1] === 0xfe) {
+    return [...findings, ...scanText(buffer.subarray(2).toString("utf16le"))];
+  }
+  if (buffer.length >= 2 && buffer[0] === 0xfe && buffer[1] === 0xff) {
+    const source = Buffer.from(buffer.subarray(2));
+    if (source.length % 2 !== 0) {
+      return [...findings, {
+        line: 1,
+        code: "binary_invalid_encoding",
+        message: "a public binary has malformed UTF-16 content",
+      }];
+    }
+    source.swap16();
+    return [...findings, ...scanText(source.toString("utf16le"))];
+  }
+  if (buffer.length >= 8 && buffer.length % 2 === 0) {
+    const sample = buffer.subarray(0, Math.min(buffer.length, 8192));
+    const pairs = Math.floor(sample.length / 2);
+    let evenNulls = 0;
+    let oddNulls = 0;
+    for (let index = 0; index < pairs * 2; index += 2) {
+      if (sample[index] === 0) evenNulls += 1;
+      if (sample[index + 1] === 0) oddNulls += 1;
+    }
+    const looksLittleEndian = oddNulls / pairs >= 0.3 && evenNulls / pairs <= 0.1;
+    const looksBigEndian = evenNulls / pairs >= 0.3 && oddNulls / pairs <= 0.1;
+    if (looksLittleEndian) {
+      return [...findings, ...scanText(buffer.toString("utf16le"))];
+    }
+    if (looksBigEndian) {
+      const source = Buffer.from(buffer);
+      source.swap16();
+      return [...findings, ...scanText(source.toString("utf16le"))];
+    }
+  }
+  if (buffer.subarray(0, 8192).includes(0)) {
+    const printable = buffer
+      .toString("latin1")
+      .replace(/[^\x20-\x7e\r\n\t]+/g, "\n");
+    return [...findings, ...scanText(printable)];
+  }
   return [...findings, ...scanText(buffer.toString("utf8"))];
 };
 

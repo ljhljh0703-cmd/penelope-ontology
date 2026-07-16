@@ -4,6 +4,10 @@ import {
 } from "@/src/contracts/run";
 import type { CanonOverlay } from "@/src/contracts/canon-overlay";
 import type { SimulationSnapshot } from "@/src/contracts/simulation";
+import {
+  assertLiveRedSailScenarioAuthority,
+  LIVE_RED_SAIL_SCENARIO_CONTRACT,
+} from "@/src/evidence/live-scenario-contract";
 
 type LiveRunRequest = Extract<RunRequest, { modelMode: "live" }>;
 
@@ -15,26 +19,17 @@ export const buildLiveEvidenceRunRequest = ({
   overlay: CanonOverlay;
   snapshot: SimulationSnapshot;
   styleProfileId: string;
-}): LiveRunRequest =>
-  LiveRunRequestSchema.parse({
+}): LiveRunRequest => {
+  assertLiveRedSailScenarioAuthority({ overlay, snapshot, styleProfileId });
+  const { request } = LIVE_RED_SAIL_SCENARIO_CONTRACT;
+  return LiveRunRequestSchema.parse({
     modelMode: "live",
+    outputLocale: request.outputLocale,
     overlay,
     snapshot,
     styleProfileId,
-    taskType: "scene",
-    brief: "Let Penelope and Eurycleia discuss a rumor without revealing hidden facts.",
-    participantIntents: [
-      {
-        intentId: "intent.penelope",
-        participantId: "participant.one",
-        controlledEntityIds: ["penelope"],
-        intent: "Keep Penelope cautious and focused on what she can prepare.",
-      },
-      {
-        intentId: "intent.eurycleia",
-        participantId: "participant.two",
-        controlledEntityIds: ["eurycleia"],
-        intent: "Offer household support without claiming secret knowledge.",
-      },
-    ],
+    taskType: request.taskType,
+    brief: request.brief,
+    participantIntents: request.participantIntents,
   });
+};

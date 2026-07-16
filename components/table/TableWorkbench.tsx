@@ -441,7 +441,7 @@ export function TableWorkbench() {
     <main id="main-content" className="workbench" aria-busy={busy}>
       <header className="workbench-header shell">
         <div className="topline">
-          <span>NARRATIVE KNOWLEDGE HARNESS</span>
+          <span>PENELOPE ONTOLOGY</span>
           <span className="mode-badge" data-testid="fixture-mode">FIXTURE MODE · NO LIVE CALL</span>
         </div>
         <div className="title-grid">

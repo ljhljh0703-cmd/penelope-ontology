@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Narrative Knowledge Harness — Table Rehearsal",
+  title: "Penelope Ontology — Table Rehearsal",
   description:
     "A fixture-mode narrative rehearsal workbench with character-scoped evidence, creator-gated canon, and bounded state transitions.",
 };

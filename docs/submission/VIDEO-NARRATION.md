@@ -2,11 +2,13 @@
 
 Target: 2:40–2:55 at a calm 130–140 words per minute, including UI pauses. Record in English. The current script describes the gated adapter without claiming a completed live call.
 
+Project name: Penelope Ontology
+
 ## Script
 
 **0:00–0:18 — Problem**
 
-Fluent AI prose can still create expensive narrative rework. It can flatten a house style, reveal knowledge a character should not have, or make invented connective lore sound canonical. Narrative Knowledge Harness is a rehearsal workbench for professional game masters and narrative teams.
+Fluent AI prose can still create expensive narrative rework. It can flatten a house style, reveal knowledge a character should not have, or make invented connective lore sound canonical. Penelope Ontology is a rehearsal workbench for professional game masters and narrative teams.
 
 **0:18–0:43 — Intent and style**
 
@@ -34,7 +36,7 @@ A familiar critique is that Codex can engineer, but its default prose may feel l
 
 **2:46–2:55 — Close**
 
-This is not automated authorship. It is an inspectable rehearsal before a plausible sentence becomes an expensive continuity mistake.
+Penelope refuses to mistake a signal for proof. Penelope Ontology refuses to mistake a generated draft for canon.
 
 ## Recording gate
 

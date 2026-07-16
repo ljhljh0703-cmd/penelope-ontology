@@ -2,7 +2,7 @@
   "type": "UsageReceipt",
   "schema_version": "1.0",
   "date": "2026-07-15",
-  "task": "OpenAI Build Week Narrative Knowledge Harness release evidence and submission preparation",
+  "task": "OpenAI Build Week Penelope Ontology release evidence and submission preparation",
   "agent": "codex",
   "model": "GPT-5",
   "platform": "Codex Desktop",
@@ -10,7 +10,7 @@
   "session_id": "private-not-recorded-in-repository",
   "source_return": "_dev/RETURN-core-vertical-slice.md",
   "blocked_by_safeguard": [
-    "root README candidate-mode approval",
+    "root README writing-pipeline refresh",
     "portfolio-refiner stale canonical dependency",
     "live GPT-5.6 credentials and evidence"
   ],
@@ -84,7 +84,7 @@
     "failed": [
       {
         "ref": "codex-skills/package-project-evidence/source-manifest.json",
-        "effect": "README write and derive modes remain SERVING_CANDIDATE; explicit user approval and --allow-candidate are required."
+        "effect": "README write and derive modes report SERVING_STALE; authority hashes must be refreshed before generation."
       },
       {
         "ref": "codex-skills/portfolio-refiner/source-manifest.json",
@@ -92,7 +92,7 @@
       }
     ],
     "missing": [
-      "Explicit candidate-mode approval for root README generation",
+      "Refreshed authority hashes for root README generation",
       "Synchronized portfolio-refiner feedback dependency",
       "Sanitized live GPT-5.6 response metadata"
     ]
@@ -105,17 +105,17 @@
     "evidence": [
       {
         "check": "clean-implementation-commit",
-        "result": "pass-current-candidate-clean-clone-post-commit-record-ignored",
+        "result": "historical-pass-earlier-candidate-current-tree-dirty",
         "ref": "_dev/RETURN-core-vertical-slice.md"
       },
       {
         "check": "current-tree-release-gate",
-        "result": "pass-156-tests-10-production-browser-164-privacy-production-build",
+        "result": "pass-344-tests-10-production-browser-199-privacy-production-build-current-tree-not-exact-sha",
         "ref": "_dev/BUILD-NOTES.md"
       },
       {
         "check": "exact-sha-deployment-smoke",
-        "result": "pass-current-and-clean-clone-post-commit-record-ignored",
+        "result": "historical-pass-earlier-candidate-current-tree-rerun-required",
         "ref": "docs/JUDGE-GUIDE.md"
       },
       {
@@ -129,8 +129,13 @@
         "ref": "docs/EVIDENCE-LEDGER.md"
       },
       {
+        "check": "submission-readiness-gate",
+        "result": "mechanism-pass-external-fields-blocked-redacted-25-check-contract",
+        "ref": "docs/EVIDENCE-LEDGER.md"
+      },
+      {
         "check": "README-writing-preflight",
-        "result": "candidate-awaiting-explicit-approval",
+        "result": "stale-authority-refresh-required",
         "ref": "_dev/RETURN-core-vertical-slice.md"
       },
       {

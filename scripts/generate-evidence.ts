@@ -7,6 +7,30 @@ import {
   loadOverlayFixture,
   loadSnapshotFixture,
 } from "@/src/adapters/filesystem/demo-data";
+import {
+  CodexCliCaptureReceiptSchema,
+  type CodexCliCaptureReceipt,
+} from "@/src/adapters/codex-cli/capture-contracts";
+import {
+  buildCodexCliAuthorityBundle,
+  isCodexCliReviewPacketBound,
+  type CodexCliAuthorityBundle,
+} from "@/src/adapters/codex-cli/authority";
+import {
+  CODEX_CLI_CAPTURE_ATTEMPTS,
+  CODEX_CLI_PRIMARY_ATTEMPT_ID,
+  CODEX_CLI_RETRY_ATTEMPT_ID,
+} from "@/src/adapters/codex-cli/attempt";
+import {
+  CODEX_CLI_REQUESTED_MODEL,
+  CodexCliReviewPacketSchema,
+  type CodexCliReviewPacket,
+} from "@/src/adapters/codex-cli/contracts";
+import { loadRegisteredCodexCliInput } from "@/src/adapters/codex-cli/preflight";
+import {
+  CodexCliSanitizedEvidenceSchema,
+  type CodexCliSanitizedEvidence,
+} from "@/src/adapters/codex-cli/red-sail-evidence";
 import { buildPublicEvidence } from "@/src/evidence/build-public-evidence";
 import { canonicalJson, sha256Canonical } from "@/src/domain/canonical-json";
 import {
@@ -19,6 +43,15 @@ import {
   SanitizedLiveEvidenceSchema,
   buildLiveEvidenceAuthority,
 } from "@/src/evidence/sanitize-live-evidence";
+import {
+  LIVE_RED_SAIL_REQUEST_SHA256,
+  LIVE_RED_SAIL_SCENARIO_CONTRACT,
+  LIVE_RED_SAIL_WORLD_PACK_SHA256,
+} from "@/src/evidence/live-scenario-contract";
+import {
+  LiveHarnessEvidenceSchema,
+  type LiveHarnessEvidence,
+} from "@/src/evidence/live-harness-evidence";
 import {
   StyleAblationCaptureReceiptSchema,
   StyleAblationPlanSchema,
@@ -136,6 +169,281 @@ export const assertLiveEvidenceAuthorityBinding = (
   }
 };
 
+export const assertLiveHarnessCaptureBinding = (
+  liveHarness: LiveHarnessEvidence,
+  liveEvidence: ReturnType<typeof SanitizedLiveEvidenceSchema.parse>,
+): void => {
+  if (
+    liveHarness.requestSha256 !== liveEvidence.authority.requestSha256 ||
+    liveHarness.runId !== liveEvidence.runId ||
+    liveHarness.liveDraftSha256 !== liveEvidence.draftDigest ||
+    liveHarness.baseAuthority.overlayId !== liveEvidence.authority.overlayId ||
+    liveHarness.baseAuthority.overlayVersion !== liveEvidence.authority.overlayVersion ||
+    liveHarness.baseAuthority.overlayHash !== liveEvidence.authority.overlayHash ||
+    liveHarness.baseAuthority.stateHash !== liveEvidence.currentStateHash ||
+    liveEvidence.runStatus !== "needs_creator_decision" ||
+    liveEvidence.hardViolationCodes.length !== 1 ||
+    liveEvidence.hardViolationCodes[0] !== "unapproved_expansion"
+  ) {
+    throw new Error(
+      "The public creator-harness evidence is not bound to the sanitized live capture.",
+    );
+  }
+};
+
+const CODEX_CLI_PUBLIC_RECEIPT_NAME =
+  "codex-cli-capture-receipt.json" as const;
+const CODEX_CLI_SANITIZED_NAME = "codex-cli-sanitized.json" as const;
+
+type CodexCliEvidenceGroup = {
+  sanitized: CodexCliSanitizedEvidence;
+  sanitizedSource: string;
+  receipt: CodexCliCaptureReceipt;
+  receiptSource: string;
+  writeDerivedReceipt: boolean;
+};
+
+export const assertCodexCliEvidenceCaptureBinding = (
+  sanitized: CodexCliSanitizedEvidence,
+  receipt: CodexCliCaptureReceipt,
+  expected: CodexCliAuthorityBundle,
+): void => {
+  const timestampsAreBound =
+    sanitized.capturedAt === receipt.finishedAt &&
+    Date.parse(receipt.dispatchedAt) <= Date.parse(receipt.finishedAt);
+  const usageIsBound =
+    receipt.usage !== null &&
+    sha256Canonical(receipt.usage) === sha256Canonical(sanitized.usage);
+  if (
+    sha256Canonical(expected.authority) !==
+      expected.approvalAuthoritySha256 ||
+    expected.authority.requestSha256 !== LIVE_RED_SAIL_REQUEST_SHA256 ||
+    expected.authority.worldPackSha256 !==
+      LIVE_RED_SAIL_WORLD_PACK_SHA256 ||
+    sanitized.scenarioContractId !== LIVE_RED_SAIL_SCENARIO_CONTRACT.id ||
+    sanitized.transport !== "codex_cli" ||
+    sanitized.requestedModel !== CODEX_CLI_REQUESTED_MODEL ||
+    sanitized.authority.requestSha256 !== LIVE_RED_SAIL_REQUEST_SHA256 ||
+    sanitized.authority.worldPackSha256 !== LIVE_RED_SAIL_WORLD_PACK_SHA256 ||
+    sanitized.modelInputSha256 !== expected.authority.modelInputSha256 ||
+    sanitized.promptSha256 !== expected.authority.promptSha256 ||
+    sanitized.outputSchemaSha256 !== expected.authority.outputSchemaSha256 ||
+    sanitized.executionContractSha256 !==
+      expected.authority.executionContractSha256 ||
+    sanitized.approvalAuthoritySha256 !==
+      expected.approvalAuthoritySha256 ||
+    expected.authority.outputSchemaSha256 !==
+      sha256Canonical(expected.outputSchema) ||
+    receipt.outcome !== "persisted" ||
+    receipt.failureCode !== null ||
+    receipt.retryable !== null ||
+    receipt.rawPersisted !== true ||
+    receipt.publicPersisted !== true ||
+    receipt.scenarioContractId !== sanitized.scenarioContractId ||
+    receipt.transport !== sanitized.transport ||
+    receipt.requestSha256 !== sanitized.authority.requestSha256 ||
+    receipt.worldPackSha256 !== sanitized.authority.worldPackSha256 ||
+    receipt.modelInputSha256 !== sanitized.modelInputSha256 ||
+    receipt.promptSha256 !== sanitized.promptSha256 ||
+    receipt.outputSchemaSha256 !== sanitized.outputSchemaSha256 ||
+    receipt.executionContractSha256 !==
+      sanitized.executionContractSha256 ||
+    receipt.approvalAuthoritySha256 !==
+      sanitized.approvalAuthoritySha256 ||
+    receipt.requestedModel !== sanitized.requestedModel ||
+    receipt.actualModel !== sanitized.actualModel ||
+    receipt.responseId !== sanitized.responseId ||
+    receipt.actualModelObserved !== sanitized.actualModelObserved ||
+    receipt.responseIdObserved !== sanitized.responseIdObserved ||
+    receipt.cliVersion !== sanitized.cliVersion ||
+    !timestampsAreBound ||
+    !usageIsBound ||
+    receipt.threadIdSha256 !== sanitized.threadIdSha256 ||
+    receipt.jsonlSha256 !== sanitized.jsonlSha256 ||
+    receipt.finalMessageSha256 !== sanitized.finalMessageSha256 ||
+    receipt.sanitizedEvidenceSha256 !== sha256Canonical(sanitized)
+  ) {
+    throw new Error(
+      "The Codex CLI capture receipt is not bound to the registered sanitized evidence.",
+    );
+  }
+};
+
+const readOptionalUtf8 = async (filePath: string): Promise<string | null> => {
+  try {
+    return await readFile(filePath, "utf8");
+  } catch (error) {
+    if (isMissing(error)) return null;
+    throw error;
+  }
+};
+
+const readReviewedCodexCliCommand = (
+  packet: CodexCliReviewPacket,
+): string => {
+  const contract = packet.executionContract;
+  if (
+    typeof contract !== "object" ||
+    contract === null ||
+    !("command" in contract) ||
+    typeof contract.command !== "string" ||
+    contract.command.length === 0
+  ) {
+    throw new Error(
+      "The Codex CLI review packet has no reproducible command identity.",
+    );
+  }
+  return contract.command;
+};
+
+export const loadBoundCodexCliEvidenceGroup = async ({
+  root,
+  evidenceDirectory,
+}: {
+  root: string;
+  evidenceDirectory: string;
+}): Promise<CodexCliEvidenceGroup | null> => {
+  const sanitizedPath = path.join(evidenceDirectory, CODEX_CLI_SANITIZED_NAME);
+  const publicReceiptPath = path.join(
+    evidenceDirectory,
+    CODEX_CLI_PUBLIC_RECEIPT_NAME,
+  );
+  const [sanitizedSource, publicReceiptSource] = await Promise.all([
+    readOptionalUtf8(sanitizedPath),
+    readOptionalUtf8(publicReceiptPath),
+  ]);
+  if (sanitizedSource === null) {
+    if (publicReceiptSource !== null) {
+      throw new Error(
+        "A public Codex CLI receipt cannot exist without sanitized evidence.",
+      );
+    }
+    return null;
+  }
+
+  const liveDirectory = path.join(root, "artifacts", "live", "codex-cli");
+  const [lockExists, primaryReservationExists, retryReservationExists] = await Promise.all([
+    exists(path.join(liveDirectory, "capture.lock.json")),
+    exists(path.join(liveDirectory, "dispatch.pending.json")),
+    exists(path.join(liveDirectory, "retry-1-dispatch.pending.json")),
+  ]);
+  if (lockExists || primaryReservationExists || retryReservationExists) {
+    throw new Error(
+      "Codex CLI evidence cannot be verified while a lock or dispatch reservation is unresolved.",
+    );
+  }
+
+  const sanitized = CodexCliSanitizedEvidenceSchema.parse(
+    JSON.parse(sanitizedSource) as unknown,
+  );
+  const [primaryReceiptSource, retryReceiptSource] = await Promise.all([
+    readOptionalUtf8(
+      path.join(root, CODEX_CLI_CAPTURE_ATTEMPTS.primary.receiptLocator),
+    ),
+    readOptionalUtf8(
+      path.join(root, CODEX_CLI_CAPTURE_ATTEMPTS.retry.receiptLocator),
+    ),
+  ]);
+  const receiptCandidates = [primaryReceiptSource, retryReceiptSource]
+    .filter((source): source is string => source !== null)
+    .map((source) => ({
+      source,
+      receipt: CodexCliCaptureReceiptSchema.parse(
+        JSON.parse(source) as unknown,
+      ),
+    }))
+    .filter(({ receipt }) =>
+      receipt.outcome === "persisted" &&
+      receipt.approvalAuthoritySha256 === sanitized.approvalAuthoritySha256,
+    );
+  if (receiptCandidates.length !== 1) {
+    throw new Error(
+      "Sanitized Codex CLI evidence requires exactly one matching ignored local capture receipt.",
+    );
+  }
+  const [{ receipt: localReceipt }] = receiptCandidates;
+  const selectedAttempt = localReceipt.attemptId === CODEX_CLI_PRIMARY_ATTEMPT_ID
+    ? CODEX_CLI_CAPTURE_ATTEMPTS.primary
+    : localReceipt.attemptId === CODEX_CLI_RETRY_ATTEMPT_ID
+      ? CODEX_CLI_CAPTURE_ATTEMPTS.retry
+      : null;
+  if (!selectedAttempt) {
+    throw new Error(
+      "The Codex CLI capture receipt has no registered attempt.",
+    );
+  }
+  const reviewSource = await readOptionalUtf8(
+    path.join(root, selectedAttempt.reviewLocator),
+  );
+  if (reviewSource === null) {
+    throw new Error(
+      "Sanitized Codex CLI evidence requires its exact private review packet.",
+    );
+  }
+  const review = CodexCliReviewPacketSchema.parse(
+    JSON.parse(reviewSource) as unknown,
+  );
+  const reviewedCommand = readReviewedCodexCliCommand(review);
+  const input = await loadRegisteredCodexCliInput();
+  const expectedBundle = localReceipt.attemptId === CODEX_CLI_PRIMARY_ATTEMPT_ID
+    ? buildCodexCliAuthorityBundle({
+        ...input,
+        command: reviewedCommand,
+        mode: "primary",
+      })
+    : localReceipt.attemptId === CODEX_CLI_RETRY_ATTEMPT_ID &&
+        primaryReceiptSource !== null
+      ? buildCodexCliAuthorityBundle({
+          ...input,
+          command: reviewedCommand,
+          mode: "retry",
+          previousAttemptReceiptSha256: sha256(primaryReceiptSource),
+        })
+      : null;
+  if (!expectedBundle) {
+    throw new Error(
+      "The Codex CLI capture receipt has no reproducible attempt authority.",
+    );
+  }
+  if (!isCodexCliReviewPacketBound({ packet: review, bundle: expectedBundle })) {
+    throw new Error(
+      "The Codex CLI review packet does not bind the captured authority.",
+    );
+  }
+  assertCodexCliEvidenceCaptureBinding(sanitized, localReceipt, expectedBundle);
+
+  const derivedReceiptSource = stablePrettyJson(localReceipt);
+  if (publicReceiptSource === null) {
+    return {
+      sanitized,
+      sanitizedSource,
+      receipt: localReceipt,
+      receiptSource: derivedReceiptSource,
+      writeDerivedReceipt: true,
+    };
+  }
+
+  const publicReceipt = CodexCliCaptureReceiptSchema.parse(
+    JSON.parse(publicReceiptSource) as unknown,
+  );
+  assertCodexCliEvidenceCaptureBinding(sanitized, publicReceipt, expectedBundle);
+  if (
+    publicReceiptSource !== stablePrettyJson(publicReceipt) ||
+    sha256Canonical(publicReceipt) !== sha256Canonical(localReceipt)
+  ) {
+    throw new Error(
+      "The public Codex CLI receipt is not the canonical sanitized local receipt.",
+    );
+  }
+  return {
+    sanitized,
+    sanitizedSource,
+    receipt: publicReceipt,
+    receiptSource: publicReceiptSource,
+    writeDerivedReceipt: false,
+  };
+};
+
 const main = async (): Promise<void> => {
   const [evidence, worldPack, overlay, snapshot] = await Promise.all([
     buildPublicEvidence(),
@@ -151,6 +459,10 @@ const main = async (): Promise<void> => {
       ),
     ) as unknown,
   );
+  const codexCliEvidenceGroup = await loadBoundCodexCliEvidenceGroup({
+    root: process.cwd(),
+    evidenceDirectory: outputDirectory,
+  });
   let liveSanitizedSource: string | null = null;
   let liveSanitized: ReturnType<typeof SanitizedLiveEvidenceSchema.parse> | null = null;
   try {
@@ -204,6 +516,27 @@ const main = async (): Promise<void> => {
     }
   } else if (liveCaptureReceipt) {
     throw new Error("A public live capture receipt cannot exist without sanitized evidence.");
+  }
+  let liveHarnessSource: string | null = null;
+  let liveHarness: LiveHarnessEvidence | null = null;
+  try {
+    liveHarnessSource = await readFile(
+      path.join(outputDirectory, "live-harness.json"),
+      "utf8",
+    );
+    liveHarness = LiveHarnessEvidenceSchema.parse(
+      JSON.parse(liveHarnessSource) as unknown,
+    );
+  } catch (error) {
+    if (!isMissing(error)) throw error;
+  }
+  if (liveHarness) {
+    if (!liveSanitized) {
+      throw new Error(
+        "Creator-harness evidence cannot exist without sanitized live evidence.",
+      );
+    }
+    assertLiveHarnessCaptureBinding(liveHarness, liveSanitized);
   }
   let styleAblation: unknown = null;
   let styleAblationSource: string | null = null;
@@ -345,6 +678,13 @@ const main = async (): Promise<void> => {
     "live-readiness.json": liveReadiness,
   };
   await mkdir(outputDirectory, { recursive: true });
+  if (codexCliEvidenceGroup?.writeDerivedReceipt) {
+    await writeFile(
+      path.join(outputDirectory, CODEX_CLI_PUBLIC_RECEIPT_NAME),
+      codexCliEvidenceGroup.receiptSource,
+      { encoding: "utf8", flag: "wx" },
+    );
+  }
   if (writeDerivedLiveCaptureReceipt && liveCaptureReceiptSource !== null) {
     await writeFile(publicLiveCaptureReceiptPath, liveCaptureReceiptSource, {
       encoding: "utf8",
@@ -392,6 +732,26 @@ const main = async (): Promise<void> => {
       buildPreservedEvidenceManifestEntry(
         "artifacts/evidence/live-capture-receipt.json",
         liveCaptureReceiptSource,
+      ),
+    );
+  }
+  if (liveHarness && liveHarnessSource !== null) {
+    manifestEntries.push(
+      buildPreservedEvidenceManifestEntry(
+        "artifacts/evidence/live-harness.json",
+        liveHarnessSource,
+      ),
+    );
+  }
+  if (codexCliEvidenceGroup) {
+    manifestEntries.push(
+      buildPreservedEvidenceManifestEntry(
+        `artifacts/evidence/${CODEX_CLI_SANITIZED_NAME}`,
+        codexCliEvidenceGroup.sanitizedSource,
+      ),
+      buildPreservedEvidenceManifestEntry(
+        `artifacts/evidence/${CODEX_CLI_PUBLIC_RECEIPT_NAME}`,
+        codexCliEvidenceGroup.receiptSource,
       ),
     );
   }

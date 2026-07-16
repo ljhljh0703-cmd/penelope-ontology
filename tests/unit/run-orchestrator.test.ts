@@ -207,6 +207,7 @@ describe("run orchestrator", () => {
     });
     const result = await run({
       modelMode: "live",
+      outputLocale: "en",
       overlay,
       snapshot,
       styleProfileId: "style.table_ready_mythic",

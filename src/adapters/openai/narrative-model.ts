@@ -41,10 +41,13 @@ const MODEL_INSTRUCTIONS = [
   "Bind every utterance and action to one authorizing participant intent.",
   "Apply the selected creator-owned style constraints and report their IDs.",
   "Put unsupported additions in proposals or unknowns; do not invent hidden world facts.",
+  "When the brief fixes machine IDs, counts, actions, or semantic descriptions, copy those requirements exactly rather than paraphrasing them.",
+  "Write every human-readable generated text field in the requested outputLocale; preserve machine IDs and any exact semantic descriptions verbatim.",
 ].join(" ");
 
 type OpenAIClientLike = Pick<OpenAI, "responses">;
 type FailureOutcome = Exclude<NarrativeModelOutcome["outcome"], "completed">;
+type LiveRunRequest = Extract<RunRequest, { modelMode: "live" }>;
 
 export type OpenAiNarrativeModelOptions = {
   env?: Environment;
@@ -161,12 +164,14 @@ const safeModelInput = ({
   evidence,
   styleProfile,
 }: {
-  request: RunRequest;
+  request: LiveRunRequest;
   evidence: EvidenceBundle;
   styleProfile: StyleProfile;
 }) => {
   const parsedEvidence = EvidenceBundleSchema.parse(evidence);
   return {
+    taskType: request.taskType,
+    outputLocale: request.outputLocale,
     brief: request.brief,
     participantIntents: normalizeParticipantIntents(request.participantIntents),
     styleProfile: {

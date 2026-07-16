@@ -2,9 +2,13 @@
 
 The prose below matches the current fixture evidence and is safe for the in-progress project page. Final submission remains blocked until one sanitized GPT-5.6 call is verified; do not add GPT-5.6 to the final Built with field before that gate passes.
 
+Project name: Penelope Ontology
+
 ## What it is
 
 This project is a Work & Productivity web tool for professional GMs, narrative production teams, and game scene or quest designers. Writers working inside a bounded canon are an adjacent audience. It turns participant intent, creator-owned style, character knowledge, canon approval, and state change into one inspectable rehearsal path. The public demo honestly replays one registered two-intent fixture; arbitrary intent composition remains behind the gated live-model boundary.
+
+Penelope refuses to mistake a signal for proof. **Penelope Ontology refuses to mistake a generated draft for canon.** Its name describes the explicit structure connecting characters, claims, source traditions, knowledge boundaries, creator rules, and world states—not a claimed graph database or formal Semantic Web implementation.
 
 ## How it works
 
@@ -13,6 +17,8 @@ The gated live boundary accepts facilitator intents separately from the fictiona
 ## Demo
 
 The demo uses two fixed moments from Greek mythology rather than an encyclopedia-sized world. A registered pair of Penelope and Telemachus intents becomes a restrained Ithacan scene candidate with both playable lines and explicit lineage. The knowledge table and graph expose character boundaries and an original red-sail rule proposal. After creator approval, the server reruns four safety controls against that overlay; two validated steps then advance `harbor_watch` from `idle` to `watching` to `signal_seen`.
+
+The red sail is deliberately not retrieved mythology. That is what makes the scene useful: Penelope's participant treats it as a signal rather than proof of Odysseus's return, while Telemachus's participant wants a cautious harbor response. The harness must preserve both intentions, expose the convention as a proposed creator expansion, and keep the world unchanged until the creator decides. Rejecting the proposal changes nothing; accepting it turns the same reviewed rule into an executable simulation condition. The scene compresses the project's core claim into one visible chain: human intent → bounded generation → evidence → creator authority → world state.
 
 ## Hardest problem
 

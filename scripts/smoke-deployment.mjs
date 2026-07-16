@@ -157,10 +157,12 @@ export const smokeDeployment = async (baseUrl, expectedSha) => {
     health.status !== "ok" ||
     health.buildSha !== expectedSha ||
     health.publicMode !== "fixture" ||
+    health.liveModelImplemented !== true ||
+    health.liveEvidenceReadinessRecorded !== true ||
     health.corePipelineImplemented !== true ||
     health.frozenReplayImplemented !== true
   ) {
-    fail("Health endpoint does not match the expected build and fixture core flags.");
+    fail("Health endpoint does not match the expected build, live-evidence, and fixture core flags.");
   }
 
   const demoResponse = await fetchWithTimeout(new URL("api/demo", baseUrl));
