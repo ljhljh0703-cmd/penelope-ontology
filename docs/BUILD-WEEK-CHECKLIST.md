@@ -44,7 +44,7 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Post-commit exact-SHA fresh-copy and local deployment-smoke authority is externalized to the ignored release record and invalidated whenever it no longer matches clean HEAD
 - [x] Node 22.x pinned consistently for local, CI, and hosted runtime selection
 - [x] Identified build gate requires exact HEAD plus a clean tracked/untracked worktree; hosted Git provider SHA outranks manual labels
-- [x] Browser CI configured to exercise `next start` after the production build
+- [x] Local release and browser CI gates exercise `next start` after the production build; the identified release gate rechecks clean exact-SHA source after Playwright exits
 - [x] Credential-free deployment smoke gate added for exact build identity, fixture boundary, all declared security headers, health, frozen proof, transition hash continuity, and public live denial
 - [x] Applied or edited overlays trigger a fresh 4/4 server replay bound to their exact hash
 - [x] Public run, decision, and transition routes reject any brief, intent, draft, style, task, overlay, or snapshot that differs from the registered frozen rehearsal

@@ -21,6 +21,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:browser": "playwright test",
+    "test:browser:production": "PLAYWRIGHT_PRODUCTION=1 playwright test",
     "smoke:deployment": "node scripts/smoke-deployment.mjs",
     "submission:check": "node --import tsx scripts/verify-submission-readiness.ts --phase pre-submit",
     "submission:check:post": "node --import tsx scripts/verify-submission-readiness.ts --phase post-submit",
@@ -52,8 +53,8 @@
     "privacy:next-trace": "node scripts/verify-next-trace-privacy.mjs",
     "verify": "npm run evidence && npm run evidence:verify && npm run lint && npm run typecheck && npm run test && npm run privacy && npm run build",
     "verify:identified": "npm run evidence && npm run evidence:verify && npm run lint && npm run typecheck && npm run test && npm run privacy && npm run build:identified",
-    "verify:release": "npm run verify && npm run test:browser",
-    "verify:release:identified": "npm run verify:identified && npm run test:browser"
+    "verify:release": "npm run verify && npm run test:browser:production",
+    "verify:release:identified": "npm run verify:identified && npm run test:browser:production && npm run prebuild:identified"
   },
   "dependencies": {
     "next": "16.2.10",

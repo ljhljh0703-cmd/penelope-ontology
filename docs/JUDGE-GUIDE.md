@@ -35,7 +35,7 @@ npx playwright install --with-deps chromium webkit
 npm run verify:release
 ```
 
-This regenerates and verifies the Evidence Packet, lints, type-checks, runs the unit/API suite and privacy scan, creates a production build, and exercises desktop Chromium plus mobile WebKit.
+This regenerates and verifies the Evidence Packet, lints, type-checks, runs the unit/API suite and privacy scan, creates a production build, and exercises that build through `next start` in desktop Chromium plus mobile WebKit. The identified variant also rechecks the clean exact-SHA worktree after the browser run, so a tool-generated tracked-file drift cannot be recorded as release proof.
 
 ## Production and hosted smoke
 

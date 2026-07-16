@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const isCI = Boolean(process.env.CI);
+const useProductionServer = isCI || process.env.PLAYWRIGHT_PRODUCTION === "1";
 
 export default defineConfig({
   testDir: "./tests/browser",
@@ -18,11 +19,11 @@ export default defineConfig({
     { name: "webkit-mobile", use: { ...devices["iPhone 13"] } },
   ],
   webServer: {
-    command: isCI
+    command: useProductionServer
       ? "npm run start -- --hostname 127.0.0.1 --port 3210"
       : "npm run dev -- --hostname 127.0.0.1 --port 3210",
     url: "http://127.0.0.1:3210/api/health",
-    reuseExistingServer: !isCI,
+    reuseExistingServer: !useProductionServer,
     timeout: 120_000,
   },
 });
