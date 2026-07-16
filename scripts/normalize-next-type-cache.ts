@@ -5,11 +5,12 @@ import {
   readdirSync,
   readFileSync,
   realpathSync,
+  unlinkSync,
 } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const DUPLICATE_SUFFIX = " 2.ts";
+const DUPLICATE_NAME = /^(?<stem>.+) (?<copyIndex>(?:[2-9]|[1-9]\d+))\.ts$/u;
 
 const walk = (directory: string): string[] => {
   let entries;
@@ -59,17 +60,36 @@ export const normalizeNextTypeCache = (root: string): number => {
       throw error;
     }
   });
-  const duplicates = generatedRoots.flatMap((directory) => walk(directory)).filter(
-    (filePath) => path.basename(filePath).endsWith(DUPLICATE_SUFFIX),
-  );
+  const duplicates = generatedRoots
+    .flatMap((directory) => walk(directory))
+    .filter((filePath) => DUPLICATE_NAME.test(path.basename(filePath)));
+
+  const canonicalByDuplicate = new Map<string, string>();
 
   for (const duplicate of duplicates) {
-    const canonical = duplicate.slice(0, -DUPLICATE_SUFFIX.length) + ".ts";
+    const match = DUPLICATE_NAME.exec(path.basename(duplicate));
+    const stem = match?.groups?.stem;
+    if (!stem) throw new Error("Generated duplicate name is invalid.");
+    const canonical = path.join(path.dirname(duplicate), `${stem}.ts`);
     assertRegularFile(duplicate, "Generated duplicate");
     assertRegularFile(canonical, "Canonical generated type");
     if (!readFileSync(duplicate).equals(readFileSync(canonical))) {
       throw new Error("Generated duplicate differs from its canonical type file.");
     }
+    canonicalByDuplicate.set(duplicate, canonical);
+  }
+
+  // Delete only after the full set passes validation, so a mixed unsafe set is
+  // left byte-for-byte untouched for diagnosis.
+  for (const duplicate of duplicates) {
+    const canonical = canonicalByDuplicate.get(duplicate);
+    if (!canonical) throw new Error("Generated duplicate validation receipt is missing.");
+    assertRegularFile(duplicate, "Generated duplicate");
+    assertRegularFile(canonical, "Canonical generated type");
+    if (!readFileSync(duplicate).equals(readFileSync(canonical))) {
+      throw new Error("Generated duplicate changed after validation.");
+    }
+    unlinkSync(duplicate);
   }
 
   return duplicates.length;
@@ -82,7 +102,7 @@ const isDirectExecution =
 if (isDirectExecution) {
   try {
     const duplicates = normalizeNextTypeCache(process.cwd());
-    process.stdout.write(`NEXT_TYPE_CACHE_VALIDATED duplicates=${duplicates}\n`);
+    process.stdout.write(`NEXT_TYPE_CACHE_NORMALIZED removed=${duplicates}\n`);
   } catch {
     process.stderr.write("NEXT_TYPE_CACHE_ERROR safety_check_failed\n");
     process.exitCode = 2;
