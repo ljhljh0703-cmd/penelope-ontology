@@ -100,7 +100,13 @@ describe("world simulation service privacy boundary", () => {
       critic: fixtureNarrationCritic,
     });
     if (narrated.outcome !== "accepted") {
-      throw new Error(`Expected accepted fixture narration, received ${narrated.pipeline.disposition}.`);
+      throw new Error(
+        `Expected accepted fixture narration, received ${
+          narrated.outcome === "no_render"
+            ? narrated.reason
+            : narrated.pipeline.disposition
+        }.`,
+      );
     }
     const projections = buildWorldSessionProjections({
       scenario,

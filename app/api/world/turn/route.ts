@@ -208,15 +208,19 @@ export async function POST(request: Request) {
         headers: { "cache-control": "no-store" },
       });
     }
-    if (narrated.outcome !== "accepted") {
+    if (
+      narrated.outcome !== "accepted" &&
+      narrated.outcome !== "no_render"
+    ) {
       throw new WorldNarrationError(
         `world_narration_${narrated.pipeline.disposition}`,
         "The narration pipeline did not accept this scene.",
       );
     }
-    const narration = projectModelNarrationOutputForWorldApi(
-      narrated.modelOutput,
-    );
+    const narration =
+      narrated.outcome === "no_render"
+        ? narrated.narration
+        : projectModelNarrationOutputForWorldApi(narrated.modelOutput);
 
     // Commit only after the complete narration pipeline accepts the resolved turn.
     const nextCheckpoint = saveWorldSessionCheckpoint({

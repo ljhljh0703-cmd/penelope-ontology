@@ -76,7 +76,11 @@ export async function POST(request: Request) {
     });
     if (narrated.outcome !== "accepted") {
       throw new WorldNarrationError(
-        `world_narration_${narrated.pipeline.disposition}`,
+        `world_narration_${
+          narrated.outcome === "no_render"
+            ? narrated.reason
+            : narrated.pipeline.disposition
+        }`,
         "The narration pipeline did not accept this scene.",
       );
     }

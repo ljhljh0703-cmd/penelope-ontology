@@ -4,6 +4,7 @@ import {
   IdentifierSchema,
   addDuplicateIssues,
 } from "@/src/contracts/common";
+import { NarrationSpeechActSchema } from "@/src/contracts/narration-license";
 
 export const MAX_WORLD_SIMULATION_TURNS = 6;
 export const MAX_REACTIONS_PER_TURN = 2;
@@ -432,6 +433,24 @@ export const ReactionRuleSchema = z
   })
   .strict();
 
+/**
+ * Creator-approved permission for rendering one resolved reaction as speech.
+ * The runtime still decides whether the reaction happened; this record only
+ * bounds how that already-resolved event may be expressed.
+ */
+export const NarrationSpeechDirectiveSchema = z
+  .object({
+    id: IdentifierSchema.max(112),
+    reactionRuleId: IdentifierSchema,
+    speakerEntityId: IdentifierSchema,
+    speechAct: NarrationSpeechActSchema,
+    plainIntent: z.string().trim().min(12).max(300),
+    contentBoundary: z.string().trim().min(12).max(400),
+    creatorApprovalReceiptId: IdentifierSchema,
+    creatorDecisionId: IdentifierSchema,
+  })
+  .strict();
+
 export const PressureClockSchema = z
   .object({
     id: IdentifierSchema,
@@ -521,6 +540,10 @@ export const WorldSimulationScenarioSchema = z
     creatorRuleApprovalAuthorityRegistry:
       CreatorRuleApprovalAuthorityRegistrySchema,
     reactionRules: z.array(ReactionRuleSchema).min(1).max(16),
+    narrationSpeechDirectives: z
+      .array(NarrationSpeechDirectiveSchema)
+      .max(8)
+      .default([]),
     endingRules: z.array(EndingRuleSchema).length(4),
   })
   .strict()
@@ -550,6 +573,16 @@ export const WorldSimulationScenarioSchema = z
       context,
     );
     addDuplicateIssues(scenario.reactionRules.map(({ id }) => id), "reaction rule id", context);
+    addDuplicateIssues(
+      scenario.narrationSpeechDirectives.map(({ id }) => id),
+      "narration speech directive id",
+      context,
+    );
+    addDuplicateIssues(
+      scenario.narrationSpeechDirectives.map(({ reactionRuleId }) => reactionRuleId),
+      "narration speech directive reaction rule id",
+      context,
+    );
     addDuplicateIssues(scenario.endingRules.map(({ id }) => id), "ending rule id", context);
 
     const sourceIds = new Set(scenario.sourceLocators.map(({ id }) => id));
@@ -611,6 +644,63 @@ export const WorldSimulationScenarioSchema = z
           path: ["simulationRules", ruleIndex, "provenance"],
           message:
             "A creator-approved rule must be mapped by its referenced receipt decision.",
+        });
+      }
+    }
+
+    for (const [directiveIndex, directive] of
+      scenario.narrationSpeechDirectives.entries()) {
+      const path = ["narrationSpeechDirectives", directiveIndex] as Array<
+        string | number
+      >;
+      const reactionRule = scenario.reactionRules.find(
+        ({ id }) => id === directive.reactionRuleId,
+      );
+      if (!reactionRule) {
+        addUnknownReferenceIssue(
+          new Set(scenario.reactionRules.map(({ id }) => id)),
+          directive.reactionRuleId,
+          [...path, "reactionRuleId"],
+          "narration speech reaction rule",
+          context,
+        );
+        continue;
+      }
+      addUnknownReferenceIssue(
+        actorIds,
+        directive.speakerEntityId,
+        [...path, "speakerEntityId"],
+        "narration speech speaker",
+        context,
+      );
+      if (reactionRule.actorEntityId !== directive.speakerEntityId) {
+        context.addIssue({
+          code: "custom",
+          path: [...path, "speakerEntityId"],
+          message:
+            "A narration speech directive speaker must own the resolved reaction rule.",
+        });
+      }
+      if (reactionRule.observableSummary === null) {
+        context.addIssue({
+          code: "custom",
+          path: [...path, "reactionRuleId"],
+          message:
+            "A narration speech directive requires an observable reaction summary.",
+        });
+      }
+      const provenance = reactionRule.provenance;
+      if (
+        provenance.reviewState !== "creator_approved" ||
+        provenance.creatorApprovalReceiptId !==
+          directive.creatorApprovalReceiptId ||
+        provenance.creatorDecisionId !== directive.creatorDecisionId
+      ) {
+        context.addIssue({
+          code: "custom",
+          path,
+          message:
+            "A narration speech directive must bind to the creator approval that activated its reaction rule.",
         });
       }
     }
@@ -973,6 +1063,9 @@ export type CreatorRuleApprovalAuthorityRegistry = z.infer<
   typeof CreatorRuleApprovalAuthorityRegistrySchema
 >;
 export type ReactionRule = z.infer<typeof ReactionRuleSchema>;
+export type NarrationSpeechDirective = z.infer<
+  typeof NarrationSpeechDirectiveSchema
+>;
 export type PressureClock = z.infer<typeof PressureClockSchema>;
 export type EndingRule = z.infer<typeof EndingRuleSchema>;
 export type WorldSimulationScenario = z.infer<typeof WorldSimulationScenarioSchema>;

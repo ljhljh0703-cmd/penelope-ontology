@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import styleProfileJson from "@/_dev/dispatch-2026-07-18/contracts/PENELOPE-ENGLISH-STYLE-PROFILE.json";
 import { getOdysseyBook19WorldSimulation } from "@/src/adapters/fixtures/odyssey-world-simulation";
 import {
@@ -18,7 +18,10 @@ import {
   createWorldSimulationSession,
   runWorldSimulationTurn,
 } from "@/src/domain/world-runtime";
-import type { NarrationRenderer } from "@/src/ports/world-narrator";
+import type {
+  NarrationCritic,
+  NarrationRenderer,
+} from "@/src/ports/world-narrator";
 
 const scenario = getOdysseyBook19WorldSimulation();
 const styleProfile = PenelopeEnglishStyleProfileSchema.parse(styleProfileJson);
@@ -98,6 +101,149 @@ describe("world simulation narration pipeline service", () => {
     });
   });
 
+  it("commits an unsupported turn without calling the renderer or critic", async () => {
+    const initial = createWorldSimulationSession({ scenario });
+    const turn = runWorldSimulationTurn({
+      scenario,
+      session: initial,
+      input: "Command Zeus to erase every suitor from the palace now.",
+    });
+    const render = vi.fn(async () => {
+      throw new Error("Unsupported actions must not reach the renderer.");
+    });
+    const revise = vi.fn(async () => {
+      throw new Error("Unsupported actions must not reach the critic.");
+    });
+    const renderer: NarrationRenderer = { render };
+    const critic: NarrationCritic = { revise };
+
+    const narrated = await runWorldSessionNarrationPipeline({
+      scenario,
+      session: turn.session,
+      receipt: turn.receipt,
+      styleProfile,
+      renderer,
+      critic,
+    });
+
+    expect(turn.receipt.action.status).toBe("unsupported");
+    expect(render).not.toHaveBeenCalled();
+    expect(revise).not.toHaveBeenCalled();
+    expect(narrated).toMatchObject({
+      outcome: "no_render",
+      reason: "unsupported_action",
+      rendererCallCount: 0,
+      criticCallCount: 0,
+      committableSession: {
+        state: { turn: 1, stateHash: turn.session.state.stateHash },
+      },
+      committableReceipt: { receiptHash: turn.receipt.receiptHash },
+      trace: {
+        provenance: "fixture",
+        adapterId: "world.unsupported_no_render.v1",
+      },
+    });
+    expect(turn.session.state.flags).toEqual(initial.state.flags);
+    expect(turn.session.state.clocks).toEqual(initial.state.clocks);
+    if (narrated.outcome !== "no_render") {
+      throw new Error("Expected deterministic no-render narration.");
+    }
+    expect(narrated.narration.prose).toContain("nothing shifts in her favor");
+
+    const recovered = runWorldSimulationTurn({
+      scenario,
+      session: narrated.committableSession,
+      input: "bring the basin",
+    });
+    expect(recovered.session.state).toMatchObject({
+      turn: 2,
+      status: "complete",
+      endingId: "ending.canon_contained",
+    });
+  });
+
+  it("binds the approved Eurycleia answer to a typed speech event and license", async () => {
+    const initial = createWorldSimulationSession({ scenario });
+    const recognition = runWorldSimulationTurn({
+      scenario,
+      session: initial,
+      input: "bring the basin",
+    });
+    const disclosure = runWorldSimulationTurn({
+      scenario,
+      session: recognition.session,
+      input: "confront the stranger",
+    });
+    const artifacts = buildWorldNarrationPipelineArtifacts({
+      scenario,
+      session: disclosure.session,
+      receipt: disclosure.receipt,
+      styleProfile,
+    });
+    const licenseId = "license.speech.eurycleia.controlled_disclosure";
+
+    expect(artifacts.authorityRegistry.typedSpeechEvents).toEqual([
+      { eventId: "event.visible_2", registeredKind: "speech" },
+    ]);
+    expect(artifacts.inputEnvelope.modelFacing.licensedRenderingDetails).toEqual([
+      expect.objectContaining({
+        licenseId,
+        issuer: "creator",
+        issuerAuthorityId: "creator.penelope_ontology",
+        category: "speech_act",
+        sourceAuthorityIds: ["event.visible_2"],
+      }),
+    ]);
+    expect(artifacts.preflightReceipt.dialogueAuthority).toMatchObject({
+      mode: "licensed",
+      speakerId: "entity.eurycleia",
+      speechAct: "answer",
+      speechEventIds: ["event.visible_2"],
+      speechActLicenseIds: [licenseId],
+    });
+    expect(
+      artifacts.scenePlan.sentencePlans.find(
+        ({ role }) => role === "licensed_dialogue",
+      ),
+    ).toMatchObject({
+      speakerId: "entity.eurycleia",
+      speechEventIds: [],
+      licensedRenderingDetailIds: [licenseId],
+      changesState: false,
+    });
+    expect(
+      artifacts.scenePlan.sentencePlans.find(
+        ({ role }) => role === "resolved_consequence",
+      ),
+    ).toMatchObject({
+      sourceEventIds: ["event.ending_consequence"],
+      licensedRenderingDetailIds: [],
+      changesState: true,
+    });
+
+    const narrated = await runWorldSessionNarrationPipeline({
+      scenario,
+      session: disclosure.session,
+      receipt: disclosure.receipt,
+      styleProfile,
+      renderer: fixtureNarrationRenderer,
+      critic: fixtureNarrationCritic,
+    });
+    expect(narrated.outcome).toBe("accepted");
+    if (narrated.outcome !== "accepted") {
+      throw new Error("Expected the licensed fixture narration to be accepted.");
+    }
+    expect(narrated.pipeline.rendererCallCount).toBe(1);
+    expect(
+      narrated.pipeline.validation?.findings.filter(
+        ({ severity }) => severity === "hard_fail",
+      ),
+    ).toEqual([]);
+    expect(
+      narrated.pipeline.validation?.renderAudit.usedSourceIds,
+    ).toContain(licenseId);
+  });
+
   it("cannot accept caller-shaped fidelity or free prose as a committable turn", async () => {
     const initial = createWorldSimulationSession({ scenario });
     const turn = runWorldSimulationTurn({
@@ -143,6 +289,9 @@ describe("world simulation narration pipeline service", () => {
         ),
       ),
     });
+    if (result.outcome === "no_render") {
+      throw new Error("Expected the supported turn to enter narration review.");
+    }
 
     expect(
       result.pipeline.validation?.findings.filter(
@@ -189,6 +338,9 @@ describe("world simulation narration pipeline service", () => {
         ),
       ),
     });
+    if (result.outcome === "no_render") {
+      throw new Error("Expected the supported turn to reach postvalidation.");
+    }
 
     expect(result.pipeline.disposition).toBe("hard_fail");
     expect(result).toMatchObject({

@@ -625,6 +625,37 @@ const inspectAndValidateCodexCli = ({
   return { cliVersion, auth: "chatgpt" };
 };
 
+export type CodexCliRuntimePreflightReport = {
+  cliVersion: string;
+  auth: "chatgpt";
+  requiredFlags: readonly string[];
+};
+
+/**
+ * Verifies only the local Codex CLI runtime. It deliberately does not reuse the
+ * Red Sail evidence approval contract, so callers can bind the same validated
+ * executable to a separate capture protocol such as W5.
+ */
+export const preflightCodexCliRuntime = ({
+  command = "codex",
+  inspector = inspectCodexCli,
+  env = process.env,
+}: {
+  command?: string;
+  inspector?: CodexCliInspector;
+  env?: NodeJS.ProcessEnv;
+} = {}): CodexCliRuntimePreflightReport => {
+  const result = inspectAndValidateCodexCli({
+    command,
+    inspector,
+    env: buildCodexCliEnvironment(env),
+  });
+  return {
+    ...result,
+    requiredFlags: REQUIRED_EXEC_HELP_FLAGS,
+  };
+};
+
 export const preflightCodexCliEvidence = async ({
   root,
   command = "codex",
@@ -660,11 +691,10 @@ export const preflightCodexCliEvidence = async ({
   });
   const approval = assertApproval(realRoot, bundle, mode);
   assertCapturePaths(realRoot, mode);
-  const dispatchEnv = buildCodexCliEnvironment(env);
-  const { cliVersion, auth } = inspectAndValidateCodexCli({
+  const { cliVersion, auth } = preflightCodexCliRuntime({
     command,
     inspector,
-    env: dispatchEnv,
+    env,
   });
   return {
     report: {

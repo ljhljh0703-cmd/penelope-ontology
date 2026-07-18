@@ -167,6 +167,70 @@ describe("world-first Odyssey API", () => {
     expect(canon.stateHash).not.toBe(controlled.stateHash);
   });
 
+  it("turns an impossible intervention into a no-gain beat and continues to an ending", async () => {
+    const { view: opening } = await startFixture();
+    const openingCheckpoint = loadWorldSessionCheckpoint(opening.sessionId);
+    const impossibleResponse = await turnWorld(
+      request("/api/world/turn", {
+        sessionId: opening.sessionId,
+        expectedStateHash: opening.stateHash,
+        action: "Command Zeus to erase every suitor from the palace now.",
+        forkBeforeAction: false,
+        transport: "fixture",
+      }),
+    );
+    const impossible = WorldParticipantSessionViewSchema.parse(
+      await impossibleResponse.json(),
+    );
+
+    expect(impossibleResponse.status).toBe(200);
+    expect(impossible).toMatchObject({
+      turn: 1,
+      status: "active",
+      narratorTrace: {
+        provenance: "fixture",
+        adapterId: "world.unsupported_no_render.v1",
+      },
+    });
+    expect(impossible.narration.prose).toContain(
+      "nothing shifts in her favor",
+    );
+    expect(impossible.visibleEvents[0]?.summary).not.toMatch(
+      /unsupported|registered world action/iu,
+    );
+    const impossibleCheckpoint = loadWorldSessionCheckpoint(
+      impossible.sessionId,
+    );
+    expect(impossibleCheckpoint?.session.turns.at(-1)?.action.status).toBe(
+      "unsupported",
+    );
+    expect(impossibleCheckpoint?.session.state.flags).toEqual(
+      openingCheckpoint?.session.state.flags,
+    );
+    expect(impossibleCheckpoint?.session.state.clocks).toEqual(
+      openingCheckpoint?.session.state.clocks,
+    );
+
+    const recoveredResponse = await turnWorld(
+      request("/api/world/turn", {
+        sessionId: impossible.sessionId,
+        expectedStateHash: impossible.stateHash,
+        action: "bring the basin",
+        forkBeforeAction: false,
+        transport: "fixture",
+      }),
+    );
+    const recovered = WorldParticipantSessionViewSchema.parse(
+      await recoveredResponse.json(),
+    );
+    expect(recoveredResponse.status).toBe(200);
+    expect(recovered).toMatchObject({
+      turn: 2,
+      status: "complete",
+      ending: { id: "ending.canon_contained" },
+    });
+  });
+
   it("rejects missing and stale checkpoint authority", async () => {
     const { view: opening } = await startFixture();
     const stale = await turnWorld(

@@ -57,12 +57,15 @@ export const buildCreatorRuleApprovalSubjectFingerprint = ({
 }: {
   scenario: Pick<
     WorldSimulationScenario,
-    "id" | "reactionRules" | "endingRules"
+    | "id"
+    | "reactionRules"
+    | "narrationSpeechDirectives"
+    | "endingRules"
   >;
   receiptId: string;
 }): string =>
   sha256Canonical({
-    schemaVersion: "penelope.creator-rule-approval-subject.v1",
+    schemaVersion: "penelope.creator-rule-approval-subject.v2",
     scenarioId: scenario.id,
     rules: simulationRuleEntries(scenario)
       .filter(
@@ -71,6 +74,12 @@ export const buildCreatorRuleApprovalSubjectFingerprint = ({
       )
       .map(({ kind, rule }) => ({ kind, rule }))
       .sort((left, right) => compareIds(left.rule.id, right.rule.id)),
+    narrationSpeechDirectives: scenario.narrationSpeechDirectives
+      .filter(
+        ({ creatorApprovalReceiptId }) =>
+          creatorApprovalReceiptId === receiptId,
+      )
+      .sort((left, right) => compareIds(left.id, right.id)),
   });
 
 export const fingerprintCreatorRuleApprovalReceiptPayload = (
@@ -1056,7 +1065,7 @@ export const runWorldSimulationTurn = ({
     summary:
       action.status === "accepted"
         ? actionDefinition?.summary ?? action.reason
-        : `The attempted intervention is unsupported: ${action.reason}`,
+        : "Penelope's attempted intervention finds no answer in the room; no one carries it out, and the moment passes without advantage.",
     effects: [],
     visibleToEntityIds: [scenario.focalParticipantEntityId],
   };

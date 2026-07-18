@@ -488,7 +488,7 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
       {
         binding: {
           receiptId: "receipt.d6.night_of_the_scar",
-          subjectFingerprint: "366ca7a03d685c90f9f7676c8b6919d270f38dccd1becc15693f43778f7a98c5",
+          subjectFingerprint: "f9b966d395a6d5c103d97770005ed3f285155debb5fba1adb3b4419192aaeade",
           issuer: "creator",
           issuerAuthorityId: "creator.penelope_ontology",
         },
@@ -508,7 +508,7 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
       trustedReceipts: [
         {
           receiptId: "receipt.d6.night_of_the_scar",
-          subjectFingerprint: "366ca7a03d685c90f9f7676c8b6919d270f38dccd1becc15693f43778f7a98c5",
+          subjectFingerprint: "f9b966d395a6d5c103d97770005ed3f285155debb5fba1adb3b4419192aaeade",
           issuer: "creator",
           issuerAuthorityId: "creator.penelope_ontology",
           payloadFingerprint: "afcfc9377e97fc1a80a54aa10a8ed163704360e4f9d035f0b4b55fca86542858",
@@ -737,6 +737,20 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
           { kind: "set_agenda_state", entityId: "entity.melantho", state: "satisfied" },
         ],
         once: true,
+      },
+    ],
+    narrationSpeechDirectives: [
+      {
+        id: "speech.eurycleia.controlled_disclosure",
+        reactionRuleId: "reaction.eurycleia.controlled_disclosure",
+        speakerEntityId: "entity.eurycleia",
+        speechAct: "answer",
+        plainIntent:
+          "Confirm only to Penelope that the stranger is Odysseus; add no plan, history, motive, prediction, or promise.",
+        contentBoundary:
+          "Eurycleia identifies the stranger as Odysseus.",
+        creatorApprovalReceiptId: "receipt.d6.night_of_the_scar",
+        creatorDecisionId: "decision.d6-4",
       },
     ],
     endingRules: [

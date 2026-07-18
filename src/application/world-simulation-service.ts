@@ -1,5 +1,6 @@
 import {
   WorldCreatorReceiptSchema,
+  WorldNarrationProjectionSchema,
   WorldParticipantSessionViewSchema,
   type WorldCreatorReceipt,
   type WorldNarrationProjection,
@@ -204,6 +205,24 @@ const WORLD_NARRATION_CREATOR_AUTHORITY_ID =
   "creator.penelope.world_copy.v1";
 const WORLD_NARRATION_REFERENCE_RECEIPT_ID =
   "creator-craft-reference-2026-07-17-01";
+const UNSUPPORTED_ACTION_NARRATION_TEXT =
+  "Nothing in the room answers Penelope's attempt. No one acts on it, and nothing shifts in her favor. The moment passes, and the night moves on.";
+const UNSUPPORTED_ACTION_NARRATION_TRACE: NarrationRendererTrace = {
+  provenance: "fixture",
+  adapterId: "world.unsupported_no_render.v1",
+};
+
+const unsupportedActionNarration = (): WorldNarrationProjection =>
+  WorldNarrationProjectionSchema.parse({
+    format: "english_prose_paragraphs",
+    paragraphs: [
+      {
+        paragraphId: "paragraph.unsupported_action",
+        text: UNSUPPORTED_ACTION_NARRATION_TEXT,
+      },
+    ],
+    prose: UNSUPPORTED_ACTION_NARRATION_TEXT,
+  });
 
 const modelFacingEntityId = (entityId: string): string =>
   entityId === "entity.odysseus" ? "entity.stranger" : entityId;
@@ -219,8 +238,20 @@ const REGISTERED_EVENT_RENDER_TEXT: Readonly<Record<string, string>> = {
   "action.odysseus.contain_recognition": "The stranger checks Eurycleia's alarm.",
   "action.eurycleia.wash_feet": "Eurycleia stops at the old scar.",
   "action.eurycleia.guard_secret": "Eurycleia keeps the moment private.",
-  "action.eurycleia.confirm_privately": "Eurycleia confirms Penelope's private conclusion.",
+  "action.eurycleia.confirm_privately": "Eurycleia identifies the stranger as Odysseus.",
   "action.melantho.investigate": "Melantho watches the visible disturbance.",
+  "action.unsupported": UNSUPPORTED_ACTION_NARRATION_TEXT,
+};
+
+const REGISTERED_ENDING_RENDER_TEXT: Readonly<Record<string, string>> = {
+  "ending.canon_contained":
+    "Recognition stays contained; Penelope remains uncertain.",
+  "ending.controlled_discovery":
+    "The confirmation stays inside the closed room.",
+  "ending.plan_compromised":
+    "The disturbance escapes and raises immediate danger.",
+  "ending.timeout":
+    "Night closes; the unresolved consequences remain.",
 };
 
 const boundedEventRenderText = (
@@ -342,18 +373,69 @@ export const buildWorldNarrationPipelineArtifacts = ({
     })),
   ].map(({ factId, renderText }) => ({ factId, renderText }));
   const visibleRuntimeEvents = safeVisibleEvents({ scenario, receipt });
-  const resolvedEvents = visibleRuntimeEvents.map((event, index) => ({
+  const runtimeResolvedEvents = visibleRuntimeEvents.map((event, index) => ({
     eventId: `event.visible_${index + 1}`,
     observableText: boundedEventRenderText(event, scenario),
     sourceAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
   }));
+  const endingResolvedEvent = session.state.endingId
+    ? {
+        eventId: "event.ending_consequence",
+        observableText:
+          REGISTERED_ENDING_RENDER_TEXT[session.state.endingId] ??
+          "The registered ending leaves its resolved consequence inside the household.",
+        sourceAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
+      }
+    : null;
+  const resolvedEvents = [
+    ...runtimeResolvedEvents,
+    ...(endingResolvedEvent ? [endingResolvedEvent] : []),
+  ];
+  const resolvedSpeech = visibleRuntimeEvents.flatMap((event, index) => {
+    if (event.source.kind !== "npc") return [];
+    const resolvedReactionRuleId = event.source.reactionRuleId;
+    const directive = scenario.narrationSpeechDirectives.find(
+      ({ reactionRuleId }) =>
+        reactionRuleId === resolvedReactionRuleId,
+    );
+    const resolvedEvent = runtimeResolvedEvents[index];
+    if (!directive || !resolvedEvent) return [];
+    const approvalReceipt = scenario.creatorRuleApprovalReceipts.find(
+      ({ binding }) =>
+        binding.receiptId === directive.creatorApprovalReceiptId,
+    );
+    if (!approvalReceipt) {
+      throw new Error(
+        `Narration speech directive is missing creator authority: ${directive.id}`,
+      );
+    }
+    return [
+      {
+        directive,
+        resolvedEvent,
+        license: {
+          licenseId: `license.${directive.id}`,
+          issuer: "creator" as const,
+          issuerAuthorityId: approvalReceipt.binding.issuerAuthorityId,
+          issuedBeforeGeneration: true as const,
+          category: "speech_act" as const,
+          contentBoundary: directive.contentBoundary,
+          sourceAuthorityIds: [resolvedEvent.eventId],
+        },
+      },
+    ];
+  });
+  if (resolvedSpeech.length > 1) {
+    throw new Error("A bounded scene may expose only one licensed speech event.");
+  }
+  const speech = resolvedSpeech[0] ?? null;
   const actionEvent =
     resolvedEvents.find((_, index) => visibleRuntimeEvents[index]?.source.kind === "participant") ??
     resolvedEvents[0];
   const reactionEvent =
     resolvedEvents.find((_, index) => visibleRuntimeEvents[index]?.source.kind !== "participant") ??
     resolvedEvents.at(-1);
-  const changeEvent = resolvedEvents.at(-1);
+  const changeEvent = endingResolvedEvent ?? resolvedEvents.at(-1);
   const actionIds = sceneMode === "turn" && actionEvent ? [actionEvent.eventId] : [];
   const reactionIds =
     sceneMode === "turn" && reactionEvent ? [reactionEvent.eventId] : [];
@@ -379,7 +461,7 @@ export const buildWorldNarrationPipelineArtifacts = ({
       authorizedReactionEventIds: reactionIds,
       authorizedChangeEventIds: changeIds,
       authorizedAnchors: [],
-      licensedRenderingDetails: [],
+      licensedRenderingDetails: speech ? [speech.license] : [],
       styleStateId: narrationStyleStateId({ scenario, session, styleProfile }),
       reservedActionIds: reservedCandidates.map(({ actionId }) => actionId),
     },
@@ -396,31 +478,60 @@ export const buildWorldNarrationPipelineArtifacts = ({
     sourceFactIds = [],
     sourceEventIds = [],
     actorId = null,
+    speakerId = null,
+    speechEventIds = [],
+    licensedRenderingDetailIds = [],
+    plainIntent = null,
+    plainIntentSourceAuthorityIds = [],
     changesState = false,
     plainFunction,
   }: {
     id: string;
-    role: "orientation" | "authorized_action" | "observable_reaction" | "resolved_consequence" | "in_world_stop";
+    role: "orientation" | "authorized_action" | "observable_reaction" | "resolved_consequence" | "licensed_dialogue" | "in_world_stop";
     sourceFactIds?: string[];
     sourceEventIds?: string[];
     actorId?: string | null;
+    speakerId?: string | null;
+    speechEventIds?: string[];
+    licensedRenderingDetailIds?: string[];
+    plainIntent?: string | null;
+    plainIntentSourceAuthorityIds?: string[];
     changesState?: boolean;
     plainFunction: string;
   }) => ({
     sentencePlanId: id,
     role,
     actorId,
-    speakerId: null,
+    speakerId,
     sourceFactIds,
     sourceEventIds,
-    speechEventIds: [],
-    licensedRenderingDetailIds: [],
+    speechEventIds,
+    licensedRenderingDetailIds,
     plainFunction,
-    plainFunctionSourceAuthorityIds: [...sourceFactIds, ...sourceEventIds],
-    plainIntent: null,
-    plainIntentSourceAuthorityIds: [],
+    plainFunctionSourceAuthorityIds: [
+      ...sourceFactIds,
+      ...sourceEventIds,
+      ...speechEventIds,
+      ...licensedRenderingDetailIds,
+    ],
+    plainIntent,
+    plainIntentSourceAuthorityIds,
     changesState,
   });
+  const speechPlan = speech
+    ? plan({
+        id: `sentence.${sceneMode}.licensed_dialogue`,
+        role: "licensed_dialogue",
+        speakerId: modelFacingEntityId(speech.directive.speakerEntityId),
+        licensedRenderingDetailIds: [speech.license.licenseId],
+        plainIntent: speech.directive.plainIntent,
+        plainIntentSourceAuthorityIds: [
+          speech.resolvedEvent.eventId,
+          speech.license.licenseId,
+        ],
+        plainFunction: "Render the creator-approved answer within its stated boundary.",
+      })
+    : null;
   const sentencePlans =
     sceneMode === "setup"
       ? [
@@ -454,6 +565,7 @@ export const buildWorldNarrationPipelineArtifacts = ({
               changesState: true,
               plainFunction: "Render the registered visible reaction.",
             }),
+            ...(speechPlan ? [speechPlan] : []),
             plan({
               id: "sentence.turn.consequence",
               role: "resolved_consequence",
@@ -476,6 +588,7 @@ export const buildWorldNarrationPipelineArtifacts = ({
               sourceFactIds: resolvedEvents[0] ? [] : [zoneFactId],
               plainFunction: "Place the final resolved beat in view.",
             }),
+            ...(speechPlan ? [speechPlan] : []),
             plan({
               id: "sentence.ending.consequence",
               role: "resolved_consequence",
@@ -505,8 +618,8 @@ export const buildWorldNarrationPipelineArtifacts = ({
       factIds: visibleFacts.map(({ factId }) => factId),
       eventIds: resolvedEvents.map(({ eventId }) => eventId),
       actorEntityIds: presentActors.map(({ entityId }) => entityId),
-      licensedRenderingDetailIds: [],
-      licensedRenderingDetails: [],
+      licensedRenderingDetailIds: speech ? [speech.license.licenseId] : [],
+      licensedRenderingDetails: speech ? [speech.license] : [],
     },
     referenceReceipt: {
       status: "available",
@@ -535,16 +648,35 @@ export const buildWorldNarrationPipelineArtifacts = ({
             },
           }),
     },
-    dialogueAuthority: {
-      mode: "none",
-      speakerId: null,
-      speechAct: null,
-      speechEventIds: [],
-      speechActLicenseIds: [],
-      authorizedContentIds: [],
-      plainIntent: null,
-      plainIntentSourceAuthorityIds: [],
-    },
+    dialogueAuthority: speech
+      ? {
+          mode: "licensed",
+          speakerId: modelFacingEntityId(
+            speech.directive.speakerEntityId,
+          ),
+          speechAct: speech.directive.speechAct,
+          speechEventIds: [speech.resolvedEvent.eventId],
+          speechActLicenseIds: [speech.license.licenseId],
+          authorizedContentIds: [
+            speech.resolvedEvent.eventId,
+            speech.license.licenseId,
+          ],
+          plainIntent: speech.directive.plainIntent,
+          plainIntentSourceAuthorityIds: [
+            speech.resolvedEvent.eventId,
+            speech.license.licenseId,
+          ],
+        }
+      : {
+          mode: "none",
+          speakerId: null,
+          speechAct: null,
+          speechEventIds: [],
+          speechActLicenseIds: [],
+          authorizedContentIds: [],
+          plainIntent: null,
+          plainIntentSourceAuthorityIds: [],
+        },
     creatorReviewRequired: true,
   });
   const cameraSafeProvenance = [
@@ -593,8 +725,20 @@ export const buildWorldNarrationPipelineArtifacts = ({
     preflightReceipt,
     styleProfile,
     authorityRegistry: {
-      typedSpeechEvents: [],
-      creatorAuthorityIds: [WORLD_NARRATION_CREATOR_AUTHORITY_ID],
+      typedSpeechEvents: speech
+        ? [
+            {
+              eventId: speech.resolvedEvent.eventId,
+              registeredKind: "speech" as const,
+            },
+          ]
+        : [],
+      creatorAuthorityIds: [
+        ...new Set([
+          WORLD_NARRATION_CREATOR_AUTHORITY_ID,
+          ...scenario.creatorRuleApprovalAuthorityRegistry.creatorAuthorityIds,
+        ]),
+      ],
       deterministicRuntimeAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
       approvedReferenceReceiptIds: [WORLD_NARRATION_REFERENCE_RECEIPT_ID],
     },
@@ -646,6 +790,16 @@ export type WorldSessionNarrationPipelineOutcome =
       trace: NarrationRendererTrace;
     }
   | {
+      outcome: "no_render";
+      committableSession: WorldSimulationSession;
+      committableReceipt: WorldTurnReceipt;
+      narration: WorldNarrationProjection;
+      trace: NarrationRendererTrace;
+      reason: "unsupported_action";
+      rendererCallCount: 0;
+      criticCallCount: 0;
+    }
+  | {
       outcome: "creator_review";
       pipeline: WorldNarrationPipelineResult;
       candidateSession: WorldSimulationSession;
@@ -679,6 +833,18 @@ export const runWorldSessionNarrationPipeline = async ({
   renderer: NarrationRenderer;
   critic?: NarrationCritic | null;
 }): Promise<WorldSessionNarrationPipelineOutcome> => {
+  if (receipt?.action.status === "unsupported") {
+    return {
+      outcome: "no_render",
+      committableSession: session,
+      committableReceipt: receipt,
+      narration: unsupportedActionNarration(),
+      trace: UNSUPPORTED_ACTION_NARRATION_TRACE,
+      reason: "unsupported_action",
+      rendererCallCount: 0,
+      criticCallCount: 0,
+    };
+  }
   const artifacts = buildWorldNarrationPipelineArtifacts({
     scenario,
     session,

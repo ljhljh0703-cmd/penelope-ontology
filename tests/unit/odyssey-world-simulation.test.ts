@@ -150,6 +150,18 @@ describe("Odyssey Book 19 world simulation", () => {
     expect(
       receipt?.decisions.find(({ decisionId }) => decisionId === "decision.d6-4"),
     ).toMatchObject({ action: "approve_as_creator_authored_if" });
+    expect(
+      ODYSSEY_BOOK_19_WORLD_SIMULATION.narrationSpeechDirectives,
+    ).toEqual([
+      expect.objectContaining({
+        id: "speech.eurycleia.controlled_disclosure",
+        reactionRuleId: "reaction.eurycleia.controlled_disclosure",
+        speakerEntityId: "entity.eurycleia",
+        speechAct: "answer",
+        creatorApprovalReceiptId: "receipt.d6.night_of_the_scar",
+        creatorDecisionId: "decision.d6-4",
+      }),
+    ]);
   });
 
   it("activates D6 rules only through the exact trusted creator receipt", () => {
@@ -176,7 +188,7 @@ describe("Odyssey Book 19 world simulation", () => {
     );
   });
 
-  it.each(["missing", "subject", "payload", "issuer", "rule"] as const)(
+  it.each(["missing", "subject", "payload", "issuer", "rule", "speech"] as const)(
     "fails D6 rule activation closed for %s approval tampering",
     (tamper) => {
       const scenario = structuredClone(ODYSSEY_BOOK_19_WORLD_SIMULATION);
@@ -192,6 +204,10 @@ describe("Odyssey Book 19 world simulation", () => {
           ({ provenance }) => provenance.basis === "agent_proposed",
         )!;
         proposed.summary = `${proposed.summary} Changed after approval.`;
+      }
+      if (tamper === "speech") {
+        scenario.narrationSpeechDirectives[0]!.plainIntent =
+          "Invent an unapproved future promise for Eurycleia.";
       }
 
       const active = activeWorldSimulationRuleIds(scenario);
@@ -210,6 +226,30 @@ describe("Odyssey Book 19 world simulation", () => {
 
       expect(sourceIds.every((id) => active.has(id))).toBe(true);
       expect(proposedIds.every((id) => !active.has(id))).toBe(true);
+    },
+  );
+
+  it.each(["unknown_rule", "wrong_speaker", "duplicate_rule"] as const)(
+    "rejects an invalid narration speech directive: %s",
+    (tamper) => {
+      const fixture = structuredClone(ODYSSEY_BOOK_19_WORLD_SIMULATION);
+      const directive = fixture.narrationSpeechDirectives[0]!;
+      if (tamper === "unknown_rule") {
+        directive.reactionRuleId = "reaction.unknown";
+      }
+      if (tamper === "wrong_speaker") {
+        directive.speakerEntityId = "entity.melantho";
+      }
+      if (tamper === "duplicate_rule") {
+        fixture.narrationSpeechDirectives.push({
+          ...directive,
+          id: "speech.eurycleia.controlled_disclosure_duplicate",
+        });
+      }
+
+      expect(WorldSimulationScenarioSchema.safeParse(fixture).success).toBe(
+        false,
+      );
     },
   );
 
