@@ -1,0 +1,400 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "penelope-english-style-profile.schema.json",
+  "title": "PenelopeEnglishStyleProfile",
+  "description": "English style as levers, not adjectives. Every lever carries its value/range, why it exists, what input changes it, its enforcement owner, and its overtightening failure. Style states change levers by engine state without touching facts (factInvariance). Status semantics: agent_proposed until an explicit creator lock; additive amendments carry a creatorCorrectionReceiptId; structural change requires creator re-lock. CREATOR REVIEW REQUIRED.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profileId", "languageTag", "version", "status", "levers", "styleStates", "correctionIngestion"],
+  "properties": {
+    "profileId": { "$ref": "#/$defs/Identifier" },
+    "languageTag": { "const": "en" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "status": { "enum": ["agent_proposed", "creator_locked"] },
+    "levers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "narrativeDistance",
+        "tense",
+        "focalization",
+        "actorNamingFrequency",
+        "sentenceLengthDistribution",
+        "clauseComplexityCeiling",
+        "dialogueDensity",
+        "dialogueFunctionAllowlist",
+        "expositionBudget",
+        "figurativeLanguageBudget",
+        "abstractionBudget",
+        "temporalOrderPolicy",
+        "objectSpaceUsagePolicy",
+        "endingMode",
+        "forbiddenConstructionIds",
+        "translationRobustnessReview"
+      ],
+      "properties": {
+        "narrativeDistance": { "$ref": "#/$defs/LeverWrapper_narrativeDistance" },
+        "tense": { "$ref": "#/$defs/LeverWrapper_tense" },
+        "focalization": { "$ref": "#/$defs/LeverWrapper_focalization" },
+        "actorNamingFrequency": { "$ref": "#/$defs/LeverWrapper_actorNamingFrequency" },
+        "sentenceLengthDistribution": { "$ref": "#/$defs/LeverWrapper_sentenceLengthDistribution" },
+        "clauseComplexityCeiling": { "$ref": "#/$defs/LeverWrapper_clauseComplexityCeiling" },
+        "dialogueDensity": { "$ref": "#/$defs/LeverWrapper_dialogueDensity" },
+        "dialogueFunctionAllowlist": { "$ref": "#/$defs/LeverWrapper_dialogueFunctionAllowlist" },
+        "expositionBudget": { "$ref": "#/$defs/LeverWrapper_expositionBudget" },
+        "figurativeLanguageBudget": { "$ref": "#/$defs/LeverWrapper_figurativeLanguageBudget" },
+        "abstractionBudget": { "$ref": "#/$defs/LeverWrapper_abstractionBudget" },
+        "temporalOrderPolicy": { "$ref": "#/$defs/LeverWrapper_temporalOrderPolicy" },
+        "objectSpaceUsagePolicy": { "$ref": "#/$defs/LeverWrapper_objectSpaceUsagePolicy" },
+        "endingMode": { "$ref": "#/$defs/LeverWrapper_endingMode" },
+        "forbiddenConstructionIds": { "$ref": "#/$defs/LeverWrapper_forbiddenConstructionIds" },
+        "translationRobustnessReview": { "$ref": "#/$defs/LeverWrapper_translationRobustnessReview" }
+      }
+    },
+    "styleStates": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "items": { "$ref": "#/$defs/StyleState" }
+    },
+    "correctionIngestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy", "entries"],
+      "properties": {
+        "policy": { "const": "additive_under_lock" },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["creatorCorrectionReceiptId", "ruleId", "date"],
+            "properties": {
+              "creatorCorrectionReceiptId": { "$ref": "#/$defs/Identifier" },
+              "ruleId": { "$ref": "#/$defs/Identifier" },
+              "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_.:-]*$",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "IdentifierArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Identifier" },
+      "uniqueItems": true
+    },
+    "LeverMeta": {
+      "type": "object",
+      "required": ["whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "properties": {
+        "whyNeeded": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "changesWith": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "enforcement": { "enum": ["prompt_owner", "deterministic_check", "heuristic", "human_review"] },
+        "overtighteningFailure": { "type": "string", "minLength": 1, "maxLength": 400 }
+      }
+    },
+    "LeverWrapper_narrativeDistance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "allowedRange", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": { "enum": ["close_limited", "medium", "distant"] },
+        "allowedRange": { "type": "array", "items": { "enum": ["close_limited", "medium", "distant"] }, "minItems": 1, "uniqueItems": true },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "LeverWrapper_tense": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "allowedRange", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": { "enum": ["present", "past"] },
+        "allowedRange": { "type": "array", "items": { "enum": ["present", "past"] }, "minItems": 1, "uniqueItems": true },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "LeverWrapper_focalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": { "enum": ["single_focal_strict", "single_focal_soft"] },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "LeverWrapper_actorNamingFrequency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["firstReference", "subsequentReference", "epithetsAllowed"],
+          "properties": {
+            "firstReference": { "enum": ["name_or_render_descriptor"] },
+            "subsequentReference": { "enum": ["pronoun_until_ambiguity", "name_each_paragraph"] },
+            "epithetsAllowed": { "const": false }
+          }
+        },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "LeverWrapper_sentenceLengthDistribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": { "$ref": "#/$defs/SentenceLengthValue" },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "SentenceLengthValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["medianWordsMin", "medianWordsMax", "hardMaxWords", "shortSentenceShareMin"],
+      "properties": {
+        "medianWordsMin": { "type": "integer", "minimum": 3, "maximum": 30 },
+        "medianWordsMax": { "type": "integer", "minimum": 3, "maximum": 40 },
+        "hardMaxWords": { "type": "integer", "minimum": 10, "maximum": 60 },
+        "shortSentenceShareMin": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "LeverWrapper_clauseComplexityCeiling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["maxSubordinateClausesPerSentence", "nestedParentheticalsAllowed"],
+          "properties": {
+            "maxSubordinateClausesPerSentence": { "type": "integer", "minimum": 0, "maximum": 4 },
+            "nestedParentheticalsAllowed": { "type": "boolean" }
+          }
+        },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "LeverWrapper_dialogueDensity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": { "$ref": "#/$defs/DialogueDensityValue" },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "DialogueDensityValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["defaultLinesPerScene", "maxLinesPerScene", "requiresLicense"],
+      "properties": {
+        "defaultLinesPerScene": { "const": 0 },
+        "maxLinesPerScene": { "type": "integer", "minimum": 0, "maximum": 4 },
+        "requiresLicense": { "const": true }
+      }
+    },
+    "LeverWrapper_dialogueFunctionAllowlist": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["request", "refusal", "question", "answer", "command", "warning", "offer", "commitment", "report_of_observable", "misdirection"]
+          }
+        },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "LeverWrapper_expositionBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["maxOrientationSentencesPerScene", "backstoryAllowed"],
+          "properties": {
+            "maxOrientationSentencesPerScene": { "type": "integer", "minimum": 0, "maximum": 4 },
+            "backstoryAllowed": { "const": false }
+          }
+        },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "LeverWrapper_figurativeLanguageBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": { "$ref": "#/$defs/FigurativeBudgetValue" },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "FigurativeBudgetValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxFigurativePerScene", "allowedBasis", "personifiedAbstractionsAllowed"],
+      "properties": {
+        "maxFigurativePerScene": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "allowedBasis": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["physical_sensory_grounded"] }
+        },
+        "personifiedAbstractionsAllowed": { "const": false }
+      }
+    },
+    "LeverWrapper_abstractionBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": { "$ref": "#/$defs/AbstractionBudgetValue" },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "AbstractionBudgetValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxAbstractNounsPerScene", "narratorEpistemicNounsAllowed"],
+      "properties": {
+        "maxAbstractNounsPerScene": { "type": "integer", "minimum": 0, "maximum": 6 },
+        "narratorEpistemicNounsAllowed": { "const": false }
+      }
+    },
+    "LeverWrapper_temporalOrderPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": { "enum": ["strict_chronological", "chronological_with_licensed_recall"] },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "LeverWrapper_objectSpaceUsagePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["registeredAnchorsOnly", "minCausalAnchorUseInTurnScenes"],
+          "properties": {
+            "registeredAnchorsOnly": { "const": true },
+            "minCausalAnchorUseInTurnScenes": { "type": "integer", "minimum": 0, "maximum": 3 }
+          }
+        },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "LeverWrapper_endingMode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["setup", "turn", "aftermath", "transition", "ending"],
+          "properties": {
+            "setup": { "$ref": "#/$defs/EndingModeValue" },
+            "turn": { "$ref": "#/$defs/EndingModeValue" },
+            "aftermath": { "$ref": "#/$defs/EndingModeValue" },
+            "transition": { "$ref": "#/$defs/EndingModeValue" },
+            "ending": { "$ref": "#/$defs/EndingModeValue" }
+          }
+        },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "EndingModeValue": {
+      "enum": ["in_world_open", "in_world_settled", "in_world_closure"]
+    },
+    "LeverWrapper_forbiddenConstructionIds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": { "$ref": "#/$defs/IdentifierArray", "minItems": 1 },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "LeverWrapper_translationRobustnessReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "whyNeeded", "changesWith", "enforcement", "overtighteningFailure"],
+      "allOf": [ { "$ref": "#/$defs/LeverMeta" } ],
+      "properties": {
+        "value": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["layer", "humanConfirmationRequired"],
+          "properties": {
+            "layer": { "const": "heuristic_advisory" },
+            "humanConfirmationRequired": { "const": true }
+          }
+        },
+        "whyNeeded": true, "changesWith": true, "enforcement": true, "overtighteningFailure": true
+      }
+    },
+    "StyleState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stateId", "trigger", "leverOverrides", "factInvariance"],
+      "properties": {
+        "stateId": { "$ref": "#/$defs/Identifier" },
+        "trigger": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "Which deterministic engine input selects this state. Only the runtime may set styleStateId; the renderer model may not choose or change it."
+        },
+        "leverOverrides": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Bounded per-state lever value overrides. Only rhythm/density levers may move; facts, authority, and forbidden constructions never vary by state.",
+          "properties": {
+            "sentenceLengthDistribution": { "$ref": "#/$defs/SentenceLengthValue" },
+            "abstractionBudget": { "$ref": "#/$defs/AbstractionBudgetValue" },
+            "dialogueDensity": { "$ref": "#/$defs/DialogueDensityValue" },
+            "figurativeLanguageBudget": { "$ref": "#/$defs/FigurativeBudgetValue" }
+          }
+        },
+        "factInvariance": { "const": true }
+      }
+    }
+  }
+}

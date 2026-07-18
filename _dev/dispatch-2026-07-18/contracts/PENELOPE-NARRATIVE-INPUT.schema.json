@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "penelope-narrative-input.schema.json",
+  "title": "PenelopeNarrationInputEnvelope",
+  "description": "Internal pipeline envelope for one narration request. Only `modelFacing` is ever serialized to the renderer model. `privateValidation` exists solely for the deterministic post-validator. Subset constraints that JSON Schema cannot express (authorized*EventIds must be subsets of resolvedEvents[].eventId; every renderDescriptor/renderText/observableText authored only by creator or a registered deterministic transform; no raw engine summary/publicDescription text copied into camera-safe fields) are enforced by the deterministic preflight per AUTHORITY-CONTRACT rules AC-DATA-01..03 and AC-AUTH-01. Status: agent_proposed, CREATOR REVIEW REQUIRED.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["modelFacing", "privateValidation"],
+  "properties": {
+    "modelFacing": { "$ref": "#/$defs/ModelFacingNarrationRequest" },
+    "privateValidation": { "$ref": "#/$defs/PrivateNarrationValidationContext" }
+  },
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:-]*$",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "IdentifierArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Identifier" },
+      "uniqueItems": true
+    },
+    "CameraSafeText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 600,
+      "description": "Camera-safe rendering-layer text: concrete, observable, free of analytic vocabulary, engine field names, and raw engine summary wording. Authored before the model call by the creator or a registered deterministic transform only; the renderer model may never create or edit it. Verbatim copying of raw engine `summary`, analytic explanation, or `publicDescription` text into this field is a hard fail (AC-DATA-01)."
+    },
+    "PresentActor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entityId", "renderDescriptor", "sourceFactIds"],
+      "properties": {
+        "entityId": { "$ref": "#/$defs/Identifier" },
+        "renderDescriptor": { "$ref": "#/$defs/CameraSafeText" },
+        "sourceFactIds": { "$ref": "#/$defs/IdentifierArray", "minItems": 1 }
+      }
+    },
+    "VisibleFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["factId", "renderText"],
+      "properties": {
+        "factId": { "$ref": "#/$defs/Identifier" },
+        "renderText": { "$ref": "#/$defs/CameraSafeText" }
+      }
+    },
+    "ResolvedEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eventId", "observableText", "sourceAuthorityIds"],
+      "properties": {
+        "eventId": { "$ref": "#/$defs/Identifier" },
+        "observableText": { "$ref": "#/$defs/CameraSafeText" },
+        "sourceAuthorityIds": { "$ref": "#/$defs/IdentifierArray", "minItems": 1 }
+      }
+    },
+    "AuthorizedAnchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["anchorId", "renderDescriptor", "sourceFactIds"],
+      "properties": {
+        "anchorId": { "$ref": "#/$defs/Identifier" },
+        "renderDescriptor": { "$ref": "#/$defs/CameraSafeText" },
+        "sourceFactIds": { "$ref": "#/$defs/IdentifierArray", "minItems": 1 }
+      }
+    },
+    "LicensedRenderingDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "licenseId",
+        "issuer",
+        "issuerAuthorityId",
+        "issuedBeforeGeneration",
+        "category",
+        "contentBoundary",
+        "sourceAuthorityIds"
+      ],
+      "properties": {
+        "licenseId": { "$ref": "#/$defs/Identifier" },
+        "issuer": { "enum": ["creator", "deterministic_runtime"] },
+        "issuerAuthorityId": {
+          "$ref": "#/$defs/Identifier",
+          "description": "Points to a creator decision receipt or a registered deterministic rule. Fable, Codex, the renderer model, the linter, and any repair executor may not mint, broaden, infer, or backdate a license (AC-LIC-01..04)."
+        },
+        "issuedBeforeGeneration": { "const": true },
+        "category": {
+          "enum": ["gesture", "movement", "speech_act", "prop_use", "spatial_relation", "sensory_detail"]
+        },
+        "contentBoundary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400,
+          "description": "Narrow statement of exactly what may be realized under this license. Content outside this boundary is a hard fail."
+        },
+        "sourceAuthorityIds": { "$ref": "#/$defs/IdentifierArray", "minItems": 1 }
+      }
+    },
+    "ModelFacingNarrationRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The complete model-facing boundary. Withheld facts, forbidden inferences, private clocks, and creator-only notes have no field here and may never be added (AC-PRIV-01).",
+      "not": {
+        "anyOf": [
+          { "required": ["forbiddenKnowledgeIds"] },
+          { "required": ["forbiddenInferenceRuleIds"] },
+          { "required": ["creatorOnlyReviewNoteIds"] }
+        ]
+      },
+      "required": [
+        "sceneMode",
+        "languageProfileId",
+        "referenceReceiptId",
+        "focalActorId",
+        "presentActors",
+        "visibleFacts",
+        "resolvedEvents",
+        "authorizedActionEventIds",
+        "authorizedReactionEventIds",
+        "authorizedChangeEventIds",
+        "authorizedAnchors",
+        "licensedRenderingDetails",
+        "styleStateId",
+        "reservedActionIds"
+      ],
+      "properties": {
+        "sceneMode": { "enum": ["setup", "turn", "aftermath", "transition", "ending"] },
+        "languageProfileId": { "$ref": "#/$defs/Identifier" },
+        "referenceReceiptId": { "$ref": "#/$defs/Identifier" },
+        "focalActorId": { "$ref": "#/$defs/Identifier" },
+        "presentActors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PresentActor" },
+          "minItems": 1,
+          "maxItems": 12
+        },
+        "visibleFacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/VisibleFact" },
+          "minItems": 1,
+          "maxItems": 24
+        },
+        "resolvedEvents": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ResolvedEvent" },
+          "maxItems": 8,
+          "description": "May be empty for transition scenes. authorizedActionEventIds, authorizedReactionEventIds, and authorizedChangeEventIds must each be a subset of the eventIds listed here (deterministic preflight check AC-AUTH-01)."
+        },
+        "authorizedActionEventIds": { "$ref": "#/$defs/IdentifierArray" },
+        "authorizedReactionEventIds": { "$ref": "#/$defs/IdentifierArray" },
+        "authorizedChangeEventIds": { "$ref": "#/$defs/IdentifierArray" },
+        "authorizedAnchors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AuthorizedAnchor" },
+          "maxItems": 12
+        },
+        "licensedRenderingDetails": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/LicensedRenderingDetail" },
+          "maxItems": 12
+        },
+        "styleStateId": { "$ref": "#/$defs/Identifier" },
+        "reservedActionIds": {
+          "$ref": "#/$defs/IdentifierArray",
+          "description": "Runtime-owned candidate actions reserved for the participant. Nothing in prose may perform, preview, or reference them (AC-ACT-01)."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "sceneMode": { "const": "setup" } } },
+          "then": {
+            "properties": {
+              "authorizedActionEventIds": { "maxItems": 0 },
+              "authorizedReactionEventIds": { "maxItems": 0 },
+              "authorizedChangeEventIds": { "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "sceneMode": { "const": "turn" } } },
+          "then": {
+            "properties": {
+              "authorizedActionEventIds": { "minItems": 1 },
+              "authorizedReactionEventIds": { "minItems": 1 },
+              "authorizedChangeEventIds": { "minItems": 1 },
+              "resolvedEvents": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "sceneMode": { "const": "aftermath" } } },
+          "then": {
+            "properties": {
+              "authorizedActionEventIds": { "maxItems": 0 },
+              "authorizedChangeEventIds": { "minItems": 1 },
+              "resolvedEvents": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "sceneMode": { "const": "transition" } } },
+          "then": {
+            "properties": {
+              "authorizedActionEventIds": { "maxItems": 0 },
+              "authorizedReactionEventIds": { "maxItems": 0 },
+              "authorizedChangeEventIds": { "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "sceneMode": { "const": "ending" } } },
+          "then": {
+            "properties": {
+              "authorizedActionEventIds": { "maxItems": 0 },
+              "resolvedEvents": { "minItems": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "PrivateNarrationValidationContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Post-generation validation context only. Never serialized into a model request, model output schema, or public audit. Contents are IDs; private wording stays in the private store they point to.",
+      "required": ["forbiddenKnowledgeIds", "forbiddenInferenceRuleIds", "creatorOnlyReviewNoteIds"],
+      "properties": {
+        "forbiddenKnowledgeIds": { "$ref": "#/$defs/IdentifierArray" },
+        "forbiddenInferenceRuleIds": { "$ref": "#/$defs/IdentifierArray" },
+        "creatorOnlyReviewNoteIds": { "$ref": "#/$defs/IdentifierArray" }
+      }
+    }
+  }
+}

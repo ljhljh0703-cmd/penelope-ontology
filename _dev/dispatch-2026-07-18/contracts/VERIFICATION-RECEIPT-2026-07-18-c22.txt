@@ -1,0 +1,42 @@
+# VERIFICATION RECEIPT — fable-narrative-harness-v2
+date: 2026-07-18 | python: 3.11.15 | jsonschema: 4.26.0
+
+[PASS] JSON parse 8/8: PENELOPE-NARRATIVE-INPUT.schema.json, PENELOPE-SENTENCE-HARNESS.schema.json, PENELOPE-ENGLISH-STYLE-PROFILE.schema.json, PENELOPE-ENGLISH-STYLE-PROFILE.json, PENELOPE-NARRATIVE-OUTPUT.schema.json, PENELOPE-NARRATIVE-PIPELINE-ENVELOPE.schema.json, FABLE-NARRATIVE-PREFLIGHT.schema.json, FABLE-NARRATIVE-AUTHORITY-CONTRACT.json
+
+[PASS] Draft 2020-12 metaschema 6/6: PENELOPE-NARRATIVE-INPUT.schema.json, PENELOPE-SENTENCE-HARNESS.schema.json, PENELOPE-ENGLISH-STYLE-PROFILE.schema.json, PENELOPE-NARRATIVE-OUTPUT.schema.json, PENELOPE-NARRATIVE-PIPELINE-ENVELOPE.schema.json, FABLE-NARRATIVE-PREFLIGHT.schema.json
+
+[PASS] T01 style-profile instance validates against its schema (expected=valid, got=valid)
+
+[PASS] T02 preflight: setup carrying a change beat is rejected (fake-change guard) (expected=reject, got=reject)
+[PASS] T03 preflight: valid turn (action+reaction+change+plain change) accepted (expected=valid, got=valid)
+[PASS] T04 preflight: valid setup (no beats, no change field) accepted (expected=valid, got=valid)
+[PASS] T05 preflight: licensed dialogue without plain intent rejected (expected=reject, got=reject)
+[PASS] T06 preflight (AC-DLG-01): licensed dialogue with NO speech event/license rejected — general events cannot authorize speech (expected=reject, got=reject)
+[PASS] T07 preflight (AC-DLG-01): licensed dialogue bound to speech_act license accepted (expected=valid, got=valid)
+
+[PASS] T08 harness: sentence plan with no source/license anchoring rejected (expected=reject, got=reject)
+[PASS] T09 harness: setup containing a change-claiming role rejected (expected=reject, got=reject)
+[PASS] T10 harness: valid setup plan (orientation + in-world stop, changesState all false) accepted (expected=valid, got=valid)
+[PASS] T11 harness: turn missing action/reaction/consequence roles rejected (expected=reject, got=reject)
+[PASS] T12 harness (AC-DLG-01): licensed_dialogue bound only to a GENERAL event rejected (expected=reject, got=reject)
+[PASS] T13 harness (AC-DLG-01): licensed_dialogue bound to typed speech event accepted (expected=valid, got=valid)
+[PASS] T14 harness: non-dialogue role carrying speechEventIds rejected (expected=reject, got=reject)
+
+[PASS] T15 input: valid envelope (modelFacing + privateValidation) accepted (expected=valid, got=valid)
+[PASS] T16 input: private field inside modelFacing rejected (expected=reject, got=reject)
+[PASS] T17 input: turn without authorized beat events rejected (expected=reject, got=reject)
+
+[PASS] T18 output root: ModelNarrationOutput alone validates (no renderAudit required or allowed) (expected=valid, got=valid)
+[PASS] T19 output root: renderAudit inside model output rejected (separation) (expected=reject, got=reject)
+[PASS] T20 envelope root: envelope with external $ref to model output validates (expected=valid, got=valid)
+[PASS] T21 envelope root: free-text field inside renderAudit rejected (expected=reject, got=reject)
+[PASS] T22 output root (AC-DLG-01): dialogue receipt bound only to general event rejected (expected=reject, got=reject)
+
+[PASS] T23 content: listed public-exclusion markers absent from Markdown/JSON artifacts (expected=valid, got=valid)
+
+[PASS] T24 contract-consistency: every rule severity exists in severityMatrix and owner is allowed by that class (expected=valid, got=valid)
+   contract=candidate-2.2 rules=36 owner-split={'deterministic_preflight': 18, 'deterministic_post_validator': 12, 'heuristic': 1, 'human_review': 5}
+
+============================================================
+TOTAL 24 checks | PASS 24 | FAIL 0
+ALL PASS — receipt 정본은 이 출력의 저장본이다. 스키마 외 검증(의미·ID 실존·hardPass 함의)은 Codex 구현 범위.

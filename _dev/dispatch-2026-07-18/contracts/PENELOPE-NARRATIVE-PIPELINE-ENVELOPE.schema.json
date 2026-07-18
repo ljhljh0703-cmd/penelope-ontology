@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "penelope-narrative-pipeline-envelope.schema.json",
+  "title": "NarrationPipelineEnvelope",
+  "description": "ROOT SCHEMA for the internal pipeline envelope (gate repair 2026-07-17: separated from the model output schema). The deterministic post-validator — never the model — assembles this envelope after generation by attaching renderAudit to the model's ModelNarrationOutput. The model neither sees nor produces this type. renderAudit is generated using PrivateNarrationValidationContext but may carry only rule codes, counts, booleans, and public-safe severities; no free-text field exists, so private wording cannot be serialized here by construction. Status: agent_proposed, CREATOR REVIEW REQUIRED.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["modelOutput", "renderAudit"],
+  "properties": {
+    "modelOutput": {
+      "$ref": "penelope-narrative-output.schema.json",
+      "description": "The unmodified model return value, validated against its own root schema before this envelope is assembled."
+    },
+    "renderAudit": { "$ref": "#/$defs/RenderAudit" }
+  },
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:-]*$",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "IdentifierArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Identifier" },
+      "uniqueItems": true
+    },
+    "RenderAuditFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ruleCode", "severity", "count"],
+      "properties": {
+        "ruleCode": {
+          "type": "string",
+          "pattern": "^(AC|FC|WF)-[A-Z0-9-]{2,24}$",
+          "description": "Public-safe rule code only. Never a private ID, private wording, withheld phrase, or creator-only note."
+        },
+        "severity": { "enum": ["info", "warning", "hard_fail"] },
+        "count": { "type": "integer", "minimum": 0, "maximum": 999 }
+      }
+    },
+    "RenderAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Produced only by the deterministic post-validator, which alone may consult PrivateNarrationValidationContext. Allowed content is rule codes, counts, booleans, and public-safe severities. hardPass must be false whenever any finding carries severity hard_fail — this implication is a deterministic post-validator obligation (Codex implementation scope), stated here because JSON Schema alone does not enforce it.",
+      "required": ["generatedBy", "usedSourceIds", "findings", "hardPass", "warningCount"],
+      "properties": {
+        "generatedBy": { "const": "deterministic_post_validator" },
+        "usedSourceIds": {
+          "$ref": "#/$defs/IdentifierArray",
+          "description": "Model-facing source IDs actually cited by the plan receipt. Private-context IDs are forbidden here; the validator reports private findings only as rule codes with counts."
+        },
+        "findings": {
+          "type": "array",
+          "maxItems": 64,
+          "items": { "$ref": "#/$defs/RenderAuditFinding" }
+        },
+        "hardPass": { "type": "boolean" },
+        "warningCount": { "type": "integer", "minimum": 0, "maximum": 999 }
+      }
+    }
+  }
+}

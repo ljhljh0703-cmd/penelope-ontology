@@ -1,0 +1,216 @@
+{
+  "profileId": "en-penelope-v1",
+  "languageTag": "en",
+  "version": "0.1.0",
+  "status": "agent_proposed",
+  "levers": {
+    "narrativeDistance": {
+      "value": "close_limited",
+      "allowedRange": ["close_limited", "medium"],
+      "whyNeeded": "Bounds what the narrator may perceive to the focal character's perception, which is the same boundary the engine already enforces on facts; distance drift is how narrator omniscience and knowledge leaks begin.",
+      "changesWith": "Fixed per scenario; not state-driven.",
+      "enforcement": "heuristic",
+      "overtighteningFailure": "If distance is policed sentence-by-sentence, legitimate orientation sentences get flagged and scenes lose the ability to establish place at all."
+    },
+    "tense": {
+      "value": "present",
+      "allowedRange": ["present", "past"],
+      "whyNeeded": "A single declared tense prevents drift between scenes and matches the rehearsal-surface framing of the product; the value itself is a creator decision, not a quality claim.",
+      "changesWith": "Creator decision only; never state-driven.",
+      "enforcement": "deterministic_check",
+      "overtighteningFailure": "None structural; the risk is choosing the wrong value for the product, which is why the alternative stays in allowedRange for creator review."
+    },
+    "focalization": {
+      "value": "single_focal_strict",
+      "whyNeeded": "One focal lane per scene is what makes knowledge-boundary validation meaningful; multi-focal prose would make private-knowledge screening undecidable.",
+      "changesWith": "Fixed; a different focal character is a different request, not a lever change.",
+      "enforcement": "deterministic_check",
+      "overtighteningFailure": "Strict mode rejects harmless communal observations; if review shows this, the soft variant is the fallback, by creator decision."
+    },
+    "actorNamingFrequency": {
+      "value": {
+        "firstReference": "name_or_render_descriptor",
+        "subsequentReference": "pronoun_until_ambiguity",
+        "epithetsAllowed": false
+      },
+      "whyNeeded": "Naming policy is where epic pastiche enters English prose; banning epithets and fixing reference behavior removes the most common fake-Homeric marker without any taste judgment.",
+      "changesWith": "Fixed.",
+      "enforcement": "heuristic",
+      "overtighteningFailure": "Aggressive pronoun policy in scenes with two same-gender actors creates reference ambiguity; the until-ambiguity clause exists exactly for that case."
+    },
+    "sentenceLengthDistribution": {
+      "value": {
+        "medianWordsMin": 8,
+        "medianWordsMax": 16,
+        "hardMaxWords": 30,
+        "shortSentenceShareMin": 0.1
+      },
+      "whyNeeded": "Length distribution is the measurable half of rhythm; a ceiling on sentence length blocks the run-on accumulation typical of machine prose, and a short-sentence floor keeps pressure expressible.",
+      "changesWith": "styleStateId (state overrides tighten the distribution under pressure states).",
+      "enforcement": "heuristic",
+      "overtighteningFailure": "Hard numeric enforcement produces chopped, metronomic prose; that is why this is a distribution target with heuristic ownership, not a per-sentence gate."
+    },
+    "clauseComplexityCeiling": {
+      "value": {
+        "maxSubordinateClausesPerSentence": 2,
+        "nestedParentheticalsAllowed": false
+      },
+      "whyNeeded": "Clause stacking is the structural form of translationese and of lecture-like narration; a ceiling keeps syntax concrete without prescribing any positive style.",
+      "changesWith": "Fixed.",
+      "enforcement": "heuristic",
+      "overtighteningFailure": "A ceiling of one would forbid ordinary cause-and-result sentences and force fragment-like output, which is itself a forbidden construction."
+    },
+    "dialogueDensity": {
+      "value": {
+        "defaultLinesPerScene": 0,
+        "maxLinesPerScene": 2,
+        "requiresLicense": true
+      },
+      "whyNeeded": "Dialogue is the highest-invention-risk channel; the default of zero with licensed exceptions encodes the repaired rule that dialogue is never expected and never free.",
+      "changesWith": "dialogueAuthority.mode in the preflight receipt; nothing else.",
+      "enforcement": "deterministic_check",
+      "overtighteningFailure": "If the ceiling stays at zero in practice because licenses are never issued, scenes with natural speakers will read as artificially mute; that is a creator policy signal, not a lever defect."
+    },
+    "dialogueFunctionAllowlist": {
+      "value": ["request", "refusal", "question", "answer", "command", "warning", "offer", "commitment", "report_of_observable", "misdirection"],
+      "whyNeeded": "Restricting speech to enumerated speech acts is what makes a line checkable: an act either changes information, action, relationship, or commitment, or it has no license to exist.",
+      "changesWith": "Creator amendments to the allowlist only.",
+      "enforcement": "deterministic_check",
+      "overtighteningFailure": "Too small an allowlist forces every utterance into command/question shapes and flattens character interaction; amendments go through correction ingestion."
+    },
+    "expositionBudget": {
+      "value": {
+        "maxOrientationSentencesPerScene": 2,
+        "backstoryAllowed": false
+      },
+      "whyNeeded": "Uncapped orientation is where input recitation returns; a small budget forces the scene to spend words on sourced events rather than on restating the situation.",
+      "changesWith": "sceneMode (setup scenes may use the full budget; turn scenes should rarely need it).",
+      "enforcement": "heuristic",
+      "overtighteningFailure": "A budget of zero makes scene openings unintelligible after a fork, because the reader loses place and time anchoring."
+    },
+    "figurativeLanguageBudget": {
+      "value": {
+        "maxFigurativePerScene": 1,
+        "allowedBasis": ["physical_sensory_grounded"],
+        "personifiedAbstractionsAllowed": false
+      },
+      "whyNeeded": "Machine prose signals literariness through figuration density; one physically grounded figure at most keeps imagery available while structurally excluding the personified-abstraction opener and the speaking-body-part metaphor.",
+      "changesWith": "styleStateId (pressure states may reduce to zero).",
+      "enforcement": "heuristic",
+      "overtighteningFailure": "Zero across all states produces affectless inventory prose, which then invites abstraction to carry feeling — the exact failure being prevented."
+    },
+    "abstractionBudget": {
+      "value": {
+        "maxAbstractNounsPerScene": 2,
+        "narratorEpistemicNounsAllowed": false
+      },
+      "whyNeeded": "Abstract-noun density is the strongest measurable correlate of the rejected analytic register; the epistemic-noun ban keeps narrator certainty-reporting out regardless of density.",
+      "changesWith": "styleStateId (pressure states tighten to fewer).",
+      "enforcement": "heuristic",
+      "overtighteningFailure": "At zero, sentences about stakes become impossible to write without contortion; two per scene is the working ceiling pending creator review."
+    },
+    "temporalOrderPolicy": {
+      "value": "strict_chronological",
+      "whyNeeded": "Chronological rendering is what keeps causality legible and machine-checkable against the event sequence; reordering is where invented causation hides.",
+      "changesWith": "Only a licensed recall detail (sensory_detail category) may interrupt order, hence the second allowed value exists for creator consideration.",
+      "enforcement": "deterministic_check",
+      "overtighteningFailure": "Strict order forbids even licensed recollection; if the creator wants memory beats, the policy moves to chronological_with_licensed_recall rather than being silently ignored."
+    },
+    "objectSpaceUsagePolicy": {
+      "value": {
+        "registeredAnchorsOnly": true,
+        "minCausalAnchorUseInTurnScenes": 1
+      },
+      "whyNeeded": "Concreteness must come from registered anchors, not renderer-invented props; requiring one causal anchor use in turn scenes keeps objects doing work instead of decorating.",
+      "changesWith": "sceneMode (the minimum applies to turn scenes only).",
+      "enforcement": "deterministic_check",
+      "overtighteningFailure": "Requiring anchor use in every mode forces setup and transition scenes to manufacture object business, which is fake activity — the same disease as fake change."
+    },
+    "endingMode": {
+      "value": {
+        "setup": "in_world_open",
+        "turn": "in_world_open",
+        "aftermath": "in_world_settled",
+        "transition": "in_world_open",
+        "ending": "in_world_closure"
+      },
+      "whyNeeded": "Each scene type has a different legitimate stopping shape; typing them prevents both reader-addressed handoffs and false closure on non-terminal scenes.",
+      "changesWith": "sceneMode.",
+      "enforcement": "heuristic",
+      "overtighteningFailure": "Treating the ending shape as deterministic would auto-reject legitimate variations; the shape check flags, the creator decides."
+    },
+    "forbiddenConstructionIds": {
+      "value": ["FC-01", "FC-02", "FC-03", "FC-04", "FC-05", "FC-06", "FC-07", "FC-08", "FC-09", "FC-10"],
+      "whyNeeded": "Named, detectable constructions replace taste adjectives; each entry carries a structural detection criterion in the authority contract and a provenance (craft-reference failure mode or creator correction receipt).",
+      "changesWith": "Creator corrections only (additive under lock, with receipt IDs).",
+      "enforcement": "heuristic",
+      "overtighteningFailure": "Over-broad detectors flag legitimate syntax; every FC entry therefore records its false-positive risk in the authority contract, and heuristics flag rather than fail."
+    },
+    "translationRobustnessReview": {
+      "value": {
+        "layer": "heuristic_advisory",
+        "humanConfirmationRequired": true
+      },
+      "whyNeeded": "The original rejection surfaced through a translated rendering; an advisory pass asks whether each sentence's structure would survive literal translation without becoming a report, feeding a future Korean lane decision.",
+      "changesWith": "Fixed until a Korean lane decision exists.",
+      "enforcement": "human_review",
+      "overtighteningFailure": "Treating this as a gate would let a hypothetical translation veto English prose; it stays advisory and human-owned."
+    }
+  },
+  "styleStates": [
+    {
+      "stateId": "en-penelope-state-baseline",
+      "trigger": "Default engine state: no threat clock at or above its warning threshold, as mapped by the deterministic runtime to styleStateId.",
+      "leverOverrides": {},
+      "factInvariance": true
+    },
+    {
+      "stateId": "en-penelope-state-elevated",
+      "trigger": "Deterministic runtime maps a rising threat clock (at warning threshold) to this state.",
+      "leverOverrides": {
+        "sentenceLengthDistribution": {
+          "medianWordsMin": 6,
+          "medianWordsMax": 13,
+          "hardMaxWords": 24,
+          "shortSentenceShareMin": 0.2
+        },
+        "abstractionBudget": {
+          "maxAbstractNounsPerScene": 1,
+          "narratorEpistemicNounsAllowed": false
+        }
+      },
+      "factInvariance": true
+    },
+    {
+      "stateId": "en-penelope-state-critical",
+      "trigger": "Deterministic runtime maps a threat clock at its maximum, or a terminal compromised route, to this state.",
+      "leverOverrides": {
+        "sentenceLengthDistribution": {
+          "medianWordsMin": 5,
+          "medianWordsMax": 11,
+          "hardMaxWords": 20,
+          "shortSentenceShareMin": 0.3
+        },
+        "abstractionBudget": {
+          "maxAbstractNounsPerScene": 0,
+          "narratorEpistemicNounsAllowed": false
+        },
+        "figurativeLanguageBudget": {
+          "maxFigurativePerScene": 0,
+          "allowedBasis": ["physical_sensory_grounded"],
+          "personifiedAbstractionsAllowed": false
+        },
+        "dialogueDensity": {
+          "defaultLinesPerScene": 0,
+          "maxLinesPerScene": 1,
+          "requiresLicense": true
+        }
+      },
+      "factInvariance": true
+    }
+  ],
+  "correctionIngestion": {
+    "policy": "additive_under_lock",
+    "entries": []
+  }
+}

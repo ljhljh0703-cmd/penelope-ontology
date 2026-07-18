@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fable-narrative-preflight.schema.json",
+  "title": "PenelopeNarrationPreflightReceipt",
+  "description": "Preflight receipt required before any later prose attempt (repair brief section 4). A generation lane may draft only after a receipt validates against this schema AND passes the deterministic subset checks (all cited IDs exist in the paired input envelope). No permissive catch-all fields; every free-text interpretation carries field-level source authority IDs. creatorReviewRequired is structurally true. Status: agent_proposed, CREATOR REVIEW REQUIRED.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["preflightId", "sceneMode", "sceneAuthority", "referenceReceipt", "plainDramaticPlan", "dialogueAuthority", "creatorReviewRequired"],
+  "properties": {
+    "preflightId": { "$ref": "#/$defs/Identifier" },
+    "sceneMode": { "enum": ["setup", "turn", "aftermath", "transition", "ending"] },
+    "sceneAuthority": { "$ref": "#/$defs/SceneAuthority" },
+    "referenceReceipt": { "$ref": "#/$defs/ReferenceReceipt" },
+    "plainDramaticPlan": { "$ref": "#/$defs/PlainDramaticPlan" },
+    "dialogueAuthority": { "$ref": "#/$defs/DialogueAuthority" },
+    "creatorReviewRequired": { "const": true }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "sceneMode": { "const": "turn" } } },
+      "then": {
+        "properties": {
+          "plainDramaticPlan": {
+            "required": ["changeInPlainTerms"],
+            "properties": {
+              "actionSourceEventIds": { "minItems": 1 },
+              "reactionSourceEventIds": { "minItems": 1 },
+              "changeSourceEventIds": { "minItems": 1 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "sceneMode": { "enum": ["setup", "transition"] } } },
+      "then": {
+        "properties": {
+          "plainDramaticPlan": {
+            "not": { "required": ["changeInPlainTerms"] },
+            "properties": {
+              "actionSourceEventIds": { "maxItems": 0 },
+              "reactionSourceEventIds": { "maxItems": 0 },
+              "changeSourceEventIds": { "maxItems": 0 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "sceneMode": { "const": "aftermath" } } },
+      "then": {
+        "properties": {
+          "plainDramaticPlan": {
+            "properties": {
+              "actionSourceEventIds": { "maxItems": 0 },
+              "changeSourceEventIds": { "minItems": 1 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "sceneMode": { "const": "ending" } } },
+      "then": {
+        "properties": {
+          "plainDramaticPlan": {
+            "properties": {
+              "actionSourceEventIds": { "maxItems": 0 }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_.:-]*$",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "IdentifierArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Identifier" },
+      "uniqueItems": true
+    },
+    "AuthorityText": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Free-text interpretation bound to authority: text may exist only with non-empty source authority IDs.",
+      "required": ["text", "sourceAuthorityIds"],
+      "properties": {
+        "text": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "sourceAuthorityIds": { "$ref": "#/$defs/IdentifierArray", "minItems": 1 }
+      }
+    },
+    "LicensedRenderingDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["licenseId", "issuer", "issuerAuthorityId", "issuedBeforeGeneration", "category", "contentBoundary", "sourceAuthorityIds"],
+      "properties": {
+        "licenseId": { "$ref": "#/$defs/Identifier" },
+        "issuer": { "enum": ["creator", "deterministic_runtime"] },
+        "issuerAuthorityId": { "$ref": "#/$defs/Identifier" },
+        "issuedBeforeGeneration": { "const": true },
+        "category": { "enum": ["gesture", "movement", "speech_act", "prop_use", "spatial_relation", "sensory_detail"] },
+        "contentBoundary": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "sourceAuthorityIds": { "$ref": "#/$defs/IdentifierArray", "minItems": 1 }
+      }
+    },
+    "SceneAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["factIds", "eventIds", "actorEntityIds", "licensedRenderingDetailIds", "licensedRenderingDetails"],
+      "properties": {
+        "factIds": { "$ref": "#/$defs/IdentifierArray" },
+        "eventIds": { "$ref": "#/$defs/IdentifierArray" },
+        "actorEntityIds": { "$ref": "#/$defs/IdentifierArray", "minItems": 1 },
+        "licensedRenderingDetailIds": { "$ref": "#/$defs/IdentifierArray" },
+        "licensedRenderingDetails": {
+          "type": "array",
+          "maxItems": 12,
+          "items": { "$ref": "#/$defs/LicensedRenderingDetail" }
+        }
+      }
+    },
+    "ReferenceReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "referenceId", "transferableTechniqueIds", "sceneApplicability", "forbiddenImitation", "excludedGimmicks"],
+      "properties": {
+        "status": { "enum": ["available", "unavailable"] },
+        "referenceId": { "$ref": "#/$defs/Identifier" },
+        "transferableTechniqueIds": {
+          "$ref": "#/$defs/IdentifierArray",
+          "maxItems": 2,
+          "description": "At most two transferable techniques per scene (repair brief section 2 step 3)."
+        },
+        "sceneApplicability": {
+          "type": "array",
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["techniqueId", "plainReason"],
+            "properties": {
+              "techniqueId": { "$ref": "#/$defs/Identifier" },
+              "plainReason": { "type": "string", "minLength": 1, "maxLength": 300 }
+            }
+          }
+        },
+        "forbiddenImitation": { "const": true },
+        "excludedGimmicks": {
+          "$ref": "#/$defs/IdentifierArray",
+          "minItems": 1,
+          "description": "FC-registry IDs screened out for this scene."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "unavailable" } } },
+          "then": {
+            "properties": {
+              "transferableTechniqueIds": { "maxItems": 0 },
+              "sceneApplicability": { "maxItems": 0 }
+            },
+            "description": "An unavailable reference is a STOP: this receipt records the stop; no drafting may follow."
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "available" } } },
+          "then": {
+            "properties": {
+              "transferableTechniqueIds": { "minItems": 1 },
+              "sceneApplicability": { "minItems": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "PlainDramaticPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Stated without literary phrasing. Fields the sources do not establish remain absent; a scene type must not pretend otherwise (enforced per sceneMode at the top level).",
+      "required": ["focalActorId", "actionSourceEventIds", "reactionSourceEventIds", "changeSourceEventIds"],
+      "properties": {
+        "focalActorId": { "$ref": "#/$defs/Identifier" },
+        "immediateWant": { "$ref": "#/$defs/AuthorityText" },
+        "immediateObstacle": { "$ref": "#/$defs/AuthorityText" },
+        "actionSourceEventIds": { "$ref": "#/$defs/IdentifierArray" },
+        "reactionSourceEventIds": { "$ref": "#/$defs/IdentifierArray" },
+        "changeSourceEventIds": { "$ref": "#/$defs/IdentifierArray" },
+        "changeInPlainTerms": { "$ref": "#/$defs/AuthorityText" }
+      }
+    },
+    "DialogueAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Gate repair 2026-07-17: dialogue binds directly to a typed speech event or a pre-issued speech_act license ID; a general resolved event can never authorize dialogue (AC-DLG-01). Cited speechActLicenseIds must resolve to licenses with category speech_act; speechEventIds must resolve to events whose registered kind is speech — both verified by deterministic preflight.",
+      "required": ["mode", "speakerId", "speechAct", "speechEventIds", "speechActLicenseIds", "authorizedContentIds", "plainIntent", "plainIntentSourceAuthorityIds"],
+      "properties": {
+        "mode": { "enum": ["none", "licensed"] },
+        "speakerId": { "oneOf": [ { "type": "null" }, { "$ref": "#/$defs/Identifier" } ] },
+        "speechAct": {
+          "oneOf": [
+            { "type": "null" },
+            { "enum": ["request", "refusal", "question", "answer", "command", "warning", "offer", "commitment", "report_of_observable", "misdirection"] }
+          ]
+        },
+        "speechEventIds": { "$ref": "#/$defs/IdentifierArray" },
+        "speechActLicenseIds": { "$ref": "#/$defs/IdentifierArray" },
+        "authorizedContentIds": { "$ref": "#/$defs/IdentifierArray" },
+        "plainIntent": { "oneOf": [ { "type": "null" }, { "type": "string", "minLength": 1, "maxLength": 300 } ] },
+        "plainIntentSourceAuthorityIds": { "$ref": "#/$defs/IdentifierArray" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mode": { "const": "none" } } },
+          "then": {
+            "properties": {
+              "speakerId": { "type": "null" },
+              "speechAct": { "type": "null" },
+              "speechEventIds": { "maxItems": 0 },
+              "speechActLicenseIds": { "maxItems": 0 },
+              "authorizedContentIds": { "maxItems": 0 },
+              "plainIntent": { "type": "null" },
+              "plainIntentSourceAuthorityIds": { "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "mode": { "const": "licensed" } } },
+          "then": {
+            "properties": {
+              "speakerId": { "$ref": "#/$defs/Identifier" },
+              "speechAct": { "enum": ["request", "refusal", "question", "answer", "command", "warning", "offer", "commitment", "report_of_observable", "misdirection"] },
+              "authorizedContentIds": { "minItems": 1 },
+              "plainIntent": { "type": "string", "minLength": 1, "maxLength": 300 },
+              "plainIntentSourceAuthorityIds": { "minItems": 1 }
+            },
+            "anyOf": [
+              { "properties": { "speechEventIds": { "minItems": 1 } } },
+              { "properties": { "speechActLicenseIds": { "minItems": 1 } } }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

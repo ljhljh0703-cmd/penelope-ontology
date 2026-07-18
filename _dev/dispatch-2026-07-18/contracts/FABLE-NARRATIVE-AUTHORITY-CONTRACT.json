@@ -1,0 +1,600 @@
+{
+  "contractId": "fable-narrative-authority-contract",
+  "version": "candidate-2.2",
+  "status": "agent_proposed",
+  "creatorReviewRequired": true,
+  "note": "Repaired successor to pass-1 candidate-1. No rule here is creator-owned; nothing in this contract certifies literary quality. failureShape/passShape are structural descriptions by design — this pass contains no example sentences. candidate-2.1 (gate repair 2026-07-17): (1) ModelNarrationOutput and NarrationPipelineEnvelope split into separate root schemas; (2) AC-DLG-01 added — licensed_dialogue binds only to typed speech events or pre-issued speech_act licenses, never to general resolved events. candidate-2.2 (2026-07-18, creator-approved minimal mapping): five rule-local severity/owner fields aligned to severityMatrix — no other rule statement, schema, prose policy, or scene behavior changed. Executable split preserved: preflight 18 / post-validator 12 / heuristic 1 / human-owned 5.",
+  "registries": {
+    "sceneModes": [
+      "setup",
+      "turn",
+      "aftermath",
+      "transition",
+      "ending"
+    ],
+    "sentenceRoles": [
+      "orientation",
+      "authorized_action",
+      "observable_reaction",
+      "resolved_consequence",
+      "pressure",
+      "licensed_dialogue",
+      "in_world_stop"
+    ],
+    "speechActs": [
+      "request",
+      "refusal",
+      "question",
+      "answer",
+      "command",
+      "warning",
+      "offer",
+      "commitment",
+      "report_of_observable",
+      "misdirection"
+    ],
+    "licenseCategories": [
+      "gesture",
+      "movement",
+      "speech_act",
+      "prop_use",
+      "spatial_relation",
+      "sensory_detail"
+    ],
+    "licenseIssuers": [
+      "creator",
+      "deterministic_runtime"
+    ]
+  },
+  "transferableTechniques": [
+    {
+      "id": "TT-01",
+      "technique": "Emotion carried by an authorized physical response instead of an explanatory emotion label",
+      "applicabilityRule": "Usable only when a resolved event or license authorizes the physical response itself",
+      "imitationBoundary": "Technique only; no wording or gesture vocabulary from the reference may be reproduced"
+    },
+    {
+      "id": "TT-02",
+      "technique": "An authorized object or spatial feature reveals character or alters the action",
+      "applicabilityRule": "Object must be a registered anchor doing causal work; decorative objects are not added",
+      "imitationBoundary": "Technique only"
+    },
+    {
+      "id": "TT-03",
+      "technique": "Dialogue alters information, action, relationship, or commitment in the present beat",
+      "applicabilityRule": "Requires dialogueAuthority.mode = licensed with an enumerated speech act",
+      "imitationBoundary": "Technique only"
+    },
+    {
+      "id": "TT-04",
+      "technique": "Theme produced by accumulated action and consequence, never taught by a character",
+      "applicabilityRule": "Cross-scene property; no single sentence may state the theme",
+      "imitationBoundary": "Technique only"
+    },
+    {
+      "id": "TT-05",
+      "technique": "Sensory transition used only when the source authorizes the sensation and the transition has a scene function",
+      "applicabilityRule": "Requires a sensory_detail license or an event-sourced sensation",
+      "imitationBoundary": "Technique only"
+    }
+  ],
+  "forbiddenConstructions": [
+    {
+      "id": "FC-01",
+      "name": "theme_teaching_dialogue",
+      "detectionCriterion": "A licensed_dialogue sentence whose plain intent explains the theme, the rules of the world, or the speaker's own inner state as commentary rather than performing an enumerated speech act",
+      "origin": "craft-reference failure mode",
+      "falsePositiveRisk": "low",
+      "owner": "heuristic"
+    },
+    {
+      "id": "FC-02",
+      "name": "quotable_line_seeking",
+      "detectionCriterion": "A sentence with no bound plan role whose form is a general-truth assertion detached from present actors, objects, or events",
+      "origin": "craft-reference failure mode",
+      "falsePositiveRisk": "medium",
+      "owner": "heuristic"
+    },
+    {
+      "id": "FC-03",
+      "name": "cryptic_aphorism",
+      "detectionCriterion": "Dialogue shaped as riddle, maxim, or symbolic slogan; plain intent cannot be stated as one of the enumerated speech acts without residue",
+      "origin": "craft-reference failure mode",
+      "falsePositiveRisk": "low",
+      "owner": "heuristic"
+    },
+    {
+      "id": "FC-04",
+      "name": "personified_abstraction",
+      "detectionCriterion": "An abstract noun or place as grammatical agent of a volitional verb in narrator voice, especially as a scene opener",
+      "origin": "craft-reference failure mode",
+      "falsePositiveRisk": "medium",
+      "owner": "heuristic"
+    },
+    {
+      "id": "FC-05",
+      "name": "surrogate_speaker_metaphor",
+      "detectionCriterion": "A construction in which a body part, object, or abstraction is said to speak, answer, or decide on behalf of a character",
+      "origin": "craft-reference failure mode",
+      "falsePositiveRisk": "low",
+      "owner": "heuristic"
+    },
+    {
+      "id": "FC-06",
+      "name": "ornamental_inversion",
+      "detectionCriterion": "Marked departure from canonical English constituent order used for elevation rather than information structure",
+      "origin": "craft-reference failure mode",
+      "falsePositiveRisk": "medium",
+      "owner": "heuristic"
+    },
+    {
+      "id": "FC-07",
+      "name": "fragment_afterthought",
+      "detectionCriterion": "A verbless or subjectless fragment appended after a complete sentence for lingering effect in narrator voice",
+      "origin": "craft-reference failure mode; parallel class exists in the creator's Korean harness as a dated creator correction — the English entry is a parallel construction, not a translation",
+      "falsePositiveRisk": "medium",
+      "owner": "heuristic"
+    },
+    {
+      "id": "FC-08",
+      "name": "fake_archaism",
+      "detectionCriterion": "Archaic diction, epic epithets, or period syntax absent from the style profile's allowed register",
+      "origin": "pass-1 finding retained; craft-reference failure mode",
+      "falsePositiveRisk": "low",
+      "owner": "heuristic"
+    },
+    {
+      "id": "FC-09",
+      "name": "nominal_abstraction_translationese",
+      "detectionCriterion": "Chains of abstract nominalizations with eventive passives erasing available agents, producing report register in narrator voice",
+      "origin": "pass-1 finding retained; craft-reference failure mode; parallel class in the creator's Korean harness",
+      "falsePositiveRisk": "medium",
+      "owner": "heuristic"
+    },
+    {
+      "id": "FC-10",
+      "name": "mirrored_wrapup",
+      "detectionCriterion": "Perfectly symmetric scene assembly or an explicit internal conclusion that resolves the scene's meaning for the reader",
+      "origin": "craft-reference failure mode",
+      "falsePositiveRisk": "medium",
+      "owner": "heuristic"
+    }
+  ],
+  "rules": [
+    {
+      "id": "AC-DATA-01",
+      "statement": "renderDescriptor, renderText, and observableText are authored before the model call by the creator or a registered deterministic transform only; copying raw engine summary, analytic explanation, or publicDescription wording into them is a hard fail",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Pass-1 root cause: engine-register input became prose diction",
+      "failureShape": "A camera-safe field containing engine-inspection phrasing or a verbatim run from a raw engine record",
+      "passShape": "A camera-safe field stating only what a camera or the focal character could register, bound to source IDs"
+    },
+    {
+      "id": "AC-DATA-02",
+      "statement": "The renderer model may not create, edit, extend, or reinterpret any camera-safe field; it consumes them as constraints",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_post_validator",
+      "rationale": "Separates representation authorship from rendering",
+      "failureShape": "Model output introducing content absent from every camera-safe field, license, and event",
+      "passShape": "All prose content traceable to supplied fields via the plan receipt"
+    },
+    {
+      "id": "AC-DATA-03",
+      "statement": "Analytic vocabulary and engine field names are forbidden inside camera-safe fields at authoring time",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Leak prevention must happen at the seam, not after generation",
+      "failureShape": "A renderText carrying epistemic-report nouns or schema field names",
+      "passShape": "Concrete perceptual wording only"
+    },
+    {
+      "id": "AC-AUTH-01",
+      "statement": "authorizedActionEventIds, authorizedReactionEventIds, and authorizedChangeEventIds must each be a subset of resolvedEvents[].eventId",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Authority cannot exceed what the engine resolved",
+      "failureShape": "An authorized list citing an eventId absent from resolvedEvents",
+      "passShape": "Every authorized ID resolvable to a supplied event"
+    },
+    {
+      "id": "AC-AUTH-02",
+      "statement": "Every sentence plan must bind to at least one existing source fact, source event, or pre-issued license; plans citing unknown IDs are invalid",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Done-gate requirement: no unanchored sentence plans",
+      "failureShape": "A plan whose three binding arrays are empty or cite unknown IDs",
+      "passShape": "A plan resolvable end-to-end against the input envelope"
+    },
+    {
+      "id": "AC-AUTH-03",
+      "statement": "authorized_action, observable_reaction, and resolved_consequence plans must draw their eventIds from the corresponding authorized*EventIds lists",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Role semantics equal authority semantics",
+      "failureShape": "An action-role plan citing an event not listed as an authorized action",
+      "passShape": "Role-to-authority alignment for every beat-carrying plan"
+    },
+    {
+      "id": "AC-LIC-01",
+      "statement": "Every dialogue act, micro-action, prop use, spatial relation, and sensory detail must point to a resolved event or an explicit licensedRenderingDetail; no implicit instantiation exists",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Abolishes the pass-1 instantiation loophole",
+      "failureShape": "A planned gesture, movement, object use, or spatial claim with no event or license behind it",
+      "passShape": "Each such element carries an event ID or license ID"
+    },
+    {
+      "id": "AC-LIC-02",
+      "statement": "Licenses are issued only by creator or deterministic_runtime, before generation, with issuer authority ID, category, narrow content boundary, and source authority IDs",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "License provenance must be checkable",
+      "failureShape": "A license with unknown issuer, missing authority ID, or post-generation timestamp",
+      "passShape": "A fully attributed pre-issued license"
+    },
+    {
+      "id": "AC-LIC-03",
+      "statement": "Fable, Codex, the renderer model, the linter, and any repair executor may not mint, broaden, infer, or backdate a license",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Closes the self-licensing path",
+      "failureShape": "A license whose issuerAuthorityId traces to an agent artifact rather than a creator receipt or registered runtime rule",
+      "passShape": "Issuer chain terminating at creator decision or registered deterministic rule"
+    },
+    {
+      "id": "AC-LIC-04",
+      "statement": "Realized content outside a license's stated contentBoundary is a hard fail even when the category matches",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_post_validator",
+      "rationale": "A gesture license is not a gesture blank check",
+      "failureShape": "Prose realizing a different act than the boundary describes",
+      "passShape": "Realization inside the boundary"
+    },
+    {
+      "id": "AC-DLG-01",
+      "statement": "licensed_dialogue binds directly and only to a typed speech event (registered event kind: speech) or a pre-issued license of category speech_act; a general resolved event can never authorize dialogue, and cited licenses of any other category cannot authorize dialogue",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Gate repair 2026-07-17: the prior anyOf allowed any resolved event to license a line of speech, which reopened dialogue invention through event paraphrase",
+      "failureShape": "A dialogue plan or receipt citing only general event IDs, or a non-speech_act license, as its speech authority",
+      "passShape": "Dialogue authority resolving to a speech-kind event or a speech_act license, with speaker, enumerated speech act, bound content, and plain intent"
+    },
+    {
+      "id": "AC-PRIV-01",
+      "statement": "Withheld facts, forbidden inferences, private clocks, and creator-only notes exist only in PrivateNarrationValidationContext and never in any model-facing request or model output schema",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Physical separation replaces trust",
+      "failureShape": "A model-facing type carrying a private field or private ID",
+      "passShape": "Model-facing serialization contains zero private-context content"
+    },
+    {
+      "id": "AC-PRIV-02",
+      "statement": "Withheld-content and forbidden-inference screening runs post-generation using the private context; findings surface only as rule codes, counts, booleans, and public-safe severities",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_post_validator",
+      "rationale": "Screening must not itself leak",
+      "failureShape": "An audit entry quoting withheld wording or private IDs",
+      "passShape": "Code-and-count findings only"
+    },
+    {
+      "id": "AC-SEP-01",
+      "statement": "Process lexicon in reader prose or title is a hard fail: unambiguous pipeline/system reference patterns, raw IDs, hashes, and schema field names; ambiguous common tokens live in a separate heuristic list with context patterns",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_post_validator",
+      "rationale": "Single-authority split of pass-1's contradictory lists",
+      "failureShape": "Prose referring to the pipeline, its fields, or its identifiers",
+      "passShape": "Prose containing no system reference; buttons and metadata live outside prose"
+    },
+    {
+      "id": "AC-SEP-02",
+      "statement": "planReceipt and renderAudit field names may not appear inside readerProse text",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_post_validator",
+      "rationale": "Worksheet names must not leak into the read surface",
+      "failureShape": "Prose containing pipeline field vocabulary",
+      "passShape": "Prose free of pipeline vocabulary"
+    },
+    {
+      "id": "AC-SEP-03",
+      "statement": "Reader prose may not restate model-facing input text: long verbatim runs are hard fails; reordered restatement of input sentences is a heuristic finding",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_post_validator",
+      "rationale": "Recitation was the dominant pass-1 surface failure; register hygiene only — this check proves nothing about quality",
+      "failureShape": "Prose reproducing input phrasing beyond the verbatim threshold",
+      "passShape": "Prose re-expressing constraints without copying them"
+    },
+    {
+      "id": "AC-ACT-01",
+      "statement": "No reserved participant action may be performed, previewed, decided, or referenced in prose; any realized act must map to a resolved event or license, so an unauthorized performance is structurally detectable",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_post_validator",
+      "rationale": "Retains the reserved-action boundary with the license system closing the stance/performance ambiguity",
+      "failureShape": "Prose realizing an act whose ID sits in reservedActionIds",
+      "passShape": "Reserved candidates untouched by prose"
+    },
+    {
+      "id": "AC-END-01",
+      "statement": "Prose may not address the reader, announce stopping, or instruct a choice",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_post_validator",
+      "rationale": "Interactive-fiction handoff was a named creator rejection",
+      "failureShape": "Final sentences that hand control to the reader or name the stop",
+      "passShape": "The scene ends inside the world per its sceneMode ending value"
+    },
+    {
+      "id": "AC-END-02",
+      "statement": "Each sceneMode carries its own ending shape (open, settled, closure); shape conformance is heuristic, aptness is human-only",
+      "severity": "heuristic",
+      "enforcementOwner": "heuristic",
+      "rationale": "Typed stopping replaces the abolished universal stop instruction",
+      "failureShape": "A non-terminal scene rendered with closure shape, or a terminal scene left open",
+      "passShape": "Ending shape matching the mode's declared value"
+    },
+    {
+      "id": "AC-END-03",
+      "statement": "Terminal scenes render the computed ending as accumulated in-world state without naming ending labels or kinds",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_post_validator",
+      "rationale": "Ending labels are engine values",
+      "failureShape": "Prose containing ending-kind vocabulary",
+      "passShape": "Terminal state carried by scene content only"
+    },
+    {
+      "id": "AC-FID-01",
+      "statement": "Writing-fidelity extraction (WF-PUBLIC-01) runs before and after any transformation: names, numbers, core claims, polarity, modality, causality direction, knowledge scope, actor authority, resolved event IDs; any drift is a hard fail with rollback",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_post_validator",
+      "rationale": "Fidelity before style, mechanized",
+      "failureShape": "Any before/after record mismatch: omission, fabrication, reversal, unsupported certainty, changed causality/knowledge/authority",
+      "passShape": "Identical before/after records"
+    },
+    {
+      "id": "AC-FID-02",
+      "statement": "Reader prose is never re-imported as next-turn world fact; continuity derives from registered events only",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Retained pass-1/runtime invariant",
+      "failureShape": "A later request whose facts trace to earlier prose",
+      "passShape": "Continuity built exclusively from engine records"
+    },
+    {
+      "id": "AC-MODE-01",
+      "statement": "setup completes with placement and pressure only; zero change claims; forcing a change beat onto a setup input is a STOP",
+      "severity": "structural",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Root repair of the pass-1 form-forcing failure",
+      "failureShape": "A setup plan containing change-asserting roles",
+      "passShape": "Setup roles limited to orientation, pressure, licensed dialogue, in-world stop"
+    },
+    {
+      "id": "AC-MODE-02",
+      "statement": "turn requires authorized action, observable reaction, and resolved consequence, each event-bound",
+      "severity": "structural",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "The full beat exists only where the engine resolved one",
+      "failureShape": "A turn plan missing any of the three beat roles",
+      "passShape": "All three roles present and authority-bound"
+    },
+    {
+      "id": "AC-MODE-03",
+      "statement": "aftermath observes resolved outcomes and responsibility; no new action authority",
+      "severity": "structural",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Aftermath is consequence, not plot",
+      "failureShape": "An aftermath plan asserting a new action",
+      "passShape": "Consequence-role coverage from already-resolved events"
+    },
+    {
+      "id": "AC-MODE-04",
+      "statement": "transition moves time, place, or focus without new events or change claims",
+      "severity": "structural",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Transitions must not manufacture story",
+      "failureShape": "A transition plan citing action or change authority",
+      "passShape": "Orientation plus in-world stop only"
+    },
+    {
+      "id": "AC-MODE-05",
+      "statement": "ending closes accumulated causality and current state; no new action authority",
+      "severity": "structural",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Endings render state, not fresh deeds",
+      "failureShape": "An ending plan introducing new action events",
+      "passShape": "Closure from resolved consequences"
+    },
+    {
+      "id": "AC-SAMPLE-01",
+      "statement": "Positive exemplars are creator-supplied or absent; agent-authored text can never enter an answer key, fixture, few-shot pack, or product surface without creator acceptance",
+      "severity": "human",
+      "enforcementOwner": "human_review",
+      "rationale": "Structure transferred from the creator's Korean harness answer-key authority; also the repair of the pass-1 self-promotion failure",
+      "failureShape": "An agent sample cited as a standard or shipped in any surface",
+      "passShape": "Exemplar slots empty or creator-filled"
+    },
+    {
+      "id": "AC-CORR-01",
+      "statement": "Creator corrections are ingested as: correction receipt ID, then rule or FC entry, then additive amendment under lock; silent rewrites of locked artifacts are forbidden",
+      "severity": "human",
+      "enforcementOwner": "human_review",
+      "rationale": "Correction-ingestion pipeline transferred from the Korean harness lifecycle",
+      "failureShape": "A rule changed without a receipt or a lock silently rewritten",
+      "passShape": "Dated receipt-bound additive entries"
+    },
+    {
+      "id": "AC-HUMAN-01",
+      "statement": "Literary verdicts (natural, immersive, literary, characterful, rhythm, scene value) are creator-only and default to pending; no linter, model, or self-audit may emit them as PASS",
+      "severity": "human",
+      "enforcementOwner": "human_review",
+      "rationale": "Repairs the pass-1 smoke-check overclaim; mirrors the Korean harness lock semantics",
+      "failureShape": "Any automated output phrased as a literary quality verdict",
+      "passShape": "Automated layers emit findings; layer-4 fields stay pending until creator action"
+    },
+    {
+      "id": "AC-SEV-01",
+      "statement": "Each rule has exactly one severity and one enforcement owner; the severity matrix in FABLE-NARRATIVE-REPAIR-AUDIT.md section 3 is the single authority for previously contradictory cases",
+      "severity": "human",
+      "enforcementOwner": "human_review",
+      "rationale": "Pass-1 carried duplicate severities for the same token classes",
+      "failureShape": "A token or behavior listed under two severities",
+      "passShape": "Disjoint lists, one owner each"
+    },
+    {
+      "id": "AC-LADDER-01",
+      "statement": "styleStateId is set only by the deterministic runtime; style states change bounded rhythm/density levers and can never alter facts, events, authority, or forbidden constructions",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Intensity ladder transferred from the Korean harness with fact invariance made structural",
+      "failureShape": "A style state carrying fact-affecting overrides or a model-chosen state",
+      "passShape": "Runtime-selected state with bounded lever overrides"
+    },
+    {
+      "id": "AC-VOICE-01",
+      "statement": "Voice is a typed state value in data; presentation (typography, color, layout) belongs to the shell and never to prose punctuation or prose content",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_post_validator",
+      "rationale": "Display/engine separation transferred from the Korean harness marker-field ruling",
+      "failureShape": "Prose encoding presentation directives or voice-switch typography",
+      "passShape": "Voice and presentation carried as metadata outside readerProse"
+    },
+    {
+      "id": "AC-REF-01",
+      "statement": "No prose attempt without an available creator-approved reference receipt; at most two transferable techniques per scene, each with a plain applicability reason",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_preflight",
+      "rationale": "Reference-first order from the repair brief",
+      "failureShape": "A draft attempt with status unavailable or unexplained technique choices",
+      "passShape": "A valid reference receipt preceding any draft"
+    },
+    {
+      "id": "AC-REF-02",
+      "statement": "Technique transfer is allowed; reproducing the reference's recognizable wording, voice, or authorship claims is forbidden, as is imitating any living author or applying the creator's personal voice profile",
+      "severity": "human",
+      "enforcementOwner": "human_review",
+      "rationale": "Rights and originality boundary, extended to the calibration reference",
+      "failureShape": "Output identifiable with the reference's signature expression or a named author's voice",
+      "passShape": "Original constraint-driven prose using at most the named techniques"
+    },
+    {
+      "id": "AC-LEN-01",
+      "statement": "Length ceilings are hard (per style profile hardMaxWords and paragraph caps); there is no minimum anywhere; completeness is role coverage, never word count",
+      "severity": "hard",
+      "enforcementOwner": "deterministic_post_validator",
+      "rationale": "Padding repair retained; advisory bands live in the style profile as heuristics",
+      "failureShape": "Output over the ceiling, or any completeness argument based on length",
+      "passShape": "A short complete scene accepted as complete"
+    }
+  ],
+  "severityMatrix": {
+    "authority": "FABLE-NARRATIVE-REPAIR-AUDIT.md section 3",
+    "classes": [
+      {
+        "class": "hard",
+        "meaning": "fail-closed rollback",
+        "owners": [
+          "deterministic_preflight",
+          "deterministic_post_validator"
+        ]
+      },
+      {
+        "class": "structural",
+        "meaning": "invalid plan or envelope; nothing downstream runs",
+        "owners": [
+          "deterministic_preflight"
+        ]
+      },
+      {
+        "class": "heuristic",
+        "meaning": "flag only; may trigger the bounded critic path; never blocks alone, never certifies",
+        "owners": [
+          "heuristic"
+        ]
+      },
+      {
+        "class": "human",
+        "meaning": "creator-only judgment; defaults to pending",
+        "owners": [
+          "human_review"
+        ]
+      }
+    ]
+  },
+  "privateModelSeparation": {
+    "modelFacingType": "ModelFacingNarrationRequest",
+    "privateType": "PrivateNarrationValidationContext",
+    "declaration": "Physically separate types; private content validates output post-generation only and never enters a model request or model output schema."
+  },
+  "correctionIngestion": {
+    "policy": "additive_under_lock",
+    "flow": [
+      "creatorCorrectionReceiptId",
+      "rule or FC entry",
+      "additive amendment",
+      "version bump",
+      "creator re-lock only for structural change"
+    ]
+  },
+  "migration_2_2": {
+    "approvedBy": "creator",
+    "approvedDate": "2026-07-18",
+    "basis": "DISPATCH-CLAUDE-PM-r5.1 Task A — Lane B/C BLOCKED_CONTRACT_AUTHORITY adjudication",
+    "fieldChanges": [
+      {
+        "ruleId": "AC-SAMPLE-01",
+        "from": {
+          "severity": "hard",
+          "enforcementOwner": "human_review"
+        },
+        "to": {
+          "severity": "human",
+          "enforcementOwner": "human_review"
+        }
+      },
+      {
+        "ruleId": "AC-CORR-01",
+        "from": {
+          "severity": "structural",
+          "enforcementOwner": "human_review"
+        },
+        "to": {
+          "severity": "human",
+          "enforcementOwner": "human_review"
+        }
+      },
+      {
+        "ruleId": "AC-SEV-01",
+        "from": {
+          "severity": "structural",
+          "enforcementOwner": "human_review"
+        },
+        "to": {
+          "severity": "human",
+          "enforcementOwner": "human_review"
+        }
+      },
+      {
+        "ruleId": "AC-VOICE-01",
+        "from": {
+          "severity": "structural",
+          "enforcementOwner": "deterministic_post_validator"
+        },
+        "to": {
+          "severity": "hard",
+          "enforcementOwner": "deterministic_post_validator"
+        }
+      },
+      {
+        "ruleId": "AC-REF-02",
+        "from": {
+          "severity": "hard",
+          "enforcementOwner": "human_review"
+        },
+        "to": {
+          "severity": "human",
+          "enforcementOwner": "human_review"
+        }
+      }
+    ]
+  }
+}

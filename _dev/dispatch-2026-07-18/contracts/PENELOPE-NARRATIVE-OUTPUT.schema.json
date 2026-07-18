@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "penelope-narrative-output.schema.json",
+  "title": "ModelNarrationOutput",
+  "description": "ROOT SCHEMA for the renderer model's return value ONLY (gate repair 2026-07-17: separated from the pipeline envelope). The model returns exactly this object: planReceipt + readerProse. Post-validation results never appear here; they live in the separate root schema penelope-narrative-pipeline-envelope.schema.json, which the deterministic post-validator assembles after generation. Private input types are never referenced by either schema. planReceipt and renderAudit field names may not appear inside readerProse text (deterministic check AC-SEP-02). Reader prose is never re-imported as next-turn world fact (AC-FID-02). This pass defines the shape of readerProse only; no prose instance exists. Status: agent_proposed, CREATOR REVIEW REQUIRED.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["planReceipt", "readerProse"],
+  "properties": {
+    "planReceipt": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 14,
+      "items": { "$ref": "#/$defs/PlanReceiptEntry" }
+    },
+    "readerProse": { "$ref": "#/$defs/ReaderProse" }
+  },
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:-]*$",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "IdentifierArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Identifier" },
+      "uniqueItems": true
+    },
+    "PlanReceiptEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sentencePlanId", "role", "sourceFactIds", "sourceEventIds", "speechEventIds", "licensedRenderingDetailIds"],
+      "properties": {
+        "sentencePlanId": { "$ref": "#/$defs/Identifier" },
+        "role": {
+          "enum": [
+            "orientation",
+            "authorized_action",
+            "observable_reaction",
+            "resolved_consequence",
+            "pressure",
+            "licensed_dialogue",
+            "in_world_stop"
+          ]
+        },
+        "sourceFactIds": { "$ref": "#/$defs/IdentifierArray" },
+        "sourceEventIds": { "$ref": "#/$defs/IdentifierArray" },
+        "speechEventIds": {
+          "$ref": "#/$defs/IdentifierArray",
+          "description": "IDs of typed speech events only (event kind verified by deterministic preflight). Non-dialogue roles carry an empty array. A licensed_dialogue entry must bind here or to a speech_act license — never to a general event (AC-DLG-01)."
+        },
+        "licensedRenderingDetailIds": { "$ref": "#/$defs/IdentifierArray" }
+      },
+      "allOf": [
+        {
+          "anyOf": [
+            { "properties": { "sourceFactIds": { "minItems": 1 } } },
+            { "properties": { "sourceEventIds": { "minItems": 1 } } },
+            { "properties": { "speechEventIds": { "minItems": 1 } } },
+            { "properties": { "licensedRenderingDetailIds": { "minItems": 1 } } }
+          ]
+        },
+        {
+          "if": { "properties": { "role": { "const": "licensed_dialogue" } } },
+          "then": {
+            "anyOf": [
+              { "properties": { "speechEventIds": { "minItems": 1 } } },
+              { "properties": { "licensedRenderingDetailIds": { "minItems": 1 } } }
+            ]
+          }
+        },
+        {
+          "if": { "not": { "properties": { "role": { "const": "licensed_dialogue" } } } },
+          "then": { "properties": { "speechEventIds": { "maxItems": 0 } } }
+        }
+      ]
+    },
+    "ReaderProse": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Reader-facing English prose. Format definition only in this pass; no instance text is authored. Each paragraph binds to the sentence plans it realizes so the post-validator can align prose to authority without parsing meaning.",
+      "required": ["format", "paragraphs"],
+      "properties": {
+        "format": { "const": "english_prose_paragraphs" },
+        "paragraphs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["paragraphId", "sentencePlanIds", "text"],
+            "properties": {
+              "paragraphId": { "$ref": "#/$defs/Identifier" },
+              "sentencePlanIds": { "$ref": "#/$defs/IdentifierArray", "minItems": 1 },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2400,
+                "description": "English prose only. May contain no engine values, IDs, rule codes, process vocabulary, or pipeline field names; enforced by the deterministic post-validator (AC-SEP-01/02), not by this schema."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

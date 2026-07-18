@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "penelope-sentence-harness.schema.json",
+  "title": "PenelopeScenePlan",
+  "description": "Sentence-role harness: a scene is planned as typed sentence functions before any wording exists. This pass deliberately has no reader-facing `text` field anywhere; role coverage and authority binding are validated first. Cross-references that JSON Schema cannot express (sourceFactIds/sourceEventIds/licensedRenderingDetailIds must exist in the paired ModelFacingNarrationRequest; authorized_action/observable_reaction/resolved_consequence sentences must draw their eventIds from the corresponding authorized*EventIds lists) are deterministic preflight checks AC-AUTH-02..03. Status: agent_proposed, CREATOR REVIEW REQUIRED.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["scenePlanId", "sceneMode", "sentencePlans"],
+  "properties": {
+    "scenePlanId": { "$ref": "#/$defs/Identifier" },
+    "sceneMode": { "enum": ["setup", "turn", "aftermath", "transition", "ending"] },
+    "sentencePlans": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 14,
+      "items": { "$ref": "#/$defs/SentencePlan" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "sceneMode": { "const": "setup" } } },
+      "then": {
+        "properties": {
+          "sentencePlans": {
+            "items": {
+              "properties": {
+                "role": { "enum": ["orientation", "pressure", "licensed_dialogue", "in_world_stop"] },
+                "changesState": { "const": false }
+              }
+            },
+            "allOf": [
+              { "contains": { "properties": { "role": { "const": "orientation" } }, "required": ["role"] } },
+              { "contains": { "properties": { "role": { "const": "in_world_stop" } }, "required": ["role"] } }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "sceneMode": { "const": "turn" } } },
+      "then": {
+        "properties": {
+          "sentencePlans": {
+            "allOf": [
+              { "contains": { "properties": { "role": { "const": "authorized_action" } }, "required": ["role"] } },
+              { "contains": { "properties": { "role": { "const": "observable_reaction" } }, "required": ["role"] } },
+              { "contains": { "properties": { "role": { "const": "resolved_consequence" } }, "required": ["role"] } },
+              { "contains": { "properties": { "role": { "const": "in_world_stop" } }, "required": ["role"] } }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "sceneMode": { "const": "aftermath" } } },
+      "then": {
+        "properties": {
+          "sentencePlans": {
+            "items": {
+              "properties": {
+                "role": {
+                  "enum": ["orientation", "observable_reaction", "resolved_consequence", "pressure", "licensed_dialogue", "in_world_stop"]
+                }
+              }
+            },
+            "allOf": [
+              { "contains": { "properties": { "role": { "const": "resolved_consequence" } }, "required": ["role"] } },
+              { "contains": { "properties": { "role": { "const": "in_world_stop" } }, "required": ["role"] } }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "sceneMode": { "const": "transition" } } },
+      "then": {
+        "properties": {
+          "sentencePlans": {
+            "maxItems": 5,
+            "items": {
+              "properties": {
+                "role": { "enum": ["orientation", "in_world_stop"] },
+                "changesState": { "const": false }
+              }
+            },
+            "allOf": [
+              { "contains": { "properties": { "role": { "const": "orientation" } }, "required": ["role"] } },
+              { "contains": { "properties": { "role": { "const": "in_world_stop" } }, "required": ["role"] } }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "sceneMode": { "const": "ending" } } },
+      "then": {
+        "properties": {
+          "sentencePlans": {
+            "items": {
+              "properties": {
+                "role": { "enum": ["orientation", "resolved_consequence", "pressure", "licensed_dialogue", "in_world_stop"] }
+              }
+            },
+            "allOf": [
+              { "contains": { "properties": { "role": { "const": "resolved_consequence" } }, "required": ["role"] } },
+              { "contains": { "properties": { "role": { "const": "in_world_stop" } }, "required": ["role"] } }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:-]*$",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "IdentifierArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Identifier" },
+      "uniqueItems": true
+    },
+    "NullableIdentifier": {
+      "oneOf": [ { "type": "null" }, { "$ref": "#/$defs/Identifier" } ]
+    },
+    "SentencePlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sentencePlanId",
+        "role",
+        "actorId",
+        "speakerId",
+        "sourceFactIds",
+        "sourceEventIds",
+        "speechEventIds",
+        "licensedRenderingDetailIds",
+        "plainFunction",
+        "plainFunctionSourceAuthorityIds",
+        "plainIntent",
+        "plainIntentSourceAuthorityIds",
+        "changesState"
+      ],
+      "properties": {
+        "sentencePlanId": { "$ref": "#/$defs/Identifier" },
+        "role": {
+          "enum": [
+            "orientation",
+            "authorized_action",
+            "observable_reaction",
+            "resolved_consequence",
+            "pressure",
+            "licensed_dialogue",
+            "in_world_stop"
+          ]
+        },
+        "actorId": { "$ref": "#/$defs/NullableIdentifier" },
+        "speakerId": { "$ref": "#/$defs/NullableIdentifier" },
+        "sourceFactIds": { "$ref": "#/$defs/IdentifierArray" },
+        "sourceEventIds": { "$ref": "#/$defs/IdentifierArray" },
+        "speechEventIds": {
+          "$ref": "#/$defs/IdentifierArray",
+          "description": "IDs of typed speech events only — resolved events whose registered kind is speech, verified by deterministic preflight (AC-DLG-01). Gate repair 2026-07-17: licensed_dialogue may bind ONLY here or to a pre-issued speech_act license; a general resolved event can never authorize dialogue. All non-dialogue roles carry an empty array."
+        },
+        "licensedRenderingDetailIds": {
+          "$ref": "#/$defs/IdentifierArray",
+          "description": "For licensed_dialogue, cited licenses must have category speech_act (cross-checked by deterministic preflight)."
+        },
+        "plainFunction": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "What job this sentence does in the scene, stated without literary phrasing. Not a free invention space: plainFunctionSourceAuthorityIds is always non-empty."
+        },
+        "plainFunctionSourceAuthorityIds": { "$ref": "#/$defs/IdentifierArray", "minItems": 1 },
+        "plainIntent": {
+          "oneOf": [ { "type": "null" }, { "type": "string", "minLength": 1, "maxLength": 300 } ],
+          "description": "Literal intent when the sentence carries a speech or communicative act; null otherwise. When non-null, plainIntentSourceAuthorityIds must be non-empty; when null, it must be empty (enforced below)."
+        },
+        "plainIntentSourceAuthorityIds": { "$ref": "#/$defs/IdentifierArray" },
+        "changesState": { "type": "boolean" }
+      },
+      "allOf": [
+        {
+          "anyOf": [
+            { "properties": { "sourceFactIds": { "minItems": 1 } }, "required": ["sourceFactIds"] },
+            { "properties": { "sourceEventIds": { "minItems": 1 } }, "required": ["sourceEventIds"] },
+            { "properties": { "speechEventIds": { "minItems": 1 } }, "required": ["speechEventIds"] },
+            { "properties": { "licensedRenderingDetailIds": { "minItems": 1 } }, "required": ["licensedRenderingDetailIds"] }
+          ]
+        },
+        {
+          "if": { "properties": { "plainIntent": { "type": "string" } } },
+          "then": { "properties": { "plainIntentSourceAuthorityIds": { "minItems": 1 } } },
+          "else": { "properties": { "plainIntentSourceAuthorityIds": { "maxItems": 0 } } }
+        },
+        {
+          "if": { "properties": { "role": { "const": "authorized_action" } } },
+          "then": {
+            "properties": {
+              "actorId": { "$ref": "#/$defs/Identifier" },
+              "sourceEventIds": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "role": { "const": "observable_reaction" } } },
+          "then": { "properties": { "sourceEventIds": { "minItems": 1 } } }
+        },
+        {
+          "if": { "properties": { "role": { "const": "resolved_consequence" } } },
+          "then": {
+            "properties": {
+              "sourceEventIds": { "minItems": 1 },
+              "changesState": { "const": true }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "role": { "const": "licensed_dialogue" } } },
+          "then": {
+            "properties": {
+              "speakerId": { "$ref": "#/$defs/Identifier" },
+              "plainIntent": { "type": "string" }
+            },
+            "anyOf": [
+              { "properties": { "speechEventIds": { "minItems": 1 } } },
+              { "properties": { "licensedRenderingDetailIds": { "minItems": 1 } } }
+            ]
+          }
+        },
+        {
+          "if": { "not": { "properties": { "role": { "const": "licensed_dialogue" } } } },
+          "then": { "properties": { "speechEventIds": { "maxItems": 0 } } }
+        },
+        {
+          "if": { "properties": { "role": { "enum": ["orientation", "pressure", "in_world_stop"] } } },
+          "then": { "properties": { "changesState": { "const": false } } }
+        },
+        {
+          "if": { "properties": { "changesState": { "const": true } } },
+          "then": {
+            "properties": {
+              "role": { "enum": ["authorized_action", "observable_reaction", "resolved_consequence"] }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
