@@ -2,15 +2,18 @@ import {
   WorldCreatorReceiptSchema,
   WorldParticipantSessionViewSchema,
   type WorldCreatorReceipt,
+  type WorldNarrationProjection,
   type WorldParticipantSessionView,
   type WorldPresentationTransport,
 } from "@/src/contracts/world-api";
 import {
-  WorldNarrationRequestSchema,
-  validateWorldNarration,
-  worldNarrationTextMatchesRestrictedConcept,
-  type WorldNarrationRequest,
-  type WorldNarrationRestrictedConcept,
+  NarrationInputEnvelopeSchema,
+  PenelopeEnglishStyleProfileSchema,
+  PenelopeNarrationPreflightReceiptSchema,
+  PenelopeScenePlanSchema,
+  type ModelNarrationOutput,
+  type NarrationRendererTrace,
+  type PenelopeEnglishStyleProfile,
 } from "@/src/contracts/world-narrator";
 import type { WorldSimulationScenario } from "@/src/contracts/world-simulation";
 import type {
@@ -22,7 +25,17 @@ import {
   focalPremiseIds,
   worldActionCandidates,
 } from "@/src/domain/world-runtime";
-import type { WorldNarrator } from "@/src/ports/world-narrator";
+import {
+  runWorldNarrationPipeline,
+  type ResolvedNarrationPipelineArtifacts,
+  type WorldNarrationPipelineResult,
+} from "@/src/application/world-narration-pipeline";
+import { extractPublicFidelityRecord } from "@/src/domain/narration-postvalidator";
+import type {
+  NarrationCritic,
+  NarrationRenderer,
+} from "@/src/ports/world-narrator";
+import type { WorldNarrationHumanDecisionReceipt } from "@/src/application/world-session-store";
 
 const PARTICIPANT_SUMMARY =
   "At the Ithacan hearth, Penelope questions a guarded stranger while an old nurse and a hostile servant act on different fragments of the truth.";
@@ -35,94 +48,6 @@ const IDENTITY_BEARING_PREMISE_IDS = new Set([
   "premise.penelope_not_certain",
   "premise.eurycleia_loyalty",
 ]);
-
-const STRANGER_IDENTITY_RESTRICTION: WorldNarrationRestrictedConcept = {
-  conceptId: "concept.stranger_identity",
-  unlockFactId: STRANGER_IDENTITY_FACT_ID,
-  forbiddenTerms: [
-    "disguised Odysseus",
-    "Odysseus in disguise",
-    "Ulysses in disguise",
-    "Laertiades in disguise",
-    "Odysseus himself",
-    "Ulysses himself",
-    "Laertiades himself",
-  ],
-  equivalences: [
-    {
-      subjectTerms: [
-        "the stranger",
-        "stranger",
-        "the beggar",
-        "beggar",
-        "the guest",
-        "guest",
-        "the wanderer",
-        "wanderer",
-        "the man before her",
-        "whom she faced",
-        "the speaker",
-      ],
-      relationTerms: [
-        "is",
-        "was",
-        "really",
-        "actually",
-        "true identity",
-        "real identity",
-        "true name",
-        "real name",
-        "revealed as",
-        "recognized as",
-        "known as",
-        "in disguise",
-        "disguised",
-        "none other than",
-        "returned as",
-        "realized",
-      ],
-      objectTerms: [
-        "Odysseus",
-        "Ulysses",
-        "Laertiades",
-        "son of Laertes",
-        "the king of Ithaca",
-        "king of Ithaca",
-        "Penelope's husband",
-        "her husband",
-        "the returned king",
-      ],
-      maxTokenDistance: 24,
-    },
-  ],
-};
-
-const STYLE_CONSTRAINTS = [
-  {
-    constraintId: "style.limited_penelope_view",
-    ownership: "agent_proposed" as const,
-    instruction:
-      "Use a close third-person view limited to what Penelope can perceive, remember, or reasonably infer.",
-  },
-  {
-    constraintId: "style.concrete_pressure",
-    ownership: "agent_proposed" as const,
-    instruction:
-      "Render pressure through physical action, interrupted speech, and objects in the room instead of abstract explanation.",
-  },
-  {
-    constraintId: "style.dialogue_subtext",
-    ownership: "agent_proposed" as const,
-    instruction:
-      "Let dialogue conceal as much as it reveals; do not make characters explain the ontology or causal rules.",
-  },
-  {
-    constraintId: "style.no_false_certainty",
-    ownership: "agent_proposed" as const,
-    instruction:
-      "Preserve uncertainty. Evidence may alter suspicion without becoming knowledge unless the resolved events explicitly grant it.",
-  },
-];
 
 const selectedActionCandidates = ({
   scenario,
@@ -219,6 +144,17 @@ const focalKnowledgeFacts = ({
     .map(({ id, summary }) => ({ factId: id, summary }));
 };
 
+const focalKnowsStrangerIdentity = ({
+  scenario,
+  session,
+}: {
+  scenario: WorldSimulationScenario;
+  session: WorldSimulationSession;
+}): boolean =>
+  focalPremiseIds(session, scenario.focalParticipantEntityId).includes(
+    STRANGER_IDENTITY_FACT_ID,
+  );
+
 const safeVisibleEvents = ({
   scenario,
   receipt,
@@ -262,62 +198,543 @@ const narratorEvents = (events: WorldSimulationEvent[]) =>
     summary: event.summary,
   }));
 
-export const buildWorldNarrationRestrictedConcepts = ({
+const WORLD_NARRATION_RUNTIME_AUTHORITY_ID =
+  "runtime.penelope.world_scene.v1";
+const WORLD_NARRATION_CREATOR_AUTHORITY_ID =
+  "creator.penelope.world_copy.v1";
+const WORLD_NARRATION_REFERENCE_RECEIPT_ID =
+  "creator-craft-reference-2026-07-17-01";
+
+const modelFacingEntityId = (entityId: string): string =>
+  entityId === "entity.odysseus" ? "entity.stranger" : entityId;
+
+const REGISTERED_EVENT_RENDER_TEXT: Readonly<Record<string, string>> = {
+  "action.opening": "The household gathers around the hearth.",
+  "action.penelope.observe": "Penelope waits and watches the room.",
+  "action.penelope.test_testimony": "Penelope tests the stranger's account.",
+  "action.penelope.order_washing": "Penelope orders Eurycleia to begin.",
+  "action.penelope.clear_room": "Penelope clears the nearby servants.",
+  "action.penelope.confront_privately": "Penelope questions the stranger in private.",
+  "action.odysseus.answer_carefully": "The stranger answers Penelope with care.",
+  "action.odysseus.contain_recognition": "The stranger checks Eurycleia's alarm.",
+  "action.eurycleia.wash_feet": "Eurycleia stops at the old scar.",
+  "action.eurycleia.guard_secret": "Eurycleia keeps the moment private.",
+  "action.eurycleia.confirm_privately": "Eurycleia confirms Penelope's private conclusion.",
+  "action.melantho.investigate": "Melantho watches the visible disturbance.",
+};
+
+const boundedEventRenderText = (
+  event: WorldSimulationEvent,
+  scenario: WorldSimulationScenario,
+): string => {
+  const registered = REGISTERED_EVENT_RENDER_TEXT[event.actionId];
+  if (registered) return registered;
+  if (event.source.kind === "participant") {
+    return "Penelope acts before the watching household.";
+  }
+  if (event.source.kind === "npc") {
+    const actorEntityId = event.source.actorEntityId;
+    const label =
+      scenario.actors.find(({ id }) => id === actorEntityId)
+        ?.participantLabel ?? "Someone nearby";
+    return `${label} reacts inside the household.`;
+  }
+  return "The household answers the visible change.";
+};
+
+const narrationSceneMode = ({
+  session,
+  receipt,
+}: {
+  session: WorldSimulationSession;
+  receipt: WorldTurnReceipt | null;
+}): "setup" | "turn" | "ending" =>
+  receipt === null ? "setup" : session.state.status === "complete" ? "ending" : "turn";
+
+const narrationStyleStateId = ({
   scenario,
   session,
+  styleProfile,
 }: {
   scenario: WorldSimulationScenario;
   session: WorldSimulationSession;
-}): WorldNarrationRestrictedConcept[] => {
-  const knownIds = new Set(focalPremiseIds(session, scenario.focalParticipantEntityId));
-  return knownIds.has(STRANGER_IDENTITY_FACT_ID)
-    ? []
-    : [structuredClone(STRANGER_IDENTITY_RESTRICTION)];
+  styleProfile: PenelopeEnglishStyleProfile;
+}): string => {
+  const byId = new Map(
+    styleProfile.styleStates.map(({ stateId }) => [stateId, stateId]),
+  );
+  const clockById = new Map(
+    scenario.clocks.map(({ id, initialValue, maxValue }) => [
+      id,
+      { initialValue, maxValue },
+    ]),
+  );
+  const planCompromised =
+    session.state.flags.find(({ id }) => id === "flag.plan_compromised")
+      ?.value ?? false;
+  const atMaximum = session.state.clocks.some(({ id, value }) => {
+    const clock = clockById.get(id);
+    return clock !== undefined && value >= clock.maxValue;
+  });
+  const aboveBaseline = session.state.clocks.some(({ id, value }) => {
+    const clock = clockById.get(id);
+    return clock !== undefined && value > clock.initialValue;
+  });
+  if (planCompromised || atMaximum) {
+    return byId.get("en-penelope-state-critical") ?? styleProfile.styleStates[0]!.stateId;
+  }
+  if (aboveBaseline) {
+    return byId.get("en-penelope-state-elevated") ?? styleProfile.styleStates[0]!.stateId;
+  }
+  return byId.get("en-penelope-state-baseline") ?? styleProfile.styleStates[0]!.stateId;
 };
 
-export const buildWorldNarrationRequest = ({
+export type WorldNarrationPipelineArtifacts =
+  ResolvedNarrationPipelineArtifacts & {
+    reservedActionSourceBindings: ReadonlyArray<{
+      actionId: string;
+      sourceIds: ReadonlyArray<string>;
+    }>;
+  };
+
+export const buildWorldNarrationPipelineArtifacts = ({
   scenario,
   session,
   receipt,
-  previousVisibleSceneSummary,
+  styleProfile: styleProfileInput,
 }: {
   scenario: WorldSimulationScenario;
   session: WorldSimulationSession;
   receipt: WorldTurnReceipt | null;
-  previousVisibleSceneSummary: string | null;
-}): WorldNarrationRequest => {
-  const restrictedConcepts = buildWorldNarrationRestrictedConcepts({
-    scenario,
-    session,
-  });
-  const candidates =
+  styleProfile: PenelopeEnglishStyleProfile;
+}): WorldNarrationPipelineArtifacts => {
+  const styleProfile = PenelopeEnglishStyleProfileSchema.parse(styleProfileInput);
+  const sceneMode = narrationSceneMode({ session, receipt });
+  const focalId = scenario.focalParticipantEntityId;
+  const focalZoneId = session.state.actors.find(
+    ({ entityId }) => entityId === focalId,
+  )?.zoneId;
+  const zone = scenario.zones.find(({ id }) => id === focalZoneId);
+  const zoneFactId = safeFactId("narration_zone", zone?.id ?? "unknown");
+  const zoneRenderText = `${zone?.name ?? "The room"} holds the gathered household.`;
+  const presentActorIds = new Set(
+    session.state.actors
+      .filter(({ zoneId }) => zoneId === focalZoneId)
+      .map(({ entityId }) => entityId),
+  );
+  const presentActors = scenario.actors
+    .filter(({ id }) => presentActorIds.has(id))
+    .map((actor) => {
+      const entityId = modelFacingEntityId(actor.id);
+      const factId = safeFactId("narration_actor", entityId);
+      return {
+        entityId,
+        renderDescriptor: `${actor.participantLabel} remains in ${zone?.name ?? "the room"}.`,
+        sourceFactIds: [factId],
+      };
+    });
+  const visibleFacts = [
+    { factId: zoneFactId, renderText: zoneRenderText },
+    ...presentActors.map(({ entityId, renderDescriptor, sourceFactIds }) => ({
+      factId: sourceFactIds[0]!,
+      renderText: renderDescriptor,
+      entityId,
+    })),
+  ].map(({ factId, renderText }) => ({ factId, renderText }));
+  const visibleRuntimeEvents = safeVisibleEvents({ scenario, receipt });
+  const resolvedEvents = visibleRuntimeEvents.map((event, index) => ({
+    eventId: `event.visible_${index + 1}`,
+    observableText: boundedEventRenderText(event, scenario),
+    sourceAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
+  }));
+  const actionEvent =
+    resolvedEvents.find((_, index) => visibleRuntimeEvents[index]?.source.kind === "participant") ??
+    resolvedEvents[0];
+  const reactionEvent =
+    resolvedEvents.find((_, index) => visibleRuntimeEvents[index]?.source.kind !== "participant") ??
+    resolvedEvents.at(-1);
+  const changeEvent = resolvedEvents.at(-1);
+  const actionIds = sceneMode === "turn" && actionEvent ? [actionEvent.eventId] : [];
+  const reactionIds =
+    sceneMode === "turn" && reactionEvent ? [reactionEvent.eventId] : [];
+  const changeIds =
+    sceneMode !== "setup" && changeEvent ? [changeEvent.eventId] : [];
+  const privateKnowledgeIds = focalKnowsStrangerIdentity({ scenario, session })
+    ? []
+    : ["private.stranger_identity"];
+  const reservedCandidates =
     session.state.status === "complete"
       ? []
       : selectedActionCandidates({ scenario, session });
-  return WorldNarrationRequestSchema.parse({
-    focalEntityId: scenario.focalParticipantEntityId,
-    observableFacts: observableFacts({ scenario, session }),
-    focalKnowledge: focalKnowledgeFacts({ scenario, session }),
-    resolvedEvents: narratorEvents(safeVisibleEvents({ scenario, receipt })),
-    previousVisibleSceneSummary:
-      previousVisibleSceneSummary !== null &&
-      restrictedConcepts.some((concept) =>
-        worldNarrationTextMatchesRestrictedConcept({
-          text: previousVisibleSceneSummary,
-          concept,
-        }),
-      )
-        ? null
-        : previousVisibleSceneSummary,
-    styleConstraints: STYLE_CONSTRAINTS,
-    nextActionCandidates: candidates.map((candidate) => ({
-      actionId: candidate.actionId,
-      actorEntityId: scenario.focalParticipantEntityId,
-      actionTypeId: candidate.actionId,
-      label: candidate.label,
-      intent: candidate.suggestedInput,
-    })),
+  const inputEnvelope = NarrationInputEnvelopeSchema.parse({
+    modelFacing: {
+      sceneMode,
+      languageProfileId: styleProfile.profileId,
+      referenceReceiptId: WORLD_NARRATION_REFERENCE_RECEIPT_ID,
+      focalActorId: focalId,
+      presentActors,
+      visibleFacts,
+      resolvedEvents,
+      authorizedActionEventIds: actionIds,
+      authorizedReactionEventIds: reactionIds,
+      authorizedChangeEventIds: changeIds,
+      authorizedAnchors: [],
+      licensedRenderingDetails: [],
+      styleStateId: narrationStyleStateId({ scenario, session, styleProfile }),
+      reservedActionIds: reservedCandidates.map(({ actionId }) => actionId),
+    },
+    privateValidation: {
+      forbiddenKnowledgeIds: privateKnowledgeIds,
+      forbiddenInferenceRuleIds: [],
+      creatorOnlyReviewNoteIds: [],
+    },
   });
+
+  const plan = ({
+    id,
+    role,
+    sourceFactIds = [],
+    sourceEventIds = [],
+    actorId = null,
+    changesState = false,
+    plainFunction,
+  }: {
+    id: string;
+    role: "orientation" | "authorized_action" | "observable_reaction" | "resolved_consequence" | "in_world_stop";
+    sourceFactIds?: string[];
+    sourceEventIds?: string[];
+    actorId?: string | null;
+    changesState?: boolean;
+    plainFunction: string;
+  }) => ({
+    sentencePlanId: id,
+    role,
+    actorId,
+    speakerId: null,
+    sourceFactIds,
+    sourceEventIds,
+    speechEventIds: [],
+    licensedRenderingDetailIds: [],
+    plainFunction,
+    plainFunctionSourceAuthorityIds: [...sourceFactIds, ...sourceEventIds],
+    plainIntent: null,
+    plainIntentSourceAuthorityIds: [],
+    changesState,
+  });
+  const sentencePlans =
+    sceneMode === "setup"
+      ? [
+          plan({
+            id: "sentence.setup.orientation",
+            role: "orientation",
+            sourceFactIds: [zoneFactId],
+            plainFunction: "Place the focal actor in the registered room.",
+          }),
+          plan({
+            id: "sentence.setup.stop",
+            role: "in_world_stop",
+            sourceFactIds: [presentActors[0]?.sourceFactIds[0] ?? zoneFactId],
+            plainFunction: "Stop on a registered person in the room.",
+          }),
+        ]
+      : sceneMode === "turn"
+        ? [
+            plan({
+              id: "sentence.turn.action",
+              role: "authorized_action",
+              actorId: focalId,
+              sourceEventIds: actionIds,
+              changesState: true,
+              plainFunction: "Render the resolved participant action.",
+            }),
+            plan({
+              id: "sentence.turn.reaction",
+              role: "observable_reaction",
+              sourceEventIds: reactionIds,
+              changesState: true,
+              plainFunction: "Render the registered visible reaction.",
+            }),
+            plan({
+              id: "sentence.turn.consequence",
+              role: "resolved_consequence",
+              sourceEventIds: changeIds,
+              changesState: true,
+              plainFunction: "Render the already resolved consequence.",
+            }),
+            plan({
+              id: "sentence.turn.stop",
+              role: "in_world_stop",
+              sourceFactIds: [zoneFactId],
+              plainFunction: "Stop inside the registered room.",
+            }),
+          ]
+        : [
+            plan({
+              id: "sentence.ending.orientation",
+              role: "orientation",
+              sourceEventIds: resolvedEvents[0] ? [resolvedEvents[0].eventId] : [zoneFactId],
+              sourceFactIds: resolvedEvents[0] ? [] : [zoneFactId],
+              plainFunction: "Place the final resolved beat in view.",
+            }),
+            plan({
+              id: "sentence.ending.consequence",
+              role: "resolved_consequence",
+              sourceEventIds: changeIds,
+              changesState: true,
+              plainFunction: "Render the terminal resolved consequence.",
+            }),
+            plan({
+              id: "sentence.ending.stop",
+              role: "in_world_stop",
+              sourceFactIds: [zoneFactId],
+              plainFunction: "Close inside the registered world.",
+            }),
+          ];
+  const scenePlan = PenelopeScenePlanSchema.parse({
+    scenePlanId: `scene.${sceneMode}.turn_${session.state.turn}`,
+    sceneMode,
+    sentencePlans,
+  });
+  const eventText = (eventId: string | undefined): string =>
+    resolvedEvents.find((event) => event.eventId === eventId)?.observableText ??
+    "The registered scene changes.";
+  const preflightReceipt = PenelopeNarrationPreflightReceiptSchema.parse({
+    preflightId: `preflight.${sceneMode}.turn_${session.state.turn}`,
+    sceneMode,
+    sceneAuthority: {
+      factIds: visibleFacts.map(({ factId }) => factId),
+      eventIds: resolvedEvents.map(({ eventId }) => eventId),
+      actorEntityIds: presentActors.map(({ entityId }) => entityId),
+      licensedRenderingDetailIds: [],
+      licensedRenderingDetails: [],
+    },
+    referenceReceipt: {
+      status: "available",
+      referenceId: WORLD_NARRATION_REFERENCE_RECEIPT_ID,
+      transferableTechniqueIds: ["TT-01"],
+      sceneApplicability: [
+        {
+          techniqueId: "TT-01",
+          plainReason: "The scene keeps each resolved beat physically legible.",
+        },
+      ],
+      forbiddenImitation: true,
+      excludedGimmicks: ["FC-04"],
+    },
+    plainDramaticPlan: {
+      focalActorId: focalId,
+      actionSourceEventIds: actionIds,
+      reactionSourceEventIds: reactionIds,
+      changeSourceEventIds: changeIds,
+      ...(sceneMode === "setup"
+        ? {}
+        : {
+            changeInPlainTerms: {
+              text: eventText(changeIds[0]),
+              sourceAuthorityIds: changeIds,
+            },
+          }),
+    },
+    dialogueAuthority: {
+      mode: "none",
+      speakerId: null,
+      speechAct: null,
+      speechEventIds: [],
+      speechActLicenseIds: [],
+      authorizedContentIds: [],
+      plainIntent: null,
+      plainIntentSourceAuthorityIds: [],
+    },
+    creatorReviewRequired: true,
+  });
+  const cameraSafeProvenance = [
+    ...presentActors.map(({ entityId, renderDescriptor }) => ({
+      fieldKey: `present_actor:${entityId}` as const,
+      text: renderDescriptor,
+      authoredBy: "deterministic_runtime" as const,
+      authorityId: WORLD_NARRATION_RUNTIME_AUTHORITY_ID,
+      rawSourceTexts: [],
+    })),
+    ...visibleFacts.map(({ factId, renderText }) => ({
+      fieldKey: `visible_fact:${factId}` as const,
+      text: renderText,
+      authoredBy: "deterministic_runtime" as const,
+      authorityId: WORLD_NARRATION_RUNTIME_AUTHORITY_ID,
+      rawSourceTexts: [],
+    })),
+    ...resolvedEvents.map(({ eventId, observableText }) => ({
+      fieldKey: `resolved_event:${eventId}` as const,
+      text: observableText,
+      authoredBy: "deterministic_runtime" as const,
+      authorityId: WORLD_NARRATION_RUNTIME_AUTHORITY_ID,
+      rawSourceTexts: [],
+    })),
+  ];
+  const privateValidationMaterial = {
+    forbiddenKnowledge:
+      privateKnowledgeIds.length === 0
+        ? []
+        : [
+            {
+              id: "private.stranger_identity",
+              patterns: [
+                "the stranger is Odysseus",
+                "the stranger was Odysseus",
+                "Odysseus in disguise",
+                "Ulysses in disguise",
+              ],
+            },
+          ],
+    forbiddenInferences: [],
+  };
+  const artifacts = {
+    inputEnvelope,
+    scenePlan,
+    preflightReceipt,
+    styleProfile,
+    authorityRegistry: {
+      typedSpeechEvents: [],
+      creatorAuthorityIds: [WORLD_NARRATION_CREATOR_AUTHORITY_ID],
+      deterministicRuntimeAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
+      approvedReferenceReceiptIds: [WORLD_NARRATION_REFERENCE_RECEIPT_ID],
+    },
+    cameraSafeProvenance,
+    continuityProvenance: {
+      source: "registered_events",
+      authority: "deterministic_runtime",
+      registeredEventIds: resolvedEvents.map(({ eventId }) => eventId),
+      readerProseImported: false,
+    },
+    privateValidationMaterial,
+    reservedActionDescriptors: reservedCandidates.map((candidate) => ({
+      actionId: candidate.actionId,
+      text: `Penelope may ${candidate.suggestedInput}.`,
+    })),
+    reservedActionSourceBindings: reservedCandidates.map((candidate) => ({
+      actionId: candidate.actionId,
+      sourceIds: resolvedEvents
+        .filter(
+          (_, index) =>
+            visibleRuntimeEvents[index]?.actionId === candidate.actionId,
+        )
+        .map(({ eventId }) => eventId),
+    })),
+    fidelityBefore: extractPublicFidelityRecord({
+      names: presentActors.map(({ entityId }) => entityId),
+      coreClaims: [
+        ...visibleFacts.map(({ renderText }) => renderText),
+        ...resolvedEvents.map(({ observableText }) => observableText),
+      ],
+      causalityDirections: visibleRuntimeEvents.flatMap(({ effects }) =>
+        effects.map(({ kind }) => kind),
+      ),
+      knowledgeScopes: focalPremiseIds(session, focalId),
+      actorAuthority: [focalId],
+      resolvedEventIds: resolvedEvents.map(({ eventId }) => eventId),
+    }),
+  } satisfies WorldNarrationPipelineArtifacts;
+  return artifacts;
+};
+
+export type WorldSessionNarrationPipelineOutcome =
+  | {
+      outcome: "accepted";
+      pipeline: WorldNarrationPipelineResult;
+      committableSession: WorldSimulationSession;
+      committableReceipt: WorldTurnReceipt | null;
+      modelOutput: ModelNarrationOutput;
+      trace: NarrationRendererTrace;
+    }
+  | {
+      outcome: "creator_review";
+      pipeline: WorldNarrationPipelineResult;
+      candidateSession: WorldSimulationSession;
+      candidateReceipt: WorldTurnReceipt;
+      modelOutput: ModelNarrationOutput;
+      trace: NarrationRendererTrace;
+      artifacts: ResolvedNarrationPipelineArtifacts;
+      creatorReviewRuleIds: string[];
+    }
+  | {
+      outcome: "blocked";
+      pipeline: WorldNarrationPipelineResult;
+      committableSession: null;
+      committableReceipt: null;
+      modelOutput: null;
+      trace: null;
+    };
+
+export const runWorldSessionNarrationPipeline = async ({
+  scenario,
+  session,
+  receipt,
+  styleProfile,
+  renderer,
+  critic,
+}: {
+  scenario: WorldSimulationScenario;
+  session: WorldSimulationSession;
+  receipt: WorldTurnReceipt | null;
+  styleProfile: PenelopeEnglishStyleProfile;
+  renderer: NarrationRenderer;
+  critic?: NarrationCritic | null;
+}): Promise<WorldSessionNarrationPipelineOutcome> => {
+  const artifacts = buildWorldNarrationPipelineArtifacts({
+    scenario,
+    session,
+    receipt,
+    styleProfile,
+  });
+  const pipeline = await runWorldNarrationPipeline({
+    artifacts,
+    renderer,
+    critic,
+  });
+  if (
+    pipeline.disposition === "creator_review" &&
+    pipeline.validation?.hardPass === true &&
+    receipt &&
+    pipeline.modelOutput &&
+    pipeline.trace
+  ) {
+    return {
+      outcome: "creator_review",
+      pipeline,
+      candidateSession: session,
+      candidateReceipt: receipt,
+      modelOutput: pipeline.modelOutput,
+      trace: pipeline.trace,
+      artifacts,
+      creatorReviewRuleIds: [
+        ...new Set(
+          pipeline.validation.findings
+            .filter(({ severity }) => severity === "creator_review")
+            .map(({ ruleId }) => ruleId),
+        ),
+      ].sort((left, right) => left.localeCompare(right)),
+    };
+  }
+  if (pipeline.disposition !== "accepted") {
+    return {
+      outcome: "blocked",
+      pipeline,
+      committableSession: null,
+      committableReceipt: null,
+      modelOutput: null,
+      trace: null,
+    };
+  }
+  if (!pipeline.modelOutput || !pipeline.trace) {
+    throw new Error("Accepted world narration is missing its validated renderer result.");
+  }
+  return {
+    outcome: "accepted",
+    pipeline,
+    committableSession: session,
+    committableReceipt: receipt,
+    modelOutput: pipeline.modelOutput,
+    trace: pipeline.trace,
+  };
 };
 
 export class WorldNarrationError extends Error {
@@ -330,46 +747,6 @@ export class WorldNarrationError extends Error {
   }
 }
 
-export const narrateWorldSession = async ({
-  scenario,
-  session,
-  receipt,
-  previousVisibleSceneSummary,
-  narrator,
-}: {
-  scenario: WorldSimulationScenario;
-  session: WorldSimulationSession;
-  receipt: WorldTurnReceipt | null;
-  previousVisibleSceneSummary: string | null;
-  narrator: WorldNarrator;
-}) => {
-  const request = buildWorldNarrationRequest({
-    scenario,
-    session,
-    receipt,
-    previousVisibleSceneSummary,
-  });
-  const outcome = await narrator.narrate(request);
-  if (outcome.outcome !== "completed") {
-    throw new WorldNarrationError(outcome.error.code, outcome.error.message);
-  }
-  const validation = validateWorldNarration({
-    request,
-    narration: outcome.narration,
-    restrictedConcepts: buildWorldNarrationRestrictedConcepts({
-      scenario,
-      session,
-    }),
-  });
-  if (!validation.ok) {
-    throw new WorldNarrationError(
-      `world_narration_${validation.code}`,
-      validation.message,
-    );
-  }
-  return { narration: validation.narration, trace: outcome.trace };
-};
-
 export type WorldSessionProjectionInput = {
   scenario: WorldSimulationScenario;
   session: WorldSimulationSession;
@@ -378,8 +755,9 @@ export type WorldSessionProjectionInput = {
   forked: boolean;
   transport: WorldPresentationTransport;
   receipt: WorldTurnReceipt | null;
-  narration: Awaited<ReturnType<typeof narrateWorldSession>>["narration"];
-  trace: Awaited<ReturnType<typeof narrateWorldSession>>["trace"];
+  narrationDecisionReceipt?: WorldNarrationHumanDecisionReceipt | null;
+  narration: WorldNarrationProjection;
+  trace: NarrationRendererTrace;
 };
 
 const participantEndingSummary = (kind: string): string => {
@@ -469,10 +847,10 @@ export const buildWorldCreatorReceipt = ({
   scenario,
   session,
   receipt,
-}: Pick<
-  WorldSessionProjectionInput,
-  "scenario" | "session" | "receipt"
->): WorldCreatorReceipt =>
+  narrationDecisionReceipt = null,
+}: Pick<WorldSessionProjectionInput, "scenario" | "session" | "receipt"> & {
+  narrationDecisionReceipt?: WorldNarrationHumanDecisionReceipt | null;
+}): WorldCreatorReceipt =>
   WorldCreatorReceiptSchema.parse({
     actors: scenario.actors.map((actor) => {
       const runtime = session.state.actors.find(
@@ -505,6 +883,17 @@ export const buildWorldCreatorReceipt = ({
         .filter(({ provenance }) => provenance.reviewState === "source_grounded")
         .map(({ id }) => id)
         .sort(),
+      creatorApprovedNotSourceCanonIds: [
+        ...scenario.reactionRules,
+        ...scenario.endingRules,
+      ]
+        .filter(
+          ({ provenance }) =>
+            provenance.reviewState === "creator_approved" &&
+            provenance.canonStatus === "not_source_canon",
+        )
+        .map(({ id }) => id)
+        .sort(),
       creatorReviewRequiredIds: [
         ...scenario.reactionRules,
         ...scenario.endingRules,
@@ -519,6 +908,20 @@ export const buildWorldCreatorReceipt = ({
     events: receipt?.events ?? [openingEvent()],
     ledgerHeadHash: session.ledger.cursor.headEntryHash,
     receiptHash: receipt?.receiptHash ?? null,
+    narrationDecisionProof: narrationDecisionReceipt
+      ? {
+          receiptHash: narrationDecisionReceipt.receiptHash,
+          decision: narrationDecisionReceipt.decision,
+          draftId: narrationDecisionReceipt.draftId,
+          draftHash: narrationDecisionReceipt.draftHash,
+          approvedModelOutputHash:
+            narrationDecisionReceipt.approvedModelOutputHash,
+          originalCreatorReviewRuleIds:
+            narrationDecisionReceipt.originalCreatorReviewRuleIds,
+          satisfiedCreatorReviewRuleIds:
+            narrationDecisionReceipt.satisfiedCreatorReviewRuleIds,
+        }
+      : null,
   });
 
 export const buildWorldSessionProjections = (

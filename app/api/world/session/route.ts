@@ -1,13 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { createCodexCliWorldNarrator } from "@/src/adapters/codex-cli/world-narrator";
+import styleProfileJson from "@/_dev/dispatch-2026-07-18/contracts/PENELOPE-ENGLISH-STYLE-PROFILE.json";
 import { getOdysseyBook19WorldSimulation } from "@/src/adapters/fixtures/odyssey-world-simulation";
-import { fixtureWorldNarrator } from "@/src/adapters/fixtures/world-narrator";
+import {
+  fixtureNarrationCritic,
+  fixtureNarrationRenderer,
+} from "@/src/adapters/fixtures/world-narrator";
 import {
   buildWorldVisibleSceneMemory,
   buildWorldSessionProjections,
-  narrateWorldSession,
+  runWorldSessionNarrationPipeline,
   WorldNarrationError,
 } from "@/src/application/world-simulation-service";
 import { saveWorldSessionCheckpoint } from "@/src/application/world-session-store";
@@ -17,13 +20,17 @@ import {
   assertStoryTransportAllowed,
 } from "@/src/application/story-live-gate";
 import {
+  projectModelNarrationOutputForWorldApi,
   StartWorldSessionApiRequestSchema,
   WORLD_CREATOR_ACCESS_TOKEN_HEADER,
 } from "@/src/contracts/world-api";
+import { PenelopeEnglishStyleProfileSchema } from "@/src/contracts/world-narrator";
 import { createWorldSimulationSession } from "@/src/domain/world-runtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const styleProfile = PenelopeEnglishStyleProfileSchema.parse(styleProfileJson);
 
 const gateError = (error: StoryLiveGateError) => {
   const details = {
@@ -54,36 +61,48 @@ export async function POST(request: Request) {
       branchId: `branch.canon_${instanceId}`,
       campaignId: `campaign.${scenario.id}.${instanceId}`,
     });
-    const narrator =
-      body.transport === "fixture"
-        ? fixtureWorldNarrator
-        : createCodexCliWorldNarrator();
-    const narrated = await narrateWorldSession({
+    // The opening is the prepared source-grounded fixture for both transports.
+    // Live Codex prose starts only after a resolved turn has a base checkpoint
+    // and creator capability to bind a pending review decision against.
+    const renderer = fixtureNarrationRenderer;
+    const critic = fixtureNarrationCritic;
+    const narrated = await runWorldSessionNarrationPipeline({
       scenario,
       session,
       receipt: null,
-      previousVisibleSceneSummary: null,
-      narrator,
+      styleProfile,
+      renderer,
+      critic,
     });
+    if (narrated.outcome !== "accepted") {
+      throw new WorldNarrationError(
+        `world_narration_${narrated.pipeline.disposition}`,
+        "The narration pipeline did not accept this scene.",
+      );
+    }
+    const narration = projectModelNarrationOutputForWorldApi(
+      narrated.modelOutput,
+    );
     const creatorAccessToken = randomUUID();
     const checkpoint = saveWorldSessionCheckpoint({
-      session,
+      session: narrated.committableSession,
+      transport: body.transport,
       parentCheckpointId: null,
       previousVisibleSceneSummary: buildWorldVisibleSceneMemory({
         scenario,
-        receipt: null,
+        receipt: narrated.committableReceipt,
       }),
       creatorAccessToken,
     });
     const { participantView } = buildWorldSessionProjections({
       scenario,
-      session,
+      session: narrated.committableSession,
       sessionId: checkpoint.sessionId,
       parentCheckpointId: null,
       forked: false,
-      transport: body.transport,
-      receipt: null,
-      narration: narrated.narration,
+      transport: checkpoint.transport,
+      receipt: narrated.committableReceipt,
+      narration,
       trace: narrated.trace,
     });
     return NextResponse.json(participantView, {

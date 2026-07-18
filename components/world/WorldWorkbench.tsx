@@ -9,6 +9,9 @@ import {
   type WorldCreatorReceipt,
   type WorldEffect,
   type WorldEvent,
+  type WorldNarrationDraftDecisionRequest,
+  type WorldNarrationDraftDecisionResponse,
+  type WorldPendingNarrationDraft,
   type WorldSessionView,
   type WorldTransport,
   type WorldTurnRequest,
@@ -27,12 +30,10 @@ type JsonResponse<T> = {
   response: Response;
 };
 
-const proseParagraphs = (prose: string): string[] =>
-  prose
-    .trim()
-    .split(/\n\s*\n/u)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
+const isPendingNarrationDraft = (
+  value: WorldSessionView | WorldPendingNarrationDraft,
+): value is WorldPendingNarrationDraft =>
+  "kind" in value && value.kind === "creator_review";
 
 const humanizeId = (value: string): string =>
   value
@@ -120,6 +121,11 @@ export function WorldWorkbench() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDraft, setPendingDraft] =
+    useState<WorldPendingNarrationDraft | null>(null);
+  const [draftParagraphs, setDraftParagraphs] = useState<
+    WorldPendingNarrationDraft["narration"]["paragraphs"]
+  >([]);
   const autoStarted = useRef(false);
   const creatorCapability = useRef<string | null>(null);
   const sceneHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -227,6 +233,8 @@ export function WorldWorkbench() {
           },
         ]);
         setSelectedId(view.sessionId);
+        setPendingDraft(null);
+        setDraftParagraphs([]);
         setAction("");
         setForkBeforeAction(false);
         setTransport(nextTransport);
@@ -279,11 +287,24 @@ export function WorldWorkbench() {
       transport: active.transport,
     };
     try {
-      const { data: next } = await requestJson<WorldSessionView>(
+      const { data: next } = await requestJson<
+        WorldSessionView | WorldPendingNarrationDraft
+      >(
         "/api/world/turn",
         request,
         active.transport === "codex_cli" ? liveToken.trim() : "",
+        undefined,
+        active.transport === "codex_cli" && creatorCapability.current
+          ? { [WORLD_CREATOR_ACCESS_HEADER]: creatorCapability.current }
+          : {},
       );
+      if (isPendingNarrationDraft(next)) {
+        setPendingDraft(next);
+        setDraftParagraphs(
+          next.narration.paragraphs.map((paragraph) => ({ ...paragraph })),
+        );
+        return;
+      }
       setCheckpoints((current) => [
         ...current,
         {
@@ -297,12 +318,76 @@ export function WorldWorkbench() {
         },
       ]);
       setSelectedId(next.sessionId);
+      setPendingDraft(null);
+      setDraftParagraphs([]);
       setAction("");
       setForkBeforeAction(false);
       window.requestAnimationFrame(() => sceneHeadingRef.current?.focus());
       await loadCreatorReceipt(next, creatorCapability.current);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The world could not resolve this action.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const decideNarrationDraft = async (
+    action: "approve" | "edit" | "reject",
+  ) => {
+    if (!pendingDraft) return;
+    const capability = creatorCapability.current;
+    if (!capability) {
+      setError("Creator approval is unavailable because this session has no creator capability.");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    const decision: WorldNarrationDraftDecisionRequest["decision"] =
+      action === "edit"
+        ? { action, paragraphs: draftParagraphs }
+        : { action };
+    try {
+      const { data: result } =
+        await requestJson<WorldNarrationDraftDecisionResponse>(
+          "/api/world/narration-draft",
+          { authority: pendingDraft.authority, decision },
+          "",
+          undefined,
+          { [WORLD_CREATOR_ACCESS_HEADER]: capability },
+        );
+      if (result.status === "rejected") {
+        setPendingDraft(null);
+        setDraftParagraphs([]);
+        setAction("");
+        setForkBeforeAction(false);
+        return;
+      }
+
+      const next = result.session;
+      setCheckpoints((current) => [
+        ...current,
+        {
+          sequence: current.length + 1,
+          view: next,
+          creatorReceipt: null,
+          creatorStatus: "loading",
+          creatorError: null,
+        },
+      ]);
+      setSelectedId(next.sessionId);
+      setPendingDraft(null);
+      setDraftParagraphs([]);
+      setAction("");
+      setForkBeforeAction(false);
+      window.requestAnimationFrame(() => sceneHeadingRef.current?.focus());
+      await loadCreatorReceipt(next, capability);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The narration decision could not be applied.",
+      );
     } finally {
       setBusy(false);
     }
@@ -339,6 +424,17 @@ export function WorldWorkbench() {
   const parentSequence = active.parentCheckpointId
     ? checkpoints.find(({ view }) => view.sessionId === active.parentCheckpointId)?.sequence ?? null
     : null;
+  const activePendingDraft =
+    pendingDraft?.authority.baseCheckpointId === active.sessionId
+      ? pendingDraft
+      : null;
+  const draftTextChanged = activePendingDraft
+    ? activePendingDraft.narration.paragraphs.some(
+        (paragraph, index) =>
+          draftParagraphs[index]?.paragraphId !== paragraph.paragraphId ||
+          draftParagraphs[index]?.text !== paragraph.text,
+      )
+    : false;
 
   return (
     <main id="main-content" className={styles.page}>
@@ -435,7 +531,7 @@ export function WorldWorkbench() {
                   Checkpoint {selectedSequence} · Turn {active.turn} of {active.maxTurns} · {branchLabel(active)}
                 </p>
                 <h2 id="world-scene-title" ref={sceneHeadingRef} tabIndex={-1}>
-                  {active.narration.title}
+                  {active.title}
                 </h2>
               </div>
               {active.forked ? <span className={styles.ifBadge}>IF branch</span> : null}
@@ -446,18 +542,94 @@ export function WorldWorkbench() {
             </p>
 
             <div className={styles.prose} data-testid="world-prose">
-              {proseParagraphs(active.narration.prose).map((paragraph, index) => (
-                <p key={`${active.sessionId}-paragraph-${index}`}>{paragraph}</p>
+              {active.narration.paragraphs.map((paragraph) => (
+                <p key={paragraph.paragraphId}>{paragraph.text}</p>
               ))}
             </div>
 
             <footer className={styles.sceneFooter}>
-              <span>Focal knowledge: {active.narration.grounding.factIds.length} cited facts</span>
-              <span>{active.narration.grounding.eventIds.length} resolved events rendered</span>
+              <span>Visible context: {active.visibleFacts.length} facts</span>
+              <span>{active.visibleEvents.length} resolved events visible</span>
             </footer>
           </article>
 
-          {active.ending ? (
+          {activePendingDraft ? (
+            <section
+              className={styles.actionPanel}
+              aria-labelledby="narration-review-heading"
+              data-testid="world-narration-review"
+            >
+              <div className={styles.sectionHeading}>
+                <p className={styles.eyebrow}>Creator decision · world state unchanged</p>
+                <h2 id="narration-review-heading">{activePendingDraft.question}</h2>
+              </div>
+              <p>
+                The action already has consequences in the simulation, but this wording will not
+                join the story until you approve it.
+              </p>
+              <details data-testid="world-pending-draft">
+                <summary>Review the narration candidate</summary>
+                <div className={styles.prose}>
+                  {draftParagraphs.map((paragraph, index) => (
+                    <label key={paragraph.paragraphId}>
+                      Paragraph {index + 1}
+                      <textarea
+                        value={paragraph.text}
+                        rows={5}
+                        maxLength={2_400}
+                        disabled={busy}
+                        onChange={(event) =>
+                          setDraftParagraphs((current) =>
+                            current.map((candidate) =>
+                              candidate.paragraphId === paragraph.paragraphId
+                                ? { ...candidate, text: event.target.value }
+                                : candidate,
+                            ),
+                          )
+                        }
+                        data-testid={`world-draft-paragraph-${index + 1}`}
+                      />
+                    </label>
+                  ))}
+                </div>
+                <small>
+                  Review requested by {activePendingDraft.authority.creatorReviewRuleIds.join(", ")}.
+                  Editing changes prose only; resolved events and causal receipts stay locked.
+                </small>
+              </details>
+              {error ? <p className={styles.error} role="alert">{error}</p> : null}
+              <div className={styles.actionMeta}>
+                <button
+                  type="button"
+                  disabled={busy || draftTextChanged}
+                  onClick={() => void decideNarrationDraft("approve")}
+                  data-testid="world-draft-approve"
+                >
+                  Approve &amp; continue
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    busy ||
+                    !draftTextChanged ||
+                    draftParagraphs.some(({ text }) => text.trim().length === 0)
+                  }
+                  onClick={() => void decideNarrationDraft("edit")}
+                  data-testid="world-draft-edit"
+                >
+                  Edit text &amp; approve
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void decideNarrationDraft("reject")}
+                  data-testid="world-draft-reject"
+                >
+                  Discard
+                </button>
+              </div>
+            </section>
+          ) : active.ending ? (
             <section className={styles.ending} role="status" data-testid="world-ending">
               <p className={styles.eyebrow}>This branch has reached an ending</p>
               <div>
@@ -643,13 +815,21 @@ export function WorldWorkbench() {
                   <section aria-labelledby="rule-review-heading">
                     <h3 id="rule-review-heading">Rule provenance</h3>
                     <p>
-                      Source-grounded behavior and authored simulation proposals stay distinguishable until creator review.
+                      Source canon, creator-approved additions, and pending proposals remain visibly separate.
                     </p>
                     <div className={styles.stateGrid}>
                       <div>
                         <strong>Source-grounded</strong>
                         <ul className={styles.idList}>
                           {creatorReceipt.ruleReview.sourceGroundedIds.map((ruleId) => (
+                            <li key={ruleId}><code>{ruleId}</code></li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <strong>Creator-approved · not source canon</strong>
+                        <ul className={styles.idList}>
+                          {creatorReceipt.ruleReview.creatorApprovedNotSourceCanonIds.map((ruleId) => (
                             <li key={ruleId}><code>{ruleId}</code></li>
                           ))}
                         </ul>
@@ -663,6 +843,18 @@ export function WorldWorkbench() {
                         </ul>
                       </div>
                     </div>
+                    {creatorReceipt.narrationDecisionProof ? (
+                      <p data-testid="world-narration-decision-proof">
+                        <strong>
+                          {creatorReceipt.narrationDecisionProof.decision === "edit"
+                            ? "Narration edited and approved"
+                            : "Narration approved"}
+                        </strong>{" "}
+                        · {creatorReceipt.narrationDecisionProof.satisfiedCreatorReviewRuleIds.length} creator-review rule
+                        {creatorReceipt.narrationDecisionProof.satisfiedCreatorReviewRuleIds.length === 1 ? "" : "s"} bound
+                        · receipt <code>{shortHash(creatorReceipt.narrationDecisionProof.receiptHash)}</code>
+                      </p>
+                    ) : null}
                   </section>
 
                   <section aria-labelledby="movement-heading">

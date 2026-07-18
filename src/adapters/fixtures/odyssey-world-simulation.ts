@@ -484,6 +484,37 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
       { id: "clock.identity_exposure", label: "Identity Exposure", initialValue: 0, maxValue: 4 },
       { id: "clock.suitor_suspicion", label: "Suitor Suspicion", initialValue: 0, maxValue: 4 },
     ],
+    creatorRuleApprovalReceipts: [
+      {
+        binding: {
+          receiptId: "receipt.d6.night_of_the_scar",
+          subjectFingerprint: "366ca7a03d685c90f9f7676c8b6919d270f38dccd1becc15693f43778f7a98c5",
+          issuer: "creator",
+          issuerAuthorityId: "creator.penelope_ontology",
+        },
+        scenarioId: "scenario.odyssey_book_19.night_of_the_scar",
+        approvedOn: "2026-07-18",
+        decisions: [
+          { decisionId: "decision.d6-1", action: "approve", ruleIds: ["reaction.melantho.notice_exclusion"] },
+          { decisionId: "decision.d6-2", action: "approve", ruleIds: ["reaction.melantho.approach_on_observe"] },
+          { decisionId: "decision.d6-3", action: "approve", ruleIds: ["reaction.melantho.compromise_plan"] },
+          { decisionId: "decision.d6-4", action: "approve_as_creator_authored_if", ruleIds: ["reaction.eurycleia.controlled_disclosure"] },
+          { decisionId: "decision.d6-5", action: "approve", ruleIds: ["ending.controlled_discovery", "ending.plan_compromised", "ending.timeout"] },
+        ],
+      },
+    ],
+    creatorRuleApprovalAuthorityRegistry: {
+      creatorAuthorityIds: ["creator.penelope_ontology"],
+      trustedReceipts: [
+        {
+          receiptId: "receipt.d6.night_of_the_scar",
+          subjectFingerprint: "366ca7a03d685c90f9f7676c8b6919d270f38dccd1becc15693f43778f7a98c5",
+          issuer: "creator",
+          issuerAuthorityId: "creator.penelope_ontology",
+          payloadFingerprint: "afcfc9377e97fc1a80a54aa10a8ed163704360e4f9d035f0b4b55fca86542858",
+        },
+      ],
+    },
     reactionRules: [
       {
         id: "reaction.eurycleia.recognize_scar",
@@ -496,6 +527,9 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
           basis: "source_derived",
           premiseIds: ["premise.stranger_identity", "premise.scar_recognition"],
           reviewState: "source_grounded",
+          canonStatus: "source_canon",
+          creatorApprovalReceiptId: null,
+          creatorDecisionId: null,
         },
         conditions: [
           {
@@ -528,6 +562,9 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
           basis: "source_derived",
           premiseIds: ["premise.scar_recognition", "premise.eurycleia_loyalty"],
           reviewState: "source_grounded",
+          canonStatus: "source_canon",
+          creatorApprovalReceiptId: null,
+          creatorDecisionId: null,
         },
         conditions: [
           {
@@ -555,6 +592,9 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
           basis: "source_derived",
           premiseIds: ["premise.penelope_bounded_evidence"],
           reviewState: "source_grounded",
+          canonStatus: "source_canon",
+          creatorApprovalReceiptId: null,
+          creatorDecisionId: null,
         },
         conditions: [
           {
@@ -579,7 +619,10 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
         provenance: {
           basis: "agent_proposed",
           premiseIds: ["premise.scar_recognition", "premise.penelope_not_certain"],
-          reviewState: "creator_review_required",
+          reviewState: "creator_approved",
+          canonStatus: "not_source_canon",
+          creatorApprovalReceiptId: "receipt.d6.night_of_the_scar",
+          creatorDecisionId: "decision.d6-4",
         },
         conditions: [
           {
@@ -616,7 +659,10 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
         provenance: {
           basis: "agent_proposed",
           premiseIds: ["premise.melantho_hostility", "premise.palace_danger"],
-          reviewState: "creator_review_required",
+          reviewState: "creator_approved",
+          canonStatus: "not_source_canon",
+          creatorApprovalReceiptId: "receipt.d6.night_of_the_scar",
+          creatorDecisionId: "decision.d6-1",
         },
         conditions: [
           {
@@ -642,7 +688,10 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
         provenance: {
           basis: "agent_proposed",
           premiseIds: ["premise.melantho_hostility", "premise.palace_danger"],
-          reviewState: "creator_review_required",
+          reviewState: "creator_approved",
+          canonStatus: "not_source_canon",
+          creatorApprovalReceiptId: "receipt.d6.night_of_the_scar",
+          creatorDecisionId: "decision.d6-2",
         },
         conditions: [
           {
@@ -672,7 +721,10 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
         provenance: {
           basis: "agent_proposed",
           premiseIds: ["premise.scar_recognition", "premise.melantho_hostility"],
-          reviewState: "creator_review_required",
+          reviewState: "creator_approved",
+          canonStatus: "not_source_canon",
+          creatorApprovalReceiptId: "receipt.d6.night_of_the_scar",
+          creatorDecisionId: "decision.d6-3",
         },
         conditions: [
           { kind: "flag_equals", flagId: "flag.scar_exposed", value: true },
@@ -697,6 +749,9 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
           basis: "source_derived",
           premiseIds: ["premise.scar_recognition", "premise.penelope_not_certain"],
           reviewState: "source_grounded",
+          canonStatus: "source_canon",
+          creatorApprovalReceiptId: null,
+          creatorDecisionId: null,
         },
         conditions: [
           { kind: "flag_equals", flagId: "flag.eurycleia_recognized", value: true },
@@ -714,7 +769,10 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
         provenance: {
           basis: "agent_proposed",
           premiseIds: ["premise.scar_recognition", "premise.penelope_not_certain"],
-          reviewState: "creator_review_required",
+          reviewState: "creator_approved",
+          canonStatus: "not_source_canon",
+          creatorApprovalReceiptId: "receipt.d6.night_of_the_scar",
+          creatorDecisionId: "decision.d6-5",
         },
         conditions: [
           { kind: "flag_equals", flagId: "flag.controlled_discovery", value: true },
@@ -730,7 +788,10 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
         provenance: {
           basis: "agent_proposed",
           premiseIds: ["premise.melantho_hostility", "premise.palace_danger"],
-          reviewState: "creator_review_required",
+          reviewState: "creator_approved",
+          canonStatus: "not_source_canon",
+          creatorApprovalReceiptId: "receipt.d6.night_of_the_scar",
+          creatorDecisionId: "decision.d6-5",
         },
         conditions: [
           { kind: "flag_equals", flagId: "flag.plan_compromised", value: true },
@@ -745,7 +806,10 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
         provenance: {
           basis: "agent_proposed",
           premiseIds: [],
-          reviewState: "creator_review_required",
+          reviewState: "creator_approved",
+          canonStatus: "not_source_canon",
+          creatorApprovalReceiptId: "receipt.d6.night_of_the_scar",
+          creatorDecisionId: "decision.d6-5",
         },
         conditions: [{ kind: "turn_at_least", turn: 6 }],
         terminal: true,

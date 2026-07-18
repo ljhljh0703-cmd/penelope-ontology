@@ -1,17 +1,23 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { createCodexCliWorldNarrator } from "@/src/adapters/codex-cli/world-narrator";
+import styleProfileJson from "@/_dev/dispatch-2026-07-18/contracts/PENELOPE-ENGLISH-STYLE-PROFILE.json";
+import { createCodexCliNarrationRenderer } from "@/src/adapters/codex-cli/world-narrator";
 import { getOdysseyBook19WorldSimulation } from "@/src/adapters/fixtures/odyssey-world-simulation";
-import { fixtureWorldNarrator } from "@/src/adapters/fixtures/world-narrator";
+import {
+  fixtureNarrationCritic,
+  fixtureNarrationRenderer,
+} from "@/src/adapters/fixtures/world-narrator";
 import {
   buildWorldVisibleSceneMemory,
   buildWorldSessionProjections,
-  narrateWorldSession,
+  runWorldSessionNarrationPipeline,
   WorldNarrationError,
 } from "@/src/application/world-simulation-service";
 import {
+  createWorldNarrationPendingDraft,
   existingWorldBranchIds,
+  loadWorldCreatorCheckpoint,
   releaseWorldSessionTurn,
   reserveWorldSessionTurn,
   saveWorldSessionCheckpoint,
@@ -21,7 +27,15 @@ import {
   StoryLiveGateError,
   assertStoryTransportAllowed,
 } from "@/src/application/story-live-gate";
-import { WorldTurnApiRequestSchema } from "@/src/contracts/world-api";
+import {
+  projectModelNarrationOutputForWorldApi,
+  WORLD_CREATOR_ACCESS_TOKEN_HEADER,
+  WorldNarrationDraftAuthoritySchema,
+  WorldNarrationDraftViewSchema,
+  WorldNarrationPendingDraftReceiptSchema,
+  WorldTurnApiRequestSchema,
+} from "@/src/contracts/world-api";
+import { PenelopeEnglishStyleProfileSchema } from "@/src/contracts/world-narrator";
 import {
   forkWorldSimulationSession,
   runWorldSimulationTurn,
@@ -29,6 +43,8 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const styleProfile = PenelopeEnglishStyleProfileSchema.parse(styleProfileJson);
 
 const gateError = (error: StoryLiveGateError) => {
   const details = {
@@ -54,6 +70,27 @@ export async function POST(request: Request) {
       requestUrl: request.url,
       presentedToken: request.headers.get(STORY_LIVE_TOKEN_HEADER),
     });
+    const creatorAccessToken = request.headers.get(
+      WORLD_CREATOR_ACCESS_TOKEN_HEADER,
+    );
+    if (
+      body.transport === "codex_cli" &&
+      (!creatorAccessToken ||
+        !loadWorldCreatorCheckpoint({
+          sessionId: body.sessionId,
+          creatorAccessToken,
+        }))
+    ) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "world_creator_access_denied",
+            message: "Private narration proposals require this workbench's creator capability.",
+          },
+        },
+        { status: 403 },
+      );
+    }
     const reservation = reserveWorldSessionTurn({
       sessionId: body.sessionId,
       expectedStateHash: body.expectedStateHash,
@@ -77,6 +114,17 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
+    if (reservation.status === "pending_creator_review") {
+      return NextResponse.json(
+        {
+          error: {
+            code: "world_session_creator_review_pending",
+            message: "Decide the pending narration candidate before resolving another turn from this checkpoint.",
+          },
+        },
+        { status: 409 },
+      );
+    }
     if (reservation.status === "mainline_advanced") {
       return NextResponse.json(
         { error: { code: "world_session_advanced", message: "This checkpoint already has a mainline continuation. Fork it explicitly to test another consequence." } },
@@ -85,6 +133,17 @@ export async function POST(request: Request) {
     }
     const checkpoint = reservation.checkpoint;
     reservedSessionId = checkpoint.sessionId;
+    if (body.transport !== checkpoint.transport) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "world_session_transport_mismatch",
+            message: "This checkpoint must continue with the narration transport that opened it.",
+          },
+        },
+        { status: 409 },
+      );
+    }
 
     const scenario = getOdysseyBook19WorldSimulation();
     let authority = checkpoint.session;
@@ -101,37 +160,84 @@ export async function POST(request: Request) {
       session: authority,
       input: body.action,
     });
-    const narrator =
-      body.transport === "fixture"
-        ? fixtureWorldNarrator
-        : createCodexCliWorldNarrator();
-    const narrated = await narrateWorldSession({
+    const liveAdapter =
+      checkpoint.transport === "codex_cli"
+        ? createCodexCliNarrationRenderer()
+        : null;
+    const renderer = liveAdapter ?? fixtureNarrationRenderer;
+    const critic = liveAdapter ?? fixtureNarrationCritic;
+    const narrated = await runWorldSessionNarrationPipeline({
       scenario,
       session: result.session,
       receipt: result.receipt,
-      previousVisibleSceneSummary: checkpoint.previousVisibleSceneSummary,
-      narrator,
+      styleProfile,
+      renderer,
+      critic,
     });
+    if (narrated.outcome === "creator_review") {
+      const pending = WorldNarrationPendingDraftReceiptSchema.parse(
+        createWorldNarrationPendingDraft({
+          baseCheckpointId: checkpoint.sessionId,
+          baseStateHash: checkpoint.session.state.stateHash,
+          candidateSession: narrated.candidateSession,
+          candidateReceipt: narrated.candidateReceipt,
+          modelOutput: narrated.modelOutput,
+          trace: narrated.trace,
+          artifacts: narrated.artifacts,
+          transport: checkpoint.transport,
+          forkBeforeAction: body.forkBeforeAction,
+          creatorReviewRuleIds: narrated.creatorReviewRuleIds,
+          pipeline: narrated.pipeline,
+          creatorAccessToken: creatorAccessToken ?? "",
+        }),
+      );
+      const { createdAtMs, consumed, ...authorityInput } = pending;
+      void createdAtMs;
+      void consumed;
+      const draftView = WorldNarrationDraftViewSchema.parse({
+        kind: "creator_review",
+        question: "Does this narration fit what just happened in the world?",
+        authority: WorldNarrationDraftAuthoritySchema.parse(authorityInput),
+        narration: projectModelNarrationOutputForWorldApi(
+          narrated.modelOutput,
+        ),
+        narratorTrace: narrated.trace,
+      });
+      return NextResponse.json(draftView, {
+        status: 202,
+        headers: { "cache-control": "no-store" },
+      });
+    }
+    if (narrated.outcome !== "accepted") {
+      throw new WorldNarrationError(
+        `world_narration_${narrated.pipeline.disposition}`,
+        "The narration pipeline did not accept this scene.",
+      );
+    }
+    const narration = projectModelNarrationOutputForWorldApi(
+      narrated.modelOutput,
+    );
 
-    // Commit only after the draft passes the bounded narration validator.
+    // Commit only after the complete narration pipeline accepts the resolved turn.
     const nextCheckpoint = saveWorldSessionCheckpoint({
-      session: result.session,
+      session: narrated.committableSession,
+      transport: checkpoint.transport,
       parentCheckpointId: checkpoint.sessionId,
       previousVisibleSceneSummary: buildWorldVisibleSceneMemory({
         scenario,
-        receipt: result.receipt,
+        receipt: narrated.committableReceipt,
       }),
     });
     commitMainlineAdvance = !body.forkBeforeAction;
     const { participantView } = buildWorldSessionProjections({
       scenario,
-      session: result.session,
+      session: narrated.committableSession,
       sessionId: nextCheckpoint.sessionId,
       parentCheckpointId: checkpoint.sessionId,
       forked: body.forkBeforeAction,
-      transport: body.transport,
-      receipt: result.receipt,
-      narration: narrated.narration,
+      transport: nextCheckpoint.transport,
+      receipt: narrated.committableReceipt,
+      narration,
       trace: narrated.trace,
     });
     return NextResponse.json(participantView, {

@@ -1,197 +1,248 @@
 import {
-  WorldNarrationRequestSchema,
-  validateWorldNarration,
-  countEnglishSceneWords,
-  type WorldNarrationRequest,
-  type WorldNarrationSegment,
+  ModelNarrationOutputSchema,
+  NarrationCriticRequestSchema,
+  NarrationRendererRequestSchema,
+  type ModelNarrationOutput,
+  type NarrationRendererRequest,
+  type PenelopeSentencePlan,
 } from "@/src/contracts/world-narrator";
-import type { WorldNarrator } from "@/src/ports/world-narrator";
+import type {
+  NarrationCritic,
+  NarrationRenderer,
+} from "@/src/ports/world-narrator";
 
-const FIXTURE_ADAPTER_ID = "world_narrator_fixture_v1";
+const FIXTURE_RENDERER_ADAPTER_ID = "world_narration_renderer_fixture_v2";
+const FIXTURE_CRITIC_ADAPTER_ID = "world_narration_critic_fixture_v1";
 
-const words = (text: string): Array<string> => text.trim().split(/\s+/u);
+type FixtureRenderResult =
+  | { ok: true; modelOutput: ModelNarrationOutput }
+  | { ok: false; code: string; message: string };
 
-const clipWords = (text: string, maximum: number): string => {
-  const tokens = words(text);
-  if (tokens.length <= maximum) return text.trim();
-  return `${tokens.slice(0, maximum).join(" ").replace(/[,:;.!?]+$/u, "")}...`;
-};
+const planReceiptFor = (plan: PenelopeSentencePlan) => ({
+  sentencePlanId: plan.sentencePlanId,
+  role: plan.role,
+  sourceFactIds: [...plan.sourceFactIds],
+  sourceEventIds: [...plan.sourceEventIds],
+  speechEventIds: [...plan.speechEventIds],
+  licensedRenderingDetailIds: [...plan.licensedRenderingDetailIds],
+});
 
-const fixtureTitle = (request: WorldNarrationRequest): string => {
-  const resolved = request.resolvedEvents
-    .map(({ summary }) => summary)
-    .join(" ")
-    .toLocaleLowerCase("en-US");
-  if (/scar|wash|basin/u.test(resolved)) return "The Basin Between Them";
-  if (/confront|confirm|private/u.test(resolved)) {
-    return "The Question Inside the Circle";
-  }
-  if (/melantho|witness|servant|notice/u.test(resolved)) {
-    return "A Witness Near the Hearth";
-  }
-  if (/testimony|question|evidence/u.test(resolved)) {
-    return "What the Stranger Can Prove";
-  }
-  return request.previousVisibleSceneSummary === null
-    ? "A Stranger at the Hearth"
-    : "Before Penelope Chooses";
-};
-
-const naturalList = (values: string[]): string => {
-  if (values.length === 0) return "no offered course";
-  if (values.length === 1) return values[0]!;
-  return `${values.slice(0, -1).join(", ")}, or ${values.at(-1)}`;
-};
-
-const createFixtureNarration = (request: WorldNarrationRequest) => {
-  const observable = request.observableFacts.slice(0, 2);
-  const known = request.focalKnowledge.slice(0, 1);
-  const groundedFactIds = [
-    ...observable.map(({ factId }) => factId),
-    ...known.map(({ factId }) => factId),
-  ];
-
-  const evidenceSegment: WorldNarrationSegment = {
-    segmentId: "world_segment_evidence",
-    text: [
-      ...observable.map(({ summary }) => clipWords(summary, 15)),
-      "Penelope holds to what the room can show her, resisting every conclusion that the visible evidence has not earned.",
-    ].join(" "),
-    grounding: {
-      factIds: groundedFactIds,
-      eventIds: [],
-    },
+const preparedSourceText = (
+  request: NarrationRendererRequest,
+): Map<string, string> => {
+  const sources = new Map<string, string>();
+  const register = (sourceId: string, text: string): void => {
+    if (!sources.has(sourceId)) sources.set(sourceId, text.trim());
   };
 
-  const continuitySegment: WorldNarrationSegment = {
-    segmentId: "world_segment_continuity",
-    text: [
-      request.previousVisibleSceneSummary === null
-        ? "No earlier conclusion settles the encounter; the late hour only makes each pause more costly."
-        : `The last visible moment still presses on the room: ${clipWords(request.previousVisibleSceneSummary, 12)}`,
-      known.length > 0
-        ? `She carries only this much forward: ${clipWords(known[0]!.summary, 14)}`
-        : "She carries no private answer beyond what has already become visible.",
-    ].join(" "),
-    grounding: {
-      factIds: [],
-      eventIds: [],
-    },
-  };
-
-  const eventWordBudget = Math.max(
-    5,
-    Math.floor(48 / request.resolvedEvents.length),
-  );
-  const eventClauses = request.resolvedEvents.map((event) =>
-    clipWords(event.summary, eventWordBudget),
-  );
-  const eventSegment: WorldNarrationSegment = {
-    segmentId: "world_segment_resolved_events",
-    text: eventClauses.join(" "),
-    grounding: {
-      factIds: [],
-      eventIds: request.resolvedEvents.map(({ eventId }) => eventId),
-    },
-  };
-
-  const padding = [
-    "Silence has become an action of its own, giving every other will in the household room to move.",
-    "A servant's glance, a halted hand, or one answer spoken too quickly could change who controls the next moment.",
-    "Penelope therefore measures not only what was done, but who had reason to notice it.",
-    "The household remains dangerous precisely because uncertainty does not keep its people still.",
-    "Whatever follows must begin from these consequences rather than erase them for a cleaner scene.",
-  ];
-  const offeredChoices = request.nextActionCandidates.map(({ label }) =>
-    label.replace(/[.!?]+$/u, ""),
-  );
-  let handoffText = [
-    "Nothing beyond these consequences is settled for her.",
-    offeredChoices.length > 0
-      ? `Her remaining courses are concrete: ${naturalList(offeredChoices)}.`
-      : "The bounded scene has reached the point where no further action is offered.",
-    "The moment stops before the next choice, leaving its cost to the person who makes it.",
-  ].join(" ");
-  const segments = [evidenceSegment, continuitySegment, eventSegment];
-  let prose = [...segments.map(({ text }) => text), handoffText].join("\n\n");
-  for (const sentence of padding) {
-    if (countEnglishSceneWords(prose) >= 120) break;
-    const candidate = `${handoffText} ${sentence}`;
-    const candidateProse = [
-      ...segments.map(({ text }) => text),
-      candidate,
-    ].join("\n\n");
-    if (countEnglishSceneWords(candidateProse) > 180) break;
-    handoffText = candidate;
-    prose = candidateProse;
+  for (const fact of request.modelFacingRequest.visibleFacts) {
+    register(fact.factId, fact.renderText);
+  }
+  for (const actor of request.modelFacingRequest.presentActors) {
+    for (const factId of actor.sourceFactIds) {
+      register(factId, actor.renderDescriptor);
+    }
+  }
+  for (const anchor of request.modelFacingRequest.authorizedAnchors) {
+    for (const factId of anchor.sourceFactIds) {
+      register(factId, anchor.renderDescriptor);
+    }
+  }
+  for (const event of request.modelFacingRequest.resolvedEvents) {
+    register(event.eventId, event.observableText);
+  }
+  for (const detail of request.modelFacingRequest.licensedRenderingDetails) {
+    register(detail.licenseId, detail.contentBoundary);
   }
 
-  const handoffSegment: WorldNarrationSegment = {
-    segmentId: "world_segment_handoff",
-    text: handoffText,
-    grounding: {
-      factIds: [],
-      eventIds: [],
-    },
-  };
-  const finalSegments = [...segments, handoffSegment];
-
-  return {
-    title: fixtureTitle(request),
-    prose: finalSegments.map(({ text }) => text).join("\n\n"),
-    segments: finalSegments,
-    grounding: {
-      factIds: groundedFactIds,
-      eventIds: request.resolvedEvents.map(({ eventId }) => eventId),
-    },
-    nextActions: request.nextActionCandidates.map((action) => ({ ...action })),
-  };
+  return sources;
 };
 
-export const fixtureWorldNarrator: WorldNarrator = {
-  async narrate(requestInput) {
-    const request = WorldNarrationRequestSchema.safeParse(requestInput);
+const authorizedSourceIds = (
+  request: NarrationRendererRequest,
+): Set<string> =>
+  new Set([
+    ...request.preflightReceipt.sceneAuthority.factIds,
+    ...request.preflightReceipt.sceneAuthority.eventIds,
+    ...request.preflightReceipt.sceneAuthority.licensedRenderingDetailIds,
+    ...request.preflightReceipt.dialogueAuthority.speechEventIds,
+    ...request.preflightReceipt.dialogueAuthority.speechActLicenseIds,
+  ]);
+
+const renderPreparedFixture = (
+  request: NarrationRendererRequest,
+): FixtureRenderResult => {
+  const sourceText = preparedSourceText(request);
+  const authorized = authorizedSourceIds(request);
+  const plans = request.scenePlan.sentencePlans;
+  const renderedPlans: Array<{ plan: PenelopeSentencePlan; text: string }> = [];
+
+  for (const plan of plans) {
+    const sourceIds = [
+      ...plan.sourceFactIds,
+      ...plan.sourceEventIds,
+      ...plan.speechEventIds,
+      ...plan.licensedRenderingDetailIds,
+    ];
+    const unauthorizedSourceId = sourceIds.find(
+      (sourceId) => !authorized.has(sourceId),
+    );
+    if (unauthorizedSourceId !== undefined) {
+      return {
+        ok: false,
+        code: "fixture_renderer_source_unauthorized",
+        message: `Sentence plan ${plan.sentencePlanId} cites an unauthorized source.`,
+      };
+    }
+
+    const missingSourceId = sourceIds.find(
+      (sourceId) => !sourceText.has(sourceId),
+    );
+    if (missingSourceId !== undefined) {
+      return {
+        ok: false,
+        code: "fixture_renderer_prose_unavailable",
+        message: `Sentence plan ${plan.sentencePlanId} has no prepared prose for an authorized source.`,
+      };
+    }
+
+    const text = [...new Set(sourceIds)]
+      .map((sourceId) => sourceText.get(sourceId)!)
+      .join(" ");
+    renderedPlans.push({ plan, text });
+  }
+
+  const maximumParagraphs = 8;
+  const chunkSize = Math.ceil(renderedPlans.length / maximumParagraphs);
+  const paragraphs = [];
+  for (let index = 0; index < renderedPlans.length; index += chunkSize) {
+    const chunk = renderedPlans.slice(index, index + chunkSize);
+    paragraphs.push({
+      paragraphId: `fixture.paragraph.${paragraphs.length + 1}`,
+      sentencePlanIds: chunk.map(({ plan }) => plan.sentencePlanId),
+      text: chunk.map(({ text }) => text).join(" "),
+    });
+  }
+
+  const output = ModelNarrationOutputSchema.safeParse({
+    planReceipt: plans.map(planReceiptFor),
+    readerProse: {
+      format: "english_prose_paragraphs",
+      paragraphs,
+    },
+  });
+  if (!output.success) {
+    return {
+      ok: false,
+      code: "fixture_renderer_output_invalid",
+      message:
+        output.error.issues[0]?.message ??
+        "The prepared fixture output is invalid.",
+    };
+  }
+
+  return { ok: true, modelOutput: output.data };
+};
+
+const sameAuthoritySet = (
+  request: NarrationRendererRequest,
+  output: ModelNarrationOutput,
+): boolean =>
+  JSON.stringify(output.planReceipt) ===
+  JSON.stringify(request.scenePlan.sentencePlans.map(planReceiptFor));
+
+export const fixtureNarrationRenderer: NarrationRenderer = {
+  async render(requestInput) {
+    const request = NarrationRendererRequestSchema.safeParse(requestInput);
     if (!request.success) {
       return {
         outcome: "rejected",
         error: {
-          code: "world_narration_request_invalid",
+          code: "fixture_renderer_request_invalid",
           message:
             request.error.issues[0]?.message ??
-            "The world narration request is invalid.",
+            "The fixture renderer request is invalid.",
         },
         trace: {
           provenance: "fixture",
-          adapterId: FIXTURE_ADAPTER_ID,
+          adapterId: FIXTURE_RENDERER_ADAPTER_ID,
         },
       };
     }
 
-    const narration = createFixtureNarration(request.data);
-    const validation = validateWorldNarration({
-      request: request.data,
-      narration,
-    });
-    if (!validation.ok) {
+    const rendered = renderPreparedFixture(request.data);
+    if (!rendered.ok) {
       return {
         outcome: "rejected",
-        error: {
-          code: `world_narration_${validation.code}`,
-          message: validation.message,
-        },
+        error: { code: rendered.code, message: rendered.message },
         trace: {
           provenance: "fixture",
-          adapterId: FIXTURE_ADAPTER_ID,
+          adapterId: FIXTURE_RENDERER_ADAPTER_ID,
         },
       };
     }
 
     return {
       outcome: "completed",
-      narration: validation.narration,
+      modelOutput: rendered.modelOutput,
       trace: {
         provenance: "fixture",
-        adapterId: FIXTURE_ADAPTER_ID,
+        adapterId: FIXTURE_RENDERER_ADAPTER_ID,
+      },
+    };
+  },
+};
+
+export const fixtureNarrationCritic: NarrationCritic = {
+  async revise(requestInput) {
+    const request = NarrationCriticRequestSchema.safeParse(requestInput);
+    if (!request.success) {
+      return {
+        outcome: "rejected",
+        error: {
+          code: "fixture_critic_request_invalid",
+          message:
+            request.error.issues[0]?.message ??
+            "The fixture critic request is invalid.",
+        },
+        trace: {
+          provenance: "fixture",
+          adapterId: FIXTURE_CRITIC_ADAPTER_ID,
+        },
+      };
+    }
+    if (!sameAuthoritySet(request.data.rendererRequest, request.data.priorOutput)) {
+      return {
+        outcome: "rejected",
+        error: {
+          code: "fixture_critic_authority_changed",
+          message: "The critic cannot revise output outside the original scene authority.",
+        },
+        trace: {
+          provenance: "fixture",
+          adapterId: FIXTURE_CRITIC_ADAPTER_ID,
+        },
+      };
+    }
+
+    const rendered = renderPreparedFixture(request.data.rendererRequest);
+    if (!rendered.ok) {
+      return {
+        outcome: "rejected",
+        error: { code: rendered.code, message: rendered.message },
+        trace: {
+          provenance: "fixture",
+          adapterId: FIXTURE_CRITIC_ADAPTER_ID,
+        },
+      };
+    }
+
+    return {
+      outcome: "completed",
+      modelOutput: rendered.modelOutput,
+      trace: {
+        provenance: "fixture",
+        adapterId: FIXTURE_CRITIC_ADAPTER_ID,
       },
     };
   },

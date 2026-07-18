@@ -19,6 +19,13 @@ const contractsDirectory = resolve(
   "_dev/dispatch-2026-07-18/contracts",
 );
 
+const listProductionSourceFiles = (directory: string): string[] =>
+  readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = resolve(directory, entry.name);
+    if (entry.isDirectory()) return listProductionSourceFiles(entryPath);
+    return /\.(?:ts|tsx)$/u.test(entry.name) ? [entryPath] : [];
+  });
+
 const validReferenceReceipt = {
   status: "available",
   referenceId: "creator-craft-reference-2026-07-17-01",
@@ -406,6 +413,39 @@ describe("candidate-2.2 schema behavior mirror", () => {
     ).toBe(false);
   });
 
+  it("rejects non-English reader prose in the Build Week English lane", () => {
+    expect(
+      ModelNarrationOutputSchema.safeParse({
+        ...validModelOutput,
+        readerProse: {
+          ...validModelOutput.readerProse,
+          paragraphs: [
+            {
+              ...validModelOutput.readerProse.paragraphs[0],
+              text: "이 문장은 영어 전용 출력 계약을 위반한다.",
+            },
+          ],
+        },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects reader prose whose ordered paragraphs exceed the API projection limit", () => {
+    expect(
+      ModelNarrationOutputSchema.safeParse({
+        ...validModelOutput,
+        readerProse: {
+          ...validModelOutput.readerProse,
+          paragraphs: Array.from({ length: 6 }, (_, index) => ({
+            paragraphId: `paragraph.long_${index}`,
+            sentencePlanIds: ["sp-orientation", "sp-stop"],
+            text: "a".repeat(2_100),
+          })),
+        },
+      }).success,
+    ).toBe(false);
+  });
+
   it("T23 scans Markdown and JSON contract artifacts for the listed public markers", () => {
     const markers = [
       "[[eldritch-seoul-rpg-tone-bible]]",
@@ -497,7 +537,42 @@ describe("human-owned authority remains human-owned", () => {
 });
 
 describe("runtime authority migration", () => {
-  it.todo(
-    "MIGRATION-GUARD activates after Lane D rewires runtime and Lane A removes deprecated WorldNarrationSchema exports",
-  );
+  it("MIGRATION-GUARD keeps production on the renderer pipeline", () => {
+    const productionRoots = [resolve(process.cwd(), "src"), resolve(process.cwd(), "app")];
+    const sourceFiles = productionRoots.flatMap((root) =>
+      listProductionSourceFiles(root),
+    );
+    const forbiddenIdentifiers = [
+      "WorldNarrator",
+      "WorldNarrationRequestSchema",
+      "WorldNarrationRequest",
+      "WorldNarrationSchema",
+      "WorldNarratorOutcomeSchema",
+      "WorldNarratorOutcome",
+      "validateWorldNarration",
+      "fixtureWorldNarrator",
+      "createCodexCliWorldNarrator",
+      "buildCodexCliWorldNarratorPrompt",
+    ];
+    const violations = sourceFiles.flatMap((file) => {
+      const text = readFileSync(file, "utf8");
+      return forbiddenIdentifiers
+        .filter((identifier) =>
+          new RegExp(`\\b${identifier}\\b`, "u").test(text),
+        )
+        .map((identifier) => ({
+          file: file.slice(process.cwd().length + 1),
+          identifier,
+        }));
+    });
+    const productionText = sourceFiles
+      .map((file) => readFileSync(file, "utf8"))
+      .join("\n");
+
+    expect(violations).toEqual([]);
+    expect(productionText).toMatch(/\bNarrationRenderer\b/u);
+    expect(productionText).toMatch(/\brunWorldNarrationPipeline\b/u);
+    expect(productionText).toMatch(/\bNarrationRendererRequestSchema\b/u);
+    expect(productionText).toMatch(/\bModelNarrationOutputSchema\b/u);
+  });
 });

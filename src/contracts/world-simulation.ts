@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  HashSchema,
   IdentifierSchema,
   addDuplicateIssues,
 } from "@/src/contracts/common";
@@ -279,38 +280,141 @@ export const SimulationRuleProvenanceSchema = z
       "creator_approved",
       "creator_review_required",
     ]),
+    canonStatus: z.enum(["source_canon", "not_source_canon"]),
+    creatorApprovalReceiptId: IdentifierSchema.nullable(),
+    creatorDecisionId: IdentifierSchema.nullable(),
   })
   .strict()
   .superRefine((provenance, context) => {
     if (
       provenance.basis === "source_derived" &&
       (provenance.reviewState !== "source_grounded" ||
-        provenance.premiseIds.length === 0)
+        provenance.premiseIds.length === 0 ||
+        provenance.canonStatus !== "source_canon" ||
+        provenance.creatorApprovalReceiptId !== null ||
+        provenance.creatorDecisionId !== null)
     ) {
       context.addIssue({
         code: "custom",
         message:
-          "A source-derived rule requires source-grounded review state and at least one premise.",
+          "A source-derived rule requires source-grounded source canon, at least one premise, and no creator approval reference.",
       });
     }
     if (
       provenance.basis === "agent_proposed" &&
-      provenance.reviewState !== "creator_review_required"
+      provenance.canonStatus !== "not_source_canon"
     ) {
       context.addIssue({
         code: "custom",
-        message: "An agent-proposed rule must remain creator-review-required.",
+        message: "An agent-proposed rule must remain explicitly outside source canon.",
+      });
+    }
+    if (
+      provenance.basis === "agent_proposed" &&
+      provenance.reviewState === "creator_review_required" &&
+      (provenance.creatorApprovalReceiptId !== null ||
+        provenance.creatorDecisionId !== null)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "A pending agent proposal cannot cite a creator approval receipt.",
+      });
+    }
+    if (
+      provenance.basis === "agent_proposed" &&
+      provenance.reviewState === "creator_approved" &&
+      (provenance.creatorApprovalReceiptId === null ||
+        provenance.creatorDecisionId === null)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "An approved agent proposal requires both creator approval receipt and decision references.",
       });
     }
     if (
       provenance.basis === "creator_authored" &&
-      provenance.reviewState !== "creator_approved"
+      (provenance.reviewState !== "creator_approved" ||
+        provenance.canonStatus !== "not_source_canon" ||
+        provenance.creatorApprovalReceiptId === null ||
+        provenance.creatorDecisionId === null)
     ) {
       context.addIssue({
         code: "custom",
-        message: "A creator-authored rule requires creator-approved review state.",
+        message:
+          "A creator-authored rule requires creator-approved non-source-canon state and receipt references.",
       });
     }
+  });
+
+export const CreatorRuleApprovalDecisionSchema = z
+  .object({
+    decisionId: IdentifierSchema,
+    action: z.enum(["approve", "approve_as_creator_authored_if"]),
+    ruleIds: z.array(IdentifierSchema).min(1).max(8),
+  })
+  .strict()
+  .superRefine((decision, context) => {
+    addDuplicateIssues(decision.ruleIds, "creator-approved rule id", context);
+  });
+
+export const CreatorRuleApprovalReceiptSchema = z
+  .object({
+    binding: z
+      .object({
+        receiptId: IdentifierSchema,
+        subjectFingerprint: HashSchema,
+        issuer: z.literal("creator"),
+        issuerAuthorityId: IdentifierSchema,
+      })
+      .strict(),
+    scenarioId: IdentifierSchema,
+    approvedOn: z.iso.date(),
+    decisions: z.array(CreatorRuleApprovalDecisionSchema).min(1).max(12),
+  })
+  .strict()
+  .superRefine((receipt, context) => {
+    addDuplicateIssues(
+      receipt.decisions.map(({ decisionId }) => decisionId),
+      "creator approval decision id",
+      context,
+    );
+    addDuplicateIssues(
+      receipt.decisions.flatMap(({ ruleIds }) => ruleIds),
+      "creator approval mapped rule id",
+      context,
+    );
+  });
+
+export const CreatorRuleApprovalAuthorityRegistrySchema = z
+  .object({
+    creatorAuthorityIds: z.array(IdentifierSchema).min(1).max(8),
+    trustedReceipts: z
+      .array(
+        z
+          .object({
+            receiptId: IdentifierSchema,
+            subjectFingerprint: HashSchema,
+            issuer: z.literal("creator"),
+            issuerAuthorityId: IdentifierSchema,
+            payloadFingerprint: HashSchema,
+          })
+          .strict(),
+      )
+      .max(8),
+  })
+  .strict()
+  .superRefine((registry, context) => {
+    addDuplicateIssues(
+      registry.creatorAuthorityIds,
+      "creator approval authority id",
+      context,
+    );
+    addDuplicateIssues(
+      registry.trustedReceipts.map(({ receiptId }) => receiptId),
+      "trusted creator approval receipt id",
+      context,
+    );
   });
 
 export const ReactionRuleSchema = z
@@ -411,6 +515,11 @@ export const WorldSimulationScenarioSchema = z
     initialPrivateKnowledge: z.array(PrivateKnowledgeStateSchema).min(2).max(6),
     initialFlags: z.array(InitialFlagSchema).max(16),
     clocks: z.array(PressureClockSchema).min(1).max(3),
+    creatorRuleApprovalReceipts: z
+      .array(CreatorRuleApprovalReceiptSchema)
+      .max(8),
+    creatorRuleApprovalAuthorityRegistry:
+      CreatorRuleApprovalAuthorityRegistrySchema,
     reactionRules: z.array(ReactionRuleSchema).min(1).max(16),
     endingRules: z.array(EndingRuleSchema).length(4),
   })
@@ -433,6 +542,13 @@ export const WorldSimulationScenarioSchema = z
     );
     addDuplicateIssues(scenario.initialFlags.map(({ id }) => id), "initial flag id", context);
     addDuplicateIssues(scenario.clocks.map(({ id }) => id), "pressure clock id", context);
+    addDuplicateIssues(
+      scenario.creatorRuleApprovalReceipts.map(
+        ({ binding }) => binding.receiptId,
+      ),
+      "creator rule approval receipt id",
+      context,
+    );
     addDuplicateIssues(scenario.reactionRules.map(({ id }) => id), "reaction rule id", context);
     addDuplicateIssues(scenario.endingRules.map(({ id }) => id), "ending rule id", context);
 
@@ -444,6 +560,60 @@ export const WorldSimulationScenarioSchema = z
     const flagIds = new Set(scenario.initialFlags.map(({ id }) => id));
     const clockById = new Map(scenario.clocks.map((clock) => [clock.id, clock]));
     const clockIds = new Set(clockById.keys());
+    const simulationRules = [
+      ...scenario.reactionRules,
+      ...scenario.endingRules,
+    ];
+    const simulationRuleIds = new Set(simulationRules.map(({ id }) => id));
+
+    for (const [receiptIndex, receipt] of
+      scenario.creatorRuleApprovalReceipts.entries()) {
+      if (receipt.scenarioId !== scenario.id) {
+        context.addIssue({
+          code: "custom",
+          path: ["creatorRuleApprovalReceipts", receiptIndex, "scenarioId"],
+          message: "A creator approval receipt must target this scenario.",
+        });
+      }
+      for (const [decisionIndex, decision] of receipt.decisions.entries()) {
+        for (const [ruleIndex, ruleId] of decision.ruleIds.entries()) {
+          addUnknownReferenceIssue(
+            simulationRuleIds,
+            ruleId,
+            [
+              "creatorRuleApprovalReceipts",
+              receiptIndex,
+              "decisions",
+              decisionIndex,
+              "ruleIds",
+              ruleIndex,
+            ],
+            "creator-approved simulation rule",
+            context,
+          );
+        }
+      }
+    }
+
+    for (const [ruleIndex, rule] of simulationRules.entries()) {
+      const provenance = rule.provenance;
+      if (provenance.reviewState !== "creator_approved") continue;
+      const receipt = scenario.creatorRuleApprovalReceipts.find(
+        ({ binding }) =>
+          binding.receiptId === provenance.creatorApprovalReceiptId,
+      );
+      const decision = receipt?.decisions.find(
+        ({ decisionId }) => decisionId === provenance.creatorDecisionId,
+      );
+      if (!decision?.ruleIds.includes(rule.id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["simulationRules", ruleIndex, "provenance"],
+          message:
+            "A creator-approved rule must be mapped by its referenced receipt decision.",
+        });
+      }
+    }
 
     const focalActors = scenario.actors.filter(
       ({ simulationRole }) => simulationRole === "focal_participant",
@@ -790,6 +960,18 @@ export type WorldActor = z.infer<typeof WorldActorSchema>;
 export type ActionDefinition = z.infer<typeof ActionDefinitionSchema>;
 export type ReactionCondition = z.infer<typeof ReactionConditionSchema>;
 export type ReactionEffect = z.infer<typeof ReactionEffectSchema>;
+export type SimulationRuleProvenance = z.infer<
+  typeof SimulationRuleProvenanceSchema
+>;
+export type CreatorRuleApprovalDecision = z.infer<
+  typeof CreatorRuleApprovalDecisionSchema
+>;
+export type CreatorRuleApprovalReceipt = z.infer<
+  typeof CreatorRuleApprovalReceiptSchema
+>;
+export type CreatorRuleApprovalAuthorityRegistry = z.infer<
+  typeof CreatorRuleApprovalAuthorityRegistrySchema
+>;
 export type ReactionRule = z.infer<typeof ReactionRuleSchema>;
 export type PressureClock = z.infer<typeof PressureClockSchema>;
 export type EndingRule = z.infer<typeof EndingRuleSchema>;

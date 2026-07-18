@@ -5,6 +5,7 @@ import type {
 } from "@/src/contracts/campaign";
 import type {
   ActionDefinition,
+  CreatorRuleApprovalReceipt,
   EndingRule,
   ReactionCondition,
   ReactionEffect,
@@ -38,6 +39,152 @@ import { sha256Canonical, sortedUniqueIds } from "@/src/domain/canonical-json";
 const WORLD_RUNTIME_VERSION = "1.0.0";
 
 const compareIds = (left: string, right: string): number => left.localeCompare(right);
+
+type SimulationRuleEntry =
+  | { kind: "reaction"; rule: ReactionRule }
+  | { kind: "ending"; rule: EndingRule };
+
+const simulationRuleEntries = (
+  scenario: Pick<WorldSimulationScenario, "reactionRules" | "endingRules">,
+): SimulationRuleEntry[] => [
+  ...scenario.reactionRules.map((rule) => ({ kind: "reaction" as const, rule })),
+  ...scenario.endingRules.map((rule) => ({ kind: "ending" as const, rule })),
+];
+
+export const buildCreatorRuleApprovalSubjectFingerprint = ({
+  scenario,
+  receiptId,
+}: {
+  scenario: Pick<
+    WorldSimulationScenario,
+    "id" | "reactionRules" | "endingRules"
+  >;
+  receiptId: string;
+}): string =>
+  sha256Canonical({
+    schemaVersion: "penelope.creator-rule-approval-subject.v1",
+    scenarioId: scenario.id,
+    rules: simulationRuleEntries(scenario)
+      .filter(
+        ({ rule }) =>
+          rule.provenance.creatorApprovalReceiptId === receiptId,
+      )
+      .map(({ kind, rule }) => ({ kind, rule }))
+      .sort((left, right) => compareIds(left.rule.id, right.rule.id)),
+  });
+
+export const fingerprintCreatorRuleApprovalReceiptPayload = (
+  receipt: CreatorRuleApprovalReceipt,
+): string => {
+  const { binding, ...payload } = receipt;
+  void binding;
+  return sha256Canonical({
+    schemaVersion: "penelope.creator-rule-approval-receipt-payload.v1",
+    payload,
+  });
+};
+
+const trustedCreatorRuleIdsForReceipt = ({
+  scenario,
+  receiptId,
+}: {
+  scenario: WorldSimulationScenario;
+  receiptId: string;
+}): ReadonlySet<string> => {
+  const receipts = scenario.creatorRuleApprovalReceipts.filter(
+    ({ binding }) => binding.receiptId === receiptId,
+  );
+  const trustedReceipts =
+    scenario.creatorRuleApprovalAuthorityRegistry.trustedReceipts.filter(
+      (receipt) => receipt.receiptId === receiptId,
+    );
+  if (receipts.length !== 1 || trustedReceipts.length !== 1) return new Set();
+  const receipt = receipts[0]!;
+  const trusted = trustedReceipts[0]!;
+  const { binding } = receipt;
+  const authorityIds =
+    scenario.creatorRuleApprovalAuthorityRegistry.creatorAuthorityIds;
+  if (
+    new Set(authorityIds).size !== authorityIds.length ||
+    binding.issuer !== "creator" ||
+    !authorityIds.includes(binding.issuerAuthorityId) ||
+    trusted.issuer !== binding.issuer ||
+    trusted.issuerAuthorityId !== binding.issuerAuthorityId ||
+    trusted.subjectFingerprint !== binding.subjectFingerprint ||
+    trusted.subjectFingerprint !==
+      buildCreatorRuleApprovalSubjectFingerprint({ scenario, receiptId }) ||
+    trusted.payloadFingerprint !==
+      fingerprintCreatorRuleApprovalReceiptPayload(receipt) ||
+    receipt.scenarioId !== scenario.id
+  ) {
+    return new Set();
+  }
+
+  const mappedRuleIds = receipt.decisions.flatMap(({ ruleIds }) => ruleIds);
+  if (
+    new Set(mappedRuleIds).size !== mappedRuleIds.length ||
+    new Set(receipt.decisions.map(({ decisionId }) => decisionId)).size !==
+      receipt.decisions.length
+  ) {
+    return new Set();
+  }
+  const mappedRuleIdSet = new Set(mappedRuleIds);
+  const approvedRules = simulationRuleEntries(scenario)
+    .map(({ rule }) => rule)
+    .filter(
+      ({ provenance }) =>
+        provenance.creatorApprovalReceiptId === receiptId,
+    );
+  if (
+    approvedRules.length !== mappedRuleIdSet.size ||
+    approvedRules.some(
+      (rule) =>
+        !mappedRuleIdSet.has(rule.id) ||
+        rule.provenance.basis === "source_derived" ||
+        rule.provenance.reviewState !== "creator_approved" ||
+        rule.provenance.canonStatus !== "not_source_canon" ||
+        !receipt.decisions.some(
+          ({ decisionId, ruleIds }) =>
+            decisionId === rule.provenance.creatorDecisionId &&
+            ruleIds.includes(rule.id),
+        ),
+    )
+  ) {
+    return new Set();
+  }
+  return mappedRuleIdSet;
+};
+
+export const activeWorldSimulationRuleIds = (
+  scenario: WorldSimulationScenario,
+): ReadonlySet<string> => {
+  const activeRuleIds = new Set<string>();
+  const receiptTrust = new Map<string, ReadonlySet<string>>();
+  for (const { rule } of simulationRuleEntries(scenario)) {
+    if (
+      rule.provenance.basis === "source_derived" &&
+      rule.provenance.reviewState === "source_grounded" &&
+      rule.provenance.canonStatus === "source_canon"
+    ) {
+      activeRuleIds.add(rule.id);
+      continue;
+    }
+    const receiptId = rule.provenance.creatorApprovalReceiptId;
+    if (
+      rule.provenance.reviewState !== "creator_approved" ||
+      rule.provenance.canonStatus !== "not_source_canon" ||
+      receiptId === null
+    ) {
+      continue;
+    }
+    const trustedRuleIds =
+      receiptTrust.get(receiptId) ??
+      trustedCreatorRuleIdsForReceipt({ scenario, receiptId });
+    receiptTrust.set(receiptId, trustedRuleIds);
+    if (trustedRuleIds.has(rule.id)) activeRuleIds.add(rule.id);
+  }
+  return activeRuleIds;
+};
 
 const normalizeText = (value: string): string =>
   value
@@ -208,6 +355,7 @@ export const hasValidWorldSimulationSession = (
   };
   const parsed = WorldSimulationSessionSchema.safeParse(session);
   const initial = initialState(scenario);
+  const activeRuleIds = activeWorldSimulationRuleIds(scenario);
   if (
     !parsed.success ||
     !hasValidWorldSimulationState(parsed.data.state) ||
@@ -272,6 +420,12 @@ export const hasValidWorldSimulationSession = (
     let playerEntryHash: string | null = null;
     let precedingReactionEntryHash: string | null = null;
     for (const [eventIndex, event] of receipt.events.entries()) {
+      if (
+        event.source.kind !== "participant" &&
+        !activeRuleIds.has(event.source.reactionRuleId)
+      ) {
+        return fail(`receipt_${receipt.turn}_inactive_rule`);
+      }
       const entry = parsed.data.ledger.entries[ledgerIndex];
       if (!entry) return fail(`ledger_entry_${ledgerIndex}_missing`);
       const expectedSource =
@@ -375,6 +529,7 @@ export const hasValidWorldSimulationSession = (
         ...replayState.firedReactionRuleIds,
         ...receipt.firedReactionRuleIds.filter(
           (ruleId) =>
+            activeRuleIds.has(ruleId) &&
             scenario.reactionRules.find(({ id }) => id === ruleId)?.once ===
             true,
         ),
@@ -666,12 +821,26 @@ const pickEnding = ({
   action: ResolvedWorldAction;
   turn: number;
 }): EndingRule | null => {
+  const activeRuleIds = activeWorldSimulationRuleIds(scenario);
   const matches = scenario.endingRules
-    .filter((ending) => allConditionsMatch({ conditions: ending.conditions, state, action, turn }))
+    .filter(
+      (ending) =>
+        activeRuleIds.has(ending.id) &&
+        allConditionsMatch({
+          conditions: ending.conditions,
+          state,
+          action,
+          turn,
+        }),
+    )
     .sort((left, right) => right.priority - left.priority || compareIds(left.id, right.id));
   if (matches[0]) return matches[0];
   if (turn >= scenario.maxTurns) {
-    return scenario.endingRules.find(({ kind }) => kind === "timeout") ?? null;
+    return (
+      scenario.endingRules.find(
+        ({ id, kind }) => kind === "timeout" && activeRuleIds.has(id),
+      ) ?? null
+    );
   }
   return null;
 };
@@ -769,8 +938,11 @@ const appendWorldEvent = ({
   });
   const reactionRuleId =
     event.source.kind === "participant" ? null : event.source.reactionRuleId;
+  const activeRuleIds = activeWorldSimulationRuleIds(scenario);
   const reactionRule = reactionRuleId
-    ? scenario.reactionRules.find(({ id }) => id === reactionRuleId) ?? null
+    ? scenario.reactionRules.find(
+        ({ id }) => id === reactionRuleId && activeRuleIds.has(id),
+      ) ?? null
     : null;
   const sourceReceiptId =
     event.source.kind === "participant"
@@ -819,7 +991,11 @@ const appendWorldEvent = ({
     event: input,
     knownEntityIds: new Set(scenario.actors.map(({ id }) => id)),
     activeClaimIds: new Set(scenario.premises.map(({ id }) => id)),
-    activeRuleIds: new Set(scenario.reactionRules.map(({ id }) => id)),
+    activeRuleIds: new Set(
+      scenario.reactionRules
+        .filter(({ id }) => activeRuleIds.has(id))
+        .map(({ id }) => id),
+    ),
     activeActionTypeIds: new Set([
       ...scenario.actions.map(({ id }) => id),
       "action.unsupported",
@@ -867,6 +1043,7 @@ export const runWorldSimulationTurn = ({
   }
 
   const turn = session.state.turn + 1;
+  const activeRuleIds = activeWorldSimulationRuleIds(scenario);
   const action = resolveWorldAction({ scenario, input });
   const actionDefinition =
     action.status === "accepted"
@@ -891,6 +1068,7 @@ export const runWorldSimulationTurn = ({
     const next = scenario.reactionRules
       .filter(
         (rule) =>
+          activeRuleIds.has(rule.id) &&
           !selectedRuleIds.has(rule.id) &&
           workingState.actors.find(({ entityId }) => entityId === rule.actorEntityId)
             ?.agendaState === "active" &&

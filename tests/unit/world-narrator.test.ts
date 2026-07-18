@@ -1,352 +1,312 @@
 import { describe, expect, it } from "vitest";
-import { fixtureWorldNarrator } from "@/src/adapters/fixtures/world-narrator";
+import penelopeEnglishStyleProfile from "@/_dev/dispatch-2026-07-18/contracts/PENELOPE-ENGLISH-STYLE-PROFILE.json";
 import {
-  WorldNarrationRequestSchema,
-  WorldNarrationRestrictedConceptSchema,
-  WorldNarrationSchema,
-  countEnglishSceneWords,
-  validateWorldNarration,
-  type WorldNarration,
-  type WorldNarrationRequest,
+  ModelNarrationOutputSchema,
+  NarrationCriticRequestSchema,
+  NarrationRendererOutcomeSchema,
+  NarrationRendererRequestSchema,
+  PenelopeEnglishStyleProfileSchema,
+  PenelopeNarrationPreflightReceiptSchema,
+  PenelopeScenePlanSchema,
 } from "@/src/contracts/world-narrator";
+import {
+  WorldNarrationProjectionSchema,
+  projectModelNarrationOutputForWorldApi,
+} from "@/src/contracts/world-api";
+import type {
+  NarrationCritic,
+  NarrationRenderer,
+} from "@/src/ports/world-narrator";
 
-const identityRestriction = WorldNarrationRestrictedConceptSchema.parse({
-  conceptId: "concept.stranger_identity",
-  unlockFactId: "fact.odysseus_identity",
-  forbiddenTerms: [
-    "disguised Odysseus",
-    "Odysseus in disguise",
-    "Ulysses himself",
-  ],
-  equivalences: [
+const rendererModelFacingRequest = {
+  sceneMode: "setup",
+  languageProfileId: "en-penelope-v1",
+  referenceReceiptId: "creator-craft-reference-2026-07-17-01",
+  focalActorId: "entity.a",
+  presentActors: [
     {
-      subjectTerms: [
-        "the stranger",
-        "the beggar",
-        "the guest",
-        "the wanderer",
-      ],
-      relationTerms: [
-        "is",
-        "was",
-        "really",
-        "true identity",
-        "none other than",
-      ],
-      objectTerms: [
-        "Odysseus",
-        "Ulysses",
-        "Laertiades",
-        "the king of Ithaca",
-      ],
-      maxTokenDistance: 20,
+      entityId: "entity.a",
+      renderDescriptor: "A woman stands beside the hearth.",
+      sourceFactIds: ["fact.a"],
     },
   ],
-});
+  visibleFacts: [{ factId: "fact.a", renderText: "A lamp burns." }],
+  resolvedEvents: [],
+  authorizedActionEventIds: [],
+  authorizedReactionEventIds: [],
+  authorizedChangeEventIds: [],
+  authorizedAnchors: [],
+  licensedRenderingDetails: [],
+  styleStateId: "en-penelope-state-baseline",
+  reservedActionIds: [],
+} as const;
 
-const request: WorldNarrationRequest = WorldNarrationRequestSchema.parse({
-  focalEntityId: "penelope",
-  observableFacts: [
+const rendererScenePlan = PenelopeScenePlanSchema.parse({
+  scenePlanId: "scene.setup",
+  sceneMode: "setup",
+  sentencePlans: [
     {
-      factId: "fact.basin_at_hearth",
-      summary: "A washing basin stands beside the hearth where Penelope can see it.",
-    },
-  ],
-  focalKnowledge: [
-    {
-      factId: "fact.stranger_claimed_guest_memory",
-      summary: "The stranger supplied a precise memory of clothing once worn by Odysseus.",
-    },
-  ],
-  resolvedEvents: [
-    {
-      eventId: "event.player.orders_washing",
-      source: "player",
-      summary: "Penelope asks Eurycleia to wash the stranger's feet.",
-    },
-    {
-      eventId: "event.npc.recognizes_scar",
-      source: "npc",
-      summary: "Eurycleia recognizes the old scar and catches her breath.",
+      sentencePlanId: "sp.orientation",
+      role: "orientation",
+      actorId: "entity.a",
+      speakerId: null,
+      sourceFactIds: ["fact.a"],
+      sourceEventIds: [],
+      speechEventIds: [],
+      licensedRenderingDetailIds: [],
+      plainFunction: "Place the focal actor beside the registered lamp.",
+      plainFunctionSourceAuthorityIds: ["fact.a"],
+      plainIntent: null,
+      plainIntentSourceAuthorityIds: [],
+      changesState: false,
     },
     {
-      eventId: "event.world.suspicion_rises",
-      source: "world",
-      summary: "The sudden silence increases the risk of notice in the hall.",
-    },
-  ],
-  previousVisibleSceneSummary:
-    "Penelope questioned the stranger and found that his account matched details she remembered.",
-  styleConstraints: [
-    {
-      constraintId: "style.concrete_pressure",
-      ownership: "creator_owned_original",
-      instruction: "Use concrete action and restrained dialogue instead of explanatory riddles.",
-    },
-  ],
-  nextActionCandidates: [
-    {
-      actionId: "action.dismiss_melantho",
-      actorEntityId: "penelope",
-      actionTypeId: "dismiss_present_npc",
-      label: "Dismiss Melantho",
-      intent: "Send Melantho out before asking Eurycleia what she recognized.",
-    },
-    {
-      actionId: "action.watch_in_silence",
-      actorEntityId: "penelope",
-      actionTypeId: "observe_without_intervening",
-      label: "Watch in silence",
-      intent: "Say nothing and watch how the stranger and Eurycleia respond.",
+      sentencePlanId: "sp.stop",
+      role: "in_world_stop",
+      actorId: "entity.a",
+      speakerId: null,
+      sourceFactIds: ["fact.a"],
+      sourceEventIds: [],
+      speechEventIds: [],
+      licensedRenderingDetailIds: [],
+      plainFunction: "Stop on the focal actor waiting by the door.",
+      plainFunctionSourceAuthorityIds: ["fact.a"],
+      plainIntent: null,
+      plainIntentSourceAuthorityIds: [],
+      changesState: false,
     },
   ],
 });
-
-const completeFixture = async (): Promise<WorldNarration> => {
-  const outcome = await fixtureWorldNarrator.narrate(request);
-  expect(outcome.outcome).toBe("completed");
-  if (outcome.outcome !== "completed") throw new Error(outcome.error.message);
-  return outcome.narration;
-};
-
-const replaceProse = (
-  narration: WorldNarration,
-  text: string,
-): WorldNarration => ({
-  ...narration,
-  prose: text,
-  segments: [
-    {
-      segmentId: "world_segment_replacement",
-      text,
-      grounding: narration.grounding,
+const rendererPreflightReceipt =
+  PenelopeNarrationPreflightReceiptSchema.parse({
+    preflightId: "preflight.setup",
+    sceneMode: "setup",
+    sceneAuthority: {
+      factIds: ["fact.a"],
+      eventIds: [],
+      actorEntityIds: ["entity.a"],
+      licensedRenderingDetailIds: [],
+      licensedRenderingDetails: [],
     },
-  ],
-});
-
-describe("world narrator boundary", () => {
-  it("builds a deterministic 120-180 word scene only from resolved input", async () => {
-    const first = await fixtureWorldNarrator.narrate(request);
-    const second = await fixtureWorldNarrator.narrate(structuredClone(request));
-
-    expect(first).toEqual(second);
-    expect(first.outcome).toBe("completed");
-    if (first.outcome !== "completed") throw new Error(first.error.message);
-    expect(first.trace).toEqual({
-      provenance: "fixture",
-      adapterId: "world_narrator_fixture_v1",
-    });
-    expect(countEnglishSceneWords(first.narration.prose)).toBeGreaterThanOrEqual(120);
-    expect(countEnglishSceneWords(first.narration.prose)).toBeLessThanOrEqual(180);
-    expect(first.narration.nextActions).toEqual(request.nextActionCandidates);
-    expect(first.narration.grounding.eventIds).toEqual(
-      request.resolvedEvents.map(({ eventId }) => eventId),
-    );
-    expect(first.narration.prose).not.toContain("branch");
-  });
-
-  it("keeps a sparse but valid resolved turn inside the same word boundary", async () => {
-    const sparseRequest = WorldNarrationRequestSchema.parse({
-      ...request,
-      observableFacts: [{ factId: "fact.lamp", summary: "A lamp burns." }],
-      focalKnowledge: [],
-      resolvedEvents: [
-        { eventId: "event.player.waits", source: "player", summary: "She waits." },
-      ],
-      previousVisibleSceneSummary: null,
-      nextActionCandidates: [],
-    });
-
-    const outcome = await fixtureWorldNarrator.narrate(sparseRequest);
-    expect(outcome.outcome).toBe("completed");
-    if (outcome.outcome !== "completed") throw new Error(outcome.error.message);
-    expect(countEnglishSceneWords(outcome.narration.prose)).toBeGreaterThanOrEqual(120);
-    expect(countEnglishSceneWords(outcome.narration.prose)).toBeLessThanOrEqual(180);
-  });
-
-  it("keeps hidden facts outside the model request and rejects phrase leakage afterward", async () => {
-    expect(
-      WorldNarrationRequestSchema.safeParse({
-        ...request,
-        hiddenFacts: [{ factId: "fact.odysseus_identity", summary: "Hidden" }],
-      }).success,
-    ).toBe(false);
-
-    const narration = await completeFixture();
-    const leakedText = `${narration.segments.at(-1)!.text} Odysseus is the disguised stranger.`;
-    const leakedSegments = narration.segments.map((segment, index) =>
-      index === narration.segments.length - 1
-        ? { ...segment, text: leakedText }
-        : segment,
-    );
-    const leaked = {
-      ...narration,
-      segments: leakedSegments,
-      prose: leakedSegments.map(({ text }) => text).join("\n\n"),
-    };
-
-    expect(
-      validateWorldNarration({
-        request,
-        narration: leaked,
-        withheldFacts: [
-          {
-            factId: "fact.odysseus_identity",
-            forbiddenPhrases: ["Odysseus is the disguised stranger"],
-          },
-        ],
-      }),
-    ).toMatchObject({ ok: false, code: "hidden_fact_leak" });
-  });
-
-  it.each([
-    "The stranger before her was really Ulysses.",
-    "The beggar was none other than Laertiades.",
-    "The guest's true identity was the king of Ithaca.",
-    "Odysseus in disguise watched her from the hearth.",
-  ])("blocks a withheld identity equivalence: %s", async (leak) => {
-    const narration = await completeFixture();
-    const leakedText = `${narration.segments.at(-1)!.text} ${leak}`;
-    const leakedSegments = narration.segments.map((segment, index) =>
-      index === narration.segments.length - 1
-        ? { ...segment, text: leakedText }
-        : segment,
-    );
-    const leaked = {
-      ...narration,
-      segments: leakedSegments,
-      prose: leakedSegments.map(({ text }) => text).join("\n\n"),
-    };
-
-    expect(
-      validateWorldNarration({
-        request,
-        narration: leaked,
-        restrictedConcepts: [identityRestriction],
-      }),
-    ).toMatchObject({ ok: false, code: "restricted_concept_leak" });
-  });
-
-  it("unlocks the restricted identity concept only through focal knowledge", async () => {
-    const narration = await completeFixture();
-    const leakedText = `${narration.segments.at(-1)!.text} The stranger was really Odysseus.`;
-    const leakedSegments = narration.segments.map((segment, index) =>
-      index === narration.segments.length - 1
-        ? { ...segment, text: leakedText }
-        : segment,
-    );
-    const revealed = {
-      ...narration,
-      segments: leakedSegments,
-      prose: leakedSegments.map(({ text }) => text).join("\n\n"),
-    };
-    const unlockedRequest = WorldNarrationRequestSchema.parse({
-      ...request,
-      focalKnowledge: [
-        ...request.focalKnowledge,
+    referenceReceipt: {
+      status: "available",
+      referenceId: "creator-craft-reference-2026-07-17-01",
+      transferableTechniqueIds: ["TT-01"],
+      sceneApplicability: [
         {
-          factId: "fact.odysseus_identity",
-          summary: "Penelope now knows that the stranger is Odysseus.",
+          techniqueId: "TT-01",
+          plainReason: "Use the resolved physical situation as the scene beat.",
         },
       ],
-    });
-
-    expect(
-      validateWorldNarration({
-        request: unlockedRequest,
-        narration: revealed,
-        restrictedConcepts: [identityRestriction],
-      }),
-    ).toMatchObject({ ok: true });
+      forbiddenImitation: true,
+      excludedGimmicks: ["FC-04"],
+    },
+    plainDramaticPlan: {
+      focalActorId: "entity.a",
+      actionSourceEventIds: [],
+      reactionSourceEventIds: [],
+      changeSourceEventIds: [],
+    },
+    dialogueAuthority: {
+      mode: "none",
+      speakerId: null,
+      speechAct: null,
+      speechEventIds: [],
+      speechActLicenseIds: [],
+      authorizedContentIds: [],
+      plainIntent: null,
+      plainIntentSourceAuthorityIds: [],
+    },
+    creatorReviewRequired: true,
   });
 
-  it("rejects unknown event IDs even when segment and top-level grounding agree", async () => {
-    const narration = await completeFixture();
-    const forgedEventId = "event.hidden.identity_reveal";
-    const forgedSegments = narration.segments.map((segment) =>
-      segment.segmentId === "world_segment_resolved_events"
-        ? {
-            ...segment,
-            grounding: {
-              ...segment.grounding,
-              eventIds: [...segment.grounding.eventIds, forgedEventId],
-            },
-          }
-        : segment,
+const rendererStyleProfile = PenelopeEnglishStyleProfileSchema.parse(
+  penelopeEnglishStyleProfile,
+);
+
+const rendererRequest = NarrationRendererRequestSchema.parse({
+  modelFacingRequest: rendererModelFacingRequest,
+  scenePlan: rendererScenePlan,
+  preflightReceipt: rendererPreflightReceipt,
+  styleProfile: rendererStyleProfile,
+});
+
+const rendererModelOutput = ModelNarrationOutputSchema.parse({
+  planReceipt: [
+    {
+      sentencePlanId: "sp.orientation",
+      role: "orientation",
+      sourceFactIds: ["fact.a"],
+      sourceEventIds: [],
+      speechEventIds: [],
+      licensedRenderingDetailIds: [],
+    },
+    {
+      sentencePlanId: "sp.stop",
+      role: "in_world_stop",
+      sourceFactIds: ["fact.a"],
+      sourceEventIds: [],
+      speechEventIds: [],
+      licensedRenderingDetailIds: [],
+    },
+  ],
+  readerProse: {
+    format: "english_prose_paragraphs",
+    paragraphs: [
+      {
+        paragraphId: "paragraph.one",
+        sentencePlanIds: ["sp.orientation"],
+        text: "A lamp burns beside the hearth.",
+      },
+      {
+        paragraphId: "paragraph.two",
+        sentencePlanIds: ["sp.stop"],
+        text: "The woman waits by the door.",
+      },
+    ],
+  },
+});
+
+describe("Lane D renderer-only migration seam", () => {
+  it("accepts only the four public renderer inputs", () => {
+    expect(NarrationRendererRequestSchema.safeParse(rendererRequest).success).toBe(
+      true,
     );
-    const forged = {
-      ...narration,
-      segments: forgedSegments,
-      grounding: {
-        ...narration.grounding,
-        eventIds: [...narration.grounding.eventIds, forgedEventId],
-      },
-    };
 
-    expect(validateWorldNarration({ request, narration: forged })).toMatchObject({
-      ok: false,
-      code: "event_not_supplied",
-    });
+    for (const forbidden of [
+      { privateValidation: { forbiddenKnowledgeIds: [] } },
+      { renderAudit: { hardPass: true } },
+      { evidenceAuthorityRegistry: { trustedReceipts: [] } },
+    ]) {
+      expect(
+        NarrationRendererRequestSchema.safeParse({
+          ...rendererRequest,
+          ...forbidden,
+        }).success,
+      ).toBe(false);
+    }
   });
 
-  it("accepts equivalent top-level grounding in a different order", async () => {
-    const narration = await completeFixture();
-    const reordered = {
-      ...narration,
-      grounding: {
-        factIds: [...narration.grounding.factIds].reverse(),
-        eventIds: [...narration.grounding.eventIds].reverse(),
-      },
-    };
-
-    expect(validateWorldNarration({ request, narration: reordered })).toMatchObject({
-      ok: true,
-    });
-  });
-
-  it("rejects any mutation of runtime-supplied next actions", async () => {
-    const narration = await completeFixture();
-    const mutated = {
-      ...narration,
-      nextActions: narration.nextActions.map((action, index) =>
-        index === 0 ? { ...action, label: "Confront the stranger" } : action,
-      ),
-    };
-
-    expect(validateWorldNarration({ request, narration: mutated })).toMatchObject({
-      ok: false,
-      code: "next_actions_mutated",
-    });
-  });
-
-  it("rejects outputs that add canon, effects, or knowledge fields", async () => {
-    const narration = await completeFixture();
+  it("rejects incoherent scene, reference, style, and focal-actor selections", () => {
     expect(
-      WorldNarrationSchema.safeParse({
-        ...narration,
-        effects: [{ kind: "knowledge_grant" }],
+      NarrationRendererRequestSchema.safeParse({
+        ...rendererRequest,
+        scenePlan: { ...rendererScenePlan, sceneMode: "transition" },
       }).success,
     ).toBe(false);
     expect(
-      WorldNarrationSchema.safeParse({ ...narration, canon: { changed: true } }).success,
+      NarrationRendererRequestSchema.safeParse({
+        ...rendererRequest,
+        modelFacingRequest: {
+          ...rendererModelFacingRequest,
+          referenceReceiptId: "receipt.other",
+        },
+      }).success,
     ).toBe(false);
     expect(
-      WorldNarrationSchema.safeParse({ ...narration, knowledge: ["secret"] }).success,
+      NarrationRendererRequestSchema.safeParse({
+        ...rendererRequest,
+        modelFacingRequest: {
+          ...rendererModelFacingRequest,
+          styleStateId: "style.unregistered",
+        },
+      }).success,
+    ).toBe(false);
+    expect(
+      NarrationRendererRequestSchema.safeParse({
+        ...rendererRequest,
+        modelFacingRequest: {
+          ...rendererModelFacingRequest,
+          focalActorId: "entity.other",
+        },
+      }).success,
     ).toBe(false);
   });
 
-  it("fails closed below 120 and above 180 English words", async () => {
-    const narration = await completeFixture();
-    const tooShort = replaceProse(
-      narration,
-      Array.from({ length: 119 }, (_, index) => `word${index}`).join(" "),
-    );
-    const tooLong = replaceProse(
-      narration,
-      Array.from({ length: 181 }, (_, index) => `word${index}`).join(" "),
+  it("returns model output plus adapter trace without a self-authored audit", async () => {
+    const renderer: NarrationRenderer = {
+      async render() {
+        return NarrationRendererOutcomeSchema.parse({
+          outcome: "completed",
+          modelOutput: rendererModelOutput,
+          trace: { provenance: "fixture", adapterId: "renderer.fixture.v1" },
+        });
+      },
+    };
+
+    const outcome = await renderer.render(rendererRequest);
+    expect(outcome).toMatchObject({
+      outcome: "completed",
+      trace: { provenance: "fixture", adapterId: "renderer.fixture.v1" },
+    });
+    expect(
+      NarrationRendererOutcomeSchema.safeParse({
+        outcome: "completed",
+        modelOutput: rendererModelOutput,
+        renderAudit: { hardPass: true },
+        trace: { provenance: "fixture", adapterId: "renderer.fixture.v1" },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("keeps warning-only critic revision separate from the first render", async () => {
+    const criticRequest = NarrationCriticRequestSchema.parse({
+      rendererRequest,
+      priorOutput: rendererModelOutput,
+      warningRuleIds: ["FC-04"],
+    });
+    const critic: NarrationCritic = {
+      async revise() {
+        return {
+          outcome: "rejected",
+          error: {
+            code: "critic.no_safe_revision",
+            message: "The warning cannot be revised inside the licensed plan.",
+          },
+          trace: { provenance: "fixture", adapterId: "critic.fixture.v1" },
+        };
+      },
+    };
+
+    expect(await critic.revise(criticRequest)).toMatchObject({
+      outcome: "rejected",
+      error: { code: "critic.no_safe_revision" },
+    });
+    expect(
+      NarrationCriticRequestSchema.safeParse({
+        ...criticRequest,
+        renderAudit: { warningCount: 1 },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("projects only reader prose into the UI contract", () => {
+    const projection = projectModelNarrationOutputForWorldApi(
+      rendererModelOutput,
     );
 
-    expect(WorldNarrationSchema.safeParse(tooShort).success).toBe(false);
-    expect(WorldNarrationSchema.safeParse(tooLong).success).toBe(false);
+    expect(projection).toEqual({
+      format: "english_prose_paragraphs",
+      paragraphs: [
+        {
+          paragraphId: "paragraph.one",
+          text: "A lamp burns beside the hearth.",
+        },
+        {
+          paragraphId: "paragraph.two",
+          text: "The woman waits by the door.",
+        },
+      ],
+      prose:
+        "A lamp burns beside the hearth.\n\nThe woman waits by the door.",
+    });
+    expect("planReceipt" in projection).toBe(false);
+    expect("sentencePlanIds" in projection.paragraphs[0]!).toBe(false);
+    expect(
+      WorldNarrationProjectionSchema.safeParse({
+        ...projection,
+        renderAudit: { hardPass: true },
+      }).success,
+    ).toBe(false);
   });
 });

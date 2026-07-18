@@ -52,6 +52,15 @@ describe("world-first Odyssey API", () => {
     expect(view.nextActions.map(({ suggestedInput }) => suggestedInput).join(" ")).not.toContain(
       "Odysseus",
     );
+    expect(view.narration.paragraphs.length).toBeGreaterThan(0);
+    expect(view.narration.prose).toBe(
+      view.narration.paragraphs.map(({ text }) => text).join("\n\n"),
+    );
+    expect(view.narration).not.toHaveProperty("title");
+    expect(view.narration).not.toHaveProperty("segments");
+    expect(view.narration).not.toHaveProperty("grounding");
+    expect(view.narration).not.toHaveProperty("planReceipt");
+    expect(view.narration.paragraphs[0]).not.toHaveProperty("sentencePlanIds");
     expect(view.narration.prose).not.toMatch(/disguised Odysseus|the stranger is Odysseus/iu);
     expect(view.narratorTrace.provenance).toBe("fixture");
     expect(creatorAccessToken).not.toBe("");
@@ -92,9 +101,18 @@ describe("world-first Odyssey API", () => {
     expect(receipt.ruleReview.sourceGroundedIds).toContain(
       "reaction.eurycleia.recognize_scar",
     );
-    expect(receipt.ruleReview.creatorReviewRequiredIds).toContain(
+    expect(receipt.ruleReview.creatorApprovedNotSourceCanonIds).toContain(
       "ending.controlled_discovery",
     );
+    expect(receipt.ruleReview.creatorApprovedNotSourceCanonIds).toContain(
+      "reaction.eurycleia.controlled_disclosure",
+    );
+    expect(receipt.ruleReview.creatorReviewRequiredIds).toEqual([]);
+    expect(
+      receipt.ruleReview.sourceGroundedIds.filter((ruleId) =>
+        receipt.ruleReview.creatorApprovedNotSourceCanonIds.includes(ruleId),
+      ),
+    ).toEqual([]);
   });
 
   it("keeps a parent checkpoint while a creator forks a controlled IF ending", async () => {
@@ -179,7 +197,7 @@ describe("world-first Odyssey API", () => {
     const action = {
       sessionId: opening.sessionId,
       expectedStateHash: opening.stateHash,
-      action: "question the stranger",
+      action: "bring the basin",
       forkBeforeAction: false,
       transport: "fixture" as const,
     };

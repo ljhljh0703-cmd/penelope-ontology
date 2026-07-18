@@ -20,65 +20,165 @@ import {
   type CodexCliProcessRunner,
 } from "@/src/adapters/codex-cli/process-runner";
 import {
-  WorldNarrationRequestSchema,
-  WorldNarrationSchema,
-  WorldNarratorOutcomeSchema,
-  validateWorldNarration,
-  type WorldNarrationRequest,
-  type WorldNarratorOutcome,
+  ModelNarrationOutputSchema,
+  NarrationCriticRequestSchema,
+  NarrationRendererOutcomeSchema,
+  NarrationRendererRequestSchema,
+  type NarrationCriticRequest,
+  type NarrationRendererOutcome,
+  type NarrationRendererRequest,
 } from "@/src/contracts/world-narrator";
 import { canonicalJson } from "@/src/domain/canonical-json";
-import type { WorldNarrator } from "@/src/ports/world-narrator";
+import type {
+  NarrationCritic,
+  NarrationRenderer,
+} from "@/src/ports/world-narrator";
 
-export const CODEX_CLI_WORLD_NARRATOR_REQUESTED_MODEL =
+export const CODEX_CLI_NARRATION_RENDERER_REQUESTED_MODEL =
   "gpt-5.6-sol" as const;
-export const CODEX_CLI_WORLD_NARRATOR_ADAPTER_ID =
-  "world_narrator_codex_cli_v1" as const;
+export const CODEX_CLI_NARRATION_RENDERER_ADAPTER_ID =
+  "narration_renderer_codex_cli_v2" as const;
 
-export const CODEX_CLI_WORLD_NARRATOR_OUTPUT_SCHEMA = z.toJSONSchema(
-  WorldNarrationSchema,
+export const CODEX_CLI_NARRATION_RENDERER_OUTPUT_SCHEMA = z.toJSONSchema(
+  ModelNarrationOutputSchema,
   {
     target: "draft-07",
     reused: "inline",
   },
 );
 
-export type CodexCliWorldNarratorCommandResolver = (
+export type CodexCliNarrationRendererCommandResolver = (
   env: NodeJS.ProcessEnv,
 ) => Promise<string>;
 
-export type CodexCliWorldNarratorOptions = {
+export type CodexCliNarrationRendererOptions = {
   env?: NodeJS.ProcessEnv;
-  commandResolver?: CodexCliWorldNarratorCommandResolver;
+  commandResolver?: CodexCliNarrationRendererCommandResolver;
   processRunner?: CodexCliProcessRunner;
   timeoutMs?: number;
   outputLimitBytes?: number;
   tempRoot?: string;
 };
 
-const MODEL_INSTRUCTIONS = [
-  "You are the world narrator for Penelope Ontology.",
-  "Return only the structured world narration required by the supplied JSON schema.",
-  "Write the prose in English using 120 through 180 words.",
-  "Narrate only the observable facts, focal knowledge, previous visible scene summary, and already-resolved events in WORLD_NARRATION_REQUEST_JSON.",
-  "Do not invent or mutate world state, canon, effects, knowledge, identities, motives, branch data, event results, or future actions.",
-  "Render every supplied resolved event and ground it with its exact eventId; cite only supplied factIds and eventIds.",
-  "Use the supplied style constraints only to shape expression, never to change facts or resolved events; preserve each ownership label exactly.",
-  "Keep the focal viewpoint inside what focalEntityId can perceive or already knows.",
-  "Copy nextActionCandidates exactly and in order into nextActions; do not complete, combine, reassign, or rewrite them.",
-  "The prose field must exactly concatenate the ordered segment text fields with two newline characters.",
-  "Stop before the next user decision.",
-  "Do not run commands, inspect files, call tools, use MCP, or browse the web. The complete safe request is below.",
-].join(" ");
-
-export const buildCodexCliWorldNarratorPrompt = (
-  request: WorldNarrationRequest,
-): string => {
-  const safeRequest = WorldNarrationRequestSchema.parse(request);
-  return `${MODEL_INSTRUCTIONS}\n\nWORLD_NARRATION_REQUEST_JSON:\n${canonicalJson(safeRequest)}\n`;
+const SCENE_MODE_COMPLETION: Record<
+  NarrationRendererRequest["modelFacingRequest"]["sceneMode"],
+  string
+> = {
+  setup: "Place the authorized actors and pressure without claiming a change.",
+  turn: "Render the authorized action, reaction, and resolved consequence in order.",
+  aftermath: "Render the already-resolved change without adding a new action.",
+  transition: "Move between registered situations without inventing a change.",
+  ending: "Render the computed in-world closure without naming an ending type.",
 };
 
-export const buildCodexCliWorldNarratorArgs = ({
+const FORBIDDEN_CONSTRUCTION_CRITERIA: Readonly<Record<string, string>> = {
+  "FC-01": "No dialogue that teaches a theme or explains an inner state.",
+  "FC-02": "No detached general-truth assertion written to sound quotable.",
+  "FC-03": "No riddle, maxim, slogan, or cryptic aphorism.",
+  "FC-04": "No abstract noun or place acting with a will of its own.",
+  "FC-05": "No body part, object, or abstraction speaking or deciding for a character.",
+  "FC-06": "No ornamental inversion used only to elevate the register.",
+  "FC-07": "No verbless or subjectless fragment appended for lingering effect.",
+  "FC-08": "No fake archaism, epic epithet, or period syntax.",
+  "FC-09": "No chain of nominal abstractions or agentless report-register passives.",
+  "FC-10": "No mirrored wrap-up or explicit explanation of the scene's meaning.",
+};
+
+const effectiveStyleLeverValues = (
+  request: NarrationRendererRequest,
+): Record<string, unknown> => {
+  const values: Record<string, unknown> = {};
+  for (const [key, lever] of Object.entries(request.styleProfile.levers)) {
+    values[key] = lever.value;
+  }
+  const state = request.styleProfile.styleStates.find(
+    ({ stateId }) => stateId === request.modelFacingRequest.styleStateId,
+  );
+  for (const [key, value] of Object.entries(state?.leverOverrides ?? {})) {
+    if (value !== undefined) values[key] = value;
+  }
+  return values;
+};
+
+const rendererPromptLayers = (request: NarrationRendererRequest): string => {
+  const { modelFacingRequest, scenePlan, preflightReceipt } = request;
+  const invariantRecords = {
+    focalActorId: modelFacingRequest.focalActorId,
+    presentActors: modelFacingRequest.presentActors,
+    visibleFacts: modelFacingRequest.visibleFacts,
+    resolvedEvents: modelFacingRequest.resolvedEvents,
+    authorizedAnchors: modelFacingRequest.authorizedAnchors,
+    licensedRenderingDetails: modelFacingRequest.licensedRenderingDetails,
+    reservedParticipantActionsExist:
+      modelFacingRequest.reservedActionIds.length > 0,
+  };
+  const resolvedScene = {
+    sceneMode: modelFacingRequest.sceneMode,
+    completionCondition:
+      SCENE_MODE_COMPLETION[modelFacingRequest.sceneMode],
+    authorizedActionEventIds:
+      modelFacingRequest.authorizedActionEventIds,
+    authorizedReactionEventIds:
+      modelFacingRequest.authorizedReactionEventIds,
+    authorizedChangeEventIds:
+      modelFacingRequest.authorizedChangeEventIds,
+    plainDramaticPlan: preflightReceipt.plainDramaticPlan,
+    dialogueAuthority: preflightReceipt.dialogueAuthority,
+    sentencePlans: scenePlan.sentencePlans,
+  };
+  const forbiddenConstructionIds =
+    request.styleProfile.levers.forbiddenConstructionIds.value;
+  const rendering = {
+    languageProfileId: modelFacingRequest.languageProfileId,
+    styleStateId: modelFacingRequest.styleStateId,
+    effectiveLeverValues: effectiveStyleLeverValues(request),
+    forbiddenConstructions: forbiddenConstructionIds.map((id) => ({
+      id,
+      criterion:
+        FORBIDDEN_CONSTRUCTION_CRITERIA[id] ??
+        "Follow the registered structural prohibition for this identifier.",
+    })),
+    endingMode:
+      request.styleProfile.levers.endingMode.value[
+        modelFacingRequest.sceneMode
+      ],
+  };
+
+  return [
+    "=== LAYER 1 : INVARIANT AUTHORITY ===",
+    "Render one scene from an already-resolved world. Treat every record as a constraint, never as prose to copy. Do not invent or alter an event, motive, emotion, relationship, identity, prop, spatial relation, knowledge, or speech act. Reserved participant actions may not be performed, previewed, or referenced. Record IDs are for planReceipt only and must never appear in reader prose.",
+    `INVARIANT_RECORDS_JSON:\n${canonicalJson(invariantRecords)}`,
+    "=== LAYER 2 : RESOLVED SCENE AND PLAN ===",
+    "Realize every sentence plan once, within its exact bindings. An empty authority list means that beat is not authorized. Dialogue is correct only when the supplied dialogue authority is licensed; otherwise silence is correct.",
+    `RESOLVED_SCENE_JSON:\n${canonicalJson(resolvedScene)}`,
+    "=== LAYER 3 : RENDERING STYLE AND OUTPUT ===",
+    "Use the effective English levers only for expression; they never change facts. Distribution targets are advisory and ceilings are limits. Return exactly ModelNarrationOutput: planReceipt plus readerProse. Do not add an envelope, audit, validation finding, evidence receipt, or state mutation. No schema field name, record ID, or system vocabulary may appear in reader prose.",
+    `RENDERING_STYLE_JSON:\n${canonicalJson(rendering)}`,
+    "Do not run commands, inspect files, call tools, use MCP, or browse the web. Return only the object required by the supplied JSON schema.",
+  ].join("\n\n");
+};
+
+export const buildCodexCliNarrationRendererPrompt = (
+  requestInput: NarrationRendererRequest,
+): string => {
+  const request = NarrationRendererRequestSchema.parse(requestInput);
+  return `${rendererPromptLayers(request)}\n`;
+};
+
+export const buildCodexCliNarrationCriticPrompt = (
+  requestInput: NarrationCriticRequest,
+): string => {
+  const request = NarrationCriticRequestSchema.parse(requestInput);
+  return [
+    rendererPromptLayers(request.rendererRequest),
+    "=== WARNING-ONLY REVISION ===",
+    "Revise the prior output only to address the listed warning rules. Preserve the same scene plan, bindings, facts, events, licenses, and sentence-plan coverage. Do not add authority or content. Return one complete replacement ModelNarrationOutput; no explanation and no third pass.",
+    `WARNING_RULE_IDS_JSON:\n${canonicalJson(request.warningRuleIds)}`,
+    `PRIOR_MODEL_OUTPUT_JSON:\n${canonicalJson(request.priorOutput)}`,
+  ].join("\n\n");
+};
+
+export const buildCodexCliNarrationRendererArgs = ({
   schemaPath,
   outputPath,
 }: {
@@ -93,7 +193,7 @@ export const buildCodexCliWorldNarratorArgs = ({
   "--sandbox",
   "read-only",
   "--model",
-  CODEX_CLI_WORLD_NARRATOR_REQUESTED_MODEL,
+  CODEX_CLI_NARRATION_RENDERER_REQUESTED_MODEL,
   "--output-schema",
   schemaPath,
   "--output-last-message",
@@ -103,23 +203,26 @@ export const buildCodexCliWorldNarratorArgs = ({
   "-",
 ];
 
-const trace = () => ({
-  provenance: "model" as const,
-  adapterId: CODEX_CLI_WORLD_NARRATOR_ADAPTER_ID,
-});
-
-const rejected = (code: string, message: string): WorldNarratorOutcome =>
-  WorldNarratorOutcomeSchema.parse({
-    outcome: "rejected",
-    error: { code, message },
-    trace: trace(),
-  });
-
 const positiveInteger = (value: number): boolean =>
   Number.isInteger(value) && value > 0;
 
-const executeInTemporaryWorkspace = async ({
-  request,
+const rendererTrace = () => ({
+  provenance: "model" as const,
+  adapterId: CODEX_CLI_NARRATION_RENDERER_ADAPTER_ID,
+});
+
+const rendererRejected = (
+  code: string,
+  message: string,
+): NarrationRendererOutcome =>
+  NarrationRendererOutcomeSchema.parse({
+    outcome: "rejected",
+    error: { code, message },
+    trace: rendererTrace(),
+  });
+
+const executeRendererInTemporaryWorkspace = async ({
+  prompt,
   root,
   command,
   env,
@@ -127,31 +230,31 @@ const executeInTemporaryWorkspace = async ({
   timeoutMs,
   outputLimitBytes,
 }: {
-  request: WorldNarrationRequest;
+  prompt: string;
   root: string;
   command: string;
   env: NodeJS.ProcessEnv;
   runner: CodexCliProcessRunner;
   timeoutMs: number;
   outputLimitBytes: number;
-}): Promise<WorldNarratorOutcome> => {
+}): Promise<NarrationRendererOutcome> => {
   const workspace = path.join(root, "workspace");
   const ioDirectory = path.join(root, "io");
   await Promise.all([mkdir(workspace), mkdir(ioDirectory)]);
 
-  const schemaPath = path.join(ioDirectory, "world-narration.schema.json");
+  const schemaPath = path.join(ioDirectory, "model-narration-output.schema.json");
   const outputPath = path.join(ioDirectory, "last-message.json");
   await writeFile(
     schemaPath,
-    `${canonicalJson(CODEX_CLI_WORLD_NARRATOR_OUTPUT_SCHEMA)}\n`,
+    `${canonicalJson(CODEX_CLI_NARRATION_RENDERER_OUTPUT_SCHEMA)}\n`,
     { encoding: "utf8", flag: "wx" },
   );
 
   const invocation: CodexCliProcessInvocation = {
     command,
-    args: buildCodexCliWorldNarratorArgs({ schemaPath, outputPath }),
+    args: buildCodexCliNarrationRendererArgs({ schemaPath, outputPath }),
     cwd: workspace,
-    stdin: buildCodexCliWorldNarratorPrompt(request),
+    stdin: prompt,
     env: buildCodexCliEnvironment(env),
     timeoutMs,
     outputLimitBytes,
@@ -161,25 +264,26 @@ const executeInTemporaryWorkspace = async ({
   try {
     result = await runner(invocation);
   } catch (error) {
-    const suffix = error instanceof CodexCliProcessRunnerError
-      ? error.code
-      : "spawn_failed";
-    return rejected(
-      `world_narrator_codex_cli_${suffix}`,
-      "The Codex CLI process could not be completed.",
+    const suffix =
+      error instanceof CodexCliProcessRunnerError
+        ? error.code
+        : "spawn_failed";
+    return rendererRejected(
+      `narration_renderer_codex_cli_${suffix}`,
+      "The Codex CLI renderer process could not be completed.",
     );
   }
 
   if (result.timedOut) {
-    return rejected(
-      "world_narrator_codex_cli_timeout",
-      "The Codex CLI world narration timed out.",
+    return rendererRejected(
+      "narration_renderer_codex_cli_timeout",
+      "The Codex CLI narration render timed out.",
     );
   }
   if (result.exitCode !== 0 || result.signal !== null) {
-    return rejected(
-      "world_narrator_codex_cli_process_failed",
-      "The Codex CLI process exited without a usable world narration.",
+    return rendererRejected(
+      "narration_renderer_codex_cli_process_failed",
+      "The Codex CLI process exited without a usable narration render.",
     );
   }
 
@@ -196,9 +300,9 @@ const executeInTemporaryWorkspace = async ({
     }
     finalMessage = await readFile(outputPath, "utf8");
   } catch {
-    return rejected(
-      "world_narrator_codex_cli_output_missing",
-      "The Codex CLI did not produce a readable structured world narration.",
+    return rendererRejected(
+      "narration_renderer_codex_cli_output_missing",
+      "The Codex CLI did not produce a readable structured narration render.",
     );
   }
 
@@ -206,50 +310,39 @@ const executeInTemporaryWorkspace = async ({
   try {
     parsedOutput = JSON.parse(finalMessage.trim()) as unknown;
   } catch {
-    return rejected(
-      "world_narrator_codex_cli_output_json_invalid",
-      "The Codex CLI world narration was not valid structured JSON.",
+    return rendererRejected(
+      "narration_renderer_codex_cli_output_json_invalid",
+      "The Codex CLI narration render was not valid structured JSON.",
     );
   }
 
-  const validation = validateWorldNarration({
-    request,
-    narration: parsedOutput,
-  });
-  if (!validation.ok) {
-    return rejected(
-      `world_narrator_codex_cli_${validation.code}`,
-      validation.message,
+  const modelOutput = ModelNarrationOutputSchema.safeParse(parsedOutput);
+  if (!modelOutput.success) {
+    return rendererRejected(
+      "narration_renderer_codex_cli_output_invalid",
+      modelOutput.error.issues[0]?.message ??
+        "The Codex CLI narration render violated the output contract.",
     );
   }
 
-  return WorldNarratorOutcomeSchema.parse({
+  return NarrationRendererOutcomeSchema.parse({
     outcome: "completed",
-    narration: validation.narration,
-    trace: trace(),
+    modelOutput: modelOutput.data,
+    trace: rendererTrace(),
   });
 };
 
-export const createCodexCliWorldNarrator = (
-  options: CodexCliWorldNarratorOptions = {},
-): WorldNarrator => ({
-  async narrate(requestInput) {
-    const request = WorldNarrationRequestSchema.safeParse(requestInput);
-    if (!request.success) {
-      return rejected(
-        "world_narrator_codex_cli_request_invalid",
-        request.error.issues[0]?.message ??
-          "The world narration request is invalid.",
-      );
-    }
-
+export const createCodexCliNarrationRenderer = (
+  options: CodexCliNarrationRendererOptions = {},
+): NarrationRenderer & NarrationCritic => {
+  const execute = async (prompt: string): Promise<NarrationRendererOutcome> => {
     const timeoutMs = options.timeoutMs ?? DEFAULT_CODEX_CLI_TIMEOUT_MS;
     const outputLimitBytes =
       options.outputLimitBytes ?? DEFAULT_CODEX_CLI_OUTPUT_LIMIT_BYTES;
     if (!positiveInteger(timeoutMs) || !positiveInteger(outputLimitBytes)) {
-      return rejected(
-        "world_narrator_codex_cli_configuration_invalid",
-        "The Codex CLI world narrator transport configuration is invalid.",
+      return rendererRejected(
+        "narration_renderer_codex_cli_configuration_invalid",
+        "The Codex CLI narration renderer transport configuration is invalid.",
       );
     }
 
@@ -260,8 +353,8 @@ export const createCodexCliWorldNarrator = (
         sourceEnv,
       );
     } catch {
-      return rejected(
-        "world_narrator_codex_cli_command_unavailable",
+      return rendererRejected(
+        "narration_renderer_codex_cli_command_unavailable",
         "A usable ChatGPT-authenticated Codex CLI was not found.",
       );
     }
@@ -271,20 +364,20 @@ export const createCodexCliWorldNarrator = (
       root = await mkdtemp(
         path.join(
           options.tempRoot ?? tmpdir(),
-          "penelope-world-narrator-codex-",
+          "penelope-narration-renderer-codex-",
         ),
       );
     } catch {
-      return rejected(
-        "world_narrator_codex_cli_temp_unavailable",
-        "The isolated Codex CLI workspace could not be created.",
+      return rendererRejected(
+        "narration_renderer_codex_cli_temp_unavailable",
+        "The isolated Codex CLI renderer workspace could not be created.",
       );
     }
 
-    let outcome: WorldNarratorOutcome;
+    let outcome: NarrationRendererOutcome;
     try {
-      outcome = await executeInTemporaryWorkspace({
-        request: request.data,
+      outcome = await executeRendererInTemporaryWorkspace({
+        prompt,
         root,
         command,
         env: sourceEnv,
@@ -293,20 +386,46 @@ export const createCodexCliWorldNarrator = (
         outputLimitBytes,
       });
     } catch {
-      outcome = rejected(
-        "world_narrator_codex_cli_io_failed",
-        "The isolated Codex CLI workspace failed safely.",
+      outcome = rendererRejected(
+        "narration_renderer_codex_cli_io_failed",
+        "The isolated Codex CLI renderer workspace failed safely.",
       );
     }
 
     try {
       await rm(root, { recursive: true, force: true });
     } catch {
-      return rejected(
-        "world_narrator_codex_cli_cleanup_failed",
-        "The isolated Codex CLI workspace could not be cleaned.",
+      return rendererRejected(
+        "narration_renderer_codex_cli_cleanup_failed",
+        "The isolated Codex CLI renderer workspace could not be cleaned.",
       );
     }
     return outcome;
-  },
-});
+  };
+
+  return {
+    async render(requestInput) {
+      const request = NarrationRendererRequestSchema.safeParse(requestInput);
+      if (!request.success) {
+        return rendererRejected(
+          "narration_renderer_codex_cli_request_invalid",
+          request.error.issues[0]?.message ??
+            "The narration renderer request is invalid.",
+        );
+      }
+      return execute(buildCodexCliNarrationRendererPrompt(request.data));
+    },
+
+    async revise(requestInput) {
+      const request = NarrationCriticRequestSchema.safeParse(requestInput);
+      if (!request.success) {
+        return rendererRejected(
+          "narration_renderer_codex_cli_critic_request_invalid",
+          request.error.issues[0]?.message ??
+            "The narration critic request is invalid.",
+        );
+      }
+      return execute(buildCodexCliNarrationCriticPrompt(request.data));
+    },
+  };
+};

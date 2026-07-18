@@ -48,6 +48,7 @@ export async function POST(request: Request) {
         scenario,
         session: checkpoint.session,
         receipt: checkpoint.session.turns.at(-1) ?? null,
+        narrationDecisionReceipt: checkpoint.narrationDecisionReceipt,
       }),
       { headers: { "cache-control": "no-store" } },
     );

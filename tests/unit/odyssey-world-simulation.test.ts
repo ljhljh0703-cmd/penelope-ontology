@@ -9,7 +9,10 @@ import {
   WorldSimulationScenarioSchema,
 } from "@/src/contracts/world-simulation";
 import {
+  activeWorldSimulationRuleIds,
+  buildCreatorRuleApprovalSubjectFingerprint,
   createWorldSimulationSession,
+  fingerprintCreatorRuleApprovalReceiptPayload,
   runWorldSimulationTurn,
 } from "@/src/domain/world-runtime";
 
@@ -105,7 +108,7 @@ describe("Odyssey Book 19 world simulation", () => {
     ).toBe(true);
   });
 
-  it("separates source-grounded rules from creator-review simulation proposals", () => {
+  it("keeps proposal origin while binding D6 approval outside source canon", () => {
     const rules = [
       ...ODYSSEY_BOOK_19_WORLD_SIMULATION.reactionRules,
       ...ODYSSEY_BOOK_19_WORLD_SIMULATION.endingRules,
@@ -122,6 +125,7 @@ describe("Odyssey Book 19 world simulation", () => {
       sourceGrounded.every(
         ({ provenance }) =>
           provenance.reviewState === "source_grounded" &&
+          provenance.canonStatus === "source_canon" &&
           provenance.premiseIds.length > 0,
       ),
     ).toBe(true);
@@ -129,10 +133,85 @@ describe("Odyssey Book 19 world simulation", () => {
     expect(
       reviewCandidates.every(
         ({ provenance }) =>
-          provenance.reviewState === "creator_review_required",
+          provenance.reviewState === "creator_approved" &&
+          provenance.canonStatus === "not_source_canon" &&
+          provenance.creatorApprovalReceiptId !== null &&
+          provenance.creatorDecisionId !== null,
       ),
     ).toBe(true);
+
+    const [receipt] =
+      ODYSSEY_BOOK_19_WORLD_SIMULATION.creatorRuleApprovalReceipts;
+    expect(receipt?.decisions).toHaveLength(5);
+    expect(receipt?.decisions.flatMap(({ ruleIds }) => ruleIds)).toHaveLength(7);
+    expect(
+      new Set(receipt?.decisions.flatMap(({ ruleIds }) => ruleIds)),
+    ).toEqual(new Set(reviewCandidates.map(({ id }) => id)));
+    expect(
+      receipt?.decisions.find(({ decisionId }) => decisionId === "decision.d6-4"),
+    ).toMatchObject({ action: "approve_as_creator_authored_if" });
   });
+
+  it("activates D6 rules only through the exact trusted creator receipt", () => {
+    const scenario = ODYSSEY_BOOK_19_WORLD_SIMULATION;
+    const [receipt] = scenario.creatorRuleApprovalReceipts;
+    const [trusted] =
+      scenario.creatorRuleApprovalAuthorityRegistry.trustedReceipts;
+    expect(receipt).toBeDefined();
+    expect(trusted).toBeDefined();
+    expect(receipt?.binding.subjectFingerprint).toBe(
+      buildCreatorRuleApprovalSubjectFingerprint({
+        scenario,
+        receiptId: receipt!.binding.receiptId,
+      }),
+    );
+    expect(trusted?.payloadFingerprint).toBe(
+      fingerprintCreatorRuleApprovalReceiptPayload(receipt!),
+    );
+    expect(activeWorldSimulationRuleIds(scenario)).toEqual(
+      new Set([
+        ...scenario.reactionRules.map(({ id }) => id),
+        ...scenario.endingRules.map(({ id }) => id),
+      ]),
+    );
+  });
+
+  it.each(["missing", "subject", "payload", "issuer", "rule"] as const)(
+    "fails D6 rule activation closed for %s approval tampering",
+    (tamper) => {
+      const scenario = structuredClone(ODYSSEY_BOOK_19_WORLD_SIMULATION);
+      const registry = scenario.creatorRuleApprovalAuthorityRegistry;
+      const trusted = registry.trustedReceipts[0]!;
+
+      if (tamper === "missing") registry.trustedReceipts = [];
+      if (tamper === "subject") trusted.subjectFingerprint = "0".repeat(64);
+      if (tamper === "payload") trusted.payloadFingerprint = "0".repeat(64);
+      if (tamper === "issuer") trusted.issuerAuthorityId = "creator.untrusted";
+      if (tamper === "rule") {
+        const proposed = scenario.reactionRules.find(
+          ({ provenance }) => provenance.basis === "agent_proposed",
+        )!;
+        proposed.summary = `${proposed.summary} Changed after approval.`;
+      }
+
+      const active = activeWorldSimulationRuleIds(scenario);
+      const sourceIds = [
+        ...scenario.reactionRules,
+        ...scenario.endingRules,
+      ]
+        .filter(({ provenance }) => provenance.basis === "source_derived")
+        .map(({ id }) => id);
+      const proposedIds = [
+        ...scenario.reactionRules,
+        ...scenario.endingRules,
+      ]
+        .filter(({ provenance }) => provenance.basis === "agent_proposed")
+        .map(({ id }) => id);
+
+      expect(sourceIds.every((id) => active.has(id))).toBe(true);
+      expect(proposedIds.every((id) => !active.has(id))).toBe(true);
+    },
+  );
 
   it.each(["origin", "meaning", "recognizerEntityIds", "stakes", "approvalState"])(
     "rejects a canonical premise without %s",

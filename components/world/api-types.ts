@@ -3,6 +3,9 @@ import type {
   WorldTurnApiRequest,
   WorldParticipantSessionView,
   WorldCreatorReceiptSchema,
+  WorldNarrationDraftDecisionApiRequest,
+  WorldNarrationDraftDecisionApiResponse,
+  WorldNarrationDraftView,
 } from "@/src/contracts/world-api";
 import type { z } from "zod";
 
@@ -13,6 +16,11 @@ export type WorldSessionView = WorldParticipantSessionView;
 export type WorldCreatorReceipt = z.infer<typeof WorldCreatorReceiptSchema>;
 export type WorldTransport = WorldPresentationTransport;
 export type WorldTurnRequest = WorldTurnApiRequest;
+export type WorldPendingNarrationDraft = WorldNarrationDraftView;
+export type WorldNarrationDraftDecisionRequest =
+  WorldNarrationDraftDecisionApiRequest;
+export type WorldNarrationDraftDecisionResponse =
+  WorldNarrationDraftDecisionApiResponse;
 export type WorldEvent = WorldCreatorReceipt["events"][number];
 export type WorldEffect = WorldEvent["effects"][number];
 

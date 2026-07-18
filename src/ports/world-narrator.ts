@@ -1,12 +1,18 @@
 import type {
-  WorldNarrationRequest,
-  WorldNarratorOutcome,
+  NarrationCriticRequest,
+  NarrationRendererOutcome,
+  NarrationRendererRequest,
 } from "@/src/contracts/world-narrator";
 
 /**
- * Narrates already-resolved world events. It has no authority to resolve an
- * action, mutate canon, grant knowledge, or create world effects.
+ * Renders a deterministic, already-authorized scene plan. The request type has
+ * no private validation, render-audit, or trusted-evidence field.
  */
-export interface WorldNarrator {
-  narrate(request: WorldNarrationRequest): Promise<WorldNarratorOutcome>;
+export interface NarrationRenderer {
+  render(request: NarrationRendererRequest): Promise<NarrationRendererOutcome>;
+}
+
+/** Optional one-shot warning repair. Hard failures must never call this port. */
+export interface NarrationCritic {
+  revise(request: NarrationCriticRequest): Promise<NarrationRendererOutcome>;
 }
