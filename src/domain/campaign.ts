@@ -123,9 +123,73 @@ const rebuildCursorAfterEntry = (
     entryCount: previous.entryCount + 1,
   });
 
+export type ForkCampaignLedgerInput = {
+  ledger: CampaignLedger;
+  childBranchId: string;
+  existingBranchIds: ReadonlySet<string>;
+};
+
+/**
+ * Forks the current branch head without mutating the parent ledger.
+ *
+ * Inherited entries retain their exact hashes and receipt-bound payloads. The
+ * parent head hash marks the immutable inherited prefix; only events appended
+ * after the fork bind to the child cursor.
+ */
+export const forkCampaignLedger = ({
+  ledger,
+  childBranchId,
+  existingBranchIds,
+}: ForkCampaignLedgerInput): CampaignLedger => {
+  const parsed = CampaignLedgerSchema.safeParse(ledger);
+  if (!parsed.success || !verifyParsedCampaignLedgerIntegrity(parsed.data)) {
+    throw new Error("Cannot fork an invalid campaign ledger.");
+  }
+
+  const parent = parsed.data;
+  if (childBranchId === parent.cursor.branchId) {
+    throw new Error("A child campaign branch must have a new branch identifier.");
+  }
+  if (existingBranchIds.has(childBranchId)) {
+    throw new Error(`Campaign branch ${childBranchId} already exists.`);
+  }
+
+  const childCursor = buildCampaignCursor({
+    campaignId: parent.cursor.campaignId,
+    branchId: childBranchId,
+    parentBranchId: parent.cursor.branchId,
+    forkedFromEntryHash: parent.cursor.headEntryHash,
+    worldPackId: parent.cursor.worldPackId,
+    worldPackVersion: parent.cursor.worldPackVersion,
+    baseCanonHash: parent.cursor.baseCanonHash,
+    baseStateHash: parent.cursor.baseStateHash,
+    currentStateHash: parent.cursor.currentStateHash,
+    headEntryHash: parent.cursor.headEntryHash,
+    entryCount: parent.cursor.entryCount,
+  });
+
+  return CampaignLedgerSchema.parse({ cursor: childCursor, entries: parent.entries });
+};
+
 /** Fast integrity check for an object already parsed by CampaignLedgerSchema. */
 export const verifyParsedCampaignLedgerIntegrity = (ledger: CampaignLedger): boolean => {
   try {
+    if (
+      ledger.cursor.parentBranchId === ledger.cursor.branchId ||
+      (ledger.cursor.parentBranchId === null && ledger.cursor.forkedFromEntryHash !== null)
+    ) {
+      return false;
+    }
+    const inheritedHeadIndex =
+      ledger.cursor.forkedFromEntryHash === null
+        ? -1
+        : ledger.entries.findIndex(
+            ({ entryHash }) => entryHash === ledger.cursor.forkedFromEntryHash,
+          );
+    if (ledger.cursor.forkedFromEntryHash !== null && inheritedHeadIndex < 0) {
+      return false;
+    }
+    const inheritedEntryCount = inheritedHeadIndex + 1;
     if (
       ledger.entries.length > MAX_CAMPAIGN_LEDGER_ENTRIES ||
       ledger.cursor.entryCount !== ledger.entries.length ||
@@ -157,6 +221,7 @@ export const verifyParsedCampaignLedgerIntegrity = (ledger: CampaignLedger): boo
     const consumedRulingReceiptIds = new Set<string>();
     let previousWorldTick = -1;
     for (const [index, entry] of ledger.entries.entries()) {
+      const inheritedFromParent = index < inheritedEntryCount;
       const stateTransitions = entry.effects.filter(
         (effect): effect is Extract<CausalEffect, { kind: "state_transition" }> =>
           effect.kind === "state_transition",
@@ -183,7 +248,7 @@ export const verifyParsedCampaignLedgerIntegrity = (ledger: CampaignLedger): boo
         entry.sequence !== index ||
         entry.worldTick < previousWorldTick ||
         entry.previousEntryHash !== cursor.headEntryHash ||
-        entry.baseCursorHash !== cursor.cursorHash ||
+        (!inheritedFromParent && entry.baseCursorHash !== cursor.cursorHash) ||
         entry.beforeStateHash !== cursor.currentStateHash ||
         entry.causeEntryHashes.some((hash) => !knownEntryHashes.has(hash)) ||
         duplicateEffect ||

@@ -5,8 +5,10 @@ import {
   appendCampaignEvent,
   buildCampaignEventAuthorityHash,
   createCampaignLedger,
+  forkCampaignLedger,
   hasValidCampaignLedger,
 } from "@/src/domain/campaign";
+import { materializeCausalProjection } from "@/src/domain/causal-context";
 
 const hash = (character: string): string => character.repeat(64);
 
@@ -130,6 +132,169 @@ describe("campaign causal ledger", () => {
       currentStateHash: hash("b"),
       headEntryHash: first.entry?.entryHash,
     });
+  });
+
+  it("forks the current head immutably with deterministic inherited history", () => {
+    const first = append();
+    if (first.status !== "applied" || !first.entry) {
+      throw new Error("Expected the first synthetic event to apply.");
+    }
+    const followUp = firstEvent(first.ledger.cursor.cursorHash, {
+      id: "event.consume_supplies",
+      worldTick: 2,
+      source: {
+        kind: "player",
+        actorEntityId: "player.hero",
+        authorizingIntentId: "intent.consume_supplies",
+      },
+      causeEntryHashes: [first.entry.entryHash],
+      effects: [
+        {
+          effectId: "effect.consume_supplies",
+          kind: "resource_delta",
+          entityId: "player.hero",
+          resourceId: "supplies",
+          delta: -1,
+        },
+      ],
+    });
+    const second = appendCampaignEvent({
+      ledger: first.ledger,
+      event: followUp,
+      ...appendAuthorities,
+      ...sourceReceiptsFor(followUp),
+    });
+    if (second.status !== "applied" || !second.entry) {
+      throw new Error("Expected the follow-up synthetic event to apply.");
+    }
+
+    const parent = second.ledger;
+    const parentBefore = canonicalJson(parent);
+    const input = {
+      ledger: parent,
+      childBranchId: "branch.what_if",
+      existingBranchIds: new Set(["branch.main", "branch.existing"]),
+    };
+    const left = forkCampaignLedger(input);
+    const right = forkCampaignLedger({ ...input, ledger: structuredClone(parent) });
+
+    expect(canonicalJson(parent)).toBe(parentBefore);
+    expect(canonicalJson(left)).toBe(canonicalJson(right));
+    expect(left.cursor).toMatchObject({
+      branchId: "branch.what_if",
+      parentBranchId: "branch.main",
+      forkedFromEntryHash: parent.cursor.headEntryHash,
+      currentStateHash: parent.cursor.currentStateHash,
+      entryCount: parent.cursor.entryCount,
+    });
+    expect(canonicalJson(left.entries)).toBe(canonicalJson(parent.entries));
+    expect(left.entries[1]?.causeEntryHashes).toEqual([parent.entries[0]?.entryHash]);
+    expect(hasValidCampaignLedger(left)).toBe(true);
+
+    const parentProjection = materializeCausalProjection(parent);
+    const childProjection = materializeCausalProjection(left);
+    const {
+      branchId: parentProjectionBranch,
+      cursorHash: parentProjectionCursor,
+      projectionHash: parentProjectionHash,
+      ...parentProjectionState
+    } = parentProjection;
+    const {
+      branchId: childProjectionBranch,
+      cursorHash: childProjectionCursor,
+      projectionHash: childProjectionHash,
+      ...childProjectionState
+    } = childProjection;
+    void parentProjectionBranch;
+    void parentProjectionCursor;
+    void parentProjectionHash;
+    void childProjectionBranch;
+    void childProjectionCursor;
+    void childProjectionHash;
+    expect(childProjectionState).toEqual(parentProjectionState);
+
+    const childEvent = firstEvent(left.cursor.cursorHash, {
+      id: "event.child_choice",
+      worldTick: 3,
+      source: {
+        kind: "player",
+        actorEntityId: "player.hero",
+        authorizingIntentId: "intent.child_choice",
+      },
+      causeEntryHashes: left.cursor.headEntryHash ? [left.cursor.headEntryHash] : [],
+      effects: [
+        {
+          effectId: "effect.child_choice",
+          kind: "resource_delta",
+          entityId: "player.hero",
+          resourceId: "supplies",
+          delta: 2,
+        },
+      ],
+    });
+    const extendedChild = appendCampaignEvent({
+      ledger: left,
+      event: childEvent,
+      ...appendAuthorities,
+      ...sourceReceiptsFor(childEvent),
+    });
+    expect(extendedChild.status).toBe("applied");
+    expect(canonicalJson(extendedChild.ledger.entries.slice(0, left.entries.length))).toBe(
+      canonicalJson(left.entries),
+    );
+    expect(hasValidCampaignLedger(extendedChild.ledger)).toBe(true);
+
+    const childBefore = canonicalJson(left);
+    const grandchild = forkCampaignLedger({
+      ledger: left,
+      childBranchId: "branch.what_if.again",
+      existingBranchIds: new Set(["branch.main", "branch.what_if"]),
+    });
+    expect(canonicalJson(left)).toBe(childBefore);
+    expect(grandchild.cursor).toMatchObject({
+      branchId: "branch.what_if.again",
+      parentBranchId: "branch.what_if",
+      forkedFromEntryHash: left.cursor.headEntryHash,
+    });
+    expect(canonicalJson(grandchild.entries)).toBe(canonicalJson(left.entries));
+    expect(hasValidCampaignLedger(grandchild)).toBe(true);
+  });
+
+  it("rejects same, duplicate, and invalid campaign-ledger forks", () => {
+    const parent = append().ledger;
+
+    expect(() =>
+      forkCampaignLedger({
+        ledger: parent,
+        childBranchId: "branch.main",
+        existingBranchIds: new Set(),
+      }),
+    ).toThrow("new branch identifier");
+    expect(() =>
+      forkCampaignLedger({
+        ledger: parent,
+        childBranchId: "branch.existing",
+        existingBranchIds: new Set(["branch.existing"]),
+      }),
+    ).toThrow("already exists");
+
+    const tampered = structuredClone(parent);
+    const relation = tampered.entries[0]?.effects.find(
+      (effect) => effect.kind === "relation_delta",
+    );
+    if (!relation || relation.kind !== "relation_delta") {
+      throw new Error("The synthetic fixture must contain a relation delta.");
+    }
+    relation.delta = 9;
+    const tamperedBefore = canonicalJson(tampered);
+    expect(() =>
+      forkCampaignLedger({
+        ledger: tampered,
+        childBranchId: "branch.invalid_parent",
+        existingBranchIds: new Set(),
+      }),
+    ).toThrow("invalid campaign ledger");
+    expect(canonicalJson(tampered)).toBe(tamperedBefore);
   });
 
   it("returns a byte-identical ledger when an event is blocked", () => {
