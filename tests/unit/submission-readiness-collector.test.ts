@@ -21,6 +21,8 @@ import {
   isPrivateIgnoredRecord,
   isTrustedGithubWorkflowRun,
   parseReleaseRecord,
+  readSubmissionClaimContract,
+  submissionClaimContractMatches,
   verifyEvidenceManifest,
   verifyGalleryManifest,
   type ReleaseRecord,
@@ -239,7 +241,7 @@ afterEach(() => {
 });
 
 describe("submission readiness collectors", () => {
-  it("keeps every tracked public documentation and UI surface mechanism-only", () => {
+  it("keeps tracked public release surfaces inside the no-live-generation boundary", () => {
     const locators = execFileSync(
       "git",
       ["ls-files", "-z", "--", "README.md", "docs", "app", "components"],
@@ -249,14 +251,85 @@ describe("submission readiness collectors", () => {
       .filter((locator) => /\.(?:md|mdx|tsx)$/i.test(locator));
     for (const locator of locators) {
       expect(
-        inspectReleaseClaimLanguage([readFileSync(locator, "utf8")]),
+        inspectReleaseClaimLanguage([readFileSync(locator, "utf8")])
+          .liveGpt56NarrativeGeneration,
         locator,
-      ).toEqual({ measuredStyleEffect: false, crossModelSuperiority: false });
+      ).toBe(false);
     }
     expect(inspectTrackedReleaseCopy(process.cwd())).toMatchObject({
+      liveGpt56NarrativeGeneration: false,
       measuredStyleEffect: false,
       crossModelSuperiority: false,
     });
+  });
+
+  it("parses the tracked claim contract v2 strictly and fails closed", () => {
+    const root = makeRepository();
+    const directory = resolve(root, "docs/submission");
+    const locator = resolve(directory, "CLAIM-CONTRACT.json");
+    mkdirSync(directory, { recursive: true });
+    const validContract = {
+      schemaVersion: 2,
+      liveGpt56NarrativeGeneration: false,
+      measuredStyleControl: false,
+      boundary:
+        "Codex plus feedback is required, while live GPT-5.6 narrative generation remains unclaimed without matching evidence.",
+    };
+    writeFileSync(locator, `${JSON.stringify(validContract)}\n`, "utf8");
+    git(root, ["add", "docs/submission/CLAIM-CONTRACT.json"]);
+    git(root, ["commit", "-m", "claim contract"]);
+
+    expect(readSubmissionClaimContract(root)).toEqual({
+      liveGpt56NarrativeGeneration: false,
+      measuredStyleControl: false,
+    });
+
+    writeFileSync(
+      locator,
+      `${JSON.stringify({ ...validContract, unexpected: true })}\n`,
+      "utf8",
+    );
+    expect(readSubmissionClaimContract(root)).toBeNull();
+
+    writeFileSync(
+      locator,
+      `${JSON.stringify({ ...validContract, schemaVersion: 1 })}\n`,
+      "utf8",
+    );
+    expect(readSubmissionClaimContract(root)).toBeNull();
+  });
+
+  it("requires exact parity between the tracked live-claim flag and release copy", () => {
+    const contract = {
+      liveGpt56NarrativeGeneration: false,
+      measuredStyleControl: false,
+    };
+    const releaseCopy = {
+      complete: true,
+      liveGpt56NarrativeGeneration: false,
+      measuredStyleEffect: false,
+      crossModelSuperiority: false,
+    };
+    expect(
+      submissionClaimContractMatches(contract, releaseCopy, false),
+    ).toBe(true);
+    expect(
+      submissionClaimContractMatches(
+        contract,
+        { ...releaseCopy, liveGpt56NarrativeGeneration: true },
+        false,
+      ),
+    ).toBe(false);
+    expect(
+      submissionClaimContractMatches(
+        { ...contract, liveGpt56NarrativeGeneration: true },
+        releaseCopy,
+        false,
+      ),
+    ).toBe(false);
+    expect(submissionClaimContractMatches(null, releaseCopy, false)).toBe(
+      false,
+    );
   });
 
   it("accepts only ignored regular records inside private-submission", () => {
@@ -525,7 +598,7 @@ describe("submission readiness collectors", () => {
         codexUseExplained: false,
         gpt56UseExplained: false,
       },
-      feedback: { sessionId: null },
+      feedback: { sessionId: null, taskModel: null },
       devpost: {
         projectUrl: "https://devpost.com/software/narrative-ontology-harness",
         trackConfirmed: true,

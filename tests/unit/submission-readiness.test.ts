@@ -41,6 +41,7 @@ const completeRecord = {
   },
   feedback: {
     sessionId: feedbackSessionId,
+    taskModel: "gpt-5.6",
   },
   devpost: {
     projectUrl: "https://devpost.com/software/narrative-ontology-harness",
@@ -71,7 +72,9 @@ const passingObservation: SubmissionObservation = {
   evidenceManifestMatches: true,
   galleryManifestMatches: true,
   privacyScanPassed: true,
-  liveEvidenceVerified: true,
+  liveEvidenceVerified: false,
+  liveGpt56NarrativeClaimRequested: false,
+  codexGpt56TaskDesignationPresent: true,
   finalNameParity: true,
   projectDescriptionFinal: true,
   readmePresent: true,
@@ -95,6 +98,14 @@ const passingObservation: SubmissionObservation = {
 describe("submission readiness gate", () => {
   it("accepts a strict private record without exposing it publicly", () => {
     expect(ExternalSubmissionRecordSchema.parse(completeRecord)).toEqual(completeRecord);
+    const legacyFeedbackRecord = {
+      ...completeRecord,
+      feedback: { sessionId: completeRecord.feedback.sessionId },
+    };
+    expect(ExternalSubmissionRecordSchema.parse(legacyFeedbackRecord).feedback).toEqual({
+      sessionId: completeRecord.feedback.sessionId,
+      taskModel: null,
+    });
     expect(
       ExternalSubmissionRecordSchema.safeParse({
         ...completeRecord,
@@ -110,7 +121,19 @@ describe("submission readiness gate", () => {
     expect(
       ExternalSubmissionRecordSchema.safeParse({
         ...completeRecord,
-        feedback: { sessionId: "private-session-token" },
+        feedback: {
+          sessionId: "private-session-token",
+          taskModel: "gpt-5.6",
+        },
+      }).success,
+    ).toBe(false);
+    expect(
+      ExternalSubmissionRecordSchema.safeParse({
+        ...completeRecord,
+        feedback: {
+          sessionId: feedbackSessionId,
+          taskModel: "gpt-5.5",
+        },
       }).success,
     ).toBe(false);
     expect(
@@ -124,6 +147,7 @@ describe("submission readiness gate", () => {
   it("separates pre-submit readiness from final submission confirmation", () => {
     const preSubmit = evaluateSubmissionReadiness("pre-submit", passingObservation);
     expect(preSubmit.ready).toBe(true);
+    expect(formatSubmissionReadiness(preSubmit)).toContain("passed=24/24");
 
     const postSubmit = evaluateSubmissionReadiness("post-submit", passingObservation);
     expect(postSubmit.ready).toBe(false);
@@ -132,6 +156,61 @@ describe("submission readiness gate", () => {
       required: true,
       passed: false,
     });
+  });
+
+  it("requires a GPT-5.6-designated Codex task with feedback while keeping live evidence claim-conditional", () => {
+    const noLiveClaim = evaluateSubmissionReadiness(
+      "pre-submit",
+      passingObservation,
+    );
+    expect(noLiveClaim.ready).toBe(true);
+    expect(noLiveClaim.checks).toContainEqual({
+      id: "live_gpt56_verified",
+      required: false,
+      passed: true,
+    });
+
+    const supportedLiveClaim = evaluateSubmissionReadiness("pre-submit", {
+      ...passingObservation,
+      liveGpt56NarrativeClaimRequested: true,
+      liveEvidenceVerified: true,
+    });
+    expect(supportedLiveClaim.ready).toBe(true);
+    expect(formatSubmissionReadiness(supportedLiveClaim)).toContain(
+      "passed=25/25",
+    );
+
+    const unsupportedLiveClaim = evaluateSubmissionReadiness("pre-submit", {
+      ...passingObservation,
+      liveGpt56NarrativeClaimRequested: true,
+      liveEvidenceVerified: false,
+    });
+    expect(unsupportedLiveClaim.ready).toBe(false);
+    expect(formatSubmissionReadiness(unsupportedLiveClaim)).toContain(
+      "live_gpt56_verified",
+    );
+
+    const missingTaskDesignation = evaluateSubmissionReadiness("pre-submit", {
+      ...passingObservation,
+      codexGpt56TaskDesignationPresent: false,
+    });
+    expect(missingTaskDesignation.ready).toBe(false);
+    expect(formatSubmissionReadiness(missingTaskDesignation)).toContain(
+      "codex_gpt56_task_designation_present",
+    );
+
+    const missingFeedback = evaluateSubmissionReadiness("pre-submit", {
+      ...passingObservation,
+      feedbackSessionPresent: false,
+      codexGpt56TaskDesignationPresent: false,
+    });
+    expect(missingFeedback.ready).toBe(false);
+    expect(formatSubmissionReadiness(missingFeedback)).toContain(
+      "feedback_session_present",
+    );
+    expect(formatSubmissionReadiness(missingFeedback)).toContain(
+      "codex_gpt56_task_designation_present",
+    );
   });
 
   it("fails closed on source, privacy, manifest, and hosted-SHA gaps", () => {
@@ -337,6 +416,7 @@ describe("submission readiness gate", () => {
         "The mechanism has no measured prose improvement claim.",
       ]),
     ).toEqual({
+      liveGpt56NarrativeGeneration: false,
       measuredStyleEffect: false,
       crossModelSuperiority: false,
     });
@@ -345,6 +425,7 @@ describe("submission readiness gate", () => {
         "We measured a 40% prose-quality improvement and now outperform other writing systems.",
       ]),
     ).toEqual({
+      liveGpt56NarrativeGeneration: false,
       measuredStyleEffect: true,
       crossModelSuperiority: true,
     });
@@ -362,6 +443,7 @@ describe("submission readiness gate", () => {
         "The harness consistently produced a more recognizable voice.",
       ]),
     ).toEqual({
+      liveGpt56NarrativeGeneration: false,
       measuredStyleEffect: true,
       crossModelSuperiority: true,
     });
@@ -373,6 +455,7 @@ describe("submission readiness gate", () => {
         "No remote room, graph database, practitioner result, or measured productivity gain is claimed.",
       ]),
     ).toEqual({
+      liveGpt56NarrativeGeneration: false,
       measuredStyleEffect: false,
       crossModelSuperiority: false,
     });
@@ -381,6 +464,7 @@ describe("submission readiness gate", () => {
         "Default Codex prose may feel less distinctive beside Fable or Opus and this harness now outperforms Opus at narrative prose.",
       ]),
     ).toEqual({
+      liveGpt56NarrativeGeneration: false,
       measuredStyleEffect: false,
       crossModelSuperiority: true,
     });
@@ -389,6 +473,7 @@ describe("submission readiness gate", () => {
         "No measured style improvement is claimed; the harness improves prose quality.",
       ]),
     ).toEqual({
+      liveGpt56NarrativeGeneration: false,
       measuredStyleEffect: true,
       crossModelSuperiority: false,
     });
@@ -399,9 +484,78 @@ describe("submission readiness gate", () => {
         "The harness does not improve prose quality.",
       ]),
     ).toEqual({
+      liveGpt56NarrativeGeneration: false,
       measuredStyleEffect: false,
       crossModelSuperiority: true,
     });
+    expect(
+      inspectReleaseClaimLanguage([
+        "Penelope's scene was written live with GPT-5.6.",
+      ]),
+    ).toEqual({
+      liveGpt56NarrativeGeneration: true,
+      measuredStyleEffect: false,
+      crossModelSuperiority: false,
+    });
+    for (const positiveClaim of [
+      "We used GPT-5.6 to write the scene.",
+      "GPT-5.6 authored the opening scene.",
+      "The opening scene came from GPT-5.6 in a live run.",
+      "This story is a live GPT-5.6 creation.",
+      "We requested GPT-5.6 and it generated the story.",
+      "The task requested GPT-5.6; GPT-5.6 wrote the scene.",
+      "We requested GPT-5.6. It wrote the scene.",
+      "We requested GPT-5.6, which composed the story.",
+      "The GPT-5.6 adapter composed the opening chapter.",
+      "The narrative engine used GPT-5.6 for story creation.",
+      "No benchmark was run, and GPT-5.6 wrote the scene.",
+      "GPT-5.6 wrote the scene; actual model identity was not verified.",
+      "We used GPT-5.6 to write the scene, though actual identity was not verified.",
+      "We requested GPT-5.6.\n\nIt generated the opening story.",
+      "GPT-5.6 was requested.\n\nThe model generated the opening story.",
+      "Codex requested GPT-5.6. It generated the story.",
+      "The run requested GPT-5.6. It wrote the scene.",
+      "This task requested GPT-5.6. The model drafted the scene.",
+      "The Codex CLI requested GPT-5.6. That model wrote the scene.",
+      "The Story Workbench run requested GPT-5.6. The model generated the story.",
+      "The Codex CLI run requested gpt-5.6-sol; actual model identity is unreported. That model authored the scene.",
+      "The Codex CLI requested GPT-5.6. GPT-5.6 itself wrote the scene.",
+      "The run requested GPT-5.6. The requested model drafted the scene.",
+      "We selected GPT-5.6. This model composed the story.",
+    ]) {
+      expect(inspectReleaseClaimLanguage([positiveClaim])).toEqual({
+        liveGpt56NarrativeGeneration: true,
+        measuredStyleEffect: false,
+        crossModelSuperiority: false,
+      });
+    }
+    for (const safeBoundary of [
+      "Codex was configured for GPT-5.6 and the private feedback session ID is supplied.",
+      "The Codex CLI run requested gpt-5.6-sol; actual model identity is unreported.",
+      "No live GPT-5.6 narrative response has been captured.",
+      "The scene was not generated with GPT-5.6.",
+      "The story was never written with GPT-5.6.",
+      "A live GPT-5.6 narrative response was not captured.",
+      "We did not use GPT-5.6 to write the scene.",
+      "We never used GPT-5.6 to draft the story.",
+      "The scene did not come from GPT-5.6.",
+      "GPT-5.6 was not used to write this story.",
+      "We used GPT-5.6 for implementation, not narrative generation.",
+      "Codex used GPT-5.6 to implement the narrative engine.",
+      "GPT-5.6 did not author the opening scene.",
+      "The story was not created with GPT-5.6.",
+      "GPT-5.6 never created this story.",
+      "We requested GPT-5.6.\n\nIt did not generate the opening story.",
+      "We requested GPT-5.6. The brief was reviewed. The schedule was approved. It generated the opening story.",
+      "The Codex CLI run requested gpt-5.6-sol; actual model identity is unreported.",
+      "The Codex CLI requested GPT-5.6. It did not write the scene.",
+    ]) {
+      expect(inspectReleaseClaimLanguage([safeBoundary])).toEqual({
+        liveGpt56NarrativeGeneration: false,
+        measuredStyleEffect: false,
+        crossModelSuperiority: false,
+      });
+    }
     for (const locator of [
       "docs/submission/DEVPOST-DRAFT.md",
       "docs/submission/SUBMISSION-FIELDS.md",
@@ -413,6 +567,7 @@ describe("submission readiness gate", () => {
         inspectReleaseClaimLanguage([readFileSync(locator, "utf8")]),
         locator,
       ).toEqual({
+        liveGpt56NarrativeGeneration: false,
         measuredStyleEffect: false,
         crossModelSuperiority: false,
       });

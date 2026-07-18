@@ -1,5 +1,6 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "liveGpt56NarrativeGeneration": false,
   "measuredStyleControl": false,
-  "boundary": "The submission claims an inspectable style-control mechanism, not a measured prose improvement or cross-model ranking."
+  "boundary": "The private submission record must declare a Codex task designated for GPT-5.6 and include its feedback session ID. This confirms designation and presence only, not the serving model. The release does not claim independently verified live GPT-5.6 narrative generation, measured prose improvement, or cross-model superiority."
 }

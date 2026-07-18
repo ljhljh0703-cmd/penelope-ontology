@@ -519,9 +519,7 @@ export function StoryWorkbench() {
     : [];
 
   const pageClaim = completedLive
-    ? trace?.mode === "responses_api" && trace.actualModel?.startsWith("gpt-5.6")
-      ? "Built with Codex. Written live with GPT-5.6. Remembered by Penelope."
-      : `Built with Codex. Written live through Codex · requested ${trace?.requestedModel}. Remembered by Penelope.`
+    ? `Built with Codex. Written live through the gated route · requested ${trace?.requestedModel}; actual model identity unreported. Remembered by Penelope.`
     : activeTransport === "codex_cli"
       ? "Live Codex selected. No completed prose trace yet. No fixture fallback."
       : "Built with Codex. Rehearsed as a public-safe fixture. Remembered by Penelope.";

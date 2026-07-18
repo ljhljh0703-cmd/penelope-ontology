@@ -944,9 +944,12 @@ export const styleAblationVerified = (root: string): boolean =>
   verifyStyleAblationEvidenceFiles(root) &&
   verifyStyleAblationLocalProof(root);
 
-const readStyleClaimContract = (
+export const readSubmissionClaimContract = (
   root: string,
-): { measuredStyleControl: boolean } | null => {
+): {
+  liveGpt56NarrativeGeneration: boolean;
+  measuredStyleControl: boolean;
+} | null => {
   const locator = "docs/submission/CLAIM-CONTRACT.json";
   if (!isTrackedRegularFile(root, locator)) return null;
   try {
@@ -954,16 +957,21 @@ const readStyleClaimContract = (
     if (!value || typeof value !== "object" || Array.isArray(value)) return null;
     const candidate = value as Record<string, unknown>;
     if (
-      candidate.schemaVersion !== 1 ||
+      candidate.schemaVersion !== 2 ||
+      typeof candidate.liveGpt56NarrativeGeneration !== "boolean" ||
       typeof candidate.measuredStyleControl !== "boolean" ||
       typeof candidate.boundary !== "string" ||
       candidate.boundary.trim().length < 40 ||
       Object.keys(candidate).sort().join(",") !==
-        "boundary,measuredStyleControl,schemaVersion"
+        "boundary,liveGpt56NarrativeGeneration,measuredStyleControl,schemaVersion"
     ) {
       return null;
     }
-    return { measuredStyleControl: candidate.measuredStyleControl };
+    return {
+      liveGpt56NarrativeGeneration:
+        candidate.liveGpt56NarrativeGeneration,
+      measuredStyleControl: candidate.measuredStyleControl,
+    };
   } catch {
     return null;
   }
@@ -973,6 +981,7 @@ export const inspectTrackedReleaseCopy = (
   root: string,
 ): {
   complete: boolean;
+  liveGpt56NarrativeGeneration: boolean;
   measuredStyleEffect: boolean;
   crossModelSuperiority: boolean;
 } => {
@@ -1012,6 +1021,18 @@ export const inspectTrackedReleaseCopy = (
   return { complete, ...inspectReleaseClaimLanguage(sources) };
 };
 
+export const submissionClaimContractMatches = (
+  contract: ReturnType<typeof readSubmissionClaimContract>,
+  releaseCopyClaims: ReturnType<typeof inspectTrackedReleaseCopy>,
+  measuredStyleControl: boolean | undefined,
+): boolean =>
+  contract !== null &&
+  releaseCopyClaims.complete &&
+  measuredStyleControl === contract.measuredStyleControl &&
+  contract.liveGpt56NarrativeGeneration ===
+    releaseCopyClaims.liveGpt56NarrativeGeneration &&
+  (contract.measuredStyleControl || !releaseCopyClaims.measuredStyleEffect);
+
 export const collectSubmissionObservation = async (
   args: Arguments,
 ): Promise<SubmissionObservation> => {
@@ -1049,7 +1070,7 @@ export const collectSubmissionObservation = async (
   const hostedUrl = record?.hostedDemo.url ?? null;
   const videoUrl = record?.video.url ?? null;
   const expectedSha = releaseRecord?.commitSha ?? "";
-  const styleClaimContract = readStyleClaimContract(args.root);
+  const submissionClaimContract = readSubmissionClaimContract(args.root);
   const releaseCopyClaims = inspectTrackedReleaseCopy(args.root);
   const descriptionLocator = path.resolve(
     args.root,
@@ -1080,6 +1101,14 @@ export const collectSubmissionObservation = async (
     galleryManifestMatches: verifyGalleryManifest(args.root, releaseRecord),
     privacyScanPassed: privacy.status === 0,
     liveEvidenceVerified: verifyLocalLiveEvidenceProof(args.root),
+    liveGpt56NarrativeClaimRequested:
+      (submissionClaimContract?.liveGpt56NarrativeGeneration ?? true) ||
+      releaseCopyClaims.liveGpt56NarrativeGeneration,
+    // This verifies the private record's explicit task designation and UUID
+    // presence. It does not independently identify the serving model.
+    codexGpt56TaskDesignationPresent:
+      Boolean(record?.feedback.sessionId) &&
+      record?.feedback.taskModel === "gpt-5.6",
     finalNameParity: hasFinalNameParity(args.root, record?.final.projectName ?? null),
     projectDescriptionFinal:
       record?.final.descriptionFinal === true &&
@@ -1106,16 +1135,15 @@ export const collectSubmissionObservation = async (
     feedbackSessionPresent: Boolean(record?.feedback.sessionId),
     devpostPageReachable,
     devpostTrackConfirmed: record?.devpost.trackConfirmed === true,
-    styleClaimContractMatches:
-      styleClaimContract !== null &&
-      releaseCopyClaims.complete &&
-      record?.claims.measuredStyleControl === styleClaimContract.measuredStyleControl &&
-      (styleClaimContract.measuredStyleControl ||
-        !releaseCopyClaims.measuredStyleEffect),
+    styleClaimContractMatches: submissionClaimContractMatches(
+      submissionClaimContract,
+      releaseCopyClaims,
+      record?.claims.measuredStyleControl,
+    ),
     crossModelSuperiorityClaimAbsent:
       releaseCopyClaims.complete && !releaseCopyClaims.crossModelSuperiority,
     measuredStyleClaimRequested:
-      (styleClaimContract?.measuredStyleControl ?? true) ||
+      (submissionClaimContract?.measuredStyleControl ?? true) ||
       releaseCopyClaims.measuredStyleEffect,
     styleAblationVerified: styleAblationVerified(args.root),
     devpostSubmitted: hasValidDevpostOwnerReadback(

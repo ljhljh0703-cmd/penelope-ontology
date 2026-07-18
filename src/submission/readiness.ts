@@ -103,6 +103,7 @@ export const ExternalSubmissionRecordSchema = z
             /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
           )
           .nullable(),
+        taskModel: z.literal("gpt-5.6").nullable().default(null),
       })
       .strict(),
     devpost: z
@@ -150,6 +151,8 @@ export type SubmissionObservation = {
   galleryManifestMatches: boolean;
   privacyScanPassed: boolean;
   liveEvidenceVerified: boolean;
+  liveGpt56NarrativeClaimRequested: boolean;
+  codexGpt56TaskDesignationPresent: boolean;
   finalNameParity: boolean;
   projectDescriptionFinal: boolean;
   readmePresent: boolean;
@@ -319,6 +322,7 @@ export const hasFinalProjectDescription = (
 };
 
 export type ReleaseClaimLanguage = {
+  liveGpt56NarrativeGeneration: boolean;
   measuredStyleEffect: boolean;
   crossModelSuperiority: boolean;
 };
@@ -326,15 +330,18 @@ export type ReleaseClaimLanguage = {
 export const inspectReleaseClaimLanguage = (
   sources: readonly string[],
 ): ReleaseClaimLanguage => {
-  const clauses = sources.flatMap((source) =>
+  const splitClauses = (source: string): string[] =>
     source
       .split(/(?<=[.!?])\s+|[\r\n]+/)
       .flatMap((sentence) =>
-        sentence.split(/(?:[,;:]\s*|\s+)(?:but|however|yet|nevertheless)\s+/i),
+        sentence.split(
+          /(?:[,;:]\s*|\s+)(?:but|however|nevertheless)\s+|[,;:]\s*yet\s+/i,
+        ),
       )
       .map((clause) => clause.trim())
-      .filter(Boolean),
-  );
+      .filter(Boolean);
+  const clauseStreams = sources.map(splitClauses);
+  const clauses = clauseStreams.flat();
 
   const hasUnnegatedMatch = (clause: string, pattern: RegExp): boolean => {
     const flags = pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`;
@@ -396,6 +403,73 @@ export const inspectReleaseClaimLanguage = (
     /(?:\bmeasur(?:e|ed|ing)\b.{0,120}\b(?:improvement|gain|increase|lift|better|higher|more distinctive)\b|\b\d+(?:\.\d+)?\s*%\b.{0,120}\b(?:improvement|gain|increase|lift|better|higher)\b|\b(?:raised|increased|improved|lifted|strengthened)\b.{0,80}\b(?:style|prose|writing|voice|narrative|distinctiveness|quality|score|rating|rubric)\b|\bimproves?\b.{0,40}\b(?:style|prose|writing|voice|narrative|distinctiveness|quality)\b|\b(?:style|prose|writing|voice|narrative|distinctiveness)(?:\s+quality)?\b.{0,80}\b(?:improved|increased|rose|grew|strengthened|improvement|gain|lift|better|higher|more distinctive)\b|\b(?:made|makes)\b.{0,50}\b(?:style|prose|writing|voice|narrative)\b.{0,30}\b(?:more distinctive|better|stronger|higher)\b|\b(?:style|prose|writing|voice|narrative|score|rating|rubric)(?:\s+quality)?\b.{0,80}\bfrom\s+\d+(?:\.\d+)?\s+to\s+\d+(?:\.\d+)?\b|\b(?:score|rating|rubric)\s+(?:delta|gain)\s*(?:of|=|:)?\s*[+]?(?:\d+(?:\.\d+)?)\b)/i;
   const crossModelPattern =
     /\b(?:(?:outperform(?:s|ed|ing)?|beats?|beating|superior to)\b.{0,60}?\b(?:models?|writing systems?|Fable|Opus)\b|writes? better than|stronger (?:at|in) (?:prose|writing) than|better (?:prose|writing) than|more distinctive than|(?:closed|narrowed|eliminated)\b.{0,60}?\bgap\b.{0,60}?\b(?:with|to)\s+(?:Fable|Opus)|(?:matches?|rivals?|surpasses?|exceeds?)\s+(?:Fable|Opus)|on par with\s+(?:Fable|Opus))\b/i;
+  const gpt56MentionPattern = /\bGPT-5\.6(?:-[A-Za-z0-9._-]+)?\b/i;
+  const narrativeContextPattern =
+    /\b(?:author(?:ed|ing)?|chapter|compos(?:e|ed|ing)|creat(?:e|ed|ing|ion)|dialogue|draft(?:ed|ing)?|generat(?:e|ed|ing|ion)|opening|output|passage|produc(?:e|ed|ing)|prose|render(?:ed|ing)?|response|scene|story|text|writ(?:e|es|ing|ten)|wrote|narrative)\b/i;
+  const requestedModelBoundary = (clause: string): boolean =>
+    /(?:\brequest(?:ed|s|ing)?\b|\brequestedModel\b).{0,50}\bGPT-5\.6(?:-[A-Za-z0-9._-]+)?\b/i.test(
+      clause,
+    );
+  const explicitGptAuthorship = (clause: string): boolean =>
+    /(?:\b(?:used|using)\s+GPT-5\.6(?:-[A-Za-z0-9._-]+)?\s+to\s+(?:author|compose|create|draft|generate|produce|render|write)\b|\b(?:used|using)\s+GPT-5\.6(?:-[A-Za-z0-9._-]+)?\s+for\s+.{0,50}\b(?:chapter|dialogue|opening|passage|prose|scene|story|text|narrative)\b.{0,30}\b(?:authoring|composition|creation|drafting|generation|writing)\b|\bGPT-5\.6(?:-[A-Za-z0-9._-]+)?\b.{0,80}\b(?:authored|composed|created|drafted|generated|produced|rendered|wrote)\b.{0,80}\b(?:chapter|dialogue|opening|passage|prose|scene|story|text|narrative)\b|\b(?:chapter|dialogue|opening|passage|prose|scene|story|text|narrative)\b.{0,80}\b(?:came|comes)\s+from\s+GPT-5\.6(?:-[A-Za-z0-9._-]+)?\b|\b(?:chapter|dialogue|opening|passage|prose|scene|story|text|narrative)\b.{0,80}\bwritten\s+live\s+(?:by|with|using)\s+GPT-5\.6(?:-[A-Za-z0-9._-]+)?\b|\b(?:chapter|dialogue|opening|passage|prose|scene|story|text|narrative)\b.{0,40}\blive\s+GPT-5\.6(?:-[A-Za-z0-9._-]+)?\s+creation\b)/i.test(
+      clause,
+    );
+  const directlyNegatedGptAuthorship = (clause: string): boolean =>
+    /(?:\bGPT-5\.6(?:-[A-Za-z0-9._-]+)?\b.{0,60}\bdid\s+not\s+(?:author|compose|create|draft|generate|produce|render|write)\b.{0,80}\b(?:chapter|dialogue|opening|passage|prose|scene|story|text|narrative)\b|\bGPT-5\.6(?:-[A-Za-z0-9._-]+)?\b.{0,60}\bnever\s+(?:authored|composed|created|drafted|generated|produced|rendered|wrote)\b.{0,80}\b(?:chapter|dialogue|opening|passage|prose|scene|story|text|narrative)\b|\b(?:chapter|dialogue|opening|passage|prose|scene|story|text|narrative)\b.{0,60}\b(?:was|were|is|are)\s+(?:not|never)\s+(?:authored|composed|created|drafted|generated|produced|rendered|written)\b.{0,60}\b(?:by|from|using|with)\s+GPT-5\.6(?:-[A-Za-z0-9._-]+)?\b|\b(?:did\s+not\s+use|never\s+used?)\s+GPT-5\.6(?:-[A-Za-z0-9._-]+)?\b.{0,80}\b(?:author|compose|create|draft|generate|produce|render|write)\b|\bGPT-5\.6(?:-[A-Za-z0-9._-]+)?\b.{0,40}\b(?:was|is)\s+not\s+used\b.{0,80}\b(?:author|compose|create|draft|generate|produce|render|write)\b|\b(?:chapter|dialogue|opening|passage|prose|scene|story|text|narrative)\b.{0,40}\bdid\s+not\s+come\s+from\s+GPT-5\.6(?:-[A-Za-z0-9._-]+)?\b|\b(?:used|using)\s+GPT-5\.6(?:-[A-Za-z0-9._-]+)?\s+for\s+implementation\b.{0,60}\bnot\s+(?:for\s+)?(?:story|prose|text|narrative)?\s*(?:authoring|composition|creation|drafting|generation|writing)\b)/i.test(
+      clause,
+    );
+  const modelPronounAuthorship = (clause: string): boolean =>
+    /\b(?:that\s+model|the\s+(?:requested\s+)?model|this\s+model)\s+(?:authored|composed|created|drafted|generated|produced|rendered|wrote)\b.{0,80}\b(?:chapter|dialogue|opening|passage|prose|scene|story|text|narrative)\b/i.test(
+      clause,
+    );
+  const ambiguousItAuthorship = (clause: string): boolean =>
+    /\bit\s+(?:authored|composed|created|drafted|generated|produced|rendered|wrote)\b.{0,80}\b(?:chapter|dialogue|opening|passage|prose|scene|story|text|narrative)\b/i.test(
+      clause,
+    );
+  const negatedPronounAuthorship = (clause: string): boolean =>
+    /\b(?:it|that\s+model|the\s+(?:requested\s+)?model|this\s+model)\s+(?:did\s+not|never)\s+(?:author|compose|create|draft|generate|produce|render|write)\b/i.test(
+      clause,
+    );
+  const gptPronounAntecedent = (clause: string): boolean =>
+    gpt56MentionPattern.test(clause) &&
+    /\b(?:configured|designated|requested|selected)\b/i.test(clause);
+  const canonicalCliRunAntecedent = (clause: string): boolean =>
+    /\b(?:ChatGPT-authenticated\s+)?Codex CLI(?:\s+run)?\b|\bStory Workbench run\b/i.test(
+      clause,
+    );
+  const codexTaskDesignationBoundary = (clause: string): boolean =>
+    /\bCodex\b.{0,80}\b(?:configured|designated|selected)\b.{0,40}\bGPT-5\.6\b/i.test(
+      clause,
+    ) && /\b(?:feedback|implementation|task)\b/i.test(clause);
+  const implementationOrCapabilityBoundary = (clause: string): boolean =>
+    /\b(?:adapter|bounded|candidate|contract|engine|fixture|gate|gated|implement(?:ation|ed|ing)?|protocol|schema|Structured Outputs?|task)\b/i.test(
+      clause,
+    );
+  const negatedLiveNarrativeBoundary = (clause: string): boolean =>
+    /^(?:[-*]\s*)?(?:do not|don't|never|must not|cannot|can't|neither)\b/i.test(
+      clause,
+    ) ||
+    /\b(?:not|never|wasn't|weren't|isn't|aren't|hasn't|haven't|hadn't)\s+(?:authored|captured|drafted|generated|produced|rendered|verified|written)\b.{0,100}\bGPT-5\.6(?:-[A-Za-z0-9._-]+)?\b/i.test(
+      clause,
+    ) ||
+    /\bGPT-5\.6(?:-[A-Za-z0-9._-]+)?\b.{0,120}\b(?:not|never|wasn't|weren't|isn't|aren't|hasn't|haven't|hadn't)(?:\s+yet)?(?:\s+been)?\s+(?:authored|captured|drafted|generated|produced|rendered|verified|written)\b/i.test(
+      clause,
+    ) ||
+    /\b(?:does|do|did|would|can|could|is|are|was|were)\s+not\s+(?:claim|establish|prove|show)\b.{0,120}\bGPT-5\.6(?:-[A-Za-z0-9._-]+)?\b/i.test(
+      clause,
+    ) ||
+    /\bnot\s+(?:a\s+)?(?:live\s+)?GPT-5\.6(?:-[A-Za-z0-9._-]+)?\b.{0,40}\b(?:claim|creation|generation|response|result)\b/i.test(
+      clause,
+    ) ||
+    /\bno\s+(?:live\s+|real\s+)?GPT-5\.6(?:-[A-Za-z0-9._-]+)?\b.{0,60}\b(?:generation|output|response|result)\b.{0,40}\b(?:captured|exists?|verified)\b/i.test(
+      clause,
+    ) ||
+    /\b(?:blocked|pending)\b.{0,160}\b(?:GPT-5\.6|no|not|unverified|unknown|null)\b/i.test(
+      clause,
+    ) ||
+    /\b(?:does|did|would|can|could)\s+not\s+(?:independently\s+)?(?:attribute|establish|identify|prove|show)\b/i.test(
+      clause,
+    );
   const approvedPerceptionSource = String.raw`\b(?:(?:its default|default Codex|Codex's default) prose may feel less distinctive (?:than|beside)(?: output from)?(?: writing-first systems)?(?: such as)?\s+(?:Fable|Opus)(?:\s*(?:or|and|\/)\s*(?:Fable|Opus))*|writing-first systems may feel more distinctive than generic default Codex prose)\b`;
   const stripApprovedPerception = (clause: string): string =>
     clause.replace(new RegExp(approvedPerceptionSource, "gi"), "");
@@ -415,8 +489,48 @@ export const inspectReleaseClaimLanguage = (
   );
   const unmeasuredOutcomePattern =
     /\b(?:harness|system|tool|project|style constraints?|Codex|GPT-5\.6)\b.{0,100}\b(?:produced|creates?|delivers?|achieves?|yields?|made|makes?)\b.{0,80}\b(?:more recognizable|more distinctive|better|stronger|higher-quality|improved)\b.{0,40}\b(?:voice|prose|writing|style|narrative)?/i;
-  const claimBearingClauses = clauses.map(stripApprovedPerception);
+  const claimBearingStreams = clauseStreams.map((stream) =>
+    stream.map(stripApprovedPerception),
+  );
+  const claimBearingClauses = claimBearingStreams.flat();
+  const isLiveGpt56NarrativeClaim = (clause: string): boolean => {
+    if (
+      !gpt56MentionPattern.test(clause) ||
+      !narrativeContextPattern.test(clause)
+    ) {
+      return false;
+    }
+    if (directlyNegatedGptAuthorship(clause)) return false;
+    if (explicitGptAuthorship(clause)) return true;
+    if (
+      requestedModelBoundary(clause) ||
+      codexTaskDesignationBoundary(clause) ||
+      implementationOrCapabilityBoundary(clause)
+    ) {
+      return false;
+    }
+    return !negatedLiveNarrativeBoundary(clause);
+  };
+  const contextualPronounClaim = claimBearingStreams.some((stream) =>
+    stream.some((clause, index) => {
+      if (!gptPronounAntecedent(clause)) return false;
+      return [1, 2].some((offset) => {
+        const candidate = stream[index + offset];
+        if (candidate === undefined || negatedPronounAuthorship(candidate)) {
+          return false;
+        }
+        if (modelPronounAuthorship(candidate)) return true;
+        return (
+          ambiguousItAuthorship(candidate) &&
+          !canonicalCliRunAntecedent(clause)
+        );
+      });
+    }),
+  );
   return {
+    liveGpt56NarrativeGeneration:
+      claimBearingClauses.some(isLiveGpt56NarrativeClaim) ||
+      contextualPronounClaim,
     measuredStyleEffect: claimBearingClauses.some(
       (clause) =>
         hasUnnegatedMatch(clause, measuredPattern) ||
@@ -443,7 +557,18 @@ export const evaluateSubmissionReadiness = (
     { id: "evidence_manifest_matches", required: true, passed: observation.evidenceManifestMatches },
     { id: "gallery_manifest_matches", required: true, passed: observation.galleryManifestMatches },
     { id: "privacy_scan_passed", required: true, passed: observation.privacyScanPassed },
-    { id: "live_gpt56_verified", required: true, passed: observation.liveEvidenceVerified },
+    {
+      id: "live_gpt56_verified",
+      required: observation.liveGpt56NarrativeClaimRequested,
+      passed:
+        !observation.liveGpt56NarrativeClaimRequested ||
+        observation.liveEvidenceVerified,
+    },
+    {
+      id: "codex_gpt56_task_designation_present",
+      required: true,
+      passed: observation.codexGpt56TaskDesignationPresent,
+    },
     { id: "final_name_parity", required: true, passed: observation.finalNameParity },
     { id: "project_description_final", required: true, passed: observation.projectDescriptionFinal },
     { id: "readme_present", required: true, passed: observation.readmePresent },

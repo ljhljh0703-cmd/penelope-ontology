@@ -20,7 +20,8 @@
     "gpt56UseExplained": false
   },
   "feedback": {
-    "sessionId": null
+    "sessionId": null,
+    "taskModel": null
   },
   "devpost": {
     "projectUrl": "https://devpost.com/software/narrative-ontology-harness",
