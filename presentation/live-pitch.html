@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Penelope Ontology — live pitch</title>
+    <style>
+      :root {
+        --night: #0d1518;
+        --raised: #162125;
+        --paper: #f3efe5;
+        --dim: #d9cfbe;
+        --coral: #f16d58;
+        --green: #62c982;
+        --acid: #d7ff45;
+        --serif: Georgia, "Times New Roman", serif;
+        --sans: Inter, "Helvetica Neue", Arial, sans-serif;
+        --mono: "JetBrains Mono", Menlo, Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--night); color: var(--paper); font-family: var(--sans); }
+      button { font: inherit; }
+      .deck { position: relative; width: 100vw; height: 100vh; }
+      .slide {
+        position: absolute;
+        inset: 0;
+        display: none;
+        overflow: hidden;
+        padding: 8vh 7vw 9vh;
+        background:
+          linear-gradient(rgba(243, 239, 229, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(243, 239, 229, 0.025) 1px, transparent 1px),
+          var(--night);
+        background-size: 32px 32px;
+      }
+      .slide.active { display: block; animation: enter 360ms ease-out both; }
+      @keyframes enter { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+      .slide.paper { color: #171711; background: var(--paper); }
+      .eyebrow { margin: 0 0 2.2vh; color: var(--coral); font: 800 1.05vw/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+      h1, h2 { margin: 0; letter-spacing: -.065em; }
+      h1 { max-width: 74vw; font-size: clamp(70px, 9vw, 160px); line-height: .88; }
+      h2 { max-width: 75vw; font-size: clamp(60px, 7vw, 124px); line-height: .92; }
+      .ghost { color: transparent; -webkit-text-stroke: 2px rgba(243,239,229,.72); }
+      .lede { max-width: 54vw; margin: 4vh 0 0; color: var(--dim); font: 400 2.2vw/1.25 var(--serif); }
+      .quote { display: inline-block; margin-top: 5vh; padding: 1.7vh 1.8vw; border: 1px solid rgba(243,239,229,.3); font: italic 2.2vw/1 var(--serif); }
+      .split { display: grid; grid-template-columns: .9fr 1.1fr; gap: 5vw; height: 76vh; align-items: center; }
+      .scene-image { width: 100%; max-height: 68vh; object-fit: cover; border: 1px solid rgba(243,239,229,.2); box-shadow: 18px 18px 0 rgba(241,109,88,.18); }
+      .stack { display: grid; gap: 1.4vh; margin-top: 4vh; }
+      .receipt { display: grid; grid-template-columns: 8px 1fr auto; gap: 1.2vw; align-items: center; padding: 1.6vh 1.4vw; border: 1px solid rgba(243,239,229,.25); background: rgba(243,239,229,.04); }
+      .receipt::before { content: ""; width: 8px; height: 100%; background: var(--green); }
+      .receipt.cost::before { background: var(--coral); }
+      .receipt b { font-size: 1.45vw; }
+      .receipt span { color: var(--dim); font-family: var(--mono); font-size: .9vw; }
+      .fork-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; margin-top: 6vh; }
+      .ending { min-height: 34vh; padding: 3vh 2.4vw; border: 1px solid rgba(23,23,17,.24); background: rgba(255,255,255,.35); }
+      .ending:first-child { border-top: 10px solid var(--coral); }
+      .ending:last-child { border-top: 10px solid var(--green); }
+      .ending h3 { margin: 1.4vh 0 2vh; font: 500 3.8vw/1 var(--serif); }
+      .ending p { max-width: 30vw; font-size: 1.35vw; line-height: 1.35; }
+      .pack-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .58; }
+      .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(13,21,24,.97), rgba(13,21,24,.75) 46%, rgba(13,21,24,.08)); }
+      .over { position: relative; z-index: 2; }
+      .pack-row { display: flex; gap: 1vw; margin-top: 6vh; }
+      .pack { padding: 1.4vh 1.2vw; border: 1px solid rgba(243,239,229,.3); background: rgba(13,21,24,.82); }
+      .pack b { display: block; font-size: 1.2vw; }
+      .pack span { display: block; margin-top: .6vh; color: var(--dim); font: .75vw var(--mono); }
+      .final { display: grid; place-items: center; height: 78vh; text-align: center; }
+      .mark { display: grid; place-items: center; width: 10vw; height: 10vw; margin: 0 auto 3vh; border: 3px solid var(--coral); border-radius: 50%; font: 6vw var(--serif); }
+      .final p { margin: 2.5vh 0 0; color: var(--dim); font: italic 2.8vw var(--serif); }
+      .url { display: inline-block; margin-top: 4vh; padding: 1.2vh 1.2vw; border: 1px solid rgba(215,255,69,.48); color: var(--acid); font: 1vw var(--mono); }
+      .chrome { position: fixed; z-index: 100; left: 2.4vw; right: 2.4vw; bottom: 2.2vh; display: flex; align-items: center; gap: 1vw; }
+      .progress { flex: 1; height: 3px; background: rgba(243,239,229,.2); }
+      .progress > div { height: 100%; background: var(--acid); transition: width 220ms ease; }
+      .controls { display: flex; gap: .5vw; }
+      .controls button { width: 44px; height: 44px; border: 1px solid rgba(243,239,229,.35); color: var(--paper); background: rgba(13,21,24,.75); cursor: pointer; }
+      .counter { min-width: 74px; color: var(--dim); font: .8vw var(--mono); text-align: right; }
+      .hint { position: fixed; top: 2.2vh; right: 2.4vw; z-index: 100; color: rgba(243,239,229,.55); font: .72vw var(--mono); letter-spacing: .06em; }
+      .paper + .chrome { color: #171711; }
+    </style>
+  </head>
+  <body>
+    <main class="deck" aria-live="polite">
+      <section class="slide active">
+        <p class="eyebrow">A familiar creator-side shorthand</p>
+        <h1>Codex<br /><span class="ghost">can't write?</span></h1>
+        <div class="quote">“Claude writes. Codex builds.”</div>
+        <p class="lede">What if the real failure begins before the sentence?</p>
+      </section>
+
+      <section class="slide">
+        <p class="eyebrow">Fluent failure</p>
+        <h2>A better paragraph cannot repair a world that forgets.</h2>
+        <div class="stack" style="max-width: 72vw">
+          <div class="receipt cost"><b>The wrong character knows the secret.</b><span>KNOWLEDGE LEAK</span></div>
+          <div class="receipt cost"><b>Yesterday's choice has no cost.</b><span>CONSEQUENCE ERASED</span></div>
+          <div class="receipt cost"><b>Every NPC borrows the narrator's knowledge.</b><span>AGENCY COLLAPSED</span></div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="split">
+          <div>
+            <p class="eyebrow">The Night of the Scar · Book 19</p>
+            <h2 style="font-family:var(--serif); font-weight:500">You removed the witness.<br /><span style="color:var(--coral)">You created an investigator.</span></h2>
+            <div class="stack">
+              <div class="receipt"><b>Privacy rises</b><span>SUCCESS</span></div>
+              <div class="receipt cost"><b>Melantho remembers the exclusion</b><span>MOTIVE ARMED</span></div>
+              <div class="receipt cost"><b>Offstage investigation begins</b><span>PRESSURE +1</span></div>
+            </div>
+          </div>
+          <img class="scene-image" src="./assets/causal-reversal.png" alt="The creator removes a witness and triggers an offstage investigation" />
+        </div>
+      </section>
+
+      <section class="slide paper">
+        <p class="eyebrow" style="color:#8a3f30">Fork Compare</p>
+        <h2>Same checkpoint. Different world line.</h2>
+        <div class="fork-grid">
+          <article class="ending"><small>WORLD LINE A</small><h3>Plan Compromised</h3><p>Melantho investigates. Pressure rises. Odysseus's identity moves closer to exposure.</p></article>
+          <article class="ending"><small>WORLD LINE B</small><h3>Canon Contained</h3><p>Eurycleia's reaction is contained. Pressure holds. The hidden identity remains protected.</p></article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <img class="pack-image" src="./assets/world-pack-portability.png" alt="Three different world packs running through one Penelope workbench" />
+        <div class="shade"></div>
+        <div class="over">
+          <p class="eyebrow">Portable World Packs</p>
+          <h2>Ithaca is one world.<br /><span style="font-family:var(--serif); color:var(--acid); font-weight:500">It is not the engine.</span></h2>
+          <p class="lede">The cast, secrets, actions, and endings change. The workbench does not.</p>
+          <div class="pack-row">
+            <div class="pack"><b>The Odyssey</b><span>BOOK 19</span></div>
+            <div class="pack"><b>The Wonderful Wizard of Oz</b><span>CHAPTER XV</span></div>
+            <div class="pack"><b>Your World</b><span>WORLD FORGE</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="final">
+          <div>
+            <div class="mark">P</div>
+            <h2>Penelope Ontology</h2>
+            <p>Fork the world, not just the paragraph.</p>
+            <div class="url">penelope-ontology.vercel.app</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="hint">← → navigate · F fullscreen</div>
+    <div class="chrome">
+      <div class="progress"><div id="bar"></div></div>
+      <div class="controls"><button id="prev" aria-label="Previous slide">←</button><button id="next" aria-label="Next slide">→</button></div>
+      <div class="counter" id="counter"></div>
+    </div>
+
+    <script>
+      const slides = [...document.querySelectorAll(".slide")];
+      const bar = document.getElementById("bar");
+      const counter = document.getElementById("counter");
+      let index = 0;
+
+      const render = () => {
+        slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
+        bar.style.width = `${((index + 1) / slides.length) * 100}%`;
+        counter.textContent = `${String(index + 1).padStart(2, "0")} / ${String(slides.length).padStart(2, "0")}`;
+      };
+      const move = (delta) => { index = Math.max(0, Math.min(slides.length - 1, index + delta)); render(); };
+      document.getElementById("prev").addEventListener("click", () => move(-1));
+      document.getElementById("next").addEventListener("click", () => move(1));
+      document.addEventListener("keydown", (event) => {
+        if (["ArrowRight", "PageDown", " "].includes(event.key)) move(1);
+        if (["ArrowLeft", "PageUp"].includes(event.key)) move(-1);
+        if (event.key.toLowerCase() === "f") document.documentElement.requestFullscreen?.();
+      });
+      render();
+    </script>
+  </body>
+</html>

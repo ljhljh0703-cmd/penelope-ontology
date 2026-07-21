@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Penelope Ontology — a world that remembers</title>
+    <script src="./node_modules/gsap/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --night: #0d1518;
+        --night-raised: #162125;
+        --paper: #f3efe5;
+        --paper-dim: #d9cfbe;
+        --coral: #f16d58;
+        --green: #62c982;
+        --acid: #d7ff45;
+        --muted: #8d9695;
+        --ink: #171711;
+        --line: rgba(243, 239, 229, 0.22);
+        --serif: Georgia, "Times New Roman", serif;
+        --sans: Inter, "Helvetica Neue", Arial, sans-serif;
+        --mono: "JetBrains Mono", Menlo, Consolas, monospace;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+      body { background: var(--night); color: var(--paper); font-family: var(--sans); }
+      img { display: block; }
+
+      #stage {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--night);
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        isolation: isolate;
+      }
+
+      .scene::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        pointer-events: none;
+        background:
+          linear-gradient(rgba(243, 239, 229, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(243, 239, 229, 0.025) 1px, transparent 1px);
+        background-size: 32px 32px;
+        mix-blend-mode: screen;
+      }
+
+      .scene-inner {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        padding: 92px 112px;
+      }
+
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin: 0;
+        color: var(--paper-dim);
+        font-family: var(--mono);
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 42px;
+        height: 3px;
+        background: currentColor;
+      }
+
+      .scene-no {
+        position: absolute;
+        top: 54px;
+        right: 72px;
+        z-index: 10;
+        color: rgba(243, 239, 229, 0.44);
+        font-family: var(--mono);
+        font-size: 18px;
+        letter-spacing: 0.08em;
+      }
+
+      .caption {
+        position: absolute;
+        left: 112px;
+        right: 112px;
+        bottom: 48px;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 56px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(243, 239, 229, 0.32);
+        color: rgba(243, 239, 229, 0.86);
+        font-size: 24px;
+        line-height: 1.25;
+      }
+
+      .caption .timecode {
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 16px;
+        letter-spacing: 0.08em;
+      }
+
+      .paper-scene { background: var(--paper); color: var(--ink); }
+      .paper-scene::after {
+        background:
+          linear-gradient(rgba(23, 23, 17, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(23, 23, 17, 0.035) 1px, transparent 1px);
+        background-size: 32px 32px;
+        mix-blend-mode: multiply;
+      }
+      .paper-scene .caption { color: rgba(23, 23, 17, 0.84); border-color: rgba(23, 23, 17, 0.3); }
+      .paper-scene .scene-no { color: rgba(23, 23, 17, 0.45); }
+
+      /* Scene 1 — provocative shorthand */
+      .s1 { background: var(--night); }
+      .s1 .scene-inner { display: grid; align-content: center; }
+      .hook-stack { position: relative; width: 1500px; }
+      .hook-kicker {
+        margin-bottom: 30px;
+        color: var(--coral);
+        font-family: var(--mono);
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .hook-title {
+        margin: 0;
+        max-width: 1420px;
+        font-size: 150px;
+        font-weight: 920;
+        line-height: 0.88;
+        letter-spacing: -0.075em;
+        text-transform: uppercase;
+      }
+      .hook-title .ghost {
+        color: transparent;
+        -webkit-text-stroke: 2px rgba(243, 239, 229, 0.72);
+      }
+      .hook-quote {
+        display: inline-flex;
+        gap: 18px;
+        margin-top: 44px;
+        padding: 18px 24px;
+        border: 1px solid rgba(243, 239, 229, 0.3);
+        color: var(--paper-dim);
+        font-family: var(--serif);
+        font-size: 34px;
+        font-style: italic;
+      }
+      .hook-question {
+        position: absolute;
+        right: 32px;
+        bottom: -20px;
+        width: 260px;
+        height: 260px;
+        display: grid;
+        place-items: center;
+        border: 2px solid var(--acid);
+        border-radius: 50%;
+        color: var(--acid);
+        font-family: var(--serif);
+        font-size: 170px;
+        font-style: italic;
+      }
+
+      /* Scene 2 — fluent failure */
+      .s2 { background: #111a1d; }
+      .failure-grid {
+        display: grid;
+        grid-template-columns: 1.04fr 0.96fr;
+        gap: 86px;
+        align-items: center;
+        height: 820px;
+      }
+      .prose-card {
+        position: relative;
+        min-height: 610px;
+        padding: 62px 68px;
+        color: var(--ink);
+        background: var(--paper);
+        box-shadow: 18px 18px 0 rgba(241, 109, 88, 0.22);
+      }
+      .prose-card::before {
+        content: "FLUENT OUTPUT";
+        position: absolute;
+        top: 26px;
+        left: 68px;
+        color: #6a675e;
+        font-family: var(--mono);
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+      }
+      .prose-card p {
+        margin: 74px 0 0;
+        font-family: var(--serif);
+        font-size: 49px;
+        line-height: 1.24;
+      }
+      .prose-card .redact {
+        position: relative;
+        white-space: nowrap;
+      }
+      .prose-card .redact::after {
+        content: "";
+        position: absolute;
+        left: -4px;
+        right: -4px;
+        top: 54%;
+        height: 11px;
+        background: var(--coral);
+        transform: rotate(-1.5deg);
+        opacity: 0.82;
+      }
+      .failure-copy h2 {
+        margin: 0;
+        max-width: 700px;
+        font-size: 88px;
+        line-height: 0.96;
+        letter-spacing: -0.055em;
+      }
+      .failure-receipts { display: grid; gap: 18px; margin-top: 46px; }
+      .failure-receipt {
+        display: grid;
+        grid-template-columns: 76px 1fr auto;
+        gap: 20px;
+        align-items: center;
+        padding: 20px 24px;
+        border: 1px solid rgba(243, 239, 229, 0.24);
+        background: rgba(243, 239, 229, 0.04);
+      }
+      .failure-receipt b { font-size: 24px; }
+      .failure-receipt span { color: var(--paper-dim); font-size: 18px; }
+      .failure-receipt em { color: var(--coral); font-family: var(--mono); font-size: 18px; font-style: normal; font-weight: 900; }
+      .xmark { color: var(--coral); font-family: var(--mono); font-size: 38px; font-weight: 900; text-align: center; }
+
+      /* Scene 3 — product reveal */
+      .s3 { background: #0a1215; }
+      .full-bleed {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .s3 .full-bleed { opacity: 0.76; transform: scale(1.035); }
+      .image-shade {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        background: linear-gradient(90deg, rgba(8, 15, 18, 0.98) 0%, rgba(8, 15, 18, 0.78) 38%, rgba(8, 15, 18, 0.08) 76%);
+      }
+      .reveal-copy {
+        position: relative;
+        z-index: 8;
+        width: 820px;
+        margin-top: 170px;
+      }
+      .reveal-copy h2 {
+        margin: 26px 0 0;
+        font-size: 104px;
+        line-height: 0.94;
+        letter-spacing: -0.06em;
+      }
+      .reveal-copy h2 em { color: var(--acid); font-family: var(--serif); font-weight: 500; }
+      .reveal-copy p {
+        max-width: 710px;
+        margin: 30px 0 0;
+        color: var(--paper-dim);
+        font-family: var(--serif);
+        font-size: 34px;
+        line-height: 1.35;
+      }
+      .authority-row { display: flex; gap: 14px; margin-top: 40px; }
+      .authority-chip {
+        padding: 12px 16px;
+        border: 1px solid rgba(243, 239, 229, 0.35);
+        font-family: var(--mono);
+        font-size: 16px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      /* Scene 4 — causal reversal */
+      .s4 { background: #0a1215; }
+      .s4 .full-bleed { opacity: 0.44; transform: scale(1.04); }
+      .s4 .image-shade { background: linear-gradient(90deg, rgba(8, 15, 18, 0.98) 0%, rgba(8, 15, 18, 0.4) 52%, rgba(8, 15, 18, 0.82) 100%); }
+      .causal-layout {
+        position: relative;
+        z-index: 8;
+        display: grid;
+        grid-template-columns: 0.92fr 1.08fr;
+        gap: 120px;
+        height: 820px;
+        align-items: center;
+      }
+      .causal-title h2 {
+        margin: 22px 0 0;
+        font-family: var(--serif);
+        font-size: 94px;
+        font-weight: 500;
+        line-height: 0.94;
+        letter-spacing: -0.045em;
+      }
+      .causal-title h2 span { color: var(--coral); }
+      .cause-card {
+        margin-top: 42px;
+        padding: 22px 24px;
+        border-left: 6px solid var(--acid);
+        background: rgba(13, 21, 24, 0.86);
+      }
+      .cause-card small { color: var(--acid); font-family: var(--mono); font-size: 15px; font-weight: 900; letter-spacing: 0.1em; }
+      .cause-card p { margin: 10px 0 0; font-size: 28px; line-height: 1.3; }
+      .receipt-stack { display: grid; gap: 16px; }
+      .world-receipt {
+        display: grid;
+        grid-template-columns: 16px 1fr auto;
+        gap: 22px;
+        align-items: center;
+        min-height: 112px;
+        padding: 20px 24px;
+        border: 1px solid rgba(243, 239, 229, 0.28);
+        background: rgba(13, 21, 24, 0.88);
+        backdrop-filter: blur(8px);
+      }
+      .world-receipt .signal { width: 12px; height: 68px; background: var(--green); }
+      .world-receipt.cost .signal { background: var(--coral); }
+      .world-receipt b { display: block; font-size: 27px; }
+      .world-receipt span { display: block; margin-top: 8px; color: var(--paper-dim); font-size: 18px; }
+      .world-receipt code { color: var(--green); font-family: var(--mono); font-size: 20px; font-weight: 900; }
+      .world-receipt.cost code { color: var(--coral); }
+      .reversal-line {
+        position: absolute;
+        left: 776px;
+        top: 236px;
+        z-index: 7;
+        width: 300px;
+        height: 330px;
+        border-top: 3px dashed var(--coral);
+        border-right: 3px dashed var(--coral);
+        border-radius: 0 80px 0 0;
+        transform: rotate(4deg);
+        transform-origin: left top;
+      }
+
+      /* Scene 5 — fork compare */
+      .s5 { background: #11191c; }
+      .fork-title {
+        position: relative;
+        z-index: 7;
+        text-align: center;
+      }
+      .fork-title h2 { margin: 18px 0 0; font-size: 72px; letter-spacing: -0.045em; }
+      .checkpoint {
+        position: absolute;
+        left: 50%;
+        top: 280px;
+        z-index: 12;
+        transform: translateX(-50%);
+        display: grid;
+        place-items: center;
+        width: 160px;
+        height: 160px;
+        border: 3px solid var(--acid);
+        border-radius: 50%;
+        background: var(--night);
+        color: var(--acid);
+        font-family: var(--mono);
+        font-size: 18px;
+        font-weight: 900;
+        text-align: center;
+      }
+      .fork-lines {
+        position: absolute;
+        left: 50%;
+        top: 430px;
+        z-index: 4;
+        width: 1040px;
+        height: 200px;
+        transform: translateX(-50%);
+      }
+      .fork-lines::before,
+      .fork-lines::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        width: 50%;
+        height: 190px;
+        border-top: 4px solid;
+      }
+      .fork-lines::before { left: 0; border-left: 4px solid var(--coral); border-color: var(--coral); border-radius: 70px 0 0 0; }
+      .fork-lines::after { right: 0; border-right: 4px solid var(--green); border-color: var(--green); border-radius: 0 70px 0 0; }
+      .fork-grid {
+        position: absolute;
+        left: 160px;
+        right: 160px;
+        top: 610px;
+        z-index: 8;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 150px;
+      }
+      .ending-card {
+        min-height: 260px;
+        padding: 30px 34px;
+        border: 1px solid rgba(243, 239, 229, 0.24);
+        background: rgba(243, 239, 229, 0.04);
+      }
+      .ending-card.compromised { border-top: 9px solid var(--coral); }
+      .ending-card.contained { border-top: 9px solid var(--green); }
+      .ending-card small { font-family: var(--mono); font-size: 14px; font-weight: 900; letter-spacing: 0.1em; }
+      .ending-card h3 { margin: 12px 0 18px; font-family: var(--serif); font-size: 48px; font-weight: 500; }
+      .ending-tags { display: flex; flex-wrap: wrap; gap: 10px; }
+      .ending-tags span { padding: 8px 11px; border: 1px solid rgba(243, 239, 229, 0.3); color: var(--paper-dim); font-family: var(--mono); font-size: 14px; }
+
+      /* Scene 6 — portability */
+      .s6 { background: #0a1215; }
+      .s6 .full-bleed { opacity: 0.62; transform: scale(1.035); }
+      .s6 .image-shade { background: linear-gradient(180deg, rgba(8, 15, 18, 0.98) 0%, rgba(8, 15, 18, 0.18) 33%, rgba(8, 15, 18, 0.72) 100%); }
+      .portability-copy {
+        position: relative;
+        z-index: 8;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+      .portability-copy h2 { margin: 16px 0 0; max-width: 1040px; font-size: 88px; line-height: 0.96; letter-spacing: -0.055em; }
+      .portability-copy h2 em { color: var(--acid); font-family: var(--serif); font-weight: 500; }
+      .pack-tabs {
+        position: absolute;
+        left: 210px;
+        right: 210px;
+        bottom: 150px;
+        z-index: 9;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .pack-tab {
+        padding: 18px 20px;
+        border: 1px solid rgba(243, 239, 229, 0.34);
+        background: rgba(13, 21, 24, 0.9);
+      }
+      .pack-tab b { display: block; font-size: 23px; }
+      .pack-tab span { display: block; margin-top: 7px; color: var(--paper-dim); font-family: var(--mono); font-size: 14px; }
+      .pack-tab:nth-child(1) { border-bottom: 5px solid var(--coral); }
+      .pack-tab:nth-child(2) { border-bottom: 5px solid var(--green); }
+      .pack-tab:nth-child(3) { border-bottom: 5px solid #d7a941; }
+
+      /* Scene 7 — authority flow */
+      .s7 .scene-inner { padding-top: 108px; }
+      .system-header { display: flex; align-items: flex-end; justify-content: space-between; }
+      .system-header h2 { margin: 18px 0 0; max-width: 1000px; font-size: 76px; line-height: 0.98; letter-spacing: -0.05em; }
+      .authority-legend { display: grid; gap: 10px; width: 420px; }
+      .legend-item { display: flex; justify-content: space-between; gap: 20px; padding-bottom: 10px; border-bottom: 1px solid rgba(23, 23, 17, 0.2); font-family: var(--mono); font-size: 15px; }
+      .legend-item b { color: var(--green); }
+      .system-flow {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 26px;
+        margin-top: 120px;
+      }
+      .system-flow::before {
+        content: "";
+        position: absolute;
+        left: 92px;
+        right: 92px;
+        top: 92px;
+        height: 4px;
+        background: var(--ink);
+        opacity: 0.22;
+      }
+      .system-node {
+        position: relative;
+        z-index: 3;
+        min-height: 220px;
+        padding: 24px 20px;
+        border: 2px solid var(--ink);
+        background: var(--paper);
+        box-shadow: 8px 8px 0 rgba(23, 23, 17, 0.12);
+      }
+      .system-node .node-index {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        color: var(--paper);
+        background: var(--ink);
+        font-family: var(--mono);
+        font-weight: 900;
+      }
+      .system-node h3 { margin: 28px 0 10px; font-size: 24px; line-height: 1.05; }
+      .system-node p { margin: 0; color: #5f5d56; font-size: 16px; line-height: 1.35; }
+      .system-node.model { border-color: var(--coral); }
+      .system-node.creator { border-color: var(--green); background: #e9f3e8; }
+      .system-node .owner { position: absolute; left: 20px; bottom: 18px; font-family: var(--mono); font-size: 12px; font-weight: 900; letter-spacing: 0.06em; }
+      .system-node.model .owner { color: #a43d2e; }
+      .system-node.creator .owner { color: #245f44; }
+      .system-claim { margin: 58px auto 0; text-align: center; font-family: var(--serif); font-size: 42px; }
+
+      /* Scene 8 — close */
+      .s8 { background: #0b1316; }
+      .s8 .scene-inner { display: grid; place-items: center; text-align: center; }
+      .final-mark {
+        display: grid;
+        place-items: center;
+        width: 158px;
+        height: 158px;
+        margin: 0 auto 34px;
+        border: 3px solid var(--coral);
+        border-radius: 50%;
+        color: var(--paper);
+        font-family: var(--serif);
+        font-size: 96px;
+      }
+      .final-title { margin: 0; font-size: 96px; letter-spacing: -0.055em; }
+      .final-thesis { margin: 22px 0 0; color: var(--paper-dim); font-family: var(--serif); font-size: 48px; font-style: italic; }
+      .final-url { margin-top: 48px; padding: 13px 18px; color: var(--acid); border: 1px solid rgba(215, 255, 69, 0.5); font-family: var(--mono); font-size: 20px; letter-spacing: 0.04em; }
+      .thread-orbit {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 940px;
+        height: 940px;
+        margin: -470px 0 0 -470px;
+        border: 2px dashed rgba(98, 201, 130, 0.24);
+        border-radius: 50%;
+      }
+      .thread-orbit::before,
+      .thread-orbit::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        border: 2px dashed rgba(241, 109, 88, 0.2);
+      }
+      .thread-orbit::before { inset: 110px; }
+      .thread-orbit::after { inset: 230px; border-color: rgba(215, 255, 69, 0.18); }
+    </style>
+  </head>
+  <body>
+    <main
+      id="stage"
+      data-composition-id="penelope-pitch"
+      data-start="0"
+      data-duration="82"
+      data-width="1920"
+      data-height="1080"
+    >
+      <section id="scene-hook" class="scene clip s1" data-start="0" data-duration="8" data-track-index="1">
+        <div class="scene-no">01 / 08</div>
+        <div class="scene-inner">
+          <div class="hook-stack">
+            <div class="hook-kicker">A familiar creator-side shorthand</div>
+            <h1 class="hook-title"><span>Codex</span><br /><span class="ghost">can't write?</span></h1>
+            <div class="hook-quote"><span>“Claude writes.</span><span>Codex builds.”</span></div>
+            <div class="hook-question">?</div>
+          </div>
+        </div>
+        <div class="caption"><span>What if the real failure begins before the sentence?</span><span class="timecode">00:00</span></div>
+      </section>
+
+      <section id="scene-fluent-failure" class="scene clip s2" data-start="8" data-duration="8.5" data-track-index="1">
+        <div class="scene-no">02 / 08</div>
+        <div class="scene-inner">
+          <div class="failure-grid">
+            <article class="prose-card">
+              <p>The room falls silent. She smiles, already certain of <span class="redact">the secret she never learned</span>.</p>
+            </article>
+            <div class="failure-copy">
+              <p class="eyebrow">Fluent failure</p>
+              <h2>A better paragraph cannot repair a world that forgets.</h2>
+              <div class="failure-receipts">
+                <div class="failure-receipt"><div class="xmark">×</div><div><b>Knowledge</b><span>Who is allowed to know?</span></div><em>LEAKED</em></div>
+                <div class="failure-receipt"><div class="xmark">×</div><div><b>Consequence</b><span>What did the choice cost?</span></div><em>ERASED</em></div>
+                <div class="failure-receipt"><div class="xmark">×</div><div><b>Agency</b><span>Why would this character act?</span></div><em>BORROWED</em></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="caption"><span>Fluent prose can still collapse character knowledge and causality.</span><span class="timecode">00:08</span></div>
+      </section>
+
+      <section id="scene-product-reveal" class="scene clip s3" data-start="16.5" data-duration="16.5" data-track-index="1">
+        <img class="full-bleed" src="./assets/choice-weaver.png" alt="" />
+        <div class="image-shade"></div>
+        <div class="scene-no">03 / 08</div>
+        <div class="scene-inner">
+          <div class="reveal-copy">
+            <p class="eyebrow">Penelope Ontology</p>
+            <h2>Give Codex a world it <em>must obey.</em></h2>
+            <p>Resolve knowledge, motives, relationships, risks, and costs before the next scene is written.</p>
+            <div class="authority-row">
+              <span class="authority-chip">Creator chooses</span>
+              <span class="authority-chip">World resolves</span>
+              <span class="authority-chip">Model renders</span>
+            </div>
+          </div>
+        </div>
+        <div class="caption"><span>The creator owns direction. The world answers before prose.</span><span class="timecode">00:16</span></div>
+      </section>
+
+      <section id="scene-causal-reversal" class="scene clip s4" data-start="33" data-duration="13" data-track-index="1">
+        <img class="full-bleed" src="./assets/causal-reversal.png" alt="" />
+        <div class="image-shade"></div>
+        <div class="scene-no">04 / 08</div>
+        <div class="scene-inner">
+          <div class="reversal-line"></div>
+          <div class="causal-layout">
+            <div class="causal-title">
+              <p class="eyebrow">The Night of the Scar · Book 19</p>
+              <h2>You removed the witness.<br /><span>You created an investigator.</span></h2>
+              <div class="cause-card">
+                <small>CREATOR CHOICE</small>
+                <p>Send Melantho away to protect the stranger's identity.</p>
+              </div>
+            </div>
+            <div class="receipt-stack">
+              <div class="world-receipt"><div class="signal"></div><div><b>Privacy in the room</b><span>Melantho leaves the scene.</span></div><code>+1</code></div>
+              <div class="world-receipt cost"><div class="signal"></div><div><b>Melantho remembers</b><span>Exclusion becomes motive.</span></div><code>ARMED</code></div>
+              <div class="world-receipt cost"><div class="signal"></div><div><b>Offstage investigation</b><span>Suspicion rises without a knowledge leak.</span></div><code>+1</code></div>
+            </div>
+          </div>
+        </div>
+        <div class="caption"><span>The request succeeds—and its social cost becomes the next story pressure.</span><span class="timecode">00:33</span></div>
+      </section>
+
+      <section id="scene-fork-compare" class="scene clip s5" data-start="46" data-duration="10.5" data-track-index="1">
+        <div class="scene-no">05 / 08</div>
+        <div class="scene-inner">
+          <div class="fork-title">
+            <p class="eyebrow" style="justify-content:center">Fork Compare</p>
+            <h2>Same checkpoint. Different world line.</h2>
+          </div>
+          <div class="checkpoint">CHECKPOINT<br />01</div>
+          <div class="fork-lines"></div>
+          <div class="fork-grid">
+            <article class="ending-card compromised">
+              <small>WORLD LINE A</small>
+              <h3>Plan Compromised</h3>
+              <div class="ending-tags"><span>Melantho · investigating</span><span>pressure · high</span><span>identity · at risk</span></div>
+            </article>
+            <article class="ending-card contained">
+              <small>WORLD LINE B</small>
+              <h3>Canon Contained</h3>
+              <div class="ending-tags"><span>Eurycleia · contained</span><span>pressure · held</span><span>identity · protected</span></div>
+            </article>
+          </div>
+        </div>
+        <div class="caption"><span>Penelope compares changed state—not paragraph similarity.</span><span class="timecode">00:46</span></div>
+      </section>
+
+      <section id="scene-portability" class="scene clip s6" data-start="56.5" data-duration="8.25" data-track-index="1">
+        <img class="full-bleed" src="./assets/world-pack-portability.png" alt="" />
+        <div class="image-shade"></div>
+        <div class="scene-no">06 / 08</div>
+        <div class="scene-inner">
+          <div class="portability-copy">
+            <div>
+              <p class="eyebrow">Portable World Packs</p>
+              <h2>Ithaca is one world.<br /><em>It is not the engine.</em></h2>
+            </div>
+          </div>
+          <div class="pack-tabs">
+            <div class="pack-tab"><b>The Odyssey</b><span>BOOK 19 · HIDDEN IDENTITY</span></div>
+            <div class="pack-tab"><b>The Wonderful Wizard of Oz</b><span>CHAPTER XV · PUBLIC ILLUSION</span></div>
+            <div class="pack-tab"><b>Your World</b><span>WORLD FORGE · FIVE-SCENE EPISODE</span></div>
+          </div>
+        </div>
+        <div class="caption"><span>The cast, secrets, actions, and endings change. The workbench does not.</span><span class="timecode">00:56</span></div>
+      </section>
+
+      <section id="scene-authority-flow" class="scene clip s7 paper-scene" data-start="64.75" data-duration="11.25" data-track-index="1">
+        <div class="scene-no">07 / 08</div>
+        <div class="scene-inner">
+          <div class="system-header">
+            <div>
+              <p class="eyebrow" style="color:#5f5d56">Authority before expression</p>
+              <h2>The model writes after the world has answered.</h2>
+            </div>
+            <div class="authority-legend">
+              <div class="legend-item"><span>Facts & consequences</span><b>STATE</b></div>
+              <div class="legend-item"><span>Direction & canon</span><b>CREATOR</b></div>
+              <div class="legend-item"><span>Prose candidate</span><b>MODEL</b></div>
+            </div>
+          </div>
+          <div class="system-flow">
+            <article class="system-node"><span class="node-index">1</span><h3>World Pack</h3><p>Bounded truth, cast, motives, risks.</p><span class="owner">STATE</span></article>
+            <article class="system-node creator"><span class="node-index">2</span><h3>A / B / C</h3><p>Prepared routes or creator direction.</p><span class="owner">CREATOR</span></article>
+            <article class="system-node"><span class="node-index">3</span><h3>Causal Resolver</h3><p>Costs, clocks, movement, relations.</p><span class="owner">STATE</span></article>
+            <article class="system-node model"><span class="node-index">4</span><h3>Narration</h3><p>Scoped expression candidate.</p><span class="owner">MODEL</span></article>
+            <article class="system-node creator"><span class="node-index">5</span><h3>Creator Gate</h3><p>Accept, edit expression, or reject.</p><span class="owner">CREATOR</span></article>
+            <article class="system-node"><span class="node-index">6</span><h3>World Codex</h3><p>Checkpoint, lineage, inspectable state.</p><span class="owner">STATE</span></article>
+          </div>
+          <p class="system-claim">Codex engineered the harness. The creator keeps authorship.</p>
+        </div>
+        <div class="caption"><span>Expression may vary. State authority and creator judgment do not.</span><span class="timecode">01:04</span></div>
+      </section>
+
+      <section id="scene-close" class="scene clip s8" data-start="76" data-duration="6" data-track-index="1">
+        <div class="thread-orbit"></div>
+        <div class="scene-no">08 / 08</div>
+        <div class="scene-inner">
+          <div>
+            <div class="final-mark">P</div>
+            <h2 class="final-title">Penelope Ontology</h2>
+            <p class="final-thesis">Fork the world, not just the paragraph.</p>
+            <div class="final-url">penelope-ontology.vercel.app</div>
+          </div>
+        </div>
+      </section>
+
+      <audio id="narration" class="clip" data-start="0" data-duration="82" data-track-index="3" data-volume="1" src="./audio/narration.wav"></audio>
+    </main>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+      window.__timelines["penelope-pitch"] = tl;
+
+      // Scene 1
+      gsap.set([".s1 .hook-kicker", ".s1 .hook-title span", ".s1 .hook-quote", ".s1 .hook-question", ".s1 .caption"], { opacity: 0 });
+      tl.to(".s1 .hook-kicker", { opacity: 1, duration: 0.5 }, 0.25)
+        .fromTo(".s1 .hook-title span", { y: 90, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, stagger: 0.18 }, 0.6)
+        .fromTo(".s1 .hook-quote", { x: -40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.65 }, 2.1)
+        .fromTo(".s1 .hook-question", { scale: 0.2, rotation: -18, opacity: 0 }, { scale: 1, rotation: 0, opacity: 1, duration: 0.7 }, 2.55)
+        .to(".s1 .caption", { opacity: 1, duration: 0.45 }, 3.1);
+
+      // Scene 2
+      gsap.set([".s2 .prose-card", ".s2 .failure-copy h2", ".s2 .eyebrow", ".s2 .failure-receipt", ".s2 .caption"], { opacity: 0 });
+      tl.fromTo(".s2 .prose-card", { x: -90, rotation: -2, opacity: 0 }, { x: 0, rotation: 0, opacity: 1, duration: 0.85 }, 8.25)
+        .fromTo(".s2 .eyebrow", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45 }, 8.65)
+        .fromTo(".s2 .failure-copy h2", { y: 46, opacity: 0 }, { y: 0, opacity: 1, duration: 0.75 }, 8.85)
+        .fromTo(".s2 .failure-receipt", { x: 70, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, stagger: 0.42 }, 10.0)
+        .to(".s2 .caption", { opacity: 1, duration: 0.45 }, 11.1);
+
+      // Scene 3
+      gsap.set([".s3 .reveal-copy > *", ".s3 .caption"], { opacity: 0 });
+      tl.fromTo(".s3 .full-bleed", { scale: 1.08 }, { scale: 1.035, duration: 16, ease: "none" }, 16.5)
+        .fromTo(".s3 .reveal-copy > *", { x: -54, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7, stagger: 0.22 }, 16.95)
+        .to(".s3 .caption", { opacity: 1, duration: 0.45 }, 18.6);
+
+      // Scene 4
+      gsap.set([".s4 .causal-title > *", ".s4 .world-receipt", ".s4 .reversal-line", ".s4 .caption"], { opacity: 0 });
+      tl.fromTo(".s4 .full-bleed", { scale: 1.08 }, { scale: 1.04, duration: 12.5, ease: "none" }, 33)
+        .fromTo(".s4 .causal-title > *", { x: -45, opacity: 0 }, { x: 0, opacity: 1, duration: 0.65, stagger: 0.22 }, 33.45)
+        .fromTo(".s4 .reversal-line", { width: 0, height: 0, opacity: 0 }, { width: 300, height: 330, opacity: 1, duration: 1.05 }, 35.1)
+        .fromTo(".s4 .world-receipt", { x: 90, opacity: 0 }, { x: 0, opacity: 1, duration: 0.65, stagger: 0.95 }, 35.45)
+        .to(".s4 .caption", { opacity: 1, duration: 0.45 }, 37.3);
+
+      // Scene 5
+      gsap.set([".s5 .fork-title", ".s5 .checkpoint", ".s5 .fork-lines", ".s5 .ending-card", ".s5 .caption"], { opacity: 0 });
+      tl.fromTo(".s5 .fork-title", { y: -35, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65 }, 46.25)
+        .fromTo(".s5 .checkpoint", { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.55 }, 47.0)
+        .fromTo(".s5 .fork-lines", { scaleX: 0.05, opacity: 0, transformOrigin: "50% 0%" }, { scaleX: 1, opacity: 1, duration: 0.9 }, 47.55)
+        .fromTo(".s5 .ending-card", { y: 70, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, stagger: 0.35 }, 48.2)
+        .to(".s5 .caption", { opacity: 1, duration: 0.45 }, 49.65);
+
+      // Scene 6
+      gsap.set([".s6 .portability-copy", ".s6 .pack-tab", ".s6 .caption"], { opacity: 0 });
+      tl.fromTo(".s6 .full-bleed", { scale: 1.08 }, { scale: 1.035, duration: 8, ease: "none" }, 56.5)
+        .fromTo(".s6 .portability-copy", { y: -42, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, 56.85)
+        .fromTo(".s6 .pack-tab", { y: 55, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, stagger: 0.32 }, 57.65)
+        .to(".s6 .caption", { opacity: 1, duration: 0.45 }, 58.9);
+
+      // Scene 7
+      gsap.set([".s7 .system-header > *", ".s7 .system-node", ".s7 .system-claim", ".s7 .caption"], { opacity: 0 });
+      tl.fromTo(".s7 .system-header > *", { y: 38, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, stagger: 0.2 }, 65.05)
+        .fromTo(".s7 .system-node", { y: 70, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, stagger: 0.24 }, 65.95)
+        .fromTo(".s7 .system-claim", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 67.75)
+        .to(".s7 .caption", { opacity: 1, duration: 0.4 }, 68.35);
+
+      // Scene 8
+      gsap.set([".s8 .final-mark", ".s8 .final-title", ".s8 .final-thesis", ".s8 .final-url", ".s8 .thread-orbit"], { opacity: 0 });
+      tl.fromTo(".s8 .thread-orbit", { scale: 0.6, rotation: -20, opacity: 0 }, { scale: 1, rotation: 0, opacity: 1, duration: 1.2 }, 76.1)
+        .fromTo(".s8 .final-mark", { scale: 0.35, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.75 }, 76.3)
+        .fromTo(".s8 .final-title", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65 }, 76.75)
+        .fromTo(".s8 .final-thesis", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 77.15)
+        .fromTo(".s8 .final-url", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55 }, 77.65);
+    </script>
+  </body>
+</html>

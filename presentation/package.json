@@ -1,0 +1,24 @@
+{
+  "name": "penelope-presentation-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic HTML-to-video presentation for Penelope Ontology.",
+  "scripts": {
+    "doctor": "hyperframes doctor",
+    "lint": "hyperframes lint . --verbose",
+    "verify": "node scripts/verify-presentation.mjs",
+    "preview": "hyperframes preview --port 4177",
+    "render:draft": "hyperframes render -f 30 -q draft -w 4 -o renders/penelope-presentation-draft.mp4",
+    "render": "hyperframes render -f 30 -q high -w 4 --video-frame-format png -o renders/penelope-presentation.mp4"
+  },
+  "dependencies": {
+    "gsap": "3.13.0",
+    "hyperframes": "0.7.66"
+  },
+  "overrides": {
+    "adm-zip": "0.6.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

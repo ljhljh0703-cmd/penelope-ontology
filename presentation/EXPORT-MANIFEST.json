@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "creatorReview": {
+    "status": "accepted",
+    "date": "2026-07-22",
+    "publicationAuthorized": false
+  },
+  "source": "index.html",
+  "renderer": {
+    "name": "Hyperframes",
+    "version": "0.7.66",
+    "node": "22.22.3",
+    "ffmpeg": "8.1.1"
+  },
+  "video": {
+    "path": "renders/penelope-presentation.mp4",
+    "sha256": "fe0491df79654d86333e292f04a9e12862495385382cacdcb5ceb54ed0d1fb4b",
+    "sizeBytes": 31660465,
+    "durationSeconds": 82.005333,
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "frames": 2460,
+    "videoCodec": "h264",
+    "audioCodec": "aac",
+    "audioSampleRate": 48000,
+    "audioChannels": 2
+  },
+  "sourceHashes": {
+    "index.html": "cadd379324c6f6d93ef165ed8a2b3c4169834e47b95d47556412a597a19cd32d",
+    "live-pitch.html": "7ce5576c6ca70783e03f0cbe7b82d3cb5d876edfcc968219d76d77c32931c677",
+    "LIVE-PITCH.md": "65c0bfd66b9f0c40acb5ec23ff27e3934b3bf52c3791b32993bcf629ca627413",
+    "package-lock.json": "24f1c6b74828d16df2242b24cd9da1a36275ae08ae51c318b330cfb60fdaa756",
+    "audio/narration.wav": "4ca7eb52de14c01deafdcbe97972ca5c92decbd80963295ee286fc7b232c98c3"
+  }
+}

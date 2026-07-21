@@ -1,0 +1,15 @@
+Codex cannot write? That is the shorthand: Claude writes; Codex builds. But what if the real failure begins before the sentence?
+
+AI can produce fluent prose and still forget who knows the secret, erase the cost of a choice, or move every character with the narrator's knowledge.
+
+Penelope Ontology gives Codex a world it must obey. Load a bounded World Pack. Each character keeps separate knowledge, motives, relationships, and risks. The creator chooses. Deterministic rules resolve what changes. The model writes only after the world has answered.
+
+In The Odyssey, I send Melantho away to protect Odysseus's identity. Privacy rises. But Melantho remembers the exclusion and investigates offstage. I removed a witness. I created an investigator.
+
+Return to the same checkpoint, contain Eurycleia's reaction, and the same past reaches a different ending. Penelope compares changed state, not paragraph similarity.
+
+Ithaca is only one pack. Oz and creator-owned worlds use the same engine. World Forge turns a short premise into an approved five-scene episode.
+
+Codex helped turn a writer's tacit judgment into contracts, validators, interfaces, and replay. Penelope does not take authorship. It gives every choice a world that remembers.
+
+Fork the world, not just the paragraph.
