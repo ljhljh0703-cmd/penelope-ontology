@@ -1,6 +1,6 @@
 # Build Week submission field packet
 
-Status: **local product verified; public links, video, `/feedback`, and final Devpost submission pending**.
+Status: **product, public repository, CI, and hosted demo verified; video, `/feedback`, and final Devpost submission pending**.
 
 ## Identity
 
@@ -20,8 +20,8 @@ Keep **Penelope Ontology** identical across README, repository UI, Devpost, vide
 | `27945` | Submitter Type | `Individual` |
 | `27946` | Country of Residence | `Korea Republic of` |
 | `27947` | Category | `Work & Productivity` |
-| `27948` | Code repository URL | pending public GitHub URL |
-| `27949` | Judge demo and instructions | pending hosted URL; no account required |
+| `27948` | Code repository URL | `https://github.com/ljhljh0703-cmd/penelope-ontology` |
+| `27949` | Judge demo and instructions | `https://penelope-ontology.vercel.app` — no account or API key; load the guided creator move, complete C, and reach `Plan Compromised`. Return to checkpoint 01, commit **Order the foot washing**, then commit **B · Alternate — Contain Eurycleia's recognition** to reach `Canon Contained`; inspect Fork Compare. |
 | `27950` | `/feedback` Session ID | pending private UUID |
 | `27951` | Plugin/developer-tool instructions | not applicable; Penelope is submitted as a Work & Productivity web app |
 
@@ -43,12 +43,12 @@ The Book 19 World Workbench completed four final narration turns across `Plan Co
 ## Local verification snapshot — 2026-07-21
 
 - `npm run verify`: PASS
-- unit/integration: 94 files, 830 tests PASS
+- unit/integration: 94 files, 833 tests PASS
 - World browser: 7/7 PASS on Chromium
 - production browser: 38/38 PASS across Chromium desktop and mobile WebKit
 - evidence verification, ESLint, TypeScript, privacy scan, production build: PASS
 
-These counts must be recertified against the final clean commit before publication.
+These counts, CI, and the hosted exact-SHA smoke are recertified for every final release commit.
 
 ## Copy sources
 
@@ -60,11 +60,9 @@ These counts must be recertified against the final clean commit before publicati
 
 ## External fields still required
 
-1. public GitHub repository URL and successful CI at the final commit;
-2. hosted demo URL and smoke verification at the same commit;
-3. public or unlisted YouTube URL under three minutes;
-4. private `/feedback` session UUID from the main Codex task;
-5. Devpost project update, category confirmation, and final submission readback.
+1. public or unlisted YouTube URL under three minutes;
+2. private `/feedback` session UUID from the main Codex task;
+3. Devpost project update, category confirmation, and final submission readback.
 
 ## Final form gate
 

@@ -62,7 +62,7 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Fixture Evidence Packet completed from executable fixtures and source checks; browser smoke is verified separately
 - [x] Pre-story source-tree local gate recorded after legacy-receipt compatibility and debt fixes; it is historical and does not certify the current tree
 - [x] Story-expanded current-tree local gate recertified after the C-interview contract change
-- [x] Book 19 clean-worktree evidence, lint, typecheck, 830 tests, 383-file privacy scan, production build, seven focused World browser checks, and 38 production browser checks recertified together; public remote/CI/host exact-SHA proof remains open
+- [x] Book 19 clean-worktree evidence, lint, typecheck, 833 tests, 383-file privacy scan, production build, seven focused World browser checks, and 38 production browser checks recertified together on the public release
 - [x] Fail-closed `submission:check` and `submission:check:post` implemented with redacted output, exact-SHA/canonical child manifests/bound live evidence/name/README/remote/CI/host/video/feedback/Devpost gates
 - [x] Public screenshots are five distinct decoded-pixel images, CRC-valid and fully decodable at 1440×900, with textual/EXIF metadata rejected; visible-content privacy remains a recorded human inspection
 - [ ] Sanitized real GPT-5.6 evidence added to the packet
@@ -78,16 +78,16 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Full browser suite recertified in 38 Chromium desktop/mobile WebKit checks, including the real Story fixture API path and World causal flow; route-mocked interaction checks remain separate
 - [x] World browser suite recertified in seven Chromium checks, including C's no-checkpoint-before-confirmation rule, both endings, NPC movement, causal pressure, and Fork Compare
 - [ ] Write-once style-ablation report finalized from live capture and creator ratings
-- [x] Public README manually truth-audited from repository evidence after the optional write-mode adapter returned `SERVING_STALE`; exact-SHA release status remains pending
-- [ ] Public GitHub remote created and pushed
-- [ ] CI passes on the public commit
+- [x] Public README manually truth-audited from repository evidence after the optional write-mode adapter returned `SERVING_STALE`; public CI and hosted exact-SHA release verification pass
+- [x] Public GitHub remote created and pushed
+- [x] CI passes on the public commit
 
 ## Required submission material
 
 - [x] Final project name locked as **Penelope Ontology** in repository UI and submission copy
 - [ ] Devpost page, hosted demo, and final video read back with the exact **Penelope Ontology** name
 - [ ] Devpost final category field confirmed as Work & Productivity
-- [ ] Project description finalized
+- [x] Project description finalized
 - [x] Evidence-safe Built-with list prepared; completed Codex CLI story generation is labeled with requested model only, while GPT-5.6 remains excluded from independently verified serving-model claims
 - [ ] Public YouTube demo under three minutes
 - [ ] Voice narration explains product, Codex use, and GPT-5.6 use
@@ -95,9 +95,9 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Submission description, shot list, and narration are prepared in English
 - [x] Five public-safe 1440×900 fixture gallery images captured with a SHA-256 manifest
 - [ ] Repository URL entered
-- [ ] Setup and sample-data instructions visible from README
+- [x] Setup and sample-data instructions visible from README
 - [ ] Core Codex task `/feedback` session ID entered privately
-- [ ] Public open-source license visible
+- [x] Public open-source license visible
 
 ## Privacy and evidence
 
@@ -107,15 +107,15 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Public fixture inputs are visibly registered, frozen, and non-editable; the UI states that prompt prose does not branch fixture output
 - [ ] Actual Responses API model and sanitized request metadata captured; Codex CLI evidence intentionally leaves `actualModel` and `responseId` null
 - [x] Public sanitized fixture evidence written under `artifacts/evidence/`; raw live material remains ignored
-- [x] Local Devpost, README, video, and repository copy derive from the same evidence boundary; final public URL/SHA parity remains pending
+- [x] Local Devpost, README, video, and repository copy derive from the same evidence boundary; public repository and hosted `/api/health` SHA parity are verified per release commit
 - [x] Tracked `CLAIM-CONTRACT.json` keeps the measured-style flag outside the editable private receipt; enabling it activates the AB/BA proof gate
 - [ ] `npm run submission:check` passes on the final public candidate
 
 ## Active blockers
 
 1. The current Story and World Workbench lanes completed local Codex CLI generation while requesting `gpt-5.6-terra`, but the transport reports neither `actualModel` nor `responseId`; public copy must keep requested-model and serving-model identity separate. The World run's delegated English QA is not a creator literary verdict. The legacy approval-bound `retry-1` remains a failed dispatch, and the Responses API path remains unused.
-2. The README and submission copy are local candidates; exact-SHA release recertification is still required.
-3. **Penelope Ontology** is name-locked and the complete Book 19 local gate passes; public GitHub remote, CI, hosted deployment, and external name parity remain open.
+2. The README, public repository, CI, and hosted exact-SHA release are verified; final Devpost field entry and readback remain external.
+3. **Penelope Ontology** is name-locked in the repository and hosted product; Devpost and video name parity remain open.
 4. Public narrated video, `/feedback` session field, and final Devpost submission remain external actions.
 5. Practitioner/user productivity evidence does not exist and must not be claimed.
 6. Both legacy CLI evidence authorities are consumed. Primary ended in a terminal process failure. The separately approved `retry-1` passed preflight and dispatched once, then terminally failed on `codex_cli_event_type_unrecognized`. No `retry-2` exists.
@@ -127,10 +127,10 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Day-0 health flags updated to reflect the implemented core truth
 - [x] `AGENTS.md` phase and current-state claims updated
 - [x] Clean/exact-SHA status is fail-closed and recorded only after commit in the ignored release record, preventing this tracked checklist from self-certifying its own SHA
-- [ ] Hosted deployment reports the same commit as the public repository
+- [x] Hosted deployment reports the same commit as the public repository
 - [ ] `npm run submission:check:post` passes after Devpost confirmation
 - [ ] Devpost completion is read back through the authenticated owner view or Devpost plugin, with exact name, track, description hash, repository, hosted demo, and video parity; public URL presence alone is not accepted
 
-Current local proof is recorded in `docs/BUILD-WEEK-COMMAND-CENTER.md`, `docs/EVIDENCE-LEDGER.md`, and `artifacts/evidence/manifest.json`. `docs/SCAFFOLD-VERIFICATION.md` is the historical Day-0 baseline. A local or fresh-copy PASS is not a public CI, live-model, deployment, or submission PASS.
+Current proof is recorded in `docs/BUILD-WEEK-COMMAND-CENTER.md`, `docs/EVIDENCE-LEDGER.md`, and `artifacts/evidence/manifest.json`; exact per-commit release evidence remains in the ignored private record. `docs/SCAFFOLD-VERIFICATION.md` is the historical Day-0 baseline. Public CI and deployment PASS do not imply serving-model identity, prose quality, or completed submission.
 
 The public Devpost project currently exists at `https://devpost.com/software/narrative-ontology-harness`, but its final submission record is still empty. Rename or confirm its visible title as **Penelope Ontology**, then verify that exact value through the authenticated submission readback.

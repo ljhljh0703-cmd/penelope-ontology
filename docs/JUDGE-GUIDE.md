@@ -4,18 +4,17 @@ This project is a fixture-first Work & Productivity web tool for professional GM
 
 ## Fastest review path
 
-When a verified hosted URL is supplied, no account or credentials are required. Until then, use the local fixture path below; hosting remains a release gate.
+Open [the public Penelope demo](https://penelope-ontology.vercel.app). No account, credentials, or API key is required.
 
-1. Confirm the header says `FIXTURE MODE · NO LIVE CALL`.
-2. Review the two registered, frozen, non-editable participant intents and the frozen creator style profile. The fixture explicitly says prompt prose does not branch its output.
-3. Use `Who can know this?` to confirm the narrator sees Ogygia, Penelope does not, and Penelope's belief about Odysseus remains uncertain.
-4. Run the frozen red-sail rehearsal. Confirm both intents authorize a playable line and appear in reciprocal lineage.
-5. Read the style receipt: `max_words` is machine-checked; the other six constraints remain `creator review required`; `Referenced ≠ verified` and `Live AB/BA not measured` stay visible.
-6. The candidate should stop at `Creator decision required`; it must not silently extend canon. Accept or edit the proposal. Editing changes display wording only; the proposal card and graph continue to show the locked semantic rule beside that non-authoritative wording. The overlay advances from v0 to v1 while the turn remains at zero.
-7. Apply both registered state steps: `idle → watching → signal_seen`.
-8. Confirm the state-hash chain is continuous and the server shows a fresh 4/4 safety-control replay bound to the exact approved overlay hash. Open the collapsed production review packet to inspect the human-handoff summary; it is explicitly not production-readiness evidence.
+1. Read the Book 19 setup, then inspect `World Pulse` and Melantho's NPC card. Before the first choice, she is within earshot and already wants to discover irregular behavior.
+2. Click **Load the guided creator move**, then **Commit this prepared action**. Answer the three creator questions about Penelope's goal, motive, and accepted cost. No checkpoint is spent during this interview.
+3. Review the proposed canonical execution and its visible state-bound receipt. Confirm it. Penelope gains privacy by dismissing Melantho; Melantho moves offstage, begins investigating, and the suspicion clock advances.
+4. Choose **Order the foot washing**. The branch reaches `Plan Compromised`: removing a witness created an investigator.
+5. Return to checkpoint 01. Choose **Order the foot washing**, commit it, then choose **B · Alternate — Contain Eurycleia's recognition** and commit it to reach `Canon Contained`.
+6. Inspect `Fork Compare`. Both lines share the same source checkpoint, but their NPC position, knowledge, pressure, latent risk, and ending now differ.
+7. Open the creator inspector to distinguish source-grounded Book 19 facts from creator-approved IF rules and creator-review-only material.
 
-Rejecting a proposal must leave canon and state unchanged. A third transition must be blocked.
+The public host is fixture-only and cannot spend OpenAI credits. Incomplete, abandoned, ambiguous, or unsupported C input leaves world state unchanged; it is never silently converted into A or B.
 
 ## Local setup
 
@@ -69,9 +68,9 @@ Codex was used as the engineering partner. The project starts from a familiar sk
 ## Evidence boundary
 
 - Public UI and hosted APIs are fixture-only.
-- The public fixture is one registered frozen two-intent replay, not an arbitrary participant-text composer.
+- The product hero is a bounded Book 19 world simulation; `/table` remains a supporting registered frozen two-intent forensic replay.
 - Fixture output must not be described as a live GPT-5.6 response.
-- A live call requires both `ENABLE_OPENAI_LIVE=true` and `OPENAI_API_KEY` through the separate evidence command.
+- Controlled local narration can request `gpt-5.6-terra` through the authenticated Codex CLI; the public host never exposes that paid path.
 - Raw model prose and response IDs stay out of the public repository.
 - No remote multiplayer room, graph database, embedding store, generalized quest generator, practitioner result, or measured productivity gain is claimed.
 

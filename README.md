@@ -2,6 +2,8 @@
 
 **A causal world simulator for creators: change one choice, then watch the world—not just the paragraph—answer back.**
 
+[Try the public demo](https://penelope-ontology.vercel.app) · [Browse the source](https://github.com/ljhljh0703-cmd/penelope-ontology)
+
 Penelope Ontology is a Work & Productivity tool for narrative designers, quest teams, professional GMs, and writers working inside a bounded canon. It lets a creator test an intervention, then traces what each important character knows, wants, notices, and does next before rendering the scene.
 
 The demo is **The Night of the Scar**, a bounded simulation set in *The Odyssey*, Book 19. This is not a TRPG rules engine and not a generic story generator. Dice and game-specific checks may be added as optional authorities; the core product is a creator-governed causal world model.
@@ -123,7 +125,7 @@ npm run verify
 npm run test:browser:production
 ```
 
-The release candidate passed the complete clean-worktree gate: evidence regeneration and verification, lint, typecheck, 94 Vitest files with 830 tests, a 383-file privacy scan, production build, all seven focused World Playwright checks, and all 38 production browser checks across desktop Chromium and mobile WebKit. The causal browser path dismisses Melantho through C, collects all three creator answers, confirms the canonical execution, reaches `Plan Compromised`, returns to opening, reaches `Canon Contained`, and compares both lines. Exact-SHA public remote, CI, and deployment recertification remain release gates.
+The release candidate passed the complete clean-worktree gate: evidence regeneration and verification, lint, typecheck, 94 Vitest files with 833 tests, a 383-file privacy scan, production build, all seven focused World Playwright checks, and all 38 production browser checks across desktop Chromium and mobile WebKit. The causal browser path dismisses Melantho through C, collects all three creator answers, confirms the canonical execution, reaches `Plan Compromised`, returns to opening, reaches `Canon Contained`, and compares both lines. The public repository passes GitHub CI, and the hosted fixture passed the cache-busted exact-SHA deployment smoke covering build identity, security headers, approved-overlay replay, two-step transition continuity, and public-live denial. Those proofs are rerun for every later release commit.
 
 ## Evidence boundaries
 

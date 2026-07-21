@@ -2,6 +2,8 @@
 
 This repository contains the implemented core vertical slice for **Penelope Ontology**, a Build Week Work & Productivity project.
 
+Public demo: [penelope-ontology.vercel.app](https://penelope-ontology.vercel.app)
+
 For the current status, deadline plan, Go/No-Go gates, and next Codex task boundary, read [`BUILD-WEEK-COMMAND-CENTER.md`](./BUILD-WEEK-COMMAND-CENTER.md).
 
 ## Product in one sentence
@@ -54,14 +56,14 @@ Implemented and fixture-verified:
 - Fork Compare: side-by-side state comparison of two world lines from a shared checkpoint, including knowledge, movement, pressure, rules, risks, and endings
 - a local four-turn Book 19 run through the Codex CLI narration path, requesting `gpt-5.6-terra`: two weak drafts failed closed without changing world state, while four final candidates passed the harness and delegated English-language QA without manual rewriting
 - deterministic retrieval, hard validation, provenance graph, creator decision, hashing, transition, replay, fixture/live evidence separation, and privacy scanning
-- complete clean-worktree verification: evidence regeneration and verification, lint, typecheck, 94 Vitest files with 830 tests, 383-file privacy scan, production build, seven focused World Playwright checks, and 38 production browser checks across desktop Chromium and mobile WebKit, including C dismissal → `Plan Compromised` → return to opening → `Canon Contained` → Fork Compare
+- complete clean-worktree verification: evidence regeneration and verification, lint, typecheck, 94 Vitest files with 833 tests, 383-file privacy scan, production build, seven focused World Playwright checks, and 38 production browser checks across desktop Chromium and mobile WebKit, including C dismissal → `Plan Compromised` → return to opening → `Canon Contained` → Fork Compare
+- a public GitHub repository, successful CI, and a credential-free hosted demo whose cache-busted health and behavior match the deployed commit
 
 Not verified or released yet:
 
 - independently reported serving-model identity; current completed local evidence is a Codex CLI generation lane that requested `gpt-5.6-terra`
 - human creator literary acceptance of the final live prose; automated gates and delegated English-language QA do not substitute for that judgment
-- final clean-commit and exact-SHA recertification
-- a public hosted deployment, narrated demo video, `/feedback` field, and final Devpost submission
+- narrated demo video, private `/feedback` field, and final Devpost submission
 - practitioner testing or evidence of productivity improvement
 
 ## Local setup

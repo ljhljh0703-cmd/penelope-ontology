@@ -1,6 +1,6 @@
 # Under-three-minute demo shot list
 
-Target: 2:25–2:35, leaving at least 25 seconds before the three-minute limit. Record one product-led story, then trim loading and all three C-answer typing pauses. World Pulse, NPC cards, Fork Compare, and the world-first root route passed the complete local source-tree gate and all seven focused World Playwright checks. The live Book 19 path also completed four final narration turns after two fail-closed wording rejections. Human creator literary acceptance and exact-SHA release certification remain separate gates.
+Target: 2:25–2:35, leaving at least 25 seconds before the three-minute limit. Record one product-led story, then trim loading and all three C-answer typing pauses. World Pulse, NPC cards, Fork Compare, and the world-first root route passed the complete release gate, all seven focused World Playwright checks, public CI, and hosted exact-SHA smoke. The live Book 19 path also completed four final narration turns after two fail-closed wording rejections. Human creator literary acceptance remains unclaimed; video review and final submission are separate gates.
 
 | Time | Screen | Required proof |
 |---|---|---|
