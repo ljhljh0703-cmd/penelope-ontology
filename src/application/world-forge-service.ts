@@ -49,7 +49,16 @@ const buildScenario = (draft: WorldForgeDraft) => {
   const immutablePremiseId = `premise.forge_immutable_${token}`;
   const hiddenPremiseId = `premise.forge_hidden_${token}`;
   const alternativeFlagId = `flag.forge_alternative_${token}`;
+  const recommendedFlagId = `flag.forge_recommended_${token}`;
   const clockId = `clock.forge_scene_${token}`;
+  const relationshipId = `relationship.forge_focal_counterpart_${token}`;
+  const sceneIds = [
+    `scene.forge_setup_${token}`,
+    `scene.forge_pressure_${token}`,
+    `scene.forge_turn_${token}`,
+    `scene.forge_reckoning_${token}`,
+    `scene.forge_resolution_${token}`,
+  ] as const;
   const recommendedActionId = `action.forge_recommended_${token}`;
   const alternativeActionId = `action.forge_alternative_${token}`;
   const recommendedResponseActionId = `action.forge_response_recommended_${token}`;
@@ -102,7 +111,7 @@ const buildScenario = (draft: WorldForgeDraft) => {
       "stakes",
     )}`,
     focalParticipantEntityId: focalId,
-    maxTurns: 2,
+    maxTurns: 5,
     maxReactionsPerTurn: 1,
     sourceLocators: [
       {
@@ -196,6 +205,68 @@ const buildScenario = (draft: WorldForgeDraft) => {
         },
       },
     ],
+    episodeBlueprint: {
+      schemaVersion: 2,
+      scenes: [
+        {
+          id: sceneIds[0],
+          sequence: 1,
+          role: "setup",
+          title: "The world opens",
+          purpose: text(draft, "seedText"),
+          pressure: text(draft, "stakes"),
+          completion: `The first decision is made through ${text(draft, "recommendedAction")}.`,
+        },
+        {
+          id: sceneIds[1],
+          sequence: 2,
+          role: "pressure",
+          title: "The cost becomes visible",
+          purpose: text(draft, "sceneTwo"),
+          pressure: text(draft, "relationshipPressure"),
+          completion: text(draft, "acceptedCost"),
+        },
+        {
+          id: sceneIds[2],
+          sequence: 3,
+          role: "turn",
+          title: "The balance turns",
+          purpose: text(draft, "sceneThree"),
+          pressure: text(draft, "knowledgeAsymmetry"),
+          completion: `The turning point answers ${text(draft, "alternativeAction")}.`,
+        },
+        {
+          id: sceneIds[3],
+          sequence: 4,
+          role: "reckoning",
+          title: "Earlier choices return",
+          purpose: text(draft, "sceneFour"),
+          pressure: text(draft, "forbiddenDevelopment"),
+          completion: text(draft, "acceptedCost"),
+        },
+        {
+          id: sceneIds[4],
+          sequence: 5,
+          role: "resolution",
+          title: "The episode answers",
+          purpose: text(draft, "sceneFive"),
+          pressure: text(draft, "endingCondition"),
+          completion: text(draft, "endingCondition"),
+        },
+      ],
+    },
+    relationships: [
+      {
+        id: relationshipId,
+        subjectEntityId: focalId,
+        objectEntityId: counterpartId,
+        axisId: `axis.${actionAlias(text(draft, "relationshipAxis"), "trust")}`.replace(/ /gu, "_"),
+        direction: "directed",
+        initialLevel: 0,
+        minLevel: -2,
+        maxLevel: 2,
+      },
+    ],
     actions: [
       {
         id: recommendedActionId,
@@ -263,7 +334,10 @@ const buildScenario = (draft: WorldForgeDraft) => {
         premiseIds: [immutablePremiseId, hiddenPremiseId],
       },
     ],
-    initialFlags: [{ id: alternativeFlagId, value: false }],
+    initialFlags: [
+      { id: alternativeFlagId, value: false },
+      { id: recommendedFlagId, value: false },
+    ],
     clocks: [
       {
         id: clockId,
@@ -315,8 +389,11 @@ const buildScenario = (draft: WorldForgeDraft) => {
         ],
         effects: [
           { kind: "grant_knowledge", entityId: focalId, premiseId: hiddenPremiseId },
+          { kind: "set_flag", flagId: recommendedFlagId, value: true },
+          { kind: "set_flag", flagId: alternativeFlagId, value: false },
+          { kind: "adjust_relationship", relationshipId, delta: 1 },
         ],
-        once: true,
+        once: false,
       },
       {
         id: alternativeReactionId,
@@ -335,8 +412,10 @@ const buildScenario = (draft: WorldForgeDraft) => {
         ],
         effects: [
           { kind: "set_flag", flagId: alternativeFlagId, value: true },
+          { kind: "set_flag", flagId: recommendedFlagId, value: false },
+          { kind: "adjust_relationship", relationshipId, delta: -1 },
         ],
-        once: true,
+        once: false,
       },
     ],
     narrationSpeechDirectives: [],
@@ -351,12 +430,8 @@ const buildScenario = (draft: WorldForgeDraft) => {
         )}`,
         provenance: creatorRuleProvenance([hiddenPremiseId]),
         conditions: [
-          {
-            kind: "premise_known",
-            entityId: focalId,
-            premiseId: hiddenPremiseId,
-            expected: true,
-          },
+          { kind: "flag_equals", flagId: recommendedFlagId, value: true },
+          { kind: "turn_at_least", turn: 5 },
         ],
         terminal: true,
       },
@@ -371,6 +446,7 @@ const buildScenario = (draft: WorldForgeDraft) => {
         provenance: creatorRuleProvenance([immutablePremiseId]),
         conditions: [
           { kind: "flag_equals", flagId: alternativeFlagId, value: true },
+          { kind: "turn_at_least", turn: 5 },
         ],
         terminal: true,
       },
@@ -378,9 +454,9 @@ const buildScenario = (draft: WorldForgeDraft) => {
         id: timeoutEndingId,
         kind: "timeout",
         priority: 1,
-        summary: `${text(draft, "endingCondition")} The bounded rehearsal closes after two unresolved turns.`,
+        summary: `${text(draft, "endingCondition")} The bounded episode closes after five accepted turns.`,
         provenance: creatorRuleProvenance([]),
-        conditions: [{ kind: "turn_at_least", turn: 2 }],
+        conditions: [{ kind: "turn_at_least", turn: 5 }],
         terminal: true,
       },
     ],
@@ -435,16 +511,18 @@ export const compileWorldForgeDraft = (
   const alternativeEndingId = scenario.endingRules[1]!.id;
   const timeoutEndingId = scenario.endingRules[2]!.id;
   const alternativeFlagId = scenario.initialFlags[0]!.id;
+  const recommendedFlagId = scenario.initialFlags[1]!.id;
+  const relationship = scenario.relationships![0]!;
 
   const definition = PenelopeWorldPackDefinitionSchema.parse({
     format: "penelope_world_pack",
     schemaVersion: 1,
     packId: `pack.creator_owned.forge_${token}`,
-    packVersion: "1.0.0",
+    packVersion: "2.0.0",
     provenance: {
       kind: "creator_owned",
       sourceTitle: text(draft, "title"),
-      sourceEdition: "Penelope World Forge creator approval, schema 1",
+      sourceEdition: "Penelope World Forge creator approval, episode schema 2",
       sourceUrl: null,
       rightsNote:
         "The creator attests ownership or authorized use of every fact entered into this private World Forge draft.",
@@ -452,12 +530,12 @@ export const compileWorldForgeDraft = (
     },
     presentation: {
       publicTitle: text(draft, "title"),
-      publicSubtitle: `A creator-forged scene at ${text(draft, "locationName")}`,
+      publicSubtitle: `A creator-forged five-scene episode at ${text(draft, "locationName")}`,
       hook: text(draft, "stakes"),
       sourceEyebrow: "Creator-owned · forged inside Penelope",
       sourceIntroduction: text(draft, "seedText"),
       productThesis:
-        "Penelope turns creator-approved facts into a bounded causal scene without silently adding canon.",
+        "Penelope turns creator-approved facts into a five-scene causal episode without silently adding canon.",
       participantSummary: `${text(draft, "focalCharacterName")} must act while ${text(
         draft,
         "counterpartName",
@@ -519,10 +597,33 @@ export const compileWorldForgeDraft = (
       ],
       creatorMayInspectHiddenState: true,
     },
+    worldCodex: {
+      dramaticQuestion: text(draft, "endingCondition"),
+      relationships: [
+        {
+          id: relationship.id,
+          subjectEntityId: relationship.subjectEntityId,
+          objectEntityId: relationship.objectEntityId,
+          axisId: relationship.axisId,
+          label: text(draft, "relationshipLabel"),
+          direction: relationship.direction,
+          provenance: "creator_approved",
+          summary: text(draft, "relationshipPressure"),
+          initialLevel: relationship.initialLevel,
+          levelLabels: [
+            "broken",
+            "strained",
+            "uncertain",
+            "strengthened",
+            "bound",
+          ],
+        },
+      ],
+    },
     renderPolicy: {
       tense: "present",
       pointOfView: "limited_third",
-      sceneModes: ["setup", "pressure", "ending"],
+      sceneModes: ["setup", "pressure", "revelation", "aftermath", "ending"],
       prohibitedTerms: ["prompt", "model", "system", "algorithm"],
       openingEvent: {
         eventId: `event.opening.forge_${token}`,
@@ -575,7 +676,7 @@ export const compileWorldForgeDraft = (
         timeout: text(draft, "endingCondition"),
       },
       lockedEventTextByActionId: {},
-      criticalFlagIds: [alternativeFlagId],
+      criticalFlagIds: [alternativeFlagId, recommendedFlagId],
       setupStopActorId: counterpartId,
       endingStopActorId: focalId,
     },

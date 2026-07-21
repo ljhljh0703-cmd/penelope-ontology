@@ -43,6 +43,15 @@ export type WorldClockDelta = {
   summary: string;
 };
 
+export type WorldRelationshipDelta = {
+  relationshipId: string;
+  label: string;
+  beforeLevel: number;
+  afterLevel: number;
+  delta: number;
+  summary: string;
+};
+
 export type WorldEndingDelta = {
   beforeEndingId: string | null;
   afterEndingId: string | null;
@@ -67,6 +76,7 @@ export type WorldPulse = {
   knowledge: WorldKnowledgeDelta[];
   movements: WorldActorMovement[];
   clocks: WorldClockDelta[];
+  relationships: WorldRelationshipDelta[];
   ending: WorldEndingDelta;
   causalRules: WorldCausalRuleProvenance[];
   summary: string;
@@ -80,6 +90,7 @@ export type WorldLineComparison = {
   knowledge: WorldKnowledgeDelta[];
   movements: WorldActorMovement[];
   clocks: WorldClockDelta[];
+  relationships: WorldRelationshipDelta[];
   ending: WorldEndingDelta;
   causalRules: WorldCausalRuleProvenance[];
 };
@@ -99,6 +110,23 @@ const actorMap = (receipt: WorldCreatorReceipt | null): Map<string, ActorState> 
 
 const clockMap = (receipt: WorldCreatorReceipt | null): Map<string, ClockState> =>
   new Map(receipt?.clocks.map((clock) => [clock.id, clock]) ?? []);
+
+const relationshipMap = (
+  receipt: WorldCreatorReceipt | null,
+): Map<string, number> =>
+  new Map(
+    receipt?.worldCodex.relationshipStates?.map((relationship) => [
+      relationship.relationshipId,
+      relationship.level,
+    ]) ?? [],
+  );
+
+const relationshipLabel = (
+  receipt: WorldCreatorReceipt | null,
+  relationshipId: string,
+): string =>
+  receipt?.worldCodex.relationships.find(({ id }) => id === relationshipId)
+    ?.label ?? titleFromId(relationshipId);
 
 const eventForMovement = (
   events: readonly WorldEvent[],
@@ -127,6 +155,17 @@ const orderedClockIds = (
 ): string[] =>
   [...new Set([...(before?.clocks ?? []), ...(after?.clocks ?? [])].map(({ id }) => id))]
     .sort((left, right) => left.localeCompare(right));
+
+const orderedRelationshipIds = (
+  before: WorldCreatorReceipt | null,
+  after: WorldCreatorReceipt | null,
+): string[] =>
+  [
+    ...new Set([
+      ...(before?.worldCodex.relationshipStates ?? []),
+      ...(after?.worldCodex.relationshipStates ?? []),
+    ].map(({ relationshipId }) => relationshipId)),
+  ].sort((left, right) => left.localeCompare(right));
 
 const ruleCategory = (
   receipt: WorldCreatorReceipt,
@@ -163,6 +202,7 @@ const summarizePulse = (pulse: Omit<WorldPulse, "summary">): string => {
     pulse.knowledge.length > 0 ? `${pulse.knowledge.length} knowledge change${pulse.knowledge.length === 1 ? "" : "s"}` : null,
     pulse.movements.length > 0 ? `${pulse.movements.length} movement${pulse.movements.length === 1 ? "" : "s"}` : null,
     pulse.clocks.length > 0 ? `${pulse.clocks.length} clock shift${pulse.clocks.length === 1 ? "" : "s"}` : null,
+    pulse.relationships.length > 0 ? `${pulse.relationships.length} relationship shift${pulse.relationships.length === 1 ? "" : "s"}` : null,
     pulse.ending.changed ? "ending changed" : null,
   ].filter((entry): entry is string => entry !== null);
 
@@ -186,6 +226,8 @@ export const deriveWorldPulse = (
   const afterActors = actorMap(afterReceipt);
   const beforeClocks = clockMap(beforeReceipt);
   const afterClocks = clockMap(afterReceipt);
+  const beforeRelationships = relationshipMap(beforeReceipt);
+  const afterRelationships = relationshipMap(afterReceipt);
 
   const knowledge = orderedActorIds(beforeReceipt, afterReceipt).flatMap((actorId) => {
     const previous = beforeActors.get(actorId);
@@ -249,6 +291,30 @@ export const deriveWorldPulse = (
     }];
   });
 
+  const relationships = orderedRelationshipIds(beforeReceipt, afterReceipt).flatMap(
+    (relationshipId) => {
+      const beforeLevel = beforeRelationships.get(relationshipId);
+      const afterLevel = afterRelationships.get(relationshipId);
+      if (
+        beforeLevel === undefined ||
+        afterLevel === undefined ||
+        beforeLevel === afterLevel
+      ) {
+        return [];
+      }
+      const label = relationshipLabel(afterReceipt, relationshipId);
+      const delta = afterLevel - beforeLevel;
+      return [{
+        relationshipId,
+        label,
+        beforeLevel,
+        afterLevel,
+        delta,
+        summary: `${label} ${delta > 0 ? "strengthened" : "weakened"} from ${beforeLevel} to ${afterLevel}.`,
+      }];
+    },
+  );
+
   const ending: WorldEndingDelta = {
     beforeEndingId: before?.view.ending?.id ?? null,
     afterEndingId: after.view.ending?.id ?? null,
@@ -285,6 +351,7 @@ export const deriveWorldPulse = (
     knowledge,
     movements,
     clocks,
+    relationships,
     ending,
     causalRules,
   };
@@ -338,6 +405,7 @@ export const compareWorldLines = (
       knowledge: [],
       movements: [],
       clocks: [],
+      relationships: [],
       ending: {
         beforeEndingId: left.view.ending?.id ?? null,
         afterEndingId: right.view.ending?.id ?? null,
@@ -419,6 +487,31 @@ export const compareWorldLines = (
       summary: `${rightClock.label} is ${leftClock.value} of ${leftClock.maxValue} on the left and ${rightClock.value} of ${rightClock.maxValue} on the right.`,
     }];
   });
+  const leftRelationships = relationshipMap(left.creatorReceipt);
+  const rightRelationships = relationshipMap(right.creatorReceipt);
+  const relationships = orderedRelationshipIds(
+    left.creatorReceipt,
+    right.creatorReceipt,
+  ).flatMap((relationshipId) => {
+    const beforeLevel = leftRelationships.get(relationshipId);
+    const afterLevel = rightRelationships.get(relationshipId);
+    if (
+      beforeLevel === undefined ||
+      afterLevel === undefined ||
+      beforeLevel === afterLevel
+    ) {
+      return [];
+    }
+    const label = relationshipLabel(right.creatorReceipt, relationshipId);
+    return [{
+      relationshipId,
+      label,
+      beforeLevel,
+      afterLevel,
+      delta: afterLevel - beforeLevel,
+      summary: `${label} is ${beforeLevel} on the left and ${afterLevel} on the right.`,
+    }];
+  });
 
   const ending: WorldEndingDelta = {
     beforeEndingId: left.view.ending?.id ?? null,
@@ -434,7 +527,7 @@ export const compareWorldLines = (
         : `The left world line is ${left.view.ending ? titleFromId(left.view.ending.kind) : "still open"}; the right world line is ${right.view.ending ? titleFromId(right.view.ending.kind) : "still open"}.`,
   };
   const causalRules = compareCausalRules(left, right);
-  const differences = knowledge.length + movements.length + clocks.length + (ending.changed ? 1 : 0) + causalRules.length;
+  const differences = knowledge.length + movements.length + clocks.length + relationships.length + (ending.changed ? 1 : 0) + causalRules.length;
   const lineage =
     mode === "same_parent"
       ? `These sibling world lines fork from checkpoint ${sharedParentCheckpointId}.`
@@ -450,6 +543,7 @@ export const compareWorldLines = (
     knowledge,
     movements,
     clocks,
+    relationships,
     ending,
     causalRules,
   };

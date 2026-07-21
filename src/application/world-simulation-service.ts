@@ -16,7 +16,10 @@ import {
   type NarrationRendererTrace,
   type PenelopeEnglishStyleProfile,
 } from "@/src/contracts/world-narrator";
-import type { WorldSimulationScenario } from "@/src/contracts/world-simulation";
+import type {
+  ReactionCondition,
+  WorldSimulationScenario,
+} from "@/src/contracts/world-simulation";
 import type {
   WorldSimulationEvent,
   WorldSimulationSession,
@@ -533,6 +536,10 @@ export const buildWorldNarrationPipelineArtifacts = ({
     })),
   ].map(({ factId, renderText }) => ({ factId, renderText }));
   const visibleRuntimeEvents = safeVisibleEvents({ scenario, worldPack: pack, receipt });
+  const activeEpisodeScene =
+    scenario.episodeBlueprint?.scenes.find(
+      ({ id }) => id === session.state.episode?.sceneId,
+    ) ?? null;
   const runtimeResolvedEvents = visibleRuntimeEvents.map((event, index) => ({
     eventId: `event.visible_${index + 1}`,
     observableText: boundedEventRenderText(
@@ -547,11 +554,12 @@ export const buildWorldNarrationPipelineArtifacts = ({
     ? {
         eventId: "event.ending_consequence",
         observableText:
-          (narrationContractMode === "current"
-            ? renderPolicy.currentEndingTextById[session.state.endingId]
-            : undefined) ??
+          (activeEpisodeScene ? `${activeEpisodeScene.title}.` : undefined) ??
+          ((narrationContractMode === "current"
+              ? renderPolicy.currentEndingTextById[session.state.endingId]
+              : undefined) ??
           renderPolicy.registeredEndingTextById[session.state.endingId] ??
-          "The registered ending leaves its resolved consequence inside the bounded scene.",
+          "The registered ending leaves its resolved consequence inside the bounded scene."),
         sourceAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
       }
     : null;
@@ -626,8 +634,11 @@ export const buildWorldNarrationPipelineArtifacts = ({
       ? {
           eventId: "event.turn_consequence",
           observableText:
-            renderPolicy.currentTurnConsequenceTextByActionId[participantActionId] ??
-            "The room carries the visible change.",
+            (activeEpisodeScene ? `${activeEpisodeScene.title}.` : undefined) ??
+            (
+              renderPolicy.currentTurnConsequenceTextByActionId[participantActionId] ??
+              "The room carries the visible change."
+            ),
           sourceAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
         }
       : null;
@@ -653,7 +664,9 @@ export const buildWorldNarrationPipelineArtifacts = ({
   const reservedCandidates =
     session.state.status === "complete"
       ? []
-      : selectedWorldActionCandidates({ scenario, worldPack: pack, session });
+      : selectedWorldActionCandidates({ scenario, worldPack: pack, session }).filter(
+          ({ actionId }) => actionId !== participantActionId,
+        );
   const inputEnvelope = NarrationInputEnvelopeSchema.parse({
     modelFacing: {
       sceneMode,
@@ -1390,6 +1403,87 @@ export const buildWorldParticipantView = ({
   });
 };
 
+const endingConditionReceipt = ({
+  condition,
+  scenario,
+  session,
+}: {
+  condition: ReactionCondition;
+  scenario: WorldSimulationScenario;
+  session: WorldSimulationSession;
+}): { summary: string; satisfied: boolean } => {
+  switch (condition.kind) {
+    case "action_observed": {
+      const action = scenario.actions.find(({ id }) => id === condition.actionId);
+      return {
+        summary: `${action?.label ?? condition.actionId} has occurred.`,
+        satisfied: session.turns.some((turn) =>
+          turn.events.some(
+            (event) =>
+              event.actionId === condition.actionId &&
+              (condition.actorEntityId === null ||
+                (event.source.kind !== "world" &&
+                  event.source.actorEntityId === condition.actorEntityId)),
+          ),
+        ),
+      };
+    }
+    case "premise_known": {
+      const actor = scenario.actors.find(({ id }) => id === condition.entityId);
+      const premise = scenario.premises.find(({ id }) => id === condition.premiseId);
+      const known =
+        session.state.knowledge
+          .find(({ entityId }) => entityId === condition.entityId)
+          ?.premiseIds.includes(condition.premiseId) ?? false;
+      return {
+        summary: `${actor?.participantLabel ?? condition.entityId} ${condition.expected ? "knows" : "does not know"} ${premise?.summary ?? condition.premiseId}`,
+        satisfied: known === condition.expected,
+      };
+    }
+    case "flag_equals":
+      return {
+        summary: `${condition.flagId} is ${condition.value ? "active" : "inactive"}.`,
+        satisfied:
+          session.state.flags.find(({ id }) => id === condition.flagId)?.value ===
+          condition.value,
+      };
+    case "clock_at_least": {
+      const clock = scenario.clocks.find(({ id }) => id === condition.clockId);
+      const value =
+        session.state.clocks.find(({ id }) => id === condition.clockId)?.value ??
+        0;
+      return {
+        summary: `${clock?.label ?? condition.clockId} reaches ${condition.value}.`,
+        satisfied: value >= condition.value,
+      };
+    }
+    case "actor_in_zone": {
+      const actor = scenario.actors.find(({ id }) => id === condition.entityId);
+      const zone = scenario.zones.find(({ id }) => id === condition.zoneId);
+      return {
+        summary: `${actor?.participantLabel ?? condition.entityId} is in ${zone?.name ?? condition.zoneId}.`,
+        satisfied:
+          session.state.actors.find(({ entityId }) => entityId === condition.entityId)
+            ?.zoneId === condition.zoneId,
+      };
+    }
+    case "turn_at_least":
+      return {
+        summary: `The episode reaches turn ${condition.turn}.`,
+        satisfied: session.state.turn >= condition.turn,
+      };
+    case "scene_is": {
+      const scene = scenario.episodeBlueprint?.scenes.find(
+        ({ id }) => id === condition.sceneId,
+      );
+      return {
+        summary: `The episode reaches ${scene?.title ?? condition.sceneId}.`,
+        satisfied: session.state.episode?.sceneId === condition.sceneId,
+      };
+    }
+  }
+};
+
 export const buildWorldCreatorReceipt = ({
   scenario,
   worldPack,
@@ -1405,11 +1499,23 @@ export const buildWorldCreatorReceipt = ({
       scenarioSummary: scenario.summary,
       dramaticQuestion: pack.worldCodex?.dramaticQuestion ?? null,
       relationships: pack.worldCodex?.relationships ?? [],
+      relationshipStates: session.state.relationships ?? [],
+      episode:
+        scenario.episodeBlueprint && session.state.episode
+          ? {
+              blueprint: scenario.episodeBlueprint,
+              currentSceneId: session.state.episode.sceneId,
+              currentSceneIndex: session.state.episode.sceneIndex,
+            }
+          : null,
       possibleEndings: scenario.endingRules.map((ending) => ({
         id: ending.id,
         kind: ending.kind,
         summary: ending.summary,
         provenance: ending.provenance.reviewState,
+        conditions: ending.conditions.map((condition) =>
+          endingConditionReceipt({ condition, scenario, session }),
+        ),
       })),
     },
     actors: scenario.actors.map((actor) => {
@@ -1474,6 +1580,7 @@ export const buildWorldCreatorReceipt = ({
     creatorDirections: session.turns.flatMap((turn) =>
       turn.creatorDirection ? [turn.creatorDirection] : [],
     ),
+    sceneTransition: receipt?.sceneTransition ?? null,
     ledgerHeadHash: session.ledger.cursor.headEntryHash,
     receiptHash: receipt?.receiptHash ?? null,
     narrationDecisionProof: narrationDecisionReceipt

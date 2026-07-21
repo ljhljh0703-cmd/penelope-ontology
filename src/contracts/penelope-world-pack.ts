@@ -109,8 +109,30 @@ export const WorldCodexRelationshipSchema = z
     direction: z.enum(["directed", "mutual"]),
     provenance: z.enum(["source_grounded", "creator_approved"]),
     summary: PackTextSchema,
+    initialLevel: z.number().int().min(-2).max(2).optional(),
+    levelLabels: z
+      .tuple([
+        z.string().trim().min(2).max(40),
+        z.string().trim().min(2).max(40),
+        z.string().trim().min(2).max(40),
+        z.string().trim().min(2).max(40),
+        z.string().trim().min(2).max(40),
+      ])
+      .optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((relationship, context) => {
+    if (
+      (relationship.initialLevel === undefined) !==
+      (relationship.levelLabels === undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "A dynamic World Codex relationship needs both an initial level and five creator-facing labels.",
+      });
+    }
+  });
 
 export const WorldCodexDefinitionSchema = z
   .object({
@@ -415,6 +437,12 @@ const validateWorldPackReferences = (
     });
   }
   const relationshipKeys = new Set<string>();
+  const runtimeRelationships = new Map(
+    (pack.scenario.relationships ?? []).map((relationship) => [
+      relationship.id,
+      relationship,
+    ]),
+  );
   for (const [index, relationship] of (
     pack.worldCodex?.relationships ?? []
   ).entries()) {
@@ -454,6 +482,34 @@ const validateWorldPackReferences = (
       });
     }
     relationshipKeys.add(relationshipKey);
+    if (relationship.initialLevel !== undefined) {
+      const runtime = runtimeRelationships.get(relationship.id);
+      if (
+        !runtime ||
+        runtime.subjectEntityId !== relationship.subjectEntityId ||
+        runtime.objectEntityId !== relationship.objectEntityId ||
+        runtime.axisId !== relationship.axisId ||
+        runtime.direction !== relationship.direction ||
+        runtime.initialLevel !== relationship.initialLevel
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["worldCodex", "relationships", index],
+          message:
+            "A dynamic World Codex relationship must match its runtime relationship authority exactly.",
+        });
+      }
+    }
+  }
+  for (const relationshipId of runtimeRelationships.keys()) {
+    if (!relationshipIds.includes(relationshipId)) {
+      context.addIssue({
+        code: "custom",
+        path: ["scenario", "relationships"],
+        message:
+          `Runtime relationship ${relationshipId} needs a creator-readable World Codex definition.`,
+      });
+    }
   }
 
   const requireCoverage = (

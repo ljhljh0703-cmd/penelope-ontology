@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import styles from "@/components/world/WorldForge.module.css";
+import { WORLD_FORGE_FACT_FIELD_IDS } from "@/src/contracts/world-forge";
 import type {
   WorldForgeCompileResponse,
   WorldForgeFactFieldId,
@@ -145,6 +146,62 @@ const QUESTIONS: readonly ForgeQuestion[] = [
     minLength: 12,
     maxLength: 420,
   },
+  {
+    fieldId: "relationshipLabel",
+    label: "Relationship",
+    question: "How does the focal character currently relate to the counterpart?",
+    helper: "Use a plain phrase such as trusts, owes, fears, protects, or suspects.",
+    minLength: 2,
+    maxLength: 64,
+  },
+  {
+    fieldId: "relationshipAxis",
+    label: "Relationship axis",
+    question: "Which part of that relationship can the episode change?",
+    helper: "Name one axis such as trust, suspicion, loyalty, debt, or fear.",
+    minLength: 2,
+    maxLength: 48,
+  },
+  {
+    fieldId: "relationshipPressure",
+    label: "Relationship pressure",
+    question: "What would strengthen or damage this bond?",
+    helper: "State a concrete behavior whose consequence can be recorded.",
+    minLength: 12,
+    maxLength: 420,
+  },
+  {
+    fieldId: "sceneTwo",
+    label: "Scene 2 · Pressure",
+    question: "How does the first choice make the cost visible?",
+    helper: "Describe the pressure inherited by the second scene.",
+    minLength: 12,
+    maxLength: 420,
+  },
+  {
+    fieldId: "sceneThree",
+    label: "Scene 3 · Turn",
+    question: "What information or reversal changes the balance?",
+    helper: "Give the episode a real turning point rather than more setup.",
+    minLength: 12,
+    maxLength: 420,
+  },
+  {
+    fieldId: "sceneFour",
+    label: "Scene 4 · Reckoning",
+    question: "How do earlier choices return before the ending?",
+    helper: "Bring back a cost, debt, suspicion, or promise already established.",
+    minLength: 12,
+    maxLength: 420,
+  },
+  {
+    fieldId: "sceneFive",
+    label: "Scene 5 · Resolution",
+    question: "What final confrontation allows the world to answer?",
+    helper: "Describe the situation in which the accumulated state earns an ending.",
+    minLength: 12,
+    maxLength: 420,
+  },
 ] as const;
 
 type ForgeValues = Partial<Record<WorldForgeFactFieldId, string>>;
@@ -267,7 +324,7 @@ export function WorldForge({
       buildFact(values[fieldId] ?? "");
     const draft = {
       format: "penelope_world_forge_draft" as const,
-      schemaVersion: 1 as const,
+      schemaVersion: 2 as const,
       draftId: `forge.browser_${Date.now()}`,
       approvedOn: new Date().toISOString().slice(0, 10),
       seedText: field("seedText"),
@@ -287,6 +344,13 @@ export function WorldForge({
       recommendedConsequence: field("recommendedConsequence"),
       alternativeAction: field("alternativeAction"),
       alternativeConsequence: field("alternativeConsequence"),
+      relationshipLabel: field("relationshipLabel"),
+      relationshipAxis: field("relationshipAxis"),
+      relationshipPressure: field("relationshipPressure"),
+      sceneTwo: field("sceneTwo"),
+      sceneThree: field("sceneThree"),
+      sceneFour: field("sceneFour"),
+      sceneFive: field("sceneFive"),
     };
 
     try {
@@ -323,7 +387,7 @@ export function WorldForge({
       <section className={styles.closed} aria-labelledby="world-forge-heading">
         <div>
           <p>World Forge · inside Penelope</p>
-          <h2 id="world-forge-heading">Bring two or three sentences. Leave with a playable world.</h2>
+          <h2 id="world-forge-heading">Bring two or three sentences. Leave with a five-scene world.</h2>
         </div>
         <button
           type="button"
@@ -355,10 +419,10 @@ export function WorldForge({
         </div>
         <span>
           {stage === "seed"
-            ? "01 / 18"
+            ? `01 / ${WORLD_FORGE_FACT_FIELD_IDS.length}`
             : stage === "questions"
-              ? `${String(questionIndex + 2).padStart(2, "0")} / 18`
-              : "18 / 18"}
+              ? `${String(questionIndex + 2).padStart(2, "0")} / ${WORLD_FORGE_FACT_FIELD_IDS.length}`
+              : `${WORLD_FORGE_FACT_FIELD_IDS.length} / ${WORLD_FORGE_FACT_FIELD_IDS.length}`}
         </span>
       </header>
 
@@ -405,7 +469,7 @@ export function WorldForge({
       {stage === "review" || stage === "compiling" ? (
         <div className={styles.review}>
           <p className={styles.reviewIntro}>
-            These are creator statements, not AI additions. Review the rails, desires, hidden knowledge, A/B actions, and their consequences before Penelope seals them.
+            These are creator statements, not AI additions. Review the rails, relationship, five-scene spine, A/B actions, and consequences before Penelope seals them.
           </p>
           <ol data-testid="world-forge-review">
             {reviewFacts.map(({ fieldId, label, value }) => (
@@ -424,7 +488,7 @@ export function WorldForge({
               disabled={stage === "compiling"}
               data-testid="world-forge-approve"
             />
-            <span>I approve these 17 facts as the canon for this one-scene world.</span>
+            <span>I approve these {WORLD_FORGE_FACT_FIELD_IDS.length} facts as the canon for this five-scene episode.</span>
           </label>
           <div className={styles.actions}>
             <button type="button" onClick={goBack} disabled={stage === "compiling"}>Revise</button>

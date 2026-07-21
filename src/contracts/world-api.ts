@@ -13,6 +13,7 @@ import {
   WorldSimulationEventSchema,
 } from "@/src/contracts/world-runtime";
 import { CreatorCDialogueRequestSchema } from "@/src/contracts/creator-c-dialogue";
+import { EpisodeBlueprintSchema } from "@/src/contracts/world-simulation";
 import {
   PenelopeWorldPackDefinitionSchema,
   WorldCodexRelationshipSchema,
@@ -327,6 +328,26 @@ export const WorldCreatorReceiptSchema = z
         scenarioSummary: z.string().trim().min(12).max(800),
         dramaticQuestion: z.string().trim().min(12).max(800).nullable(),
         relationships: z.array(WorldCodexRelationshipSchema).max(24),
+        relationshipStates: z
+          .array(
+            z
+              .object({
+                relationshipId: IdentifierSchema,
+                level: z.number().int().min(-2).max(2),
+              })
+              .strict(),
+          )
+          .max(24)
+          .optional(),
+        episode: z
+          .object({
+            blueprint: EpisodeBlueprintSchema,
+            currentSceneId: IdentifierSchema,
+            currentSceneIndex: z.number().int().min(0).max(4),
+          })
+          .strict()
+          .nullable()
+          .optional(),
         possibleEndings: z
           .array(
             z
@@ -339,6 +360,17 @@ export const WorldCreatorReceiptSchema = z
                   "creator_approved",
                   "creator_review_required",
                 ]),
+                conditions: z
+                  .array(
+                    z
+                      .object({
+                        summary: z.string().trim().min(3).max(240),
+                        satisfied: z.boolean(),
+                      })
+                      .strict(),
+                  )
+                  .max(4)
+                  .optional(),
               })
               .strict(),
           )
@@ -363,6 +395,16 @@ export const WorldCreatorReceiptSchema = z
     behindCurtainRisks: z.array(WorldBehindCurtainRiskSchema).max(4),
     events: z.array(WorldSimulationEventSchema),
     creatorDirections: z.array(CreatorWorldDirectionReceiptSchema).max(6),
+    sceneTransition: z
+      .object({
+        fromSceneId: IdentifierSchema,
+        toSceneId: IdentifierSchema,
+        fromSceneIndex: z.number().int().min(0).max(4),
+        toSceneIndex: z.number().int().min(0).max(4),
+      })
+      .strict()
+      .nullable()
+      .optional(),
     ledgerHeadHash: HashSchema.nullable(),
     receiptHash: HashSchema.nullable(),
     narrationDecisionProof: z

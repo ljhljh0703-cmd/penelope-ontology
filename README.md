@@ -8,7 +8,7 @@
 
 Penelope Ontology is a Work & Productivity tool for narrative designers, quest teams, professional GMs, and writers working inside a bounded canon. It runs a sealed World Pack, lets a creator test an intervention, then traces what each important character knows, wants, notices, and does next before rendering the scene.
 
-The default demo is **The Night of the Scar**, a bounded simulation set in *The Odyssey*, Book 19. A second registered pack, **Behind the Green Screen**, runs a different two-turn rehearsal from *The Wonderful Wizard of Oz*, Chapter XV. Creators can also import a schema-valid JSON World Pack for one session. This is a portable story-simulation runtime—not a TRPG rules engine, an unlimited prompt box, or a long-running agent society.
+The default demo is **The Night of the Scar**, a bounded simulation set in *The Odyssey*, Book 19. A second registered pack, **Behind the Green Screen**, runs a different two-turn rehearsal from *The Wonderful Wizard of Oz*, Chapter XV. Creators can import a schema-valid JSON World Pack or use **World Forge** to turn a two-to-three-sentence premise into a creator-approved five-scene episode with a tracked relationship. This is a portable story-simulation runtime—not a TRPG rules engine, an unlimited prompt box, or a long-running agent society.
 
 ## Product views
 
@@ -56,7 +56,13 @@ A creator may also import a JSON World Pack definition inside a session-start re
 
 The public-safe starter file [`examples/world-packs/creator-owned-starter.json`](examples/world-packs/creator-owned-starter.json) contains **The Lantern Ledger**, a creator-attested original one-room rehearsal with its own cast, hidden premise, actions, reactions, and endings.
 
-This MVP import is session-scoped server memory, not a cloud library or confidential manuscript vault. It is not persisted and expires after 30 minutes, but anyone testing unpublished or sensitive IP should self-host locally rather than upload it to the public demo. The current product imports a prepared contract; it does not yet build a full pack conversationally from raw notes.
+This MVP import is session-scoped server memory, not a cloud library or confidential manuscript vault. It is not persisted and expires after 30 minutes, but anyone testing unpublished or sensitive IP should self-host locally rather than upload it to the public demo. World Forge can compile a small episode through 24 explicit creator approvals; it does not claim to ingest an arbitrary manuscript or simulate an unlimited world automatically.
+
+### World Forge: premise to five-scene episode
+
+World Forge asks one bounded question at a time. The creator approves 24 facts covering cast, desires, immutable canon, hidden knowledge, cost, endings, two strategic routes, one relationship axis, and five scene beats. Only then does Penelope seal a session-private pack.
+
+The resulting episode advances through `setup → pressure → turn → reckoning → resolution`. Accepted choices move the active scene, change the declared relationship on a bounded `-2…2` axis, and accumulate receipts until a route earns its ending on turn five. The fixture renderer names each new dramatic phase; World Codex retains the complete approved scene spine and the realized beats.
 
 ### Three ways to continue
 
@@ -99,6 +105,7 @@ This is intentionally a short portability proof, not a claim to simulate all of 
 3. **Forks remain inspectable.** Session-scoped checkpoints preserve the shared past so a creator can run a different consequence from the same moment.
 4. **Creator agency is real.** C never silently becomes A or B. Penelope asks what the creator wants, why the character acts now, and what cost is acceptable before proposing anything.
 5. **The runtime is portable.** Oz and a session-private creator pack continue through the same API and UI without inheriting Odyssey content.
+6. **A small episode can accumulate consequences.** A forged world carries five approved beats, a changing relationship, and a turn-five ending rather than resetting after one scene.
 
 `World Pulse` makes the causal receipt legible after each turn: creator choice, world response, state change, and renewed story pressure. Compact NPC cards expose each relevant character's position, agenda, and private-knowledge boundary. `Fork Compare` places two world lines from a shared checkpoint beside each other and compares state—not prose—including knowledge, movement, pressure, rules, latent risks, and endings.
 
@@ -158,7 +165,7 @@ npm run verify
 npm run test:browser:production
 ```
 
-The current portable-world candidate passed evidence regeneration and verification, lint, typecheck, 103 Vitest files with 872 tests, a 406-file privacy scan, production build and trace-privacy inspection, and all 40 production browser checks across desktop Chromium and mobile WebKit. The browser suite covers the Book 19 causal fork, Oz selection, creator-pack import, The Lantern Ledger's first-turn ending, creator-only curtain data, and the absence of Odyssey leakage. Exact-commit GitHub CI, deployment, and hosted smoke must be rerun for this candidate; the previous public release does not certify it.
+The current candidate passed evidence regeneration and verification, lint, typecheck, 108 Vitest files with 893 tests, a 436-file final privacy scan, production build and trace-privacy inspection, and all 46 production browser checks across desktop Chromium and mobile WebKit. The browser suite covers the Book 19 causal fork, truthful and accessible Loom states, Oz selection, creator-pack import, World Forge's complete five-scene episode, dynamic relationship history, the World Codex branch tree, creator-only curtain data, and the absence of Odyssey leakage. Exact-commit GitHub CI, deployment, and hosted smoke must be rerun for this candidate; the previous public release does not certify it.
 
 ## Evidence boundaries
 

@@ -68,6 +68,20 @@ export function WorldCodex({
     projection.relationships.find(({ id }) => id === selectedRelationshipId) ??
     projection.relationships[0] ??
     null;
+  const branchPositions = new Map(
+    projection.branches.map((branch) => [
+      branch.checkpointId,
+      { x: 70 + branch.depth * 170, y: 60 + branch.lane * 100 },
+    ]),
+  );
+  const branchTreeWidth = Math.max(
+    320,
+    140 + Math.max(0, ...projection.branches.map(({ depth }) => depth)) * 170,
+  );
+  const branchTreeHeight = Math.max(
+    140,
+    120 + Math.max(0, ...projection.branches.map(({ lane }) => lane)) * 100,
+  );
 
   return (
     <section className={styles.codex} data-testid="world-codex">
@@ -105,8 +119,16 @@ export function WorldCodex({
           </article>
           <div className={styles.metricGrid}>
             <article>
-              <strong>{active.view.turn}</strong>
-              <span>Turns resolved</span>
+              <strong>
+                {projection.overview.currentScene
+                  ? `${projection.overview.currentScene.sequence}/${projection.overview.currentScene.total}`
+                  : active.view.turn}
+              </strong>
+              <span>
+                {projection.overview.currentScene
+                  ? `Current scene · ${projection.overview.currentScene.title}`
+                  : "Turns resolved"}
+              </span>
             </article>
             <article>
               <strong>{projection.overview.activeClockCount}</strong>
@@ -223,7 +245,12 @@ export function WorldCodex({
                     <strong>{relationship.subjectName}</strong>
                     <span>
                       <i aria-hidden="true" />
-                      <em>{relationship.label}</em>
+                      <em>
+                        {relationship.label}
+                        {relationship.currentLabel
+                          ? ` · ${relationship.currentLabel}`
+                          : ""}
+                      </em>
                       <b aria-hidden="true">
                         {relationship.direction === "mutual" ? "↔" : "→"}
                       </b>
@@ -253,7 +280,34 @@ export function WorldCodex({
                       <dt>Axis</dt>
                       <dd>{readableId(selectedRelationship.axisId)}</dd>
                     </div>
+                    {selectedRelationship.currentLevel !== null ? (
+                      <div>
+                        <dt>Current state</dt>
+                        <dd>
+                          {selectedRelationship.currentLabel} ({selectedRelationship.currentLevel > 0 ? "+" : ""}
+                          {selectedRelationship.currentLevel})
+                          {selectedRelationship.changeFromParent
+                            ? ` · ${selectedRelationship.changeFromParent > 0 ? "+" : ""}${selectedRelationship.changeFromParent} since parent`
+                            : ""}
+                        </dd>
+                      </div>
+                    ) : null}
                   </dl>
+                  {selectedRelationship.history.length > 0 ? (
+                    <section className={styles.relationHistory}>
+                      <p>Recorded changes</p>
+                      <ol>
+                        {selectedRelationship.history.map((change) => (
+                          <li key={change.checkpointId}>
+                            <strong>
+                              {change.from} → {change.to}
+                            </strong>
+                            <span>{change.cause}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </section>
+                  ) : null}
                   <small>
                     This edge comes from the sealed World Pack. Penelope does not infer it from prose.
                   </small>
@@ -274,6 +328,42 @@ export function WorldCodex({
 
       {tab === "plot" ? (
         <div className={styles.plot} data-testid="world-codex-plot">
+          {projection.plot.episodeSpine.length > 0 ? (
+            <section className={styles.episodeSpine}>
+              <p>Approved episode spine</p>
+              <h3>Five scenes keep the world bounded.</h3>
+              <ol>
+                {projection.plot.episodeSpine.map((scene) => (
+                  <li key={scene.id} data-status={scene.status}>
+                    <span>{String(scene.sequence).padStart(2, "0")}</span>
+                    <div>
+                      <small>{scene.role}</small>
+                      <strong>{scene.title}</strong>
+                      <p>{scene.purpose}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ) : null}
+          <section className={styles.realizedStory}>
+            <p>Realized story</p>
+            <h3>The accepted line so far</h3>
+            <ol>
+              {projection.plot.realizedBeats.map((beat) => (
+                <li key={beat.checkpointId}>
+                  <span>{String(beat.sequence).padStart(2, "0")}</span>
+                  <div>
+                    <small>{beat.sceneTitle ?? "Bounded scene"}</small>
+                    <strong>{beat.choice ?? beat.events[0]}</strong>
+                    {beat.events.slice(beat.choice ? 0 : 1).map((event) => (
+                      <p key={event}>{event}</p>
+                    ))}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
           <section>
             <p>Current causal beat</p>
             <h3>Events recorded at this checkpoint</h3>
@@ -310,6 +400,16 @@ export function WorldCodex({
                   <span>{readableId(ending.provenance)}</span>
                   <strong>{readableId(ending.kind)}</strong>
                   <p>{ending.summary}</p>
+                  {ending.conditions ? (
+                    <ul className={styles.endingConditions}>
+                      {ending.conditions.map((condition) => (
+                        <li key={condition.summary} data-satisfied={condition.satisfied}>
+                          <b aria-hidden="true">{condition.satisfied ? "✓" : "○"}</b>
+                          <span>{condition.summary}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -337,6 +437,42 @@ export function WorldCodex({
               Select a checkpoint to inspect it. Parent links and endings come from receipts, not story wording.
             </span>
           </header>
+          <div className={styles.branchTree}>
+            <svg
+              viewBox={`0 0 ${branchTreeWidth} ${branchTreeHeight}`}
+              aria-hidden="true"
+              focusable="false"
+              data-testid="world-codex-branch-tree"
+            >
+              {projection.branches.map((branch) => {
+                const from = branch.parentCheckpointId
+                  ? branchPositions.get(branch.parentCheckpointId)
+                  : null;
+                const to = branchPositions.get(branch.checkpointId)!;
+                return from ? (
+                  <path
+                    key={`edge-${branch.checkpointId}`}
+                    d={`M ${from.x} ${from.y} C ${from.x + 65} ${from.y}, ${to.x - 65} ${to.y}, ${to.x} ${to.y}`}
+                  />
+                ) : null;
+              })}
+              {projection.branches.map((branch) => {
+                const position = branchPositions.get(branch.checkpointId)!;
+                return (
+                  <g
+                    key={branch.checkpointId}
+                    transform={`translate(${position.x} ${position.y})`}
+                    data-active={branch.active}
+                  >
+                    <circle r="25" />
+                    <text textAnchor="middle" dominantBaseline="central">
+                      {String(branch.sequence).padStart(2, "0")}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
           <ol>
             {projection.branches.map((branch) => (
               <li key={branch.checkpointId} data-active={branch.active}>

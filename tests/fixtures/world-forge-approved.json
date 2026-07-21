@@ -1,6 +1,6 @@
 {
   "format": "penelope_world_forge_draft",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "draftId": "forge.lantern_ledger.browser_fixture",
   "approvedOn": "2026-07-21",
   "seedText": {
@@ -23,5 +23,12 @@
   "recommendedAction": { "value": "Offer Mira custody of the ledger", "origin": "creator_stated", "approval": "creator_approved" },
   "recommendedConsequence": { "value": "Mira shares the rescue route because Elian makes her safeguard part of the agreement.", "origin": "creator_stated", "approval": "creator_approved" },
   "alternativeAction": { "value": "Seal the ledger and ask for one signal only", "origin": "creator_stated", "approval": "creator_approved" },
-  "alternativeConsequence": { "value": "Mira gives one temporary signal, but Elian leaves without the route and owes her another negotiation.", "origin": "creator_stated", "approval": "creator_approved" }
+  "alternativeConsequence": { "value": "Mira gives one temporary signal, but Elian leaves without the route and owes her another negotiation.", "origin": "creator_stated", "approval": "creator_approved" },
+  "relationshipLabel": { "value": "trusts cautiously", "origin": "creator_stated", "approval": "creator_approved" },
+  "relationshipAxis": { "value": "trust", "origin": "creator_stated", "approval": "creator_approved" },
+  "relationshipPressure": { "value": "Elian strengthens the bond by accepting custody terms and damages it by treating Mira's warning as disposable.", "origin": "creator_stated", "approval": "creator_approved" },
+  "sceneTwo": { "value": "The failing beacon forces Elian to choose whether Mira's custody terms matter more than immediate speed.", "origin": "creator_stated", "approval": "creator_approved" },
+  "sceneThree": { "value": "The ledger identifies a second failure and reveals that the safe route depends on Mira's withheld signal.", "origin": "creator_stated", "approval": "creator_approved" },
+  "sceneFour": { "value": "The rescue boat enters the outer harbor while Elian's earlier promise returns as a debt he must honor.", "origin": "creator_stated", "approval": "creator_approved" },
+  "sceneFive": { "value": "Elian and Mira face the darkened beacon together and the accumulated trust determines which route survives.", "origin": "creator_stated", "approval": "creator_approved" }
 }

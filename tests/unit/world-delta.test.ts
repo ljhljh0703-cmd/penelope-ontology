@@ -33,18 +33,43 @@ const receipt = ({
   identityExposure = 0,
   suspicion = 0,
   events = [] as WorldEvent[],
+  relationshipLevel,
 }: {
   eurycleiaKnowledge?: string[];
   melanthoZone?: string;
   identityExposure?: number;
   suspicion?: number;
   events?: WorldEvent[];
+  relationshipLevel?: number;
 } = {}): WorldCreatorReceipt => ({
   worldCodex: {
     scenarioSummary: "A bounded creator world used to test causal state changes.",
     dramaticQuestion: null,
-    relationships: [],
+    relationships: relationshipLevel === undefined ? [] : [
+      {
+        id: "relationship.penelope_eurycleia",
+        label: "Penelope and Eurycleia",
+        subjectEntityId: "entity.penelope",
+        objectEntityId: "entity.eurycleia",
+        axisId: "axis.trust",
+        direction: "directed",
+        provenance: "creator_approved",
+        summary: "Whether Penelope and Eurycleia can trust one another under pressure.",
+        initialLevel: 0,
+        levelLabels: ["broken", "strained", "uncertain", "strengthened", "bound"],
+      },
+    ],
     possibleEndings: [],
+    ...(relationshipLevel === undefined
+      ? {}
+      : {
+          relationshipStates: [
+            {
+              relationshipId: "relationship.penelope_eurycleia",
+              level: relationshipLevel,
+            },
+          ],
+        }),
   },
   actors: [
     {
@@ -131,7 +156,11 @@ const checkpoint = (
 
 describe("World Pulse derived view", () => {
   it("turns only resolved receipt changes into readable knowledge, movement, clock, ending, and provenance deltas", () => {
-    const opening = checkpoint(1, "checkpoint.opening", receipt());
+    const opening = checkpoint(
+      1,
+      "checkpoint.opening",
+      receipt({ relationshipLevel: 0 }),
+    );
     const after = checkpoint(
       2,
       "checkpoint.after_exclusion",
@@ -140,6 +169,7 @@ describe("World Pulse derived view", () => {
         melanthoZone: "zone.washing_store",
         identityExposure: 1,
         suspicion: 1,
+        relationshipLevel: 1,
         events: [
           event(
             "reaction.eurycleia.recognize_scar",
@@ -151,6 +181,11 @@ describe("World Pulse derived view", () => {
                 premiseId: "premise.stranger_identity",
               },
               { kind: "advance_clock", clockId: "clock.identity_exposure", delta: 1 },
+              {
+                kind: "adjust_relationship",
+                relationshipId: "relationship.penelope_eurycleia",
+                delta: 1,
+              },
             ],
           ),
           event(
@@ -197,6 +232,14 @@ describe("World Pulse derived view", () => {
       expect.objectContaining({ clockId: "clock.identity_exposure", delta: 1 }),
       expect.objectContaining({ clockId: "clock.suitor_suspicion", delta: 1 }),
     ]);
+    expect(pulse.relationships).toEqual([
+      expect.objectContaining({
+        relationshipId: "relationship.penelope_eurycleia",
+        beforeLevel: 0,
+        afterLevel: 1,
+        delta: 1,
+      }),
+    ]);
     expect(pulse.ending).toMatchObject({
       changed: true,
       afterKind: "plan_compromised",
@@ -212,7 +255,7 @@ describe("World Pulse derived view", () => {
       }),
     ]);
     expect(pulse.summary).toBe(
-      "World Pulse: 1 knowledge change, 1 movement, 2 clock shifts, ending changed.",
+      "World Pulse: 1 knowledge change, 1 movement, 2 clock shifts, 1 relationship shift, ending changed.",
     );
   });
 
@@ -237,6 +280,7 @@ describe("World Pulse derived view", () => {
             ],
           ),
         ],
+        relationshipLevel: 1,
       }),
       {
         parentCheckpointId,
@@ -268,6 +312,7 @@ describe("World Pulse derived view", () => {
             ],
           ),
         ],
+        relationshipLevel: -1,
       }),
       {
         parentCheckpointId,
@@ -295,6 +340,14 @@ describe("World Pulse derived view", () => {
         expect.objectContaining({ clockId: "clock.suitor_suspicion", delta: 1 }),
       ]),
     );
+    expect(comparison.relationships).toEqual([
+      expect.objectContaining({
+        relationshipId: "relationship.penelope_eurycleia",
+        beforeLevel: 1,
+        afterLevel: -1,
+        delta: -2,
+      }),
+    ]);
     expect(comparison.ending).toMatchObject({
       changed: true,
       beforeKind: "canon_contained",
@@ -323,6 +376,7 @@ describe("World Pulse derived view", () => {
     expect(comparison.knowledge).toEqual([]);
     expect(comparison.movements).toEqual([]);
     expect(comparison.clocks).toEqual([]);
+    expect(comparison.relationships).toEqual([]);
     expect(comparison.causalRules).toEqual([]);
   });
 });

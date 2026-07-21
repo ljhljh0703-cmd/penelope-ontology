@@ -18,7 +18,9 @@ describe("World Forge API", () => {
     expect(response.status).toBe(200);
     expect(payload.definition).not.toHaveProperty("definitionDigest");
     expect(payload.definitionDigest).toMatch(/^[a-f0-9]{64}$/u);
-    expect(payload.approvedFacts).toHaveLength(17);
+    expect(payload.approvedFacts).toHaveLength(24);
+    expect(payload.definition.scenario.episodeBlueprint?.scenes).toHaveLength(5);
+    expect(payload.definition.worldCodex?.relationships).toHaveLength(1);
   });
 
   it("fails closed when a proposed fact is still pending", async () => {

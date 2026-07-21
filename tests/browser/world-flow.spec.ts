@@ -224,6 +224,10 @@ test("opens a readable World Codex and shows only receipt-backed consequences", 
   await expect(page.getByTestId("world-loom")).toContainText(
     "Your choice has entered the world",
   );
+  await page.waitForTimeout(2_600);
+  await expect(page.getByTestId("world-loom")).toBeVisible();
+  await page.getByRole("button", { name: "Dismiss The Loom" }).click();
+  await expect(page.getByTestId("world-loom")).toHaveCount(0);
   await expect(page.getByTestId("world-aftermath")).toContainText(
     "World Aftermath",
   );
@@ -233,7 +237,48 @@ test("opens a readable World Codex and shows only receipt-backed consequences", 
   await page.getByTestId("world-codex-tab-plot").click();
   await expect(page.getByTestId("world-codex-plot")).toContainText("old scar");
   await page.getByTestId("world-codex-tab-branches").click();
-  await expect(page.getByTestId("world-codex-branches").getByRole("button")).toHaveCount(2);
+  await expect(page.getByTestId("world-codex-branches").locator("ol button")).toHaveCount(2);
+});
+
+test("keeps a failed Loom truthful, dismissible, and scrollable on a narrow screen", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 480 });
+  await page.goto("/world");
+  await expect(page.getByTestId("world-scene")).toBeVisible();
+  await page.route("**/api/world/turn", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: {
+          message: `The previous checkpoint remains intact. ${"A declared consequence could not be verified. ".repeat(18)}`,
+        },
+      }),
+    });
+  });
+  await page.getByTestId("world-candidate-1").click();
+  await page.getByTestId("world-resolve").click();
+
+  const loom = page.getByTestId("world-loom");
+  await expect(loom).toContainText("The world refused this choice");
+  await expect(loom).not.toContainText("Your choice has entered the world");
+  const scrollState = await loom.evaluate((element) => {
+    const style = window.getComputedStyle(element);
+    element.scrollTop = element.scrollHeight;
+    return {
+      pointerEvents: style.pointerEvents,
+      canScroll: element.scrollHeight > element.clientHeight,
+      scrolled: element.scrollTop > 0,
+    };
+  });
+  expect(scrollState).toEqual({
+    pointerEvents: "auto",
+    canScroll: true,
+    scrolled: true,
+  });
+  await page.getByRole("button", { name: "Dismiss The Loom" }).click();
+  await expect(loom).toHaveCount(0);
 });
 
 test("elicits a creator's tacit intent before C changes the world", async ({ page }) => {

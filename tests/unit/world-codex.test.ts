@@ -9,6 +9,9 @@ import {
 import { buildWorldCodexProjection } from "@/components/world/world-codex";
 import type { WorldSessionView } from "@/components/world/api-types";
 import { sealPenelopeWorldPack } from "@/src/contracts/penelope-world-pack";
+import { compileWorldForgeDraft } from "@/src/application/world-forge-service";
+import { WorldForgeDraftSchema } from "@/src/contracts/world-forge";
+import worldForgeFixture from "@/tests/fixtures/world-forge-approved.json";
 
 const scenario = getOdysseyBook19WorldSimulation();
 const worldPack = getOdysseyBook19WorldPack();
@@ -111,5 +114,85 @@ describe("World Codex projection", () => {
     });
 
     expect(projection.relationships).toEqual([]);
+  });
+
+  it("projects a five-scene spine, cumulative beats, relationship history, and parent-child depth", () => {
+    const compiled = compileWorldForgeDraft({
+      draft: WorldForgeDraftSchema.parse(worldForgeFixture),
+    });
+    const pack = sealPenelopeWorldPack(compiled.definition);
+    const episodeScenario = pack.scenario;
+    const openingSession = createWorldSimulationSession({
+      scenario: episodeScenario,
+    });
+    const first = runWorldSimulationTurn({
+      scenario: episodeScenario,
+      session: openingSession,
+      input: worldForgeFixture.recommendedAction.value,
+    });
+    const second = runWorldSimulationTurn({
+      scenario: episodeScenario,
+      session: first.session,
+      input: worldForgeFixture.recommendedAction.value,
+    });
+    const sessions = [openingSession, first.session, second.session];
+    const receipts = [
+      buildWorldCreatorReceipt({
+        scenario: episodeScenario,
+        worldPack: pack,
+        session: openingSession,
+        receipt: null,
+      }),
+      buildWorldCreatorReceipt({
+        scenario: episodeScenario,
+        worldPack: pack,
+        session: first.session,
+        receipt: first.receipt,
+      }),
+      buildWorldCreatorReceipt({
+        scenario: episodeScenario,
+        worldPack: pack,
+        session: second.session,
+        receipt: second.receipt,
+      }),
+    ];
+    const ids = [
+      "44444444-4444-4444-8444-444444444444",
+      "55555555-5555-4555-8555-555555555555",
+      "66666666-6666-4666-8666-666666666666",
+    ];
+    const episodeCheckpoints = sessions.map((session, index) => ({
+      sequence: index + 1,
+      view: {
+        ...view(ids[index]!, index, index === 0 ? null : ids[index - 1]!),
+        title: episodeScenario.title,
+        maxTurns: 5,
+        cursor: {
+          branchId: session.cursor.branchId,
+          parentBranchId: session.cursor.parentBranchId,
+          forkedFromReceiptHash: session.cursor.forkedFromReceiptHash,
+        },
+      },
+      creatorReceipt: receipts[index]!,
+    }));
+    const projection = buildWorldCodexProjection({
+      active: episodeCheckpoints[2]!,
+      parent: episodeCheckpoints[1]!,
+      checkpoints: episodeCheckpoints,
+    });
+
+    expect(projection.overview.currentScene).toMatchObject({
+      sequence: 3,
+      total: 5,
+    });
+    expect(projection.plot.episodeSpine).toHaveLength(5);
+    expect(projection.plot.realizedBeats).toHaveLength(3);
+    expect(projection.relationships[0]).toMatchObject({
+      currentLevel: 2,
+      currentLabel: "bound",
+      changeFromParent: 1,
+    });
+    expect(projection.relationships[0]?.history).toHaveLength(2);
+    expect(projection.branches.map(({ depth }) => depth)).toEqual([0, 1, 2]);
   });
 });

@@ -53,14 +53,15 @@ Implemented and fixture-verified:
 - Book 19 fixture rules that distinguish source-grounded facts from creator-approved IF rules; Melantho reacts to visible exclusion and disturbance rather than receiving hidden identity knowledge for free
 - narration approval, edit, and rejection flow where prose cannot rewrite resolved events or causal receipts
 - session-scoped world-line checkpoints for returning to a shared past and testing a different consequence
-- The Loom: a non-blocking transition that appears only when A/B or an approved C actually enters resolution, then reports receipt-backed consequences
+- The Loom: a dismissible, scrollable transition whose heading distinguishes resolving, review, accepted, and failed states; it reports only receipt-backed consequences and never claims a rejected choice entered the world
 - World Aftermath: creator choice, declared causal world response, typed state delta, and renewed story pressure derived from the causal receipt
-- World Codex: a creator-only observatory for the current dramatic question, character desires and changes, declared relationship edges, causal events, pressure clocks, possible endings, and checkpoint lineage
+- World Forge: a two-to-three-sentence intake expanded through 24 creator approvals into a session-private five-scene episode with one bounded relationship axis
+- World Codex: a creator-only observatory for the current dramatic question, cumulative approved and realized plot beats, dynamic relationship history, ending-condition status, and parent-child checkpoint lineage
 - compact NPC cards for each relevant NPC's position, agenda, and private-knowledge boundary
 - Fork Compare: side-by-side state comparison of two world lines from a shared checkpoint, including knowledge, movement, pressure, rules, risks, and endings
 - a local four-turn Book 19 run through the Codex CLI narration path, requesting `gpt-5.6-terra`: two weak drafts failed closed without changing world state, while four final candidates passed the harness and delegated English-language QA without manual rewriting
 - deterministic retrieval, hard validation, provenance graph, creator decision, hashing, transition, replay, fixture/live evidence separation, and privacy scanning
-- current portable-world verification: evidence regeneration and verification, lint, typecheck, 108 Vitest files with 892 tests, 435-file final privacy scan, production build and trace-privacy inspection, and 44 production browser checks across desktop Chromium and mobile WebKit
+- current portable-world verification: evidence regeneration and verification, lint, typecheck, 108 Vitest files with 893 tests, 436-file final privacy scan, production build and trace-privacy inspection, and 46 production browser checks across desktop Chromium and mobile WebKit
 - the previous public GitHub release, CI, and credential-free hosted demo passed their exact-SHA gates; this portable-world tree still needs its own commit, CI, deployment, and hosted-smoke recertification
 
 Not verified or released yet:

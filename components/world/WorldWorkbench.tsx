@@ -173,8 +173,17 @@ const movementEffects = (
 const loomConsequenceCopy = (
   pulse: WorldPulse,
   risks: WorldCreatorReceipt["behindCurtainRisks"],
+  receipt: WorldCreatorReceipt | null,
 ): string[] => {
+  const episode = receipt?.worldCodex.episode;
+  const currentEpisodeScene = episode?.blueprint.scenes.find(
+    ({ id }) => id === episode.currentSceneId,
+  );
+  const sceneAdvanced = Boolean(receipt?.sceneTransition && currentEpisodeScene);
   const messages = [
+    ...(sceneAdvanced && episode && currentEpisodeScene
+      ? [`Story advances to scene ${currentEpisodeScene.sequence}/${episode.blueprint.scenes.length}: ${currentEpisodeScene.title}.`]
+      : []),
     ...pulse.knowledge.map(({ actorName, summary }) => `${actorName} will remember this. ${summary}`),
     ...pulse.movements.map(
       ({ actorName, fromZoneId, toZoneId }) =>
@@ -184,6 +193,7 @@ const loomConsequenceCopy = (
       ({ label, beforeValue, afterValue, maxValue }) =>
         `${label} changed: ${beforeValue} → ${afterValue} / ${maxValue}.`,
     ),
+    ...pulse.relationships.map(({ summary }) => summary),
     ...risks.map(({ summary }) => `Behind the curtain: ${summary}`),
     ...(pulse.ending.changed ? [`Fate changed. ${pulse.ending.summary}`] : []),
   ];
@@ -246,15 +256,6 @@ export function WorldWorkbench() {
   const creatorCapability = useRef<string | null>(null);
   const importedCreatorPack = useRef<unknown | null>(null);
   const sceneHeadingRef = useRef<HTMLHeadingElement>(null);
-
-  useEffect(() => {
-    if (!loom || !["resolved", "review", "failed"].includes(loom.phase)) return;
-    const timeout = window.setTimeout(
-      () => setLoom(null),
-      loom.phase === "resolved" ? 2_400 : 3_200,
-    );
-    return () => window.clearTimeout(timeout);
-  }, [loom]);
 
   const activeCheckpoint = useMemo(
     () => checkpoints.find(({ view }) => view.sessionId === selectedId) ?? null,
@@ -616,7 +617,7 @@ export function WorldWorkbench() {
           phase: "resolved",
           choice: transition.choice,
           consequences: pulse
-            ? loomConsequenceCopy(pulse, newRisks)
+            ? loomConsequenceCopy(pulse, newRisks, nextCreatorReceipt)
             : [
                 "The checkpoint advanced, but the creator receipt is unavailable. No private consequence is guessed.",
               ],
@@ -910,7 +911,7 @@ export function WorldWorkbench() {
 
   return (
     <main id="main-content" className={styles.page}>
-      <CausalTransition state={loom} />
+      <CausalTransition state={loom} onDismiss={() => setLoom(null)} />
       <header className={styles.header}>
         <div className={styles.topline}>
           <a className={styles.brand} href="#world-scene" aria-label="Penelope Ontology world scene">
@@ -1413,6 +1414,11 @@ export function WorldWorkbench() {
                   {worldComparison.clocks.map((delta) => (
                     <article key={delta.clockId} data-testid={`world-compare-delta-${testIdToken(delta.clockId)}`}>
                       <span>Pressure</span><strong>{delta.summary}</strong>
+                    </article>
+                  ))}
+                  {worldComparison.relationships.map((delta) => (
+                    <article key={delta.relationshipId} data-testid="world-compare-delta-relationship">
+                      <span>Relationship</span><strong>{delta.summary}</strong>
                     </article>
                   ))}
                   {worldComparison.causalRules.map((delta) => (

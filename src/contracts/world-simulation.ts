@@ -9,6 +9,7 @@ import { DisclosureGeometrySchema } from "@/src/contracts/story-world-control";
 
 export const MAX_WORLD_SIMULATION_TURNS = 6;
 export const MAX_REACTIONS_PER_TURN = 2;
+export const PENELOPE_EPISODE_SCENE_COUNT = 5;
 
 const SummarySchema = z.string().trim().min(12).max(600);
 
@@ -149,6 +150,62 @@ export const WorldActorSchema = z
   })
   .strict();
 
+export const EpisodeSceneSchema = z
+  .object({
+    id: IdentifierSchema,
+    sequence: z.number().int().min(1).max(PENELOPE_EPISODE_SCENE_COUNT),
+    role: z.enum(["setup", "pressure", "turn", "reckoning", "resolution"]),
+    title: z.string().trim().min(3).max(80),
+    purpose: SummarySchema,
+    pressure: SummarySchema,
+    completion: SummarySchema,
+  })
+  .strict();
+
+export const EpisodeBlueprintSchema = z
+  .object({
+    schemaVersion: z.literal(2),
+    scenes: z.array(EpisodeSceneSchema).length(PENELOPE_EPISODE_SCENE_COUNT),
+  })
+  .strict()
+  .superRefine(({ scenes }, context) => {
+    addDuplicateIssues(
+      scenes.map(({ id }) => id),
+      "episode scene id",
+      context,
+    );
+    const expectedRoles = [
+      "setup",
+      "pressure",
+      "turn",
+      "reckoning",
+      "resolution",
+    ] as const;
+    scenes.forEach((scene, index) => {
+      if (scene.sequence !== index + 1 || scene.role !== expectedRoles[index]) {
+        context.addIssue({
+          code: "custom",
+          path: ["scenes", index],
+          message:
+            "A five-scene episode must keep the approved setup, pressure, turn, reckoning, resolution order.",
+        });
+      }
+    });
+  });
+
+export const RuntimeRelationshipDefinitionSchema = z
+  .object({
+    id: IdentifierSchema,
+    subjectEntityId: IdentifierSchema,
+    objectEntityId: IdentifierSchema,
+    axisId: IdentifierSchema,
+    direction: z.enum(["directed", "mutual"]),
+    initialLevel: z.number().int().min(-2).max(2),
+    minLevel: z.literal(-2),
+    maxLevel: z.literal(2),
+  })
+  .strict();
+
 export const ActionDefinitionSchema = z
   .object({
     id: IdentifierSchema,
@@ -254,6 +311,12 @@ export const ReactionConditionSchema = z.discriminatedUnion("kind", [
       turn: z.number().int().min(1).max(MAX_WORLD_SIMULATION_TURNS),
     })
     .strict(),
+  z
+    .object({
+      kind: z.literal("scene_is"),
+      sceneId: IdentifierSchema,
+    })
+    .strict(),
 ]);
 
 export const ReactionEffectSchema = z.discriminatedUnion("kind", [
@@ -290,6 +353,15 @@ export const ReactionEffectSchema = z.discriminatedUnion("kind", [
       kind: z.literal("set_agenda_state"),
       entityId: IdentifierSchema,
       state: z.enum(["active", "blocked", "satisfied"]),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("adjust_relationship"),
+      relationshipId: IdentifierSchema,
+      delta: z.number().int().min(-2).max(2).refine((value) => value !== 0, {
+        message: "A relationship adjustment cannot be zero.",
+      }),
     })
     .strict(),
 ]);
@@ -561,6 +633,8 @@ export const WorldSimulationScenarioSchema = z
     premises: z.array(CanonicalPremiseSchema).min(1).max(24),
     zones: z.array(WorldZoneSchema).min(1).max(8),
     actors: z.array(WorldActorSchema).min(2).max(6),
+    episodeBlueprint: EpisodeBlueprintSchema.optional(),
+    relationships: z.array(RuntimeRelationshipDefinitionSchema).max(24).optional(),
     actions: z.array(ActionDefinitionSchema).min(2).max(18),
     initialPrivateKnowledge: z.array(PrivateKnowledgeStateSchema).min(2).max(6),
     initialFlags: z.array(InitialFlagSchema).max(16),
@@ -583,6 +657,11 @@ export const WorldSimulationScenarioSchema = z
     addDuplicateIssues(scenario.premises.map(({ id }) => id), "canonical premise id", context);
     addDuplicateIssues(scenario.zones.map(({ id }) => id), "world zone id", context);
     addDuplicateIssues(scenario.actors.map(({ id }) => id), "world actor id", context);
+    addDuplicateIssues(
+      scenario.relationships?.map(({ id }) => id) ?? [],
+      "runtime relationship id",
+      context,
+    );
     addDuplicateIssues(scenario.actions.map(({ id }) => id), "action definition id", context);
     addDuplicateIssues(
       scenario.actions.flatMap(({ verbAliases }) => verbAliases),
@@ -620,6 +699,12 @@ export const WorldSimulationScenarioSchema = z
     const premiseIds = new Set(scenario.premises.map(({ id }) => id));
     const zoneIds = new Set(scenario.zones.map(({ id }) => id));
     const actorIds = new Set(scenario.actors.map(({ id }) => id));
+    const relationshipIds = new Set(
+      scenario.relationships?.map(({ id }) => id) ?? [],
+    );
+    const episodeSceneIds = new Set(
+      scenario.episodeBlueprint?.scenes.map(({ id }) => id) ?? [],
+    );
     const actionIds = new Set(scenario.actions.map(({ id }) => id));
     const flagIds = new Set(scenario.initialFlags.map(({ id }) => id));
     const clockById = new Map(scenario.clocks.map((clock) => [clock.id, clock]));
@@ -867,6 +952,32 @@ export const WorldSimulationScenarioSchema = z
       }
     }
 
+    for (const [relationshipIndex, relationship] of (
+      scenario.relationships ?? []
+    ).entries()) {
+      addUnknownReferenceIssue(
+        actorIds,
+        relationship.subjectEntityId,
+        ["relationships", relationshipIndex, "subjectEntityId"],
+        "relationship subject",
+        context,
+      );
+      addUnknownReferenceIssue(
+        actorIds,
+        relationship.objectEntityId,
+        ["relationships", relationshipIndex, "objectEntityId"],
+        "relationship object",
+        context,
+      );
+      if (relationship.subjectEntityId === relationship.objectEntityId) {
+        context.addIssue({
+          code: "custom",
+          path: ["relationships", relationshipIndex],
+          message: "A runtime relationship must connect two different actors.",
+        });
+      }
+    }
+
     for (const [actionIndex, action] of scenario.actions.entries()) {
       for (const actorId of action.allowedActorEntityIds) {
         addUnknownReferenceIssue(
@@ -971,6 +1082,15 @@ export const WorldSimulationScenarioSchema = z
             });
           }
           break;
+        case "scene_is":
+          addUnknownReferenceIssue(
+            episodeSceneIds,
+            condition.sceneId,
+            path,
+            "episode scene",
+            context,
+          );
+          break;
       }
     };
 
@@ -1043,6 +1163,15 @@ export const WorldSimulationScenarioSchema = z
           case "set_agenda_state":
             addUnknownReferenceIssue(actorIds, effect.entityId, path, "agenda actor", context);
             break;
+          case "adjust_relationship":
+            addUnknownReferenceIssue(
+              relationshipIds,
+              effect.relationshipId,
+              path,
+              "runtime relationship",
+              context,
+            );
+            break;
         }
       }
     }
@@ -1096,6 +1225,11 @@ export type CanonicalPremise = z.infer<typeof CanonicalPremiseSchema>;
 export type WorldZone = z.infer<typeof WorldZoneSchema>;
 export type ActorAgenda = z.infer<typeof ActorAgendaSchema>;
 export type WorldActor = z.infer<typeof WorldActorSchema>;
+export type EpisodeScene = z.infer<typeof EpisodeSceneSchema>;
+export type EpisodeBlueprint = z.infer<typeof EpisodeBlueprintSchema>;
+export type RuntimeRelationshipDefinition = z.infer<
+  typeof RuntimeRelationshipDefinitionSchema
+>;
 export type ActionDefinition = z.infer<typeof ActionDefinitionSchema>;
 export type ReactionCondition = z.infer<typeof ReactionConditionSchema>;
 export type ReactionEffect = z.infer<typeof ReactionEffectSchema>;

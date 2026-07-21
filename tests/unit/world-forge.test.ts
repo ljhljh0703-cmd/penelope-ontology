@@ -27,7 +27,7 @@ const approved = <Value extends string>(value: Value) => ({
 const draft = (): WorldForgeDraft =>
   WorldForgeDraftSchema.parse({
     format: "penelope_world_forge_draft",
-    schemaVersion: 1,
+    schemaVersion: 2,
     draftId: "forge.lantern_ledger.browser_test",
     approvedOn: "2026-07-21",
     seedText: approved(
@@ -69,6 +69,23 @@ const draft = (): WorldForgeDraft =>
     alternativeConsequence: approved(
       "Mira gives one temporary signal, but Elian leaves without the route and owes her another negotiation.",
     ),
+    relationshipLabel: approved("trusts cautiously"),
+    relationshipAxis: approved("trust"),
+    relationshipPressure: approved(
+      "Elian strengthens the bond by accepting custody terms and damages it by treating Mira's warning as disposable.",
+    ),
+    sceneTwo: approved(
+      "The failing beacon forces Elian to choose whether Mira's custody terms matter more than immediate speed.",
+    ),
+    sceneThree: approved(
+      "The ledger identifies a second failure and reveals that the safe route depends on Mira's withheld signal.",
+    ),
+    sceneFour: approved(
+      "The rescue boat enters the outer harbor while Elian's earlier promise returns as a debt he must honor.",
+    ),
+    sceneFive: approved(
+      "Elian and Mira face the darkened beacon together and the accumulated trust determines which route survives.",
+    ),
   });
 
 describe("Penelope World Forge", () => {
@@ -107,7 +124,10 @@ describe("Penelope World Forge", () => {
       sourceStatus: "creator_attested",
     });
     expect(first.definition.scenario.title).toBe("The Last Beacon Ledger");
-    expect(first.approvedFacts).toHaveLength(17);
+    expect(first.approvedFacts).toHaveLength(24);
+    expect(first.definition.packVersion).toBe("2.0.0");
+    expect(first.definition.scenario.episodeBlueprint?.scenes).toHaveLength(5);
+    expect(first.definition.worldCodex?.relationships).toHaveLength(1);
     expect(first.approvedFacts.every(({ approval }) => approval === "creator_approved")).toBe(true);
     expect(JSON.stringify(first)).not.toMatch(/Odysseus|Ithaca|Dorothy|Wizard/iu);
   });
@@ -118,16 +138,23 @@ describe("Penelope World Forge", () => {
     const recommendedSession = createWorldSimulationSession({ scenario });
     const alternativeSession = createWorldSimulationSession({ scenario });
 
-    const recommended = runWorldSimulationTurn({
-      scenario,
-      session: recommendedSession,
-      input: draft().recommendedAction.value,
-    });
-    const alternative = runWorldSimulationTurn({
-      scenario,
-      session: alternativeSession,
-      input: draft().alternativeAction.value,
-    });
+    const runFive = (input: string, initial: typeof recommendedSession) => {
+      let current = initial;
+      let result: ReturnType<typeof runWorldSimulationTurn> | null = null;
+      for (let turn = 0; turn < 5; turn += 1) {
+        result = runWorldSimulationTurn({ scenario, session: current, input });
+        current = result.session;
+      }
+      return result!;
+    };
+    const recommended = runFive(
+      draft().recommendedAction.value,
+      recommendedSession,
+    );
+    const alternative = runFive(
+      draft().alternativeAction.value,
+      alternativeSession,
+    );
 
     expect(recommended.receipt.endingId).toContain("recommended");
     expect(alternative.receipt.endingId).toContain("alternative");
@@ -137,6 +164,9 @@ describe("Penelope World Forge", () => {
     expect(recommended.session.state.stateHash).not.toBe(
       alternative.session.state.stateHash,
     );
+    expect(recommended.session.state.episode?.sceneIndex).toBe(4);
+    expect(recommended.session.state.relationships?.[0]?.level).toBe(2);
+    expect(alternative.session.state.relationships?.[0]?.level).toBe(-2);
   });
 
   it("opens the forged pack through the existing narration pipeline", async () => {
@@ -154,5 +184,24 @@ describe("Penelope World Forge", () => {
     });
 
     expect(narrated.outcome, JSON.stringify(narrated, null, 2)).toBe("accepted");
+
+    const turn = runWorldSimulationTurn({
+      scenario: worldPack.scenario,
+      session,
+      input: draft().recommendedAction.value,
+    });
+    const turnNarration = await runWorldSessionNarrationPipeline({
+      scenario: worldPack.scenario,
+      worldPack,
+      session: turn.session,
+      receipt: turn.receipt,
+      styleProfile: PenelopeEnglishStyleProfileSchema.parse(styleProfileJson),
+      renderer: fixtureNarrationRenderer,
+      critic: fixtureNarrationCritic,
+    });
+    expect(
+      turnNarration.outcome,
+      JSON.stringify(turnNarration, null, 2),
+    ).toBe("accepted");
   });
 });

@@ -267,6 +267,14 @@ const normalizeStatePayload = (
       .sort(({ entityId: left }, { entityId: right }) => compareIds(left, right)),
     flags: [...parsed.flags].sort(({ id: left }, { id: right }) => compareIds(left, right)),
     clocks: [...parsed.clocks].sort(({ id: left }, { id: right }) => compareIds(left, right)),
+    ...(parsed.relationships
+      ? {
+          relationships: [...parsed.relationships].sort(
+            ({ relationshipId: left }, { relationshipId: right }) =>
+              compareIds(left, right),
+          ),
+        }
+      : {}),
     firedReactionRuleIds: sortedUniqueIds(parsed.firedReactionRuleIds),
   };
 };
@@ -311,6 +319,22 @@ const initialState = (scenario: WorldSimulationScenario): WorldSimulationState =
     })),
     flags: scenario.initialFlags,
     clocks: scenario.clocks.map(({ id, initialValue }) => ({ id, value: initialValue })),
+    ...(scenario.relationships
+      ? {
+          relationships: scenario.relationships.map(({ id, initialLevel }) => ({
+            relationshipId: id,
+            level: initialLevel,
+          })),
+        }
+      : {}),
+    ...(scenario.episodeBlueprint
+      ? {
+          episode: {
+            sceneId: scenario.episodeBlueprint.scenes[0]!.id,
+            sceneIndex: 0,
+          },
+        }
+      : {}),
     firedReactionRuleIds: [],
     status: "active",
     endingId: null,
@@ -471,6 +495,14 @@ export const hasValidWorldSimulationSession = (
                   case "set_flag":
                   case "advance_clock":
                     return [];
+                  case "adjust_relationship": {
+                    const relationship = scenario.relationships?.find(
+                      ({ id }) => id === effect.relationshipId,
+                    );
+                    return relationship
+                      ? [relationship.subjectEntityId, relationship.objectEntityId]
+                      : [];
+                  }
                 }
               }),
             );
@@ -487,6 +519,7 @@ export const hasValidWorldSimulationSession = (
             ],
       );
       const expectedEffects = causalEffects({
+        scenario,
         event,
         turn: receipt.turn,
         priorState: turnPriorState,
@@ -546,6 +579,18 @@ export const hasValidWorldSimulationSession = (
         ),
       ]),
     });
+    const replayEpisode = advanceEpisodeState({
+      scenario,
+      state: replayState,
+      accepted: receipt.action.status === "accepted",
+    });
+    replayState = replayEpisode.state;
+    if (
+      sha256Canonical(receipt.sceneTransition ?? null) !==
+      sha256Canonical(replayEpisode.transition)
+    ) {
+      return fail(`receipt_${receipt.turn}_scene_transition_mismatch`);
+    }
     const expectedEnding = pickEnding({
       scenario,
       state: replayState,
@@ -755,6 +800,8 @@ const conditionMatches = ({
       return state.actors.find(({ entityId }) => entityId === condition.entityId)?.zoneId === condition.zoneId;
     case "turn_at_least":
       return turn >= condition.turn;
+    case "scene_is":
+      return state.episode?.sceneId === condition.sceneId;
   }
 };
 
@@ -816,9 +863,57 @@ const applyReactionEffects = ({
         actor.agendaState = effect.state;
         break;
       }
+      case "adjust_relationship": {
+        const relationship = payload.relationships?.find(
+          ({ relationshipId }) => relationshipId === effect.relationshipId,
+        );
+        const definition = scenario.relationships?.find(
+          ({ id }) => id === effect.relationshipId,
+        );
+        if (!relationship || !definition) {
+          throw new Error(`Unknown runtime relationship ${effect.relationshipId}.`);
+        }
+        relationship.level = Math.max(
+          definition.minLevel,
+          Math.min(definition.maxLevel, relationship.level + effect.delta),
+        );
+        break;
+      }
     }
   }
   return buildWorldSimulationState(payload);
+};
+
+const advanceEpisodeState = ({
+  scenario,
+  state,
+  accepted,
+}: {
+  scenario: WorldSimulationScenario;
+  state: WorldSimulationState;
+  accepted: boolean;
+}): {
+  state: WorldSimulationState;
+  transition: NonNullable<WorldTurnReceipt["sceneTransition"]> | null;
+} => {
+  const blueprint = scenario.episodeBlueprint;
+  const episode = state.episode;
+  if (!accepted || !blueprint || !episode) return { state, transition: null };
+  const nextIndex = Math.min(episode.sceneIndex + 1, blueprint.scenes.length - 1);
+  if (nextIndex === episode.sceneIndex) return { state, transition: null };
+  const nextScene = blueprint.scenes[nextIndex]!;
+  return {
+    state: buildWorldSimulationState({
+      ...statePayload(state),
+      episode: { sceneId: nextScene.id, sceneIndex: nextIndex },
+    }),
+    transition: {
+      fromSceneId: episode.sceneId,
+      toSceneId: nextScene.id,
+      fromSceneIndex: episode.sceneIndex,
+      toSceneIndex: nextIndex,
+    },
+  };
 };
 
 const pickEnding = ({
@@ -867,11 +962,13 @@ const reactionPremiseIds = (rule: ReactionRule): string[] =>
   ]);
 
 const causalEffects = ({
+  scenario,
   event,
   turn,
   priorState,
   focalEntityId,
 }: {
+  scenario: WorldSimulationScenario;
   event: WorldSimulationEvent;
   turn: number;
   priorState: WorldSimulationState;
@@ -920,6 +1017,20 @@ const causalEffects = ({
       }
       case "set_agenda_state":
         return [{ effectId, kind: "flag_set", entityId: effect.entityId, flagId: `agenda.${effect.entityId}.${effect.state}`, value: true }];
+      case "adjust_relationship": {
+        const relationship = scenario.relationships?.find(
+          ({ id }) => id === effect.relationshipId,
+        );
+        if (!relationship) return [];
+        return [{
+          effectId,
+          kind: "relation_delta",
+          subjectEntityId: relationship.subjectEntityId,
+          objectEntityId: relationship.objectEntityId,
+          axisId: relationship.axisId,
+          delta: effect.delta,
+        }];
+      }
     }
   });
 };
@@ -942,6 +1053,7 @@ const appendWorldEvent = ({
   targetEntityIds: string[];
 }): { ledger: CampaignLedger; entryHash: string } => {
   const effects = causalEffects({
+    scenario,
     event,
     turn,
     priorState,
@@ -1012,7 +1124,9 @@ const appendWorldEvent = ({
       "action.unsupported",
       event.actionId,
     ]),
-    activeRelationAxisIds: new Set(),
+    activeRelationAxisIds: new Set(
+      scenario.relationships?.map(({ axisId }) => axisId) ?? [],
+    ),
     activeResourceIds: new Set(),
     activeFlagIds: new Set([...scenario.initialFlags.map(({ id }) => id), ...flagIds]),
     activeClockIds: new Set(scenario.clocks.map(({ id }) => id)),
@@ -1152,6 +1266,12 @@ export const runWorldSimulationTurn = ({
     turn,
     worldTick: session.state.worldTick + 1,
   });
+  const episodeAdvance = advanceEpisodeState({
+    scenario,
+    state: workingState,
+    accepted: action.status === "accepted",
+  });
+  workingState = episodeAdvance.state;
   const ending = pickEnding({ scenario, state: workingState, action, turn });
   if (ending) {
     workingState = buildWorldSimulationState({
@@ -1194,6 +1314,14 @@ export const runWorldSimulationTurn = ({
             case "set_flag":
             case "advance_clock":
               return [];
+            case "adjust_relationship": {
+              const relationship = scenario.relationships?.find(
+                ({ id }) => id === effect.relationshipId,
+              );
+              return relationship
+                ? [relationship.subjectEntityId, relationship.objectEntityId]
+                : [];
+            }
           }
         }),
       ),
@@ -1213,6 +1341,9 @@ export const runWorldSimulationTurn = ({
     events,
     firedReactionRuleIds: [...selectedRuleIds].sort(compareIds),
     endingId: ending?.id ?? null,
+    ...(scenario.episodeBlueprint
+      ? { sceneTransition: episodeAdvance.transition }
+      : {}),
   });
   const receipt = WorldTurnReceiptSchema.parse({
     ...receiptPayloadValue,

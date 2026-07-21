@@ -26,6 +26,20 @@ export const WorldClockRuntimeStateSchema = z
   .object({ id: IdentifierSchema, value: z.number().int().nonnegative() })
   .strict();
 
+export const WorldRelationshipRuntimeStateSchema = z
+  .object({
+    relationshipId: IdentifierSchema,
+    level: z.number().int().min(-2).max(2),
+  })
+  .strict();
+
+export const WorldEpisodeRuntimeStateSchema = z
+  .object({
+    sceneId: IdentifierSchema,
+    sceneIndex: z.number().int().min(0).max(4),
+  })
+  .strict();
+
 const WorldSimulationStateFields = {
   scenarioId: IdentifierSchema,
   turn: z.number().int().min(0).max(6),
@@ -34,6 +48,8 @@ const WorldSimulationStateFields = {
   knowledge: z.array(WorldKnowledgeStateSchema),
   flags: z.array(WorldFlagRuntimeStateSchema),
   clocks: z.array(WorldClockRuntimeStateSchema),
+  relationships: z.array(WorldRelationshipRuntimeStateSchema).optional(),
+  episode: WorldEpisodeRuntimeStateSchema.optional(),
   firedReactionRuleIds: z.array(IdentifierSchema),
   status: z.enum(["active", "complete"]),
   endingId: IdentifierSchema.nullable(),
@@ -45,6 +61,7 @@ const addStateIssues = (
     knowledge: Array<{ entityId: string }>;
     flags: Array<{ id: string }>;
     clocks: Array<{ id: string }>;
+    relationships?: Array<{ relationshipId: string }>;
     firedReactionRuleIds: string[];
   },
   context: z.RefinementCtx,
@@ -67,6 +84,11 @@ const addStateIssues = (
   addDuplicateIssues(
     state.clocks.map(({ id }) => id),
     "runtime clock id",
+    context,
+  );
+  addDuplicateIssues(
+    state.relationships?.map(({ relationshipId }) => relationshipId) ?? [],
+    "runtime relationship id",
     context,
   );
   addDuplicateIssues(state.firedReactionRuleIds, "fired reaction rule id", context);
@@ -141,6 +163,16 @@ const WorldTurnReceiptFields = {
   events: z.array(WorldSimulationEventSchema).min(1).max(3),
   firedReactionRuleIds: z.array(IdentifierSchema).max(2),
   endingId: IdentifierSchema.nullable(),
+  sceneTransition: z
+    .object({
+      fromSceneId: IdentifierSchema,
+      toSceneId: IdentifierSchema,
+      fromSceneIndex: z.number().int().min(0).max(4),
+      toSceneIndex: z.number().int().min(0).max(4),
+    })
+    .strict()
+    .nullable()
+    .optional(),
 } as const;
 
 export const WorldTurnReceiptPayloadSchema = z
@@ -183,6 +215,12 @@ export type WorldSimulationStatePayload = z.infer<
   typeof WorldSimulationStatePayloadSchema
 >;
 export type WorldSimulationState = z.infer<typeof WorldSimulationStateSchema>;
+export type WorldRelationshipRuntimeState = z.infer<
+  typeof WorldRelationshipRuntimeStateSchema
+>;
+export type WorldEpisodeRuntimeState = z.infer<
+  typeof WorldEpisodeRuntimeStateSchema
+>;
 export type ResolvedWorldAction = z.infer<typeof ResolvedWorldActionSchema>;
 export type WorldSimulationEvent = z.infer<typeof WorldSimulationEventSchema>;
 export type CreatorWorldDirectionReceipt = z.infer<

@@ -16,29 +16,52 @@ const phaseCopy: Record<CausalTransitionState["phase"], string> = {
   failed: "The choice did not enter the world. The previous checkpoint is intact.",
 };
 
-export function CausalTransition({ state }: { state: CausalTransitionState | null }) {
+const phaseTitle: Record<CausalTransitionState["phase"], string> = {
+  resolving: "Your choice is being tested against the world.",
+  receipt: "The world has answered.",
+  review: "A possible world line awaits your approval.",
+  resolved: "Your choice has entered the world.",
+  failed: "The world refused this choice.",
+};
+
+export function CausalTransition({
+  state,
+  onDismiss,
+}: {
+  state: CausalTransitionState | null;
+  onDismiss: () => void;
+}) {
   if (!state) return null;
+  const dismissible = ["review", "resolved", "failed"].includes(state.phase);
 
   return (
     <aside
       className={styles.loom}
       data-phase={state.phase}
       data-testid="world-loom"
-      aria-live="polite"
-      aria-atomic="true"
+      aria-labelledby="world-loom-title"
     >
       <div className={styles.heading}>
-        <p>The Loom</p>
-        <span>{state.phase === "resolved" ? "Receipt sealed" : "World in motion"}</span>
+        <div>
+          <p>The Loom</p>
+          <span>{state.phase === "resolved" ? "Receipt sealed" : "World in motion"}</span>
+        </div>
+        {dismissible ? (
+          <button type="button" onClick={onDismiss} aria-label="Dismiss The Loom">
+            Close
+          </button>
+        ) : null}
       </div>
-      <h2>Your choice has entered the world.</h2>
+      <h2 id="world-loom-title">{phaseTitle[state.phase]}</h2>
       <blockquote>“{state.choice}”</blockquote>
       <div className={styles.thread} aria-hidden="true">
         <i />
         <i />
         <i />
       </div>
-      <p className={styles.status}>{phaseCopy[state.phase]}</p>
+      <p className={styles.status} aria-live="polite" aria-atomic="true">
+        {phaseCopy[state.phase]}
+      </p>
       {state.consequences.length > 0 ? (
         <ul>
           {state.consequences.map((consequence) => (

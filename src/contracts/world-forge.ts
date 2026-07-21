@@ -3,7 +3,7 @@ import { HashSchema, IdentifierSchema } from "@/src/contracts/common";
 import { PenelopeWorldPackDefinitionSchema } from "@/src/contracts/penelope-world-pack";
 
 export const WORLD_FORGE_FORMAT = "penelope_world_forge_draft" as const;
-export const WORLD_FORGE_SCHEMA_VERSION = 1 as const;
+export const WORLD_FORGE_SCHEMA_VERSION = 2 as const;
 
 export const WORLD_FORGE_FACT_FIELD_IDS = [
   "seedText",
@@ -23,6 +23,13 @@ export const WORLD_FORGE_FACT_FIELD_IDS = [
   "recommendedConsequence",
   "alternativeAction",
   "alternativeConsequence",
+  "relationshipLabel",
+  "relationshipAxis",
+  "relationshipPressure",
+  "sceneTwo",
+  "sceneThree",
+  "sceneFour",
+  "sceneFive",
 ] as const;
 
 export const WorldForgeFactFieldIdSchema = z.enum(WORLD_FORGE_FACT_FIELD_IDS);
@@ -89,6 +96,13 @@ export const WorldForgeDraftSchema = z
     recommendedConsequence: fact(NarrativeFactSchema),
     alternativeAction: fact(ActionSchema),
     alternativeConsequence: fact(NarrativeFactSchema),
+    relationshipLabel: fact(z.string().trim().min(2).max(64)),
+    relationshipAxis: fact(z.string().trim().min(2).max(48)),
+    relationshipPressure: fact(NarrativeFactSchema),
+    sceneTwo: fact(NarrativeFactSchema),
+    sceneThree: fact(NarrativeFactSchema),
+    sceneFour: fact(NarrativeFactSchema),
+    sceneFive: fact(NarrativeFactSchema),
   })
   .strict()
   .superRefine((draft, context) => {
