@@ -1,6 +1,6 @@
 # Build Week submission field packet
 
-Status: **portable product tree, public video, exact release commit, public CI, and deployment/hosted smoke verified; `/feedback` and final Devpost submission pending**.
+Status: **portable product tree, public video, and private `/feedback` record verified; video-link release recertification and final Devpost submission pending**.
 
 ## Identity
 
@@ -24,7 +24,7 @@ Keep **Penelope Ontology** identical across README, repository UI, Devpost, vide
 | `27947` | Category | `Work & Productivity` |
 | `27948` | Code repository URL | `https://github.com/ljhljh0703-cmd/penelope-ontology` |
 | `27949` | Judge demo and instructions | `https://penelope-ontology.vercel.app` — no account or API key. In **The Night of the Scar**, load the guided C move and reach `Plan Compromised`; return to checkpoint 01, take the containment route, reach `Canon Contained`, and inspect Fork Compare. Then use the World Pack selector to open **Behind the Green Screen** and verify that its Oz cast, actions, and hidden fact replace the Odyssey pack without leakage. Creator JSON import is available for public-safe prepared packs; do not upload sensitive manuscripts to the hosted demo. |
-| `27950` | `/feedback` Session ID | pending private UUID |
+| `27950` | `/feedback` Session ID | stored in the gitignored private submission record; paste into Devpost without copying it into public artifacts |
 | `27951` | Plugin/developer-tool instructions | not applicable; Penelope is submitted as a Work & Productivity web app |
 
 ## Built with
@@ -62,8 +62,7 @@ These local counts belong to the portable-world candidate. CI and hosted exact-S
 
 ## External fields still required
 
-1. private `/feedback` session UUID from the main Codex task;
-2. Devpost project update, category confirmation, and final submission readback.
+1. Devpost project update, category confirmation, and final submission readback.
 
 ## Final form gate
 
