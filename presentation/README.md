@@ -2,6 +2,8 @@
 
 This folder contains the live-pitch script and an 82-second Hyperframes presentation film. It is separate from the under-three-minute product-operation demo.
 
+**[Watch the public 2:42 product-operation demo](https://youtu.be/5oiEzLk8LWY)**
+
 ![Eight-scene presentation contact sheet](assets/presentation-contact-sheet.png)
 
 ## Build

@@ -3,21 +3,22 @@
 **Most AI story tools generate the next paragraph. Penelope simulates what must be true before that paragraph can exist.**
 
 [![Live demo](https://img.shields.io/badge/Live_demo-Open_Penelope-192126?style=flat-square)](https://penelope-ontology.vercel.app)
+[![Video demo](https://img.shields.io/badge/Video_demo-Watch_2%3A42-c65f3f?style=flat-square)](https://youtu.be/5oiEzLk8LWY)
 [![Track](https://img.shields.io/badge/OpenAI_Build_Week-Work_%26_Productivity-5b8f69?style=flat-square)](https://openai.devpost.com/)
 ![Tests](https://img.shields.io/badge/Vitest-893_passed-5b8f69?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-192126?style=flat-square)
 
-![Penelope turns one creator choice into two inspectable world lines](docs/assets/readme/penelope-choice-weaver.png)
+[![Watch the 2:42 Penelope Ontology product demo](presentation/assets/youtube-thumbnail.png)](https://youtu.be/5oiEzLk8LWY)
 
 > Load a bounded world. Change one choice. Watch knowledge, motives, risks, relationships, and endings move before the prose is written.
 
-**[Try the public demo](https://penelope-ontology.vercel.app)** · **[Review the fastest judge path](docs/JUDGE-GUIDE.md)** · **[Author a World Pack](docs/WORLD-PACK-AUTHORING.md)**
+**[Watch the 2:42 product demo](https://youtu.be/5oiEzLk8LWY)** · **[Try the public demo](https://penelope-ontology.vercel.app)** · **[Review the fastest judge path](docs/JUDGE-GUIDE.md)** · **[Author a World Pack](docs/WORLD-PACK-AUTHORING.md)**
 
 Penelope Ontology is a causal story simulator for writers, narrative designers, quest teams, and professional GMs. The creator keeps authorship and final judgment. Penelope keeps the world coherent enough to answer back.
 
 The hosted demo needs no account or API key. It opens with *The Odyssey*, Book 19, but the runtime is not tied to Ithaca: an Oz pack, a creator-owned starter pack, and World Forge all run through the same engine.
 
-<sub>Concept illustration featuring Park Dal-jae, the creator's original character. Product screenshots below are captured from the implemented fixture UI.</sub>
+<sub>Thumbnail concept illustration featuring Park Dal-jae, the creator's original character. Product screenshots below are captured from the implemented fixture UI.</sub>
 
 ## “Codex can't write?”
 

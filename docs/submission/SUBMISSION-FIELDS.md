@@ -1,6 +1,6 @@
 # Build Week submission field packet
 
-Status: **portable product tree locally verified; exact release commit, public CI, deployment/hosted smoke, video, `/feedback`, and final Devpost submission pending**.
+Status: **portable product tree, public video, exact release commit, public CI, and deployment/hosted smoke verified; `/feedback` and final Devpost submission pending**.
 
 ## Identity
 
@@ -12,6 +12,8 @@ Status: **portable product tree locally verified; exact release commit, public C
 - **Duplicate project to leave untouched:** `1329950` / `Untitled`
 
 Keep **Penelope Ontology** identical across README, repository UI, Devpost, video, and hosted product. The technical repository slug may differ.
+
+- **Public product demo:** `https://youtu.be/5oiEzLk8LWY` — Public, 2:42, narrated product/Codex/GPT-5.6 coverage verified
 
 ## Official custom fields
 
@@ -60,9 +62,8 @@ These local counts belong to the portable-world candidate. CI and hosted exact-S
 
 ## External fields still required
 
-1. public or unlisted YouTube URL under three minutes;
-2. private `/feedback` session UUID from the main Codex task;
-3. Devpost project update, category confirmation, and final submission readback.
+1. private `/feedback` session UUID from the main Codex task;
+2. Devpost project update, category confirmation, and final submission readback.
 
 ## Final form gate
 

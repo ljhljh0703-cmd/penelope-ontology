@@ -89,9 +89,9 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [ ] Devpost final category field confirmed as Work & Productivity
 - [x] Project description finalized
 - [x] Evidence-safe Built-with list prepared; completed Codex CLI story generation is labeled with requested model only, while GPT-5.6 remains excluded from independently verified serving-model claims
-- [ ] Public YouTube demo under three minutes
-- [ ] Voice narration explains product, Codex use, and GPT-5.6 use
-- [ ] Private video receipt confirms the recording demonstrates the product and explains Codex and GPT-5.6 use
+- [x] Public YouTube demo verified at 2:42
+- [x] Voice narration explains the product, Codex use, and GPT-5.6 use
+- [x] Private submission record confirms the recording demonstrates the product and explains Codex and GPT-5.6 use
 - [x] Submission description, shot list, and narration are prepared in English
 - [x] Five public-safe 1440×900 fixture gallery images captured with a SHA-256 manifest
 - [ ] Repository URL entered
@@ -115,8 +115,8 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 
 1. The current Story and World Workbench lanes completed local Codex CLI generation while requesting `gpt-5.6-terra`, but the transport reports neither `actualModel` nor `responseId`; public copy must keep requested-model and serving-model identity separate. The World run's delegated English QA is not a creator literary verdict. The legacy approval-bound `retry-1` remains a failed dispatch, and the Responses API path remains unused.
 2. The README, public repository, CI, and hosted exact-SHA release are verified; final Devpost field entry and readback remain external.
-3. **Penelope Ontology** is name-locked in the repository and hosted product; Devpost and video name parity remain open.
-4. Public narrated video, `/feedback` session field, and final Devpost submission remain external actions.
+3. **Penelope Ontology** is name-locked in the repository, hosted product, and public video; Devpost name parity remains open.
+4. The `/feedback` session field and final Devpost submission remain external actions.
 5. Practitioner/user productivity evidence does not exist and must not be claimed.
 6. Both legacy CLI evidence authorities are consumed. Primary ended in a terminal process failure. The separately approved `retry-1` passed preflight and dispatched once, then terminally failed on `codex_cli_event_type_unrecognized`. No `retry-2` exists.
 7. Myth Atlas corrected packaging revision `v1.0.1` is quarantined as private reference only after schema and byte-integrity checks across 16 assets totaling 2,489,820 bytes. Its producer-reported ten exact-passage candidates, five `video_reported` items, and six pending items retain creator-review, rights, culture, provenance, video, and pending warnings; no public/canon authorization or World Pack import exists.
