@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import styleProfileJson from "@/_dev/dispatch-2026-07-18/contracts/PENELOPE-ENGLISH-STYLE-PROFILE.json";
-import { getOdysseyBook19WorldSimulation } from "@/src/adapters/fixtures/odyssey-world-simulation";
+import { getOdysseyBook19WorldPack } from "@/src/adapters/world-packs/odyssey-book19";
 import {
   fixtureNarrationCritic,
   fixtureNarrationRenderer,
@@ -24,7 +24,8 @@ import type {
   NarrationRenderer,
 } from "@/src/ports/world-narrator";
 
-const scenario = getOdysseyBook19WorldSimulation();
+const worldPack = getOdysseyBook19WorldPack();
+const scenario = worldPack.scenario;
 const styleProfile = PenelopeEnglishStyleProfileSchema.parse(styleProfileJson);
 
 const outputFor = (
@@ -68,6 +69,7 @@ describe("world simulation narration pipeline service", () => {
     const initial = createWorldSimulationSession({ scenario });
     const setup = await runWorldSessionNarrationPipeline({
       scenario,
+      worldPack,
       session: initial,
       receipt: null,
       styleProfile,
@@ -83,6 +85,7 @@ describe("world simulation narration pipeline service", () => {
     });
     const narrated = await runWorldSessionNarrationPipeline({
       scenario,
+      worldPack,
       session: turn.session,
       receipt: turn.receipt,
       styleProfile,
@@ -109,6 +112,7 @@ describe("world simulation narration pipeline service", () => {
     ): Promise<string[]> => {
       const result = await runWorldSessionNarrationPipeline({
         scenario,
+        worldPack,
         session,
         receipt,
         styleProfile,
@@ -195,12 +199,14 @@ describe("world simulation narration pipeline service", () => {
     });
     const turnArtifacts = buildWorldNarrationPipelineArtifacts({
       scenario,
+      worldPack,
       session: clearRoom.session,
       receipt: clearRoom.receipt,
       styleProfile,
     });
     const artifacts = buildWorldNarrationPipelineArtifacts({
       scenario,
+      worldPack,
       session: compromised.session,
       receipt: compromised.receipt,
       styleProfile,
@@ -248,6 +254,7 @@ describe("world simulation narration pipeline service", () => {
 
     const narrated = await runWorldSessionNarrationPipeline({
       scenario,
+      worldPack,
       session: turn.session,
       receipt: turn.receipt,
       styleProfile,
@@ -305,6 +312,7 @@ describe("world simulation narration pipeline service", () => {
     });
     const artifacts = buildWorldNarrationPipelineArtifacts({
       scenario,
+      worldPack,
       session: disclosure.session,
       receipt: disclosure.receipt,
       styleProfile,
@@ -406,6 +414,7 @@ describe("world simulation narration pipeline service", () => {
 
     const narrated = await runWorldSessionNarrationPipeline({
       scenario,
+      worldPack,
       session: disclosure.session,
       receipt: disclosure.receipt,
       styleProfile,
@@ -486,6 +495,7 @@ describe("world simulation narration pipeline service", () => {
     };
     const artifacts = buildWorldNarrationPipelineArtifacts({
       scenario: syntheticScenario,
+      worldPack,
       session: disclosure.session,
       receipt: syntheticReceipt,
       styleProfile,
@@ -528,6 +538,7 @@ describe("world simulation narration pipeline service", () => {
     });
     const artifacts = buildWorldNarrationPipelineArtifacts({
       scenario,
+      worldPack,
       session: turn.session,
       receipt: turn.receipt,
       styleProfile,
@@ -554,6 +565,7 @@ describe("world simulation narration pipeline service", () => {
     ).toBe(true);
     const result = await runWorldSessionNarrationPipeline({
       scenario,
+      worldPack,
       session: turn.session,
       receipt: turn.receipt,
       styleProfile,
@@ -597,12 +609,14 @@ describe("world simulation narration pipeline service", () => {
     });
     const artifacts = buildWorldNarrationPipelineArtifacts({
       scenario,
+      worldPack,
       session: turn.session,
       receipt: turn.receipt,
       styleProfile,
     });
     const result = await runWorldSessionNarrationPipeline({
       scenario,
+      worldPack,
       session: turn.session,
       receipt: turn.receipt,
       styleProfile,

@@ -7,6 +7,7 @@ import {
   type CreatorTacitKnowledgeQuestionId,
 } from "@/src/contracts/creator-c-dialogue";
 import type { WorldSimulationSession } from "@/src/contracts/world-runtime";
+import type { PenelopeWorldPackV1 } from "@/src/contracts/penelope-world-pack";
 import type {
   ActionDefinition,
   WorldSimulationScenario,
@@ -19,101 +20,43 @@ const QUESTION_ORDER = [
   "accepted_cost",
 ] as const satisfies readonly CreatorTacitKnowledgeQuestionId[];
 
-const QUESTION_COPY: Record<
-  CreatorTacitKnowledgeQuestionId,
-  { prompt: string; whyItMatters: string }
-> = {
-  desired_outcome: {
-    prompt: "If this works, what should Penelope gain, protect, or change?",
-    whyItMatters:
-      "The same outward move can seek proof, safety, leverage, or mercy; the world needs the intended gain before it can judge the action.",
-  },
-  character_motive: {
-    prompt:
-      "Why does Penelope choose this now, instead of waiting or taking one of the prepared routes?",
-    whyItMatters:
-      "A motive turns a convenient move into a character decision and tells the world which pressure she is answering.",
-  },
-  accepted_cost: {
-    prompt:
-      "What consequence is Penelope willing to risk if this draws attention or fails?",
-    whyItMatters:
-      "A chosen cost lets the world honor the creator's aim without guaranteeing the desired result for free.",
-  },
+const focalParticipant = (scenario: WorldSimulationScenario) => {
+  const actor = scenario.actors.find(({ id }) => id === scenario.focalParticipantEntityId);
+  if (!actor) {
+    throw new Error("World pack focal participant is not registered as a scenario actor.");
+  }
+  return actor;
 };
 
-const ACTION_CUES: Readonly<Record<string, readonly string[]>> = {
-  "action.penelope.observe": [
-    "observe",
-    "watch",
-    "wait",
-    "study",
-    "hold back",
-    "stay silent",
-    "attention",
-  ],
-  "action.penelope.test_testimony": [
-    "test",
-    "proof",
-    "evidence",
-    "truth",
-    "lie",
-    "trust",
-    "question",
-    "detail",
-    "certainty",
-  ],
-  "action.penelope.order_washing": [
-    "wash",
-    "washing",
-    "basin",
-    "feet",
-    "foot",
-    "scar",
-    "nurse",
-    "household memory",
-  ],
-  "action.penelope.clear_room": [
-    "melantho",
-    "dismiss",
-    "leave",
-    "send away",
-    "clear the room",
-    "private",
-    "privacy",
-    "witness",
-    "overhear",
-    "exclude",
-  ],
-  "action.penelope.confront_privately": [
-    "confront",
-    "identity",
-    "odysseus",
-    "ask directly",
-    "name him",
-    "reveal",
-    "admit",
-  ],
-};
-
-const PRAISE_BY_ACTION: Readonly<Record<string, string>> = {
-  "action.penelope.observe":
-    "You are turning restraint into an active choice: Penelope protects what she does not yet know while allowing the other agendas in the room to move.",
-  "action.penelope.test_testimony":
-    "You have separated what Penelope wants to learn from what she can honestly know. That keeps the test useful without granting certainty for free.",
-  "action.penelope.order_washing":
-    "You have tied Penelope's aim to an existing household ritual. The answer can emerge through Eurycleia's memory instead of an unexplained revelation.",
-  "action.penelope.clear_room":
-    "You are buying privacy by creating a visible exclusion. That gives Penelope control now and gives Melantho a reason to react later.",
-  "action.penelope.confront_privately":
-    "You have chosen direct knowledge over concealment and accepted that the question itself may expose the secret. That makes the revelation costly.",
+const questionCopyFor = ({
+  pack,
+  scenario,
+}: {
+  pack: PenelopeWorldPackV1;
+  scenario: WorldSimulationScenario;
+}): Record<CreatorTacitKnowledgeQuestionId, { prompt: string; whyItMatters: string }> => {
+  const focalLabel = focalParticipant(scenario).participantLabel;
+  return {
+    desired_outcome: {
+      prompt: pack.creatorInput.tacitKnowledgePrompts.desiredOutcome,
+      whyItMatters: `The same outward move can seek proof, safety, leverage, or mercy. The world needs the gain ${focalLabel} is pursuing before it can judge the action.`,
+    },
+    character_motive: {
+      prompt: pack.creatorInput.tacitKnowledgePrompts.characterMotive,
+      whyItMatters: `A motive turns a convenient move into ${focalLabel}'s decision and tells the world which pressure that character is answering.`,
+    },
+    accepted_cost: {
+      prompt: pack.creatorInput.tacitKnowledgePrompts.acceptedCost,
+      whyItMatters: `A chosen cost lets the world honor the creator's aim without granting ${focalLabel}'s desired result for free.`,
+    },
+  };
 };
 
 const normalize = (value: string): string =>
   value
     .normalize("NFKC")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/gu, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
 
 const meaningfulTokens = (value: string): Set<string> =>
@@ -138,7 +81,6 @@ const meaningfulTokens = (value: string): Set<string> =>
             "could",
             "before",
             "after",
-            "penelope",
           ].includes(token),
       ),
   );
@@ -164,10 +106,12 @@ type RankedAction = {
 };
 
 const rankActions = ({
+  pack,
   scenario,
   originalAction,
   answers,
 }: {
+  pack: PenelopeWorldPackV1;
   scenario: WorldSimulationScenario;
   originalAction: string;
   answers: readonly CreatorTacitKnowledgeAnswer[];
@@ -178,14 +122,20 @@ const rankActions = ({
   const originalTokens = meaningfulTokens(originalAction);
   const answerTokens = meaningfulTokens(answerText);
 
+  const vocabularyByActionId = new Map(
+    pack.creatorInput.actionVocabulary.map((entry) => [entry.actionId, entry]),
+  );
+
   return participantActions(scenario)
     .map((action) => {
+      const vocabulary = vocabularyByActionId.get(action.id);
       const metadataTokens = meaningfulTokens(
         [
           action.label,
           action.summary,
           action.worldMeaning,
           ...action.verbAliases,
+          vocabulary?.creatorFacingLabel ?? "",
         ].join(" "),
       );
       const metadataOverlap = [...metadataTokens].reduce(
@@ -193,14 +143,14 @@ const rankActions = ({
           total + (originalTokens.has(token) ? 2 : 0) + (answerTokens.has(token) ? 1 : 0),
         0,
       );
-      const cueScore = (ACTION_CUES[action.id] ?? []).reduce((total, cue) => {
+      const cueScore = (vocabulary?.cueTerms ?? []).reduce((total, cue) => {
         const normalizedCue = normalize(cue);
         if (!normalizedCue) return total;
         if (originalNormalized.includes(normalizedCue)) return total + 5;
         if (combinedNormalized.includes(normalizedCue)) return total + 3;
         return total;
       }, 0);
-      const matchedSignals = (ACTION_CUES[action.id] ?? []).filter((cue) =>
+      const matchedSignals = (vocabulary?.cueTerms ?? []).filter((cue) =>
         combinedNormalized.includes(normalize(cue)),
       );
       return { action, score: metadataOverlap + cueScore, matchedSignals };
@@ -211,12 +161,22 @@ const rankActions = ({
     );
 };
 
-const alternativesFrom = (ranked: readonly RankedAction[]) =>
-  ranked.slice(0, 3).map(({ action }) => ({
+const alternativesFrom = ({
+  pack,
+  ranked,
+}: {
+  pack: PenelopeWorldPackV1;
+  ranked: readonly RankedAction[];
+}) => {
+  const vocabularyByActionId = new Map(
+    pack.creatorInput.actionVocabulary.map((entry) => [entry.actionId, entry]),
+  );
+  return ranked.slice(0, 3).map(({ action }) => ({
     registeredActionId: action.id,
-    label: action.label,
+    label: vocabularyByActionId.get(action.id)?.creatorFacingLabel ?? action.label,
     why: action.worldMeaning,
   }));
+};
 
 const canonicalVerb = (action: ActionDefinition): string | null =>
   [...new Set(action.verbAliases.map(normalize).filter(Boolean))].sort(
@@ -281,6 +241,7 @@ const canonicalExecutionFor = ({
   action: ActionDefinition;
   originalAction: string;
 }): CanonicalExecutionResult => {
+  const focalLabel = focalParticipant(scenario).participantLabel;
   const verb = canonicalVerb(action);
   if (!verb) {
     return {
@@ -288,7 +249,7 @@ const canonicalExecutionFor = ({
       boundary:
         "The registered action has no stable execution verb, so the world cannot turn this proposal into a consequence safely.",
       nextQuestion:
-        "Which registered physical action should Penelope take before the world resolves the outcome?",
+        `Which registered physical action should ${focalLabel} take before the world resolves the outcome?`,
     };
   }
   if (action.targetMode === "entity") {
@@ -305,7 +266,7 @@ const canonicalExecutionFor = ({
         boundary:
           "This registered action can address more than one entity target, but the creator direction does not authorize one target explicitly.",
         nextQuestion:
-          "Which one permitted person does Penelope physically address or affect with this move?",
+          `Which one permitted person does ${focalLabel} physically address or affect with this move?`,
       };
     }
     return {
@@ -327,7 +288,7 @@ const canonicalExecutionFor = ({
         boundary:
           "This registered action can address more than one zone, but the creator direction does not authorize one destination explicitly.",
         nextQuestion:
-          "Which one permitted place does Penelope physically move to or affect with this move?",
+          `Which one permitted place does ${focalLabel} physically move to or affect with this move?`,
       };
     }
     return {
@@ -371,21 +332,22 @@ const namesNonParticipantActor = (
   );
 };
 
-const unsupportedWorldMechanism = (originalAction: string): string | null => {
+const unsupportedWorldMechanism = ({
+  creatorInput,
+  originalAction,
+}: {
+  creatorInput: PenelopeWorldPackV1["creatorInput"];
+  originalAction: string;
+}): string | null => {
   const normalized = normalize(originalAction);
-  if (/\b(?:magic|magical|spell|enchanted)\b/u.test(normalized)) {
-    return "The current world has no registered magical power, spell, or enchanted object that can produce this result.";
-  }
-  if (/\bmirror\b/u.test(normalized)) {
-    return "The current world has no registered mirror that can reveal identity or hidden knowledge.";
-  }
-  if (/\b(?:zeus|athena|poseidon|god|goddess)\b/u.test(normalized)) {
-    return "The current world has no registered action that lets Penelope command a god or turn divine intervention into a guaranteed result.";
-  }
-  if (/\b(?:teleport|resurrect|time travel|fly the palace)\b/u.test(normalized)) {
-    return "The current world has no premise or causal rule that supports this mechanism.";
-  }
-  return null;
+  return (
+    creatorInput.unsupportedMechanisms.find(({ cueTerms }) =>
+      cueTerms.some((cue) => {
+        const normalizedCue = normalize(cue);
+        return normalizedCue.length > 0 && normalized.includes(normalizedCue);
+      }),
+    )?.explanation ?? null
+  );
 };
 
 const sortedAnswers = (
@@ -402,20 +364,21 @@ const sortedAnswers = (
 };
 
 export const assessCreatorDirection = ({
-  scenario,
+  pack,
   session,
   baseSessionId,
   originalAction,
   answers: answerInput,
   forkBeforeAction,
 }: {
-  scenario: WorldSimulationScenario;
+  pack: PenelopeWorldPackV1;
   session: WorldSimulationSession;
   baseSessionId: string;
   originalAction: string;
   answers: readonly CreatorTacitKnowledgeAnswer[];
   forkBeforeAction: boolean;
 }): CreatorCDialogueResponse => {
+  const scenario = pack.scenario;
   if (session.scenarioId !== scenario.id) {
     throw new Error("Creator direction targets another world scenario.");
   }
@@ -427,42 +390,47 @@ export const assessCreatorDirection = ({
     answers,
     stateChanged: false as const,
   };
+  const missingWorldSupport = unsupportedWorldMechanism({
+    creatorInput: pack.creatorInput,
+    originalAction,
+  });
+  if (missingWorldSupport) {
+    const ranked = rankActions({ pack, scenario, originalAction, answers });
+    return CreatorCDialogueResponseSchema.parse({
+      kind: "creator_expansion_required",
+      ...base,
+      preservedIntent:
+        answerById(answers, "desired_outcome") || originalAction.trim(),
+      missingWorldSupport,
+      nextQuestion: pack.creatorInput.expansionPrompt,
+      alternatives: alternativesFrom({ pack, ranked }),
+    });
+  }
   const missing = QUESTION_ORDER.find(
     (questionId) => !answers.some((answer) => answer.questionId === questionId),
   );
   if (missing) {
+    const questionCopy = questionCopyFor({ pack, scenario });
     return CreatorCDialogueResponseSchema.parse({
       kind: "creator_clarification",
       ...base,
       progress: { answered: answers.length, total: 3 },
-      question: { questionId: missing, ...QUESTION_COPY[missing] },
+      question: { questionId: missing, ...questionCopy[missing] },
     });
   }
 
   const desiredOutcome = answerById(answers, "desired_outcome");
-  const ranked = rankActions({ scenario, originalAction, answers });
-  const alternatives = alternativesFrom(ranked);
+  const focalLabel = focalParticipant(scenario).participantLabel;
+  const ranked = rankActions({ pack, scenario, originalAction, answers });
+  const alternatives = alternativesFrom({ pack, ranked });
   const namedNpc = namesNonParticipantActor(scenario, originalAction);
   if (namedNpc) {
     return CreatorCDialogueResponseSchema.parse({
       kind: "creator_blocked",
       ...base,
       preservedIntent: desiredOutcome,
-      boundary: `${namedNpc.label} is an NPC in this bounded scene. Penelope cannot silently author ${namedNpc.label}'s decision; that character must act through an agenda or a resolved reaction.`,
-      nextQuestion: `What can Penelope do to give ${namedNpc.label} a reason or opportunity to make that choice?`,
-      alternatives,
-    });
-  }
-
-  const missingWorldSupport = unsupportedWorldMechanism(originalAction);
-  if (missingWorldSupport) {
-    return CreatorCDialogueResponseSchema.parse({
-      kind: "creator_expansion_required",
-      ...base,
-      preservedIntent: desiredOutcome,
-      missingWorldSupport,
-      nextQuestion:
-        "Do you want to pursue the same aim through evidence already present in Ithaca, or author a new world fact with a history, limit, and cost?",
+      boundary: `${namedNpc.label} is an NPC in this bounded scene. ${focalLabel} cannot silently author ${namedNpc.label}'s decision; that character must act through an agenda or a resolved reaction.`,
+      nextQuestion: `What can ${focalLabel} do to give ${namedNpc.label} a reason or opportunity to make that choice?`,
       alternatives,
     });
   }
@@ -471,7 +439,7 @@ export const assessCreatorDirection = ({
   const runnerUp = ranked[1];
   if (
     !selected ||
-    selected.matchedSignals.length < 2 ||
+    selected.matchedSignals.length < 1 ||
     selected.score < 8 ||
     (runnerUp && selected.score - runnerUp.score < 3)
   ) {
@@ -480,9 +448,9 @@ export const assessCreatorDirection = ({
       ...base,
       preservedIntent: desiredOutcome,
       boundary:
-        "The intention is clear, but the current scene has no registered Penelope action that can carry the proposed move without inventing its result.",
+        `The intention is clear, but the current scene has no registered ${focalLabel} action that can carry the proposed move without inventing its result.`,
       nextQuestion:
-        "What does Penelope physically do in the room to pursue this aim without assuming the outcome?",
+        `What does ${focalLabel} physically do in this scene to pursue this aim without assuming the outcome?`,
       alternatives,
     });
   }
@@ -505,6 +473,9 @@ export const assessCreatorDirection = ({
   }
   const proposalPayload = {
     schemaVersion: 1,
+    packId: pack.packId,
+    packVersion: pack.packVersion,
+    definitionDigest: pack.definitionDigest,
     scenarioId: scenario.id,
     baseSessionId,
     baseStateHash: session.state.stateHash,
@@ -518,7 +489,8 @@ export const assessCreatorDirection = ({
     kind: "creator_confirmation",
     ...base,
     praise:
-      PRAISE_BY_ACTION[action.id] ??
+      pack.creatorInput.actionVocabulary.find(({ actionId }) => actionId === action.id)
+        ?.praise ??
       `You have given ${action.label} a motive and an accepted cost, so it can enter the world as a cause instead of a guaranteed result.`,
     proposal: {
       proposalHash: sha256Canonical(proposalPayload),
@@ -541,14 +513,15 @@ export const assessCreatorDirection = ({
 };
 
 export const registeredCreatorActionInput = ({
-  scenario,
+  pack,
   actionId,
   canonicalExecution,
 }: {
-  scenario: WorldSimulationScenario;
+  pack: PenelopeWorldPackV1;
   actionId: string;
   canonicalExecution: CreatorCCanonicalExecution;
 }): string => {
+  const scenario = pack.scenario;
   const action = participantActions(scenario).find(({ id }) => id === actionId);
   if (!action) throw new Error("The confirmed creator action is not registered for the focal participant.");
   const verb = canonicalVerb(action);

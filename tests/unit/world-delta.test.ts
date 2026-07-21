@@ -84,6 +84,7 @@ const receipt = ({
     creatorApprovedNotSourceCanonIds: ["reaction.melantho.notice_exclusion"],
     creatorReviewRequiredIds: [],
   },
+  behindCurtainPremises: [],
   behindCurtainRisks: [],
   events,
   creatorDirections: [],

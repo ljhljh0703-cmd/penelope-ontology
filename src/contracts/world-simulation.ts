@@ -15,16 +15,34 @@ const SummarySchema = z.string().trim().min(12).max(600);
 export const SourceLocatorSchema = z
   .object({
     id: IdentifierSchema,
-    work: z.literal("Homer, Odyssey"),
-    book: z.enum(["19", "23"]),
+    // Source identity belongs to the pack, not to this reusable simulation
+    // contract.  Creator-owned packs may use a manuscript, episode, chapter,
+    // or another stable locator instead of a classical work/book pair.
+    work: z.string().trim().min(1).max(160),
+    book: z.string().trim().min(1).max(120),
     passage: z.string().trim().min(3).max(120),
-    url: z.string().url(),
-    sourceStatus: z.literal("primary_source_checked"),
+    url: z.string().url().nullable(),
+    sourceStatus: z.enum([
+      "primary_source_checked",
+      "creator_source_attested",
+    ]),
     checkedAt: z.iso.date(),
     evidenceSummary: SummarySchema,
     usage: z.literal("original_summary_only"),
   })
-  .strict();
+  .strict()
+  .superRefine((locator, context) => {
+    if (
+      locator.sourceStatus === "primary_source_checked" &&
+      locator.url === null
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["url"],
+        message: "A checked public source locator requires a URL.",
+      });
+    }
+  });
 
 const PremiseOriginSchema = z.discriminatedUnion("kind", [
   z
@@ -92,7 +110,10 @@ export const WorldZoneSchema = z
     id: IdentifierSchema,
     name: z.string().trim().min(1).max(80),
     summary: SummarySchema,
-    connectedZoneIds: z.array(IdentifierSchema).min(1).max(2),
+    // A one-room scene is a valid bounded world. Connections are descriptive
+    // topology only; action legality and all movement remain validated through
+    // declared actor/zone references below.
+    connectedZoneIds: z.array(IdentifierSchema).max(7),
   })
   .strict()
   .superRefine((zone, context) => {
@@ -480,12 +501,9 @@ export const PressureClockSchema = z
 export const EndingRuleSchema = z
   .object({
     id: IdentifierSchema,
-    kind: z.enum([
-      "canon_contained",
-      "controlled_discovery",
-      "plan_compromised",
-      "timeout",
-    ]),
+    // Packs may name their own terminal states. `timeout` remains the one
+    // reserved kind so every bounded simulation still closes deterministically.
+    kind: IdentifierSchema,
     priority: z.number().int().min(1).max(100),
     summary: SummarySchema,
     provenance: SimulationRuleProvenanceSchema,
@@ -539,9 +557,9 @@ export const WorldSimulationScenarioSchema = z
       .int()
       .min(1)
       .max(MAX_REACTIONS_PER_TURN),
-    sourceLocators: z.array(SourceLocatorSchema).min(2).max(6),
+    sourceLocators: z.array(SourceLocatorSchema).min(1).max(6),
     premises: z.array(CanonicalPremiseSchema).min(1).max(24),
-    zones: z.array(WorldZoneSchema).length(3),
+    zones: z.array(WorldZoneSchema).min(1).max(8),
     actors: z.array(WorldActorSchema).min(2).max(6),
     actions: z.array(ActionDefinitionSchema).min(2).max(18),
     initialPrivateKnowledge: z.array(PrivateKnowledgeStateSchema).min(2).max(6),
@@ -557,7 +575,7 @@ export const WorldSimulationScenarioSchema = z
       .array(NarrationSpeechDirectiveSchema)
       .max(8)
       .default([]),
-    endingRules: z.array(EndingRuleSchema).length(4),
+    endingRules: z.array(EndingRuleSchema).min(1).max(6),
   })
   .strict()
   .superRefine((scenario, context) => {
@@ -1029,25 +1047,20 @@ export const WorldSimulationScenarioSchema = z
       }
     }
 
-    const expectedEndingKinds = [
-      "canon_contained",
-      "controlled_discovery",
-      "plan_compromised",
-      "timeout",
-    ];
     addDuplicateIssues(
       scenario.endingRules.map(({ kind }) => kind),
       "ending rule kind",
       context,
     );
-    for (const kind of expectedEndingKinds) {
-      if (!scenario.endingRules.some((ending) => ending.kind === kind)) {
-        context.addIssue({
-          code: "custom",
-          path: ["endingRules"],
-          message: `Missing required ending kind: ${kind}`,
-        });
-      }
+    const timeoutEndings = scenario.endingRules.filter(
+      ({ kind }) => kind === "timeout",
+    );
+    if (timeoutEndings.length !== 1) {
+      context.addIssue({
+        code: "custom",
+        path: ["endingRules"],
+        message: "A scenario must define exactly one timeout ending kind.",
+      });
     }
     for (const [endingIndex, ending] of scenario.endingRules.entries()) {
       for (const premiseId of ending.provenance.premiseIds) {

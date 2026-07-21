@@ -1,48 +1,57 @@
-# Demo narration — final recording script
+# Demo narration — portable-world cut
 
-Target: 2:25–2:35 at a calm pace, leaving at least 25 seconds before the limit. Record in English with the product visible throughout.
+Target: 2:30–2:45 at a clear pace. Record in English with the product visible throughout. Keep at least fifteen seconds below the three-minute limit.
 
 Project name: Penelope Ontology
 
 ## Script
 
-**0:00–0:15 — Hook**
+**0:00–0:12 — Give everyone the myth**
 
-Odysseus has returned to Ithaca in disguise. In Book Nineteen, his old nurse is about to recognize a scar on his leg. Penelope does not know who he is. What happens if the creator changes just one choice?
+Odysseus returns to Ithaca in disguise. In Book Nineteen, his old nurse is about to recognize his scar. Penelope still does not know him. What changes if the creator makes one different choice?
 
-**0:15–0:35 — The world before the choice**
+**0:12–0:25 — State the product**
 
-This is Penelope Ontology: a bounded causal world simulator for creators. The scene starts with four people who know different things and want different things. I can inspect the world state, but the prose only receives what the focal character can honestly perceive.
+This is Penelope Ontology, a portable causal story simulator. It starts from a bounded World Pack instead of an empty prompt. Characters hold separate knowledge, and the creator can inspect the rules behind the scene.
 
-**0:35–1:00 — Creator direction C**
+**0:25–0:45 — Creator direction C**
 
-I choose C and ask Penelope to send Melantho away before the interview. The system does not quietly turn that into a prepared option. It asks what Penelope is trying to gain, why she acts now, and what cost she accepts. I confirm the resulting world-compatible execution.
+I choose C and ask Penelope to send Melantho away. The system does not replace my idea with a prepared option. It asks what Penelope wants, why she acts now, and what cost she accepts. I inspect the proposed execution, then confirm its state-bound hash.
 
-**1:00–1:24 — World reaction**
+**0:45–1:05 — The world answers**
 
-Melantho leaves the interview, but exclusion is itself a visible event. World Pulse shows her movement, the rise in pressure, and the rule that fired. Her NPC card still shows a separate agenda and private knowledge boundary. When Eurycleia reacts to the scar, Melantho can treat that disturbance as evidence worth reporting. I did not just remove a witness. I created an investigator.
+Melantho leaves, but she notices the exclusion. A declared reaction moves her offstage and raises the pressure. She still does not know the stranger is Odysseus. When Eurycleia reacts to the scar, the disturbance gives Melantho something to report. I removed a witness and created an investigator.
 
-**1:24–1:48 — Fork and consequence**
+**1:05–1:23 — Same past, different consequence**
 
-This branch ends Plan Compromised. I return to the same checkpoint and take the containment route: Eurycleia recognizes Odysseus, he contains the reaction, and that world line reaches Canon Contained. Fork Compare shows what changed between them: knowledge, position, pressure, fired rules, latent risk, and ending. The difference is not a rewritten paragraph. It is a changed chain of consequence.
+This line ends Plan Compromised. From the same checkpoint, I take the containment route. Eurycleia recognizes Odysseus, he contains the reaction, and the line reaches Canon Contained. Fork Compare shows changed knowledge, movement, pressure, risk, and ending—not paragraph similarity.
 
-**1:48–2:04 — Creator authority**
+**1:23–1:38 — Prove that Ithaca is not the engine**
 
-Behind-the-curtain receipts show unresolved risks without leaking them into the scene as facts. A rejected narration changes neither world state nor checkpoint. The typed world remains authoritative.
+Now I switch to The Wonderful Wizard of Oz. The cast, secret, actions, reactions, and endings all change. The same runtime continues without carrying Odyssey names or rules into the room.
 
-**2:04–2:28 — Codex and GPT-5.6**
+**1:38–1:55 — Bring a creator-owned world**
 
-I defined the story problem, causal rules, writing judgment, and product scope. Codex converted them into contracts, validators, UI, adversarial tests, and release evidence. On the live local path, two weak drafts were rejected without changing the world; four final candidates passed the harness unchanged. The lane requested GPT-5.6 Terra through Codex CLI, though the transport did not report the serving model. Deterministic code owns validation, canon, and state change.
+I can also import The Lantern Ledger, a creator-attested original sample. The server validates and seals it with its own ID, version, and digest, then runs it through the same workbench. Imported packs stay temporary; sensitive manuscripts belong in a local copy.
 
-**2:28–2:36 — Close**
+**1:55–2:10 — Creator authority**
 
-Penelope Ontology lets creators fork the world, not just the paragraph.
+The curtain ledger explains hidden facts and risks to the creator without inserting them into reader prose. A rejected narration or unconfirmed C changes neither world state nor checkpoint. Typed state remains authoritative.
+
+**2:10–2:34 — Codex and GPT-5.6**
+
+I defined the story problem, causal rules, writing judgment, and scope. Codex turned those decisions into contracts, validators, interfaces, adversarial tests, and release evidence. The local narration lane requested GPT-5.6 Terra through Codex CLI. Because that transport did not report the serving identity, I do not claim it as verified. Deterministic code owns validation, canon, and state change.
+
+**2:34–2:40 — Close**
+
+Penelope lets creators fork the world, not just the paragraph.
 
 ## Recording gate
 
-- Keep the final cut below three minutes and upload it to YouTube as public or unlisted.
-- Show `/world` first; `/table` is supporting evidence, not the product hero.
+- Preload the three C answers and the public-safe creator-pack JSON; cut typing and loading pauses.
+- Show `/world` first. `/table` is supporting evidence, not the product hero.
 - Keep fixture and Codex-lane labels visible and accurate.
-- Do not claim independently reported serving-model identity or a Responses API trace.
-- Do not show keys, tokens, raw private traces, local paths, private Codex conversations, or the `/feedback` ID.
-- Reopen the final YouTube link in a private browser window before submission.
+- Describe NPC behavior as declared causal reactions, not autonomous scheduling while the creator is idle.
+- Do not claim that arbitrary prose becomes a valid pack, that imported data is confidential, or that the hosted demo persists creator work.
+- Do not show keys, tokens, raw private traces, local paths, private Codex conversations, unpublished manuscripts, or the `/feedback` ID.
+- Upload the final video as public or unlisted, then reopen it in a private browser window and verify the duration and narration.

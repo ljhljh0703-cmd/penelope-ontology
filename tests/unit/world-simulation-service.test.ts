@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import styleProfileJson from "@/_dev/dispatch-2026-07-18/contracts/PENELOPE-ENGLISH-STYLE-PROFILE.json";
 import { getOdysseyBook19WorldSimulation } from "@/src/adapters/fixtures/odyssey-world-simulation";
+import { getOdysseyBook19WorldPack } from "@/src/adapters/world-packs/odyssey-book19";
 import {
   fixtureNarrationCritic,
   fixtureNarrationRenderer,
@@ -8,6 +9,7 @@ import {
 import {
   buildWorldCreatorReceipt,
   buildWorldNarrationPipelineArtifacts,
+  buildWorldParticipantView,
   buildWorldSessionProjections,
   buildWorldVisibleSceneMemory,
   runWorldSessionNarrationPipeline,
@@ -15,8 +17,10 @@ import {
 } from "@/src/application/world-simulation-service";
 import {
   projectModelNarrationOutputForWorldApi,
+  WorldNarrationProjectionSchema,
   WorldParticipantSessionViewSchema,
 } from "@/src/contracts/world-api";
+import { sealPenelopeWorldPack } from "@/src/contracts/penelope-world-pack";
 import { PenelopeEnglishStyleProfileSchema } from "@/src/contracts/world-narrator";
 import {
   createWorldSimulationSession,
@@ -24,9 +28,97 @@ import {
 } from "@/src/domain/world-runtime";
 
 const scenario = getOdysseyBook19WorldSimulation();
+const worldPack = getOdysseyBook19WorldPack();
 const styleProfile = PenelopeEnglishStyleProfileSchema.parse(styleProfileJson);
 
 describe("world simulation service privacy boundary", () => {
+  it("rejects a sealed pack when its scenario id does not match the active simulation", () => {
+    const initial = createWorldSimulationSession({ scenario });
+    const { definitionDigest, ...definition } = worldPack;
+    void definitionDigest;
+    const scenarioId = "scenario.wrong_pack";
+    const foreignPack = sealPenelopeWorldPack({
+      ...structuredClone(definition),
+      scenario: {
+        ...definition.scenario,
+        id: scenarioId,
+        creatorRuleApprovalReceipts:
+          definition.scenario.creatorRuleApprovalReceipts.map((receipt) => ({
+            ...receipt,
+            scenarioId,
+          })),
+      },
+    });
+
+    expect(() =>
+      buildWorldNarrationPipelineArtifacts({
+        scenario,
+        worldPack: foreignPack,
+        session: initial,
+        receipt: null,
+        styleProfile,
+      }),
+    ).toThrow(/does not belong to this simulation scenario/u);
+  });
+
+  it("keeps an imported creator pack active even when it is absent from the public selector", () => {
+    const { definitionDigest, ...definition } = worldPack;
+    void definitionDigest;
+    const scenarioId = "scenario.creator.private_rehearsal";
+    const importedPack = sealPenelopeWorldPack({
+      ...structuredClone(definition),
+      packId: "pack.creator.private_rehearsal",
+      packVersion: "1.0.1",
+      provenance: {
+        kind: "creator_owned",
+        sourceTitle: "Creator rehearsal",
+        sourceEdition: "private working draft",
+        sourceUrl: null,
+        rightsNote: "Creator-owned material remains inside this session pack.",
+        sourceStatus: "creator_attested",
+      },
+      presentation: {
+        ...definition.presentation,
+        publicTitle: "Creator rehearsal",
+        demoOrder: 99,
+      },
+      scenario: {
+        ...definition.scenario,
+        id: scenarioId,
+        creatorRuleApprovalReceipts:
+          definition.scenario.creatorRuleApprovalReceipts.map((receipt) => ({
+            ...receipt,
+            scenarioId,
+          })),
+      },
+    });
+    const importedScenario = importedPack.scenario;
+    const session = createWorldSimulationSession({ scenario: importedScenario });
+    const view = buildWorldParticipantView({
+      scenario: importedScenario,
+      worldPack: importedPack,
+      session,
+      sessionId: crypto.randomUUID(),
+      parentCheckpointId: null,
+      forked: false,
+      transport: "fixture",
+      receipt: null,
+      narration: WorldNarrationProjectionSchema.parse({
+        format: "english_prose_paragraphs",
+        paragraphs: [{ paragraphId: "paragraph.test", text: "The rehearsal waits." }],
+        prose: "The rehearsal waits.",
+      }),
+      trace: { provenance: "fixture", adapterId: "test.private_pack" },
+    });
+
+    expect(view.worldPack.packId).toBe("pack.creator.private_rehearsal");
+    expect(view.availableWorldPacks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ packId: "pack.creator.private_rehearsal" }),
+      ]),
+    );
+  });
+
   it("derives continuation memory from registered visible events, not model prose", () => {
     const initial = createWorldSimulationSession({ scenario });
     const result = runWorldSimulationTurn({
@@ -36,6 +128,7 @@ describe("world simulation service privacy boundary", () => {
     });
     const memory = buildWorldVisibleSceneMemory({
       scenario,
+      worldPack,
       receipt: result.receipt,
     });
 
@@ -48,6 +141,7 @@ describe("world simulation service privacy boundary", () => {
     const initial = createWorldSimulationSession({ scenario });
     const before = buildWorldNarrationPipelineArtifacts({
       scenario,
+      worldPack,
       session: initial,
       receipt: null,
       styleProfile,
@@ -76,6 +170,7 @@ describe("world simulation service privacy boundary", () => {
     });
     const after = buildWorldNarrationPipelineArtifacts({
       scenario,
+      worldPack,
       session: discovery.session,
       receipt: discovery.receipt,
       styleProfile,
@@ -104,11 +199,13 @@ describe("world simulation service privacy boundary", () => {
     });
     const creatorReceipt = buildWorldCreatorReceipt({
       scenario,
+      worldPack,
       session: disclosure.session,
       receipt: disclosure.receipt,
     });
     const artifacts = buildWorldNarrationPipelineArtifacts({
       scenario,
+      worldPack,
       session: disclosure.session,
       receipt: disclosure.receipt,
       styleProfile,
@@ -128,6 +225,16 @@ describe("world simulation service privacy boundary", () => {
         ],
       },
     ]);
+    expect(creatorReceipt.behindCurtainPremises).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          premiseId: "premise.stranger_identity",
+          approvalStatus: "source_verified",
+          sourceGrounding: expect.stringContaining("Odyssey"),
+          whyWithheld: expect.stringContaining("concealed fact directly"),
+        }),
+      ]),
+    );
     expect(JSON.stringify(artifacts.inputEnvelope.modelFacing)).not.toContain(
       "entity.melantho",
     );
@@ -140,6 +247,7 @@ describe("world simulation service privacy boundary", () => {
     const session = createWorldSimulationSession({ scenario });
     const narrated = await runWorldSessionNarrationPipeline({
       scenario,
+      worldPack,
       session,
       receipt: null,
       styleProfile,
@@ -157,6 +265,7 @@ describe("world simulation service privacy boundary", () => {
     }
     const projections = buildWorldSessionProjections({
       scenario,
+      worldPack,
       session,
       sessionId: crypto.randomUUID(),
       parentCheckpointId: null,
@@ -168,6 +277,9 @@ describe("world simulation service privacy boundary", () => {
     });
     const participantJson = JSON.stringify(projections.participantView);
     const creatorJson = JSON.stringify(projections.creatorReceipt);
+    const concealedIdentity = projections.creatorReceipt.behindCurtainPremises.find(
+      ({ premiseId }) => premiseId === "premise.stranger_identity",
+    );
 
     expect(projections.participantView).not.toHaveProperty("creatorReceipt");
     expect(
@@ -184,8 +296,12 @@ describe("world simulation service privacy boundary", () => {
     expect(participantJson).not.toMatch(
       /disguised odysseus|premise\.stranger_identity/iu,
     );
+    expect(concealedIdentity).toBeDefined();
+    expect(participantJson).not.toContain(concealedIdentity?.summary ?? "");
+    expect(projections.participantView).not.toHaveProperty("behindCurtainPremises");
     expect(creatorJson).toContain("Disguised Odysseus");
     expect(creatorJson).toContain("premise.stranger_identity");
+    expect(creatorJson).toContain("concealed fact directly");
     expect(
       projections.creatorReceipt.ruleReview.creatorApprovedNotSourceCanonIds,
     ).toContain("ending.controlled_discovery");

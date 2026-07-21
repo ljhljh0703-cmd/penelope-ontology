@@ -1,0 +1,438 @@
+{
+  "format": "penelope_world_pack",
+  "schemaVersion": 1,
+  "packId": "pack.creator_owned.lantern_ledger",
+  "packVersion": "1.0.0",
+  "provenance": {
+    "kind": "creator_owned",
+    "sourceTitle": "The Lantern Ledger",
+    "sourceEdition": "Creator-owned starter rehearsal, version 1.0",
+    "sourceUrl": null,
+    "rightsNote": "All characters, places, events, and wording in this starter pack are original creator-owned demonstration material.",
+    "sourceStatus": "creator_attested"
+  },
+  "presentation": {
+    "publicTitle": "The Lantern Ledger",
+    "publicSubtitle": "A creator-owned one-room rehearsal",
+    "hook": "A lantern, a sealed ledger, and one decision before dawn.",
+    "sourceEyebrow": "Creator-owned starter world pack",
+    "sourceIntroduction": "In a lantern room above a sleeping harbor, Elian and Mira decide whether a found ledger should be opened before the beacon goes dark.",
+    "productThesis": "Penelope rehearses declared causes and consequences without borrowing anyone else's world.",
+    "participantSummary": "Elian can offer the recovered lantern or study the ledger while Mira responds from her own guarded agenda.",
+    "guidedCreatorMove": {
+      "actionText": "Elian offers Mira the recovered lantern before opening the ledger.",
+      "helperText": "Test whether a gesture of trust earns a route through the harbor before the room closes for dawn.",
+      "forkBeforeAction": false
+    },
+    "defaultLocale": "en",
+    "availableLocales": ["en"],
+    "demoOrder": 2
+  },
+  "creatorInput": {
+    "recommendedActionPolicies": [
+      {
+        "whenFlagId": "flag.shutter_closed",
+        "whenFlagValue": false,
+        "actionIds": ["action.elian.offer_lantern", "action.elian.study_ledger"]
+      },
+      {
+        "whenFlagId": "flag.shutter_closed",
+        "whenFlagValue": true,
+        "actionIds": ["action.elian.study_ledger", "action.elian.offer_lantern"]
+      }
+    ],
+    "actionVocabulary": [
+      {
+        "actionId": "action.elian.offer_lantern",
+        "creatorFacingLabel": "Offer the lantern",
+        "cueTerms": ["offer", "lantern", "give", "trust"],
+        "praise": "You make trust a visible choice and let Mira answer it from her own priorities."
+      },
+      {
+        "actionId": "action.elian.study_ledger",
+        "creatorFacingLabel": "Study the ledger",
+        "cueTerms": ["study", "ledger", "read", "inspect"],
+        "praise": "You spend the room's remaining time on interpretation, accepting that Mira may protect the exit."
+      }
+    ],
+    "tacitKnowledgePrompts": {
+      "desiredOutcome": "What should Elian gain before the beacon fades?",
+      "characterMotive": "Why does Elian choose trust or study in this narrow window?",
+      "acceptedCost": "What will Elian risk if the shutter closes before a route is agreed?"
+    },
+    "unsupportedMechanisms": [
+      {
+        "cueTerms": ["teleport", "summon", "mind read"],
+        "explanation": "This room has no registered power that can bypass the lantern, ledger, or locked shutter."
+      }
+    ],
+    "expansionPrompt": "Do you want to use the declared objects in the room, or author a new fact with a limit and cost?"
+  },
+  "identityPolicy": {
+    "actorAliases": [],
+    "hiddenKnowledge": [
+      {
+        "premiseId": "premise.mira_knows_signal_route",
+        "privateKnowledgeId": "private.mira_signal_route",
+        "withheldPremiseIds": ["premise.mira_knows_signal_route"],
+        "forbiddenPatterns": ["Mira already knows the signal route", "Mira knows the route"]
+      }
+    ],
+    "creatorMayInspectHiddenState": true
+  },
+  "renderPolicy": {
+    "tense": "present",
+    "pointOfView": "limited_third",
+    "sceneModes": ["setup", "pressure", "ending"],
+    "prohibitedTerms": ["prompt", "model", "system", "algorithm"],
+    "openingEvent": {
+      "eventId": "event.opening.lantern_room",
+      "source": { "kind": "world", "reactionRuleId": "reaction.opening" },
+      "actionId": "action.opening",
+      "summary": "The harbor beacon weakens outside the lantern room while a sealed ledger waits between Elian and Mira.",
+      "effects": [],
+      "visibleToEntityIds": ["entity.elian", "entity.mira"]
+    },
+    "unsupportedActionText": "The room offers no path for that attempt. The ledger stays sealed, and the dim beacon continues its slow pulse.",
+    "zoneActiveText": "The lantern room remains closed above the harbor.",
+    "zoneCompleteText": "The lantern room falls quiet as dawn reaches the shutter.",
+    "actorRenderTextById": {
+      "entity.elian": "Elian holds the recovered lantern.",
+      "entity.mira": "Mira guards the iron shutter."
+    },
+    "registeredEventTextByActionId": {
+      "action.opening": "The lantern room holds its breath above the harbor.",
+      "action.elian.offer_lantern": "Elian offers Mira the recovered lantern.",
+      "action.elian.study_ledger": "Elian studies the sealed ledger.",
+      "action.mira.share_route": "Mira shares the signal route.",
+      "action.mira.close_shutter": "Mira closes the shutter against the dawn."
+    },
+    "currentEventTextByActionId": {
+      "action.opening": "The harbor beacon fades.",
+      "action.elian.offer_lantern": "Elian offers Mira the lantern.",
+      "action.elian.study_ledger": "Elian studies the wax seal."
+    },
+    "currentReactionTextByRuleId": {
+      "reaction.mira.share_route": "Mira names the signal route.",
+      "reaction.mira.close_shutter": "Mira shuts the iron shutter."
+    },
+    "currentTurnConsequenceTextByActionId": {
+      "action.elian.offer_lantern": "Trust gives Mira a reason to answer.",
+      "action.elian.study_ledger": "Dawn advances while the seal holds."
+    },
+    "registeredEndingTextById": {
+      "ending.route_shared": "Mira shares the route before the beacon fades.",
+      "ending.shutter_closed": "The shutter closes and the ledger remains unresolved.",
+      "ending.timeout": "Dawn ends the short rehearsal."
+    },
+    "currentEndingTextById": {
+      "ending.route_shared": "Elian leaves with Mira's route.",
+      "ending.shutter_closed": "The ledger waits behind the shutter.",
+      "ending.timeout": "Dawn reaches the glass."
+    },
+    "participantEndingTextByKind": {
+      "route_shared": "Trust produces a usable route, but it also creates a future obligation.",
+      "shutter_closed": "Protection wins the immediate moment and postpones the ledger's answer.",
+      "timeout": "The short rehearsal ends with its unresolved objects and consequences intact."
+    },
+    "lockedEventTextByActionId": {},
+    "criticalFlagIds": ["flag.shutter_closed"],
+    "setupStopActorId": "entity.mira",
+    "endingStopActorId": "entity.elian"
+  },
+  "scenario": {
+    "id": "scenario.creator_owned.lantern_ledger",
+    "title": "The Lantern Ledger",
+    "summary": "A two-turn rehearsal in one lantern room asks whether Elian can earn Mira's signal route before the harbor beacon fades and dawn closes the shutter.",
+    "focalParticipantEntityId": "entity.elian",
+    "maxTurns": 2,
+    "maxReactionsPerTurn": 1,
+    "sourceLocators": [
+      {
+        "id": "source.creator.lantern_ledger",
+        "work": "Creator-Owned Starter Pack",
+        "book": "Lantern Room Rehearsal",
+        "passage": "Starter scene version 1",
+        "url": null,
+        "sourceStatus": "creator_source_attested",
+        "checkedAt": "2026-07-21",
+        "evidenceSummary": "The creator attests that this compact lantern-room scene, cast, and causal setup are original demonstration material.",
+        "usage": "original_summary_only"
+      }
+    ],
+    "premises": [
+      {
+        "id": "premise.mira_knows_signal_route",
+        "summary": "Mira knows a quiet signal route through the harbor, but she shares it only when Elian shows that the recovered lantern will not be used carelessly.",
+        "textForm": "original_summary",
+        "origin": { "kind": "creator", "creatorDecisionId": "decision.creator.lantern_ledger" },
+        "meaning": "Mira's route is private knowledge with a declared social condition, not a reward granted by an unsupported request.",
+        "recognizerEntityIds": ["entity.mira"],
+        "stakes": [
+          {
+            "id": "stake.route_trust",
+            "summary": "Sharing the route gives Elian a way forward while making Mira's trust visible and consequential.",
+            "affectedEntityIds": ["entity.elian", "entity.mira"]
+          }
+        ],
+        "approvalState": "creator_approved"
+      },
+      {
+        "id": "premise.ledger_is_sealed",
+        "summary": "The ledger remains sealed during this rehearsal, so studying it can consume attention but cannot reveal a new route by itself.",
+        "textForm": "original_summary",
+        "origin": { "kind": "creator", "creatorDecisionId": "decision.creator.lantern_ledger" },
+        "meaning": "The ledger supplies pressure and a future question without replacing Mira's agency in the present room.",
+        "recognizerEntityIds": ["entity.elian", "entity.mira"],
+        "stakes": [
+          {
+            "id": "stake.ledger_delay",
+            "summary": "Time spent reading the seal may protect curiosity but lets the room's closing condition advance.",
+            "affectedEntityIds": ["entity.elian", "entity.mira"]
+          }
+        ],
+        "approvalState": "creator_approved"
+      }
+    ],
+    "zones": [
+      {
+        "id": "zone.lantern_room",
+        "name": "Lantern Room",
+        "summary": "A small beacon chamber above the harbor holds one table, one shutter, a recovered lantern, and a sealed ledger.",
+        "connectedZoneIds": []
+      }
+    ],
+    "actors": [
+      {
+        "id": "entity.elian",
+        "name": "Elian",
+        "participantLabel": "Elian",
+        "simulationRole": "focal_participant",
+        "publicDescription": "A careful courier who brought a recovered lantern upstairs and wants a route before the beacon loses its last useful light.",
+        "currentZoneId": "zone.lantern_room",
+        "agenda": {
+          "desire": "Earn a reliable way through the harbor before dawn without forcing Mira to abandon her own safeguards.",
+          "avoids": "Avoid treating the sealed ledger or Mira's private route as a shortcut that can be claimed without cost.",
+          "priority": 100,
+          "state": "active",
+          "defaultActionId": "action.elian.offer_lantern"
+        }
+      },
+      {
+        "id": "entity.mira",
+        "name": "Mira",
+        "participantLabel": "Mira",
+        "simulationRole": "npc",
+        "publicDescription": "The lantern keeper protects the beacon room and tests whether Elian understands that a route can endanger people as well as save time.",
+        "currentZoneId": "zone.lantern_room",
+        "agenda": {
+          "desire": "Keep the signal route from becoming a careless promise while deciding whether Elian has earned a measured answer.",
+          "avoids": "Avoid leaving the shutter open when dawn can turn the beacon into an invitation for unwanted attention.",
+          "priority": 90,
+          "state": "active",
+          "defaultActionId": "action.mira.close_shutter"
+        }
+      }
+    ],
+    "actions": [
+      {
+        "id": "action.elian.offer_lantern",
+        "label": "Offer the lantern",
+        "summary": "Elian offers Mira the recovered lantern and makes his willingness to share responsibility visible.",
+        "verbAliases": ["offer lantern", "give lantern", "offer the lantern"],
+        "actorMode": "participant",
+        "allowedActorEntityIds": ["entity.elian"],
+        "targetMode": "entity",
+        "allowedTargetEntityIds": ["entity.mira"],
+        "allowedZoneIds": [],
+        "cost": { "turns": 1 },
+        "worldMeaning": "A visible offer can satisfy Mira's declared condition for sharing a route, but it cannot erase the obligation that follows."
+      },
+      {
+        "id": "action.elian.study_ledger",
+        "label": "Study the ledger",
+        "summary": "Elian studies the wax seal and marginal marks without breaking the ledger open.",
+        "verbAliases": ["study ledger", "read ledger", "inspect ledger"],
+        "actorMode": "participant",
+        "allowedActorEntityIds": ["entity.elian"],
+        "targetMode": "none",
+        "allowedTargetEntityIds": [],
+        "allowedZoneIds": [],
+        "cost": { "turns": 1 },
+        "worldMeaning": "Study makes the sealed object more immediate but cannot substitute for the route Mira controls."
+      },
+      {
+        "id": "action.mira.share_route",
+        "label": "Share the signal route",
+        "summary": "Mira accepts the lantern and names the quiet route that keeps the harbor beacon from drawing attention.",
+        "verbAliases": ["share route"],
+        "actorMode": "npc",
+        "allowedActorEntityIds": ["entity.mira"],
+        "targetMode": "entity",
+        "allowedTargetEntityIds": ["entity.elian"],
+        "allowedZoneIds": [],
+        "cost": { "turns": 1 },
+        "worldMeaning": "Mira's answer grants bounded knowledge because the demonstrated offer meets her stated condition."
+      },
+      {
+        "id": "action.mira.close_shutter",
+        "label": "Close the shutter",
+        "summary": "Mira closes the iron shutter before dawn turns the beacon room into a visible target.",
+        "verbAliases": ["close shutter"],
+        "actorMode": "npc",
+        "allowedActorEntityIds": ["entity.mira"],
+        "targetMode": "none",
+        "allowedTargetEntityIds": [],
+        "allowedZoneIds": [],
+        "cost": { "turns": 1 },
+        "worldMeaning": "Closing the shutter protects the room while ending the short window for a route decision."
+      }
+    ],
+    "initialPrivateKnowledge": [
+      { "entityId": "entity.elian", "premiseIds": ["premise.ledger_is_sealed"] },
+      { "entityId": "entity.mira", "premiseIds": ["premise.mira_knows_signal_route", "premise.ledger_is_sealed"] }
+    ],
+    "initialFlags": [
+      { "id": "flag.shutter_closed", "value": false }
+    ],
+    "clocks": [
+      { "id": "clock.dawn", "label": "Dawn", "initialValue": 0, "maxValue": 2 }
+    ],
+    "creatorRuleApprovalReceipts": [
+      {
+        "binding": {
+          "receiptId": "receipt.creator.lantern_ledger.v1",
+          "subjectFingerprint": "8c9b43320e5795f04c7a19f00c60371763b9a725bb266597f59a725813515a88",
+          "issuer": "creator",
+          "issuerAuthorityId": "creator.lantern_ledger_authority"
+        },
+        "scenarioId": "scenario.creator_owned.lantern_ledger",
+        "approvedOn": "2026-07-21",
+        "decisions": [
+          {
+            "decisionId": "decision.creator.lantern_ledger_rules",
+            "action": "approve",
+            "ruleIds": ["reaction.mira.share_route", "reaction.mira.close_shutter", "ending.route_shared", "ending.shutter_closed", "ending.timeout"]
+          }
+        ]
+      }
+    ],
+    "creatorRuleApprovalAuthorityRegistry": {
+      "creatorAuthorityIds": ["creator.lantern_ledger_authority"],
+      "trustedReceipts": [
+        {
+          "receiptId": "receipt.creator.lantern_ledger.v1",
+          "subjectFingerprint": "8c9b43320e5795f04c7a19f00c60371763b9a725bb266597f59a725813515a88",
+          "issuer": "creator",
+          "issuerAuthorityId": "creator.lantern_ledger_authority",
+          "payloadFingerprint": "4553038b9515006f7b9f612d96ea0294d00060fba465130492e6ebe0ada9fd10"
+        }
+      ]
+    },
+    "reactionRules": [
+      {
+        "id": "reaction.mira.share_route",
+        "actorEntityId": "entity.mira",
+        "actionId": "action.mira.share_route",
+        "priority": 100,
+        "summary": "Mira shares the signal route after Elian offers the recovered lantern and accepts shared responsibility for its use.",
+        "observableSummary": "Mira accepts the lantern and names the signal route.",
+        "provenance": {
+          "basis": "creator_authored",
+          "premiseIds": ["premise.mira_knows_signal_route"],
+          "reviewState": "creator_approved",
+          "canonStatus": "not_source_canon",
+          "creatorApprovalReceiptId": "receipt.creator.lantern_ledger.v1",
+          "creatorDecisionId": "decision.creator.lantern_ledger_rules"
+        },
+        "conditions": [
+          { "kind": "action_observed", "actionId": "action.elian.offer_lantern", "actorEntityId": "entity.elian" }
+        ],
+        "effects": [
+          { "kind": "grant_knowledge", "entityId": "entity.elian", "premiseId": "premise.mira_knows_signal_route" }
+        ],
+        "once": true
+      },
+      {
+        "id": "reaction.mira.close_shutter",
+        "actorEntityId": "entity.mira",
+        "actionId": "action.mira.close_shutter",
+        "priority": 90,
+        "summary": "Mira closes the shutter when Elian spends the first turn studying the ledger instead of showing a shared commitment.",
+        "observableSummary": "Mira closes the shutter before dawn can make the room visible.",
+        "provenance": {
+          "basis": "creator_authored",
+          "premiseIds": ["premise.ledger_is_sealed"],
+          "reviewState": "creator_approved",
+          "canonStatus": "not_source_canon",
+          "creatorApprovalReceiptId": "receipt.creator.lantern_ledger.v1",
+          "creatorDecisionId": "decision.creator.lantern_ledger_rules"
+        },
+        "conditions": [
+          { "kind": "action_observed", "actionId": "action.elian.study_ledger", "actorEntityId": "entity.elian" }
+        ],
+        "effects": [
+          { "kind": "set_flag", "flagId": "flag.shutter_closed", "value": true }
+        ],
+        "once": true
+      }
+    ],
+    "narrationSpeechDirectives": [],
+    "endingRules": [
+      {
+        "id": "ending.route_shared",
+        "kind": "route_shared",
+        "priority": 100,
+        "summary": "The rehearsal ends when Elian has the route from Mira and must carry the obligation created by that trust.",
+        "provenance": {
+          "basis": "creator_authored",
+          "premiseIds": ["premise.mira_knows_signal_route"],
+          "reviewState": "creator_approved",
+          "canonStatus": "not_source_canon",
+          "creatorApprovalReceiptId": "receipt.creator.lantern_ledger.v1",
+          "creatorDecisionId": "decision.creator.lantern_ledger_rules"
+        },
+        "conditions": [
+          { "kind": "premise_known", "entityId": "entity.elian", "premiseId": "premise.mira_knows_signal_route", "expected": true }
+        ],
+        "terminal": true
+      },
+      {
+        "id": "ending.shutter_closed",
+        "kind": "shutter_closed",
+        "priority": 90,
+        "summary": "The rehearsal ends when Mira secures the shutter, leaving the ledger closed for another night.",
+        "provenance": {
+          "basis": "creator_authored",
+          "premiseIds": ["premise.ledger_is_sealed"],
+          "reviewState": "creator_approved",
+          "canonStatus": "not_source_canon",
+          "creatorApprovalReceiptId": "receipt.creator.lantern_ledger.v1",
+          "creatorDecisionId": "decision.creator.lantern_ledger_rules"
+        },
+        "conditions": [
+          { "kind": "flag_equals", "flagId": "flag.shutter_closed", "value": true }
+        ],
+        "terminal": true
+      },
+      {
+        "id": "ending.timeout",
+        "kind": "timeout",
+        "priority": 1,
+        "summary": "The two-turn rehearsal closes at dawn if neither the lantern offer nor the shutter resolves the room first.",
+        "provenance": {
+          "basis": "creator_authored",
+          "premiseIds": [],
+          "reviewState": "creator_approved",
+          "canonStatus": "not_source_canon",
+          "creatorApprovalReceiptId": "receipt.creator.lantern_ledger.v1",
+          "creatorDecisionId": "decision.creator.lantern_ledger_rules"
+        },
+        "conditions": [
+          { "kind": "turn_at_least", "turn": 2 }
+        ],
+        "terminal": true
+      }
+    ]
+  }
+}

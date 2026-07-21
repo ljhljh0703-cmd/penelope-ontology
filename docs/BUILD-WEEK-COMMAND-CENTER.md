@@ -1,7 +1,7 @@
 # Build Week command center
 
 Status snapshot: **2026-07-21 KST**
-Current state: **Penelope Ontology now has a world-first Book 19 vertical slice. From one opening checkpoint, the creator can dismiss Melantho through a goal/motive/cost interview and reach `Plan Compromised`, or preserve the containment route and reach `Canon Contained`; World Pulse, NPC cards, and Fork Compare expose the causal difference. A local Codex CLI proof requested `gpt-5.6-terra` and completed four accepted narration turns after two fail-closed wording rejections. The transport did not report the serving-model identity, and delegated English QA is not a human creator literary verdict. The public repository, GitHub CI, credential-free Vercel demo, and exact-SHA hosted smoke pass; video, `/feedback`, and Devpost submission remain.**
+Current state: **Penelope Ontology now has a portable World Pack runtime around its world-first Book 19 vertical slice. Book 19 remains the main causal proof; an Oz Chapter XV pack replaces its cast, facts, actions, reactions, and endings on the same workbench; a strict creator-owned JSON pack can run in temporary session memory without entering the public registry. From one Book 19 checkpoint, the creator can dismiss Melantho through a goal/motive/cost interview and reach `Plan Compromised`, or preserve the containment route and reach `Canon Contained`; World Pulse, NPC cards, and Fork Compare expose the causal difference. A local Codex CLI proof requested `gpt-5.6-terra` and completed four accepted narration turns after two fail-closed wording rejections. The transport did not report the serving-model identity, and delegated English QA is not a human creator literary verdict. The previous public release remains live; this portable-pack change is not release-certified until its exact commit, CI, deployment, and hosted smoke pass. Video, `/feedback`, and Devpost submission remain.**
 
 Official submission deadline: **2026-07-22 09:00 KST** (2026-07-21 17:00 PDT).
 Internal submission freeze: **2026-07-21 23:00 KST**. The final ten hours are emergency buffer, not feature time.
@@ -11,7 +11,8 @@ Internal submission freeze: **2026-07-21 23:00 KST**. The final ten hours are em
 **Penelope Ontology** serves professional GMs, narrative production teams, and game scene or quest designers under Work & Productivity. It succeeds only if this world-first vertical slice works end to end:
 
 ```text
-Book 19 opening checkpoint
+registered World Pack or strict creator-pack import
+→ bounded opening checkpoint
 → A recommended route, B meaningful alternative, or C creator direction
 → goal, motive, and accepted-cost interview
 → world-compatible proposal and canonical execution
@@ -22,7 +23,7 @@ Book 19 opening checkpoint
 → return to the shared checkpoint and compare world lines
 ```
 
-The Night of the Scar World Workbench is the `/` product entrance (`/world` exposes the same surface). It is grounded in selected Book 19 events: the interview, foot washing, scar recognition, and Penelope's continued uncertainty. Melantho's investigation and the alternate endings are labeled creator-authored IF rules, not Homeric canon. Incomplete, ambiguous, and unsupported C remain `stateChanged: false`; they do not advance through a prepared branch. Dice, items, conditions, and GM rulings are optional resolution inputs, not the product's center. `/story` remains a supporting prepared A/B prose rehearsal, and `/table` remains the forensic canon/simulation proof.
+The Night of the Scar remains the `/` and `/world` default and main causal demonstration. It is grounded in selected Book 19 events: the interview, foot washing, scar recognition, and Penelope's continued uncertainty. Melantho's investigation and the alternate endings are labeled creator-authored IF rules, not Homeric canon. Behind the Green Screen supplies a separate Oz Chapter XV portability proof; creator JSON import is a prepared-contract boundary, not automatic manuscript ingestion. Incomplete, ambiguous, and unsupported C remain `stateChanged: false`; they do not advance through a prepared branch. Dice, items, conditions, and GM rulings are optional resolution inputs, not the product's center. `/story` remains a supporting prepared A/B prose rehearsal, and `/table` remains the forensic canon/simulation proof.
 
 The primary demo is not “AI writes mythology.” It is one professional causal rehearsal: remove a witness, create an investigator, expose the resulting movement and pressure, close the branch, then return to the same past and prove that a different choice produced a different world—not merely a different paragraph.
 
@@ -37,10 +38,11 @@ The primary demo is not “AI writes mythology.” It is one professional causal
 | Public repository | verified; per-commit proof externalized | `https://github.com/ljhljh0703-cmd/penelope-ontology` publishes `main` with MIT license and GitHub CI; exact release SHA and clean-copy authority remain in the ignored release record rather than this self-referential tracked file |
 | Core contracts and deterministic engine | verified | eight demo-critical contract groups plus retrieval, validation, registered public-fixture authority, overlay, graph, simulation, exact-overlay replay, and transition-authority tests |
 | World Workbench | verified on current tree | `/` and `/world` run the Book 19 causal demo with A/B/C, hash-confirmed C execution, World Pulse, causal NPC cards, preserved checkpoints, two endings, and Fork Compare |
+| Portable World Packs | verified on current tree; release recertification pending | two registered public-domain packs plus strict creator JSON import; canonical digest, checkpoint binding, ID-collision rejection, creator-only hidden-premise projection, temporary 30-minute server-memory retention, and desktop/mobile no-Odyssey-leakage browser coverage |
 | World causal browser flow | verified on current tree | seven Chromium checks cover C's no-checkpoint-before-confirmation rule, Melantho movement and pressure, `Plan Compromised`, return to opening, `Canon Contained`, and state-based Fork Compare |
 | World Codex CLI narration | generated; serving identity and human verdict open | requested `gpt-5.6-terra`; four final narration turns accepted unchanged after two fail-closed wording rejections. Typed state and checkpoints remained unchanged on rejection; delegated English QA is not human creator literary acceptance |
 | Story Workbench | prepared A/B runtime and fixture flow | `/story` carries a selected prepared branch through causal resolution, scoped generation, consequence echo, and three-scene closure; C is handed to `/world` rather than substituted into a fixture branch |
-| Production browser flow | verified on current tree | the full 38-check Chromium desktop/mobile WebKit suite passes and includes the real Story fixture API path plus the World causal flow; route-mocked interaction checks remain separate |
+| Production browser flow | verified on current tree | the full 40-check Chromium desktop/mobile WebKit suite passes and includes the real Story fixture API path, Book 19 causal flow, Oz switch, and creator-owned starter import; route-mocked interaction checks remain separate |
 | Story Codex CLI candidate | historical supporting run; creator verdict pending | one command generated two consecutive scenes and completed the quiet branch. Output hashes are `d35bbe89f261af97f508986cfec90b3a27588a0438a075ffa3d154e52800f727` and `a2f72d35f28bbfeae7e95856a1060b8021ac81b189156da785e4a5b22ff9cca8`; requested model `gpt-5.6-terra`, actual model and response ID unknown |
 | Table product surface | verified fixture-only | registered frozen two-intent lineage, visible style receipt and knowledge boundary, creator gate before the collapsed graph, production review packet, fresh 4/4 approved-overlay replay, S0r, and two steps are visible without JSON editing |
 | Clean-worktree release gate | verified on public release | evidence generation/verification, lint, typecheck, 94 Vitest files with 833 tests, 383-file privacy scan, production build, seven focused World browser checks, and 38 production browser checks pass in GitHub CI; the exact SHA is externalized per release |
@@ -131,7 +133,7 @@ The creator inspects the ignored packet before supplying its combined authority 
 
 ### Gate 4 — Evidence and release
 
-**Status: PARTIAL.** The public release passes evidence regeneration and verification, lint, typecheck, 94 Vitest files with 833 tests, a 383-file privacy scan, production build, seven focused World browser checks, the 38-check production browser suite, GitHub CI, and hosted exact-SHA smoke. Final readiness remains blocked by the narrated video, private `/feedback` ID, and Devpost confirmation. Independently attributable serving-model evidence and human creator prose acceptance remain unclaimed rather than silently inferred.
+**Status: PARTIAL.** The current portable-world tree passes evidence regeneration and verification, lint, typecheck, 103 Vitest files with 872 tests, a 406-file privacy scan, production build, trace-privacy inspection, and the 40-check production browser suite. It still needs an exact commit, GitHub CI, deployment, and hosted exact-SHA smoke. Final readiness also remains blocked by the narrated video, private `/feedback` ID, and Devpost confirmation. Independently attributable serving-model evidence and human creator prose acceptance remain unclaimed rather than silently inferred.
 
 Run frozen evaluation, publish sanitized evidence, build the Evidence Packet, and derive README, Devpost copy, video claims, and later portfolio copy from the same claim ledger.
 
@@ -156,6 +158,7 @@ Run frozen evaluation, publish sanitized evidence, build the Evidence Packet, an
 Included now:
 
 - world-first Book 19 loop with C intervention, offstage NPC response, World Pulse, NPC cards, two earned endings, and Fork Compare from a shared checkpoint
+- portable `PenelopeWorldPackV1`, registered Book 19 and Oz packs, and session-scoped creator JSON import with explicit privacy limits
 - `/` and `/world` C interview: goal, motive, accepted cost, world-compatible proposal, canonical execution, hash confirmation, and execution
 - supporting `/story` three-scene Red-Sail loop with two prepared branches, causal echo, creator-owned style, and small-arc closure
 - registered frozen two-intent fixture with explicit lineage; arbitrary facilitator-collected composition remains at the gated live boundary

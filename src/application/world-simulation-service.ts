@@ -37,54 +37,67 @@ import type {
   NarrationRenderer,
 } from "@/src/ports/world-narrator";
 import type { WorldNarrationHumanDecisionReceipt } from "@/src/application/world-session-store";
+import {
+  PenelopeWorldPackV1Schema,
+  type PenelopeWorldPackV1,
+} from "@/src/contracts/penelope-world-pack";
+import {
+  isRegisteredWorldPack,
+  listWorldPacks,
+} from "@/src/adapters/world-packs/registry";
 
-const PARTICIPANT_SUMMARY =
-  "At the Ithacan hearth, Penelope questions a guarded stranger while an old nurse and a hostile servant act on different fragments of the truth.";
-
-const STRANGER_IDENTITY_FACT_ID = "premise.stranger_identity";
-const IDENTITY_BEARING_PREMISE_IDS = new Set([
-  STRANGER_IDENTITY_FACT_ID,
-  "premise.scar_recognition",
-  "premise.penelope_bounded_evidence",
-  "premise.penelope_not_certain",
-  "premise.eurycleia_loyalty",
-]);
+/**
+ * A session runtime never infers a pack from a scenario id.  That shortcut
+ * would make imported, creator-owned packs impossible and would allow a
+ * same-id registry pack to replace the sealed session definition.  Callers
+ * must carry the sealed pack they selected or imported with the session.
+ */
+const requireWorldPack = ({
+  scenario,
+  worldPack,
+}: {
+  scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
+}): PenelopeWorldPackV1 => {
+  const parsed = PenelopeWorldPackV1Schema.parse(worldPack);
+  if (parsed.scenario.id !== scenario.id) {
+    throw new WorldNarrationError(
+      "world_pack_scenario_mismatch",
+      "The sealed world pack does not belong to this simulation scenario.",
+    );
+  }
+  return parsed;
+};
 
 export const selectedWorldActionCandidates = ({
   scenario,
+  worldPack,
   session,
 }: {
   scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
   session: WorldSimulationSession;
 }) => {
+  const pack = requireWorldPack({ scenario, worldPack });
   const candidates = worldActionCandidates({ scenario });
-  const scarExposed =
-    session.state.flags.find(({ id }) => id === "flag.scar_exposed")?.value ?? false;
-  const preferred = scarExposed
-    ? [
-        "action.penelope.confront_privately",
-        "action.penelope.observe",
-        "action.penelope.clear_room",
-      ]
-    : [
-        "action.penelope.test_testimony",
-        "action.penelope.order_washing",
-        "action.penelope.observe",
-      ];
+  const preferred =
+    pack.creatorInput.recommendedActionPolicies.find((policy) => {
+      if (policy.whenFlagId === null) return true;
+      return session.state.flags.some(
+        ({ id, value }) =>
+          id === policy.whenFlagId && value === policy.whenFlagValue,
+      );
+    })?.actionIds ?? [];
   return preferred
     .map((actionId) => candidates.find((candidate) => candidate.actionId === actionId))
     .filter((candidate): candidate is (typeof candidates)[number] => Boolean(candidate));
 };
 
-const openingEvent = (): WorldSimulationEvent => ({
-  eventId: "event.opening.hearth_interview",
-  source: { kind: "world", reactionRuleId: "reaction.opening" },
-  actionId: "action.opening",
-  summary:
-    "Penelope keeps the late interview at the hearth, with the stranger before her, Eurycleia attending, and Melantho close enough to become a risk.",
-  effects: [],
-  visibleToEntityIds: ["entity.penelope"],
-});
+const openingEvent = (
+  scenario: WorldSimulationScenario,
+  worldPack: PenelopeWorldPackV1,
+): WorldSimulationEvent =>
+  structuredClone(requireWorldPack({ scenario, worldPack }).renderPolicy.openingEvent);
 
 const safeFactId = (kind: string, value: string): string =>
   `fact.${kind}.${value
@@ -99,11 +112,14 @@ const lowerInitial = (value: string): string =>
 
 const observableFacts = ({
   scenario,
+  worldPack,
   session,
 }: {
   scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
   session: WorldSimulationSession;
 }) => {
+  const pack = requireWorldPack({ scenario, worldPack });
   const focalId = scenario.focalParticipantEntityId;
   const focalZoneId = session.state.actors.find(({ entityId }) => entityId === focalId)?.zoneId;
   const zone = scenario.zones.find(({ id }) => id === focalZoneId);
@@ -114,14 +130,20 @@ const observableFacts = ({
   );
   const actorFacts = scenario.actors
     .filter(({ id }) => actorIds.has(id))
-    .map((actor) => ({
-      factId: safeFactId("visible_actor", actor.participantLabel),
-      summary: `${actor.participantLabel} is ${lowerInitial(actor.publicDescription)}`,
-    }));
+    .map((actor) => {
+      const alias = pack.identityPolicy.actorAliases.find(
+        ({ entityId }) => entityId === actor.id,
+      );
+      const visibleLabel = alias?.renderText ?? actor.participantLabel;
+      return {
+        factId: safeFactId("visible_actor", alias?.modelFacingEntityId ?? actor.participantLabel),
+        summary: `${visibleLabel} is ${lowerInitial(actor.publicDescription)}`,
+      };
+    });
   return [
     {
       factId: safeFactId("zone", zone?.name ?? focalZoneId ?? "unknown"),
-      summary: zone?.summary ?? "The focal character remains inside the bounded palace scene.",
+      summary: zone?.summary ?? "The focal character remains inside the bounded scene.",
     },
     ...actorFacts,
   ];
@@ -129,41 +151,53 @@ const observableFacts = ({
 
 const focalKnowledgeFacts = ({
   scenario,
+  worldPack,
   session,
 }: {
   scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
   session: WorldSimulationSession;
 }) => {
+  const pack = requireWorldPack({ scenario, worldPack });
   const knownIds = new Set(focalPremiseIds(session, scenario.focalParticipantEntityId));
-  const identityGranted = knownIds.has(STRANGER_IDENTITY_FACT_ID);
+  const withheldIds = new Set(
+    pack.identityPolicy.hiddenKnowledge.flatMap((policy) =>
+      knownIds.has(policy.premiseId) ? [] : policy.withheldPremiseIds,
+    ),
+  );
   return scenario.premises
-    .filter(
-      ({ id }) =>
-        knownIds.has(id) &&
-        (identityGranted || !IDENTITY_BEARING_PREMISE_IDS.has(id)),
-    )
+    .filter(({ id }) => knownIds.has(id) && !withheldIds.has(id))
     .map(({ id, summary }) => ({ factId: id, summary }));
 };
 
-const focalKnowsStrangerIdentity = ({
+const unresolvedHiddenKnowledge = ({
   scenario,
+  worldPack,
   session,
 }: {
   scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
   session: WorldSimulationSession;
-}): boolean =>
-  focalPremiseIds(session, scenario.focalParticipantEntityId).includes(
-    STRANGER_IDENTITY_FACT_ID,
+}) => {
+  const knownIds = new Set(
+    focalPremiseIds(session, scenario.focalParticipantEntityId),
   );
+  return requireWorldPack({ scenario, worldPack }).identityPolicy.hiddenKnowledge.filter(
+    ({ premiseId }) => !knownIds.has(premiseId),
+  );
+};
 
 const safeVisibleEvents = ({
   scenario,
+  worldPack,
   receipt,
 }: {
   scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
   receipt: WorldTurnReceipt | null;
 }): WorldSimulationEvent[] => {
-  if (!receipt) return [openingEvent()];
+  const pack = requireWorldPack({ scenario, worldPack });
+  if (!receipt) return [openingEvent(scenario, pack)];
   return receipt.events.filter(({ visibleToEntityIds }) =>
     visibleToEntityIds.includes(scenario.focalParticipantEntityId),
   );
@@ -176,12 +210,14 @@ const safeVisibleEvents = ({
  */
 export const buildWorldVisibleSceneMemory = ({
   scenario,
+  worldPack,
   receipt,
 }: {
   scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
   receipt: WorldTurnReceipt | null;
 }): string => {
-  const summary = safeVisibleEvents({ scenario, receipt })
+  const summary = safeVisibleEvents({ scenario, worldPack, receipt })
     .map(({ summary: eventSummary }) => eventSummary.trim())
     .join(" ");
   return summary.length <= 1_600
@@ -205,27 +241,35 @@ const WORLD_NARRATION_CREATOR_AUTHORITY_ID =
   "creator.penelope.world_copy.v1";
 const WORLD_NARRATION_REFERENCE_RECEIPT_ID =
   "creator-craft-reference-2026-07-17-01";
-const UNSUPPORTED_ACTION_NARRATION_TEXT =
-  "Nothing in the room answers Penelope's attempt. No one acts on it, and nothing shifts in her favor. The moment passes, and the night moves on.";
 const UNSUPPORTED_ACTION_NARRATION_TRACE: NarrationRendererTrace = {
   provenance: "fixture",
   adapterId: "world.unsupported_no_render.v1",
 };
 
-const unsupportedActionNarration = (): WorldNarrationProjection =>
-  WorldNarrationProjectionSchema.parse({
+const unsupportedActionNarration = (
+  scenario: WorldSimulationScenario,
+  worldPack: PenelopeWorldPackV1,
+): WorldNarrationProjection => {
+  const text = requireWorldPack({ scenario, worldPack }).renderPolicy.unsupportedActionText;
+  return WorldNarrationProjectionSchema.parse({
     format: "english_prose_paragraphs",
     paragraphs: [
       {
         paragraphId: "paragraph.unsupported_action",
-        text: UNSUPPORTED_ACTION_NARRATION_TEXT,
+        text,
       },
     ],
-    prose: UNSUPPORTED_ACTION_NARRATION_TEXT,
+    prose: text,
   });
+};
 
-const modelFacingEntityId = (entityId: string): string =>
-  entityId === "entity.odysseus" ? "entity.stranger" : entityId;
+const modelFacingEntityId = (
+  worldPack: PenelopeWorldPackV1,
+  entityId: string,
+): string =>
+  worldPack.identityPolicy.actorAliases.find(
+    (alias) => alias.entityId === entityId,
+  )?.modelFacingEntityId ?? entityId;
 
 const behindCurtainRisks = ({
   scenario,
@@ -266,122 +310,92 @@ const behindCurtainRisks = ({
     ];
   });
 
-const REGISTERED_EVENT_RENDER_TEXT: Readonly<Record<string, string>> = {
-  "action.opening": "The household gathers around the hearth.",
-  "action.penelope.observe": "Penelope waits and watches the room.",
-  "action.penelope.test_testimony": "Penelope tests the stranger's account.",
-  "action.penelope.order_washing": "Penelope orders Eurycleia to begin.",
-  "action.penelope.clear_room": "Penelope clears the nearby servants.",
-  "action.penelope.confront_privately":
-    "Penelope asks whether the stranger is Odysseus.",
-  "action.odysseus.answer_carefully": "The stranger answers Penelope with care.",
-  "action.odysseus.contain_recognition": "The stranger checks Eurycleia's alarm.",
-  "action.eurycleia.wash_feet": "Eurycleia stops at the old scar.",
-  "action.eurycleia.guard_secret": "Eurycleia keeps the moment private.",
-  "action.eurycleia.confirm_privately": "Eurycleia identifies the stranger as Odysseus.",
-  "action.melantho.investigate": "Melantho watches the visible disturbance.",
-  "action.unsupported": UNSUPPORTED_ACTION_NARRATION_TEXT,
-};
+const behindCurtainPremises = ({
+  scenario,
+  worldPack,
+}: {
+  scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
+}) => {
+  const pack = requireWorldPack({ scenario, worldPack });
+  const sourceLocators = new Map(
+    scenario.sourceLocators.map((locator) => [locator.id, locator]),
+  );
+  const seenPremiseIds = new Set<string>();
 
-const CURRENT_EVENT_RENDER_TEXT: Readonly<Record<string, string>> = {
-  "action.opening":
-    "Penelope questions the stranger beside the hearth.",
-  "action.penelope.order_washing":
-    "Penelope asks Eurycleia to wash his feet.",
-  "action.penelope.clear_room":
-    "Penelope sends Melantho out of earshot.",
-  "action.odysseus.contain_recognition":
-    "The stranger stops Eurycleia before she speaks.",
-};
+  return pack.identityPolicy.hiddenKnowledge.flatMap((boundary) =>
+    boundary.withheldPremiseIds.flatMap((premiseId) => {
+      if (seenPremiseIds.has(premiseId)) return [];
+      seenPremiseIds.add(premiseId);
 
-const CURRENT_REACTION_RENDER_TEXT: Readonly<Record<string, string>> = {
-  "reaction.eurycleia.recognize_scar":
-    "Eurycleia stops when she sees the scar.",
-  "reaction.odysseus.contain_recognition":
-    "The stranger stops Eurycleia before she speaks.",
-  "reaction.odysseus.answer_testimony":
-    "The stranger answers Penelope with care.",
-  "reaction.eurycleia.controlled_disclosure":
-    "Eurycleia identifies the stranger as Odysseus.",
-  "reaction.melantho.notice_exclusion":
-    "Melantho leaves, but looks back at Penelope.",
-  "reaction.melantho.approach_on_observe":
-    "Melantho draws near and listens.",
-  "reaction.melantho.compromise_plan":
-    "Melantho sees Eurycleia's shock and calls help.",
-};
+      const premise = scenario.premises.find(({ id }) => id === premiseId);
+      if (!premise) return [];
 
-const CURRENT_TURN_CONSEQUENCE_RENDER_TEXT: Readonly<Record<string, string>> = {
-  "action.penelope.observe":
-    "The pause gives Melantho room to listen.",
-  "action.penelope.test_testimony":
-    "Penelope has evidence, but not certainty.",
-  "action.penelope.clear_room":
-    "Melantho is now outside the interview.",
-};
+      const sourceGrounding =
+        premise.origin.kind === "source"
+          ? premise.origin.sourceLocatorIds
+              .map((locatorId) => {
+                const locator = sourceLocators.get(locatorId);
+                return locator
+                  ? `${locator.work} · ${locator.book} · ${locator.passage}`
+                  : locatorId;
+              })
+              .join("; ")
+          : `Creator-approved decision: ${premise.origin.creatorDecisionId}`;
 
-const REGISTERED_ENDING_RENDER_TEXT: Readonly<Record<string, string>> = {
-  "ending.canon_contained":
-    "Recognition stays contained; Penelope remains uncertain.",
-  "ending.controlled_discovery":
-    "The confirmation stays inside the closed room.",
-  "ending.plan_compromised":
-    "The disturbance escapes and raises immediate danger.",
-  "ending.timeout":
-    "Night closes; the unresolved consequences remain.",
-};
-
-const CURRENT_ENDING_RENDER_TEXT: Readonly<Record<string, string>> = {
-  "ending.canon_contained":
-    "Eurycleia keeps silent while Penelope remains uncertain.",
-  "ending.controlled_discovery":
-    "Penelope learns the truth in private.",
-  "ending.plan_compromised":
-    "Melantho carries word toward the suitor faction.",
-  "ending.timeout":
-    "Night ends before Penelope reaches an answer.",
-};
-
-const CURRENT_ACTOR_RENDER_TEXT: Readonly<Record<string, string>> = {
-  "entity.penelope": "Penelope sits beside the hearth.",
-  "entity.odysseus": "The stranger sits before her.",
-  "entity.eurycleia": "Eurycleia waits nearby.",
-  "entity.melantho": "Melantho watches from the inner corridor.",
+      return [
+        {
+          premiseId: premise.id,
+          summary: premise.summary,
+          meaning: premise.meaning,
+          approvalStatus: premise.approvalState,
+          sourceGrounding,
+          whyWithheld:
+            premise.id === boundary.premiseId
+              ? "It states the concealed fact directly, so participant prose must wait for a registered reveal."
+              : "It would confirm or materially narrow the concealed fact before a registered reveal makes it observable.",
+        },
+      ];
+    }),
+  );
 };
 
 const boundedEventRenderText = (
   event: WorldSimulationEvent,
   scenario: WorldSimulationScenario,
+  worldPack: PenelopeWorldPackV1,
   narrationContractMode: "current" | "w5_locked_2026_07_18",
 ): string => {
-  if (
-    narrationContractMode === "w5_locked_2026_07_18" &&
-    event.actionId === "action.penelope.confront_privately"
-  ) {
-    return "Penelope questions the stranger in private.";
+  const renderPolicy = requireWorldPack({ scenario, worldPack }).renderPolicy;
+  if (narrationContractMode === "w5_locked_2026_07_18") {
+    const locked = renderPolicy.lockedEventTextByActionId[event.actionId];
+    if (locked) return locked;
   }
   if (narrationContractMode === "current" && event.source.kind === "npc") {
     const currentReaction =
-      CURRENT_REACTION_RENDER_TEXT[event.source.reactionRuleId];
+      renderPolicy.currentReactionTextByRuleId[event.source.reactionRuleId];
     if (currentReaction) return currentReaction;
   }
   if (narrationContractMode === "current") {
-    const current = CURRENT_EVENT_RENDER_TEXT[event.actionId];
+    const current = renderPolicy.currentEventTextByActionId[event.actionId];
     if (current) return current;
   }
-  const registered = REGISTERED_EVENT_RENDER_TEXT[event.actionId];
+  const registered = renderPolicy.registeredEventTextByActionId[event.actionId];
   if (registered) return registered;
   if (event.source.kind === "participant") {
-    return "Penelope acts before the watching household.";
+    const focal = scenario.actors.find(
+      ({ id }) => id === scenario.focalParticipantEntityId,
+    );
+    return `${focal?.participantLabel ?? "The focal character"} acts inside the bounded scene.`;
   }
   if (event.source.kind === "npc") {
     const actorEntityId = event.source.actorEntityId;
     const label =
       scenario.actors.find(({ id }) => id === actorEntityId)
         ?.participantLabel ?? "Someone nearby";
-    return `${label} reacts inside the household.`;
+    return `${label} reacts inside the bounded scene.`;
   }
-  return "The household answers the visible change.";
+  return "The world answers the visible change.";
 };
 
 const narrationSceneMode = ({
@@ -395,10 +409,12 @@ const narrationSceneMode = ({
 
 const narrationStyleStateId = ({
   scenario,
+  worldPack,
   session,
   styleProfile,
 }: {
   scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
   session: WorldSimulationSession;
   styleProfile: PenelopeEnglishStyleProfile;
 }): string => {
@@ -411,9 +427,10 @@ const narrationStyleStateId = ({
       { initialValue, maxValue },
     ]),
   );
-  const planCompromised =
-    session.state.flags.find(({ id }) => id === "flag.plan_compromised")
-      ?.value ?? false;
+  const criticalFlagActive = requireWorldPack({ scenario, worldPack }).renderPolicy.criticalFlagIds.some(
+    (flagId) =>
+      session.state.flags.find(({ id }) => id === flagId)?.value === true,
+  );
   const atMaximum = session.state.clocks.some(({ id, value }) => {
     const clock = clockById.get(id);
     return clock !== undefined && value >= clock.maxValue;
@@ -422,7 +439,7 @@ const narrationStyleStateId = ({
     const clock = clockById.get(id);
     return clock !== undefined && value > clock.initialValue;
   });
-  if (planCompromised || atMaximum) {
+  if (criticalFlagActive || atMaximum) {
     return byId.get("en-penelope-state-critical") ?? styleProfile.styleStates[0]!.stateId;
   }
   if (aboveBaseline) {
@@ -441,17 +458,21 @@ export type WorldNarrationPipelineArtifacts =
 
 export const buildWorldNarrationPipelineArtifacts = ({
   scenario,
+  worldPack,
   session,
   receipt,
   styleProfile: styleProfileInput,
   narrationContractMode = "current",
 }: {
   scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
   session: WorldSimulationSession;
   receipt: WorldTurnReceipt | null;
   styleProfile: PenelopeEnglishStyleProfile;
   narrationContractMode?: "current" | "w5_locked_2026_07_18";
 }): WorldNarrationPipelineArtifacts => {
+  const pack = requireWorldPack({ scenario, worldPack });
+  const renderPolicy = pack.renderPolicy;
   const styleProfile = PenelopeEnglishStyleProfileSchema.parse(styleProfileInput);
   const sceneMode = narrationSceneMode({ session, receipt });
   const focalId = scenario.focalParticipantEntityId;
@@ -463,9 +484,9 @@ export const buildWorldNarrationPipelineArtifacts = ({
   const zoneRenderText =
     narrationContractMode === "current"
       ? sceneMode === "ending"
-        ? "The interview ends beside the hearth."
-        : "The interview remains beside the hearth."
-      : `${zone?.name ?? "The room"} holds the gathered household.`;
+        ? renderPolicy.zoneCompleteText
+        : renderPolicy.zoneActiveText
+      : `${zone?.name ?? "The room"} contains the registered scene.`;
   const presentActorIds = new Set(
     session.state.actors
       .filter(({ zoneId }) => zoneId === focalZoneId)
@@ -474,29 +495,35 @@ export const buildWorldNarrationPipelineArtifacts = ({
   const presentActors = scenario.actors
     .filter(({ id }) => presentActorIds.has(id))
     .map((actor) => {
-      const entityId = modelFacingEntityId(actor.id);
+      const alias = pack.identityPolicy.actorAliases.find(
+        ({ entityId }) => entityId === actor.id,
+      );
+      const entityId = modelFacingEntityId(pack, actor.id);
       const factId = safeFactId("narration_actor", entityId);
       return {
         entityId,
         renderDescriptor:
           narrationContractMode === "current"
-            ? CURRENT_ACTOR_RENDER_TEXT[actor.id] ??
+            ? renderPolicy.actorRenderTextById[actor.id] ?? alias?.renderText ??
               `${actor.participantLabel} remains in ${zone?.name ?? "the room"}.`
-            : `${actor.participantLabel} remains in ${zone?.name ?? "the room"}.`,
+            : alias?.renderText ?? `${actor.participantLabel} remains in ${zone?.name ?? "the room"}.`,
         sourceFactIds: [factId],
       };
     });
   const focalActorFactId =
     presentActors.find(
-      ({ entityId }) => entityId === modelFacingEntityId(focalId),
+      ({ entityId }) => entityId === modelFacingEntityId(pack, focalId),
     )?.sourceFactIds[0] ?? zoneFactId;
-  const strangerActorFactId =
-    presentActors.find(({ entityId }) => entityId === "entity.stranger")
+  const endingActorFactId =
+    presentActors.find(
+      ({ entityId }) =>
+        entityId === modelFacingEntityId(pack, renderPolicy.endingStopActorId),
+    )
       ?.sourceFactIds[0] ?? focalActorFactId;
   const turnStopFactId =
     narrationContractMode === "current" ? focalActorFactId : zoneFactId;
   const endingStopFactId =
-    narrationContractMode === "current" ? strangerActorFactId : zoneFactId;
+    narrationContractMode === "current" ? endingActorFactId : zoneFactId;
   const visibleFacts = [
     { factId: zoneFactId, renderText: zoneRenderText },
     ...presentActors.map(({ entityId, renderDescriptor, sourceFactIds }) => ({
@@ -505,12 +532,13 @@ export const buildWorldNarrationPipelineArtifacts = ({
       entityId,
     })),
   ].map(({ factId, renderText }) => ({ factId, renderText }));
-  const visibleRuntimeEvents = safeVisibleEvents({ scenario, receipt });
+  const visibleRuntimeEvents = safeVisibleEvents({ scenario, worldPack: pack, receipt });
   const runtimeResolvedEvents = visibleRuntimeEvents.map((event, index) => ({
     eventId: `event.visible_${index + 1}`,
     observableText: boundedEventRenderText(
       event,
       scenario,
+      pack,
       narrationContractMode,
     ),
     sourceAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
@@ -520,10 +548,10 @@ export const buildWorldNarrationPipelineArtifacts = ({
         eventId: "event.ending_consequence",
         observableText:
           (narrationContractMode === "current"
-            ? CURRENT_ENDING_RENDER_TEXT[session.state.endingId]
+            ? renderPolicy.currentEndingTextById[session.state.endingId]
             : undefined) ??
-          REGISTERED_ENDING_RENDER_TEXT[session.state.endingId] ??
-          "The registered ending leaves its resolved consequence inside the household.",
+          renderPolicy.registeredEndingTextById[session.state.endingId] ??
+          "The registered ending leaves its resolved consequence inside the bounded scene.",
         sourceAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
       }
     : null;
@@ -598,7 +626,7 @@ export const buildWorldNarrationPipelineArtifacts = ({
       ? {
           eventId: "event.turn_consequence",
           observableText:
-            CURRENT_TURN_CONSEQUENCE_RENDER_TEXT[participantActionId] ??
+            renderPolicy.currentTurnConsequenceTextByActionId[participantActionId] ??
             "The room carries the visible change.",
           sourceAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
         }
@@ -614,19 +642,24 @@ export const buildWorldNarrationPipelineArtifacts = ({
     sceneMode === "turn" && reactionEvent ? [reactionEvent.eventId] : [];
   const changeIds =
     sceneMode !== "setup" && changeEvent ? [changeEvent.eventId] : [];
-  const privateKnowledgeIds = focalKnowsStrangerIdentity({ scenario, session })
-    ? []
-    : ["private.stranger_identity"];
+  const unresolvedKnowledge = unresolvedHiddenKnowledge({
+    scenario,
+    worldPack: pack,
+    session,
+  });
+  const privateKnowledgeIds = unresolvedKnowledge.map(
+    ({ privateKnowledgeId }) => privateKnowledgeId,
+  );
   const reservedCandidates =
     session.state.status === "complete"
       ? []
-      : selectedWorldActionCandidates({ scenario, session });
+      : selectedWorldActionCandidates({ scenario, worldPack: pack, session });
   const inputEnvelope = NarrationInputEnvelopeSchema.parse({
     modelFacing: {
       sceneMode,
       languageProfileId: styleProfile.profileId,
       referenceReceiptId: WORLD_NARRATION_REFERENCE_RECEIPT_ID,
-      focalActorId: focalId,
+      focalActorId: modelFacingEntityId(pack, focalId),
       presentActors,
       visibleFacts,
       resolvedEvents,
@@ -640,28 +673,34 @@ export const buildWorldNarrationPipelineArtifacts = ({
           ? resolvedSpeech.map((speech) => ({
               eventId: speech.resolvedEvent.eventId,
               speakerId: modelFacingEntityId(
+                pack,
                 speech.directive.disclosureGeometry.speakerId,
               ),
               addresseeIds:
-                speech.directive.disclosureGeometry.addresseeIds.map(
-                  modelFacingEntityId,
+                speech.directive.disclosureGeometry.addresseeIds.map((entityId) =>
+                  modelFacingEntityId(pack, entityId),
                 ),
               volume: speech.directive.disclosureGeometry.volume,
               distance: speech.directive.disclosureGeometry.distance,
               lineOfSightIds:
-                speech.directive.disclosureGeometry.lineOfSightIds.map(
-                  modelFacingEntityId,
+                speech.directive.disclosureGeometry.lineOfSightIds.map((entityId) =>
+                  modelFacingEntityId(pack, entityId),
                 ),
               confirmedHearerIds:
-                speech.directive.disclosureGeometry.confirmedHearerIds.map(
-                  modelFacingEntityId,
+                speech.directive.disclosureGeometry.confirmedHearerIds.map((entityId) =>
+                  modelFacingEntityId(pack, entityId),
                 ),
               deliveryCueLicenseIds: speech.deliveryLicenses.map(
                 ({ licenseId }) => licenseId,
               ),
             }))
           : [],
-      styleStateId: narrationStyleStateId({ scenario, session, styleProfile }),
+      styleStateId: narrationStyleStateId({
+        scenario,
+        worldPack: pack,
+        session,
+        styleProfile,
+      }),
       reservedActionIds: reservedCandidates.map(({ actionId }) => actionId),
     },
     privateValidation: {
@@ -678,7 +717,7 @@ export const buildWorldNarrationPipelineArtifacts = ({
                     `risk.${directive.id}.potential_audience` === risk.riskId,
                 )?.resolvedEvent.eventId ?? risk.eventId,
               potentialHearerIds: risk.potentialHearers.map(({ entityId }) =>
-                modelFacingEntityId(entityId),
+                modelFacingEntityId(pack, entityId),
               ),
               channel: "behind_curtain" as const,
               exposureStatus: risk.exposureStatus,
@@ -740,7 +779,10 @@ export const buildWorldNarrationPipelineArtifacts = ({
             ? `sentence.${sceneMode}.licensed_dialogue`
             : `sentence.${sceneMode}.licensed_dialogue_${index + 1}`,
         role: "licensed_dialogue",
-        speakerId: modelFacingEntityId(speech.directive.speakerEntityId),
+        speakerId: modelFacingEntityId(
+          pack,
+          speech.directive.speakerEntityId,
+        ),
         speechEventIds:
           narrationContractMode === "w5_locked_2026_07_18"
             ? []
@@ -793,9 +835,14 @@ export const buildWorldNarrationPipelineArtifacts = ({
         })
       : [];
   const setupStopFactId =
-    presentActors.find(({ entityId }) => entityId === "entity.eurycleia")
+    presentActors.find(
+      ({ entityId }) =>
+        entityId === modelFacingEntityId(pack, renderPolicy.setupStopActorId),
+    )
       ?.sourceFactIds[0] ??
-    presentActors.find(({ entityId }) => entityId !== focalId)?.sourceFactIds[0] ??
+    presentActors.find(
+      ({ entityId }) => entityId !== modelFacingEntityId(pack, focalId),
+    )?.sourceFactIds[0] ??
     zoneFactId;
   const sentencePlans =
     sceneMode === "setup"
@@ -805,13 +852,13 @@ export const buildWorldNarrationPipelineArtifacts = ({
             role: "orientation",
             sourceEventIds: resolvedEvents[0] ? [resolvedEvents[0].eventId] : [],
             sourceFactIds: resolvedEvents[0] ? [] : [zoneFactId],
-            plainFunction: "Open on the registered interview at the hearth.",
+            plainFunction: "Open on the registered scene and its present actors.",
           }),
           plan({
             id: "sentence.setup.stop",
             role: "in_world_stop",
             sourceFactIds: [setupStopFactId],
-            plainFunction: "Stop on the stranger seated before Penelope.",
+            plainFunction: "Stop on the pack-designated present actor.",
           }),
         ]
       : sceneMode === "turn"
@@ -819,7 +866,7 @@ export const buildWorldNarrationPipelineArtifacts = ({
             plan({
               id: "sentence.turn.action",
               role: "authorized_action",
-              actorId: focalId,
+              actorId: modelFacingEntityId(pack, focalId),
               sourceEventIds: actionIds,
               changesState: true,
               plainFunction: "Render the resolved participant action.",
@@ -871,7 +918,7 @@ export const buildWorldNarrationPipelineArtifacts = ({
               role: "in_world_stop",
               sourceFactIds: [endingStopFactId],
               plainFunction:
-                "Close on the registered stranger still before the focal actor; never repeat the prior consequence or make the place the grammatical subject.",
+                "Close on the pack-designated actor; never repeat the prior consequence or make the place the grammatical subject.",
             }),
           ];
   const scenePlan = PenelopeScenePlanSchema.parse({
@@ -908,7 +955,7 @@ export const buildWorldNarrationPipelineArtifacts = ({
       excludedGimmicks: ["FC-04"],
     },
     plainDramaticPlan: {
-      focalActorId: focalId,
+      focalActorId: modelFacingEntityId(pack, focalId),
       actionSourceEventIds: actionIds,
       reactionSourceEventIds: reactionIds,
       changeSourceEventIds: changeIds,
@@ -925,6 +972,7 @@ export const buildWorldNarrationPipelineArtifacts = ({
       ? {
           mode: "licensed",
           speakerId: modelFacingEntityId(
+            pack,
             resolvedSpeech[0].directive.speakerEntityId,
           ),
           speechAct: resolvedSpeech[0].directive.speechAct,
@@ -957,6 +1005,7 @@ export const buildWorldNarrationPipelineArtifacts = ({
             .map((speech) => ({
               mode: "licensed" as const,
               speakerId: modelFacingEntityId(
+                pack,
                 speech.directive.speakerEntityId,
               ),
               speechAct: speech.directive.speechAct,
@@ -1000,20 +1049,10 @@ export const buildWorldNarrationPipelineArtifacts = ({
     })),
   ];
   const privateValidationMaterial = {
-    forbiddenKnowledge:
-      privateKnowledgeIds.length === 0
-        ? []
-        : [
-            {
-              id: "private.stranger_identity",
-              patterns: [
-                "the stranger is Odysseus",
-                "the stranger was Odysseus",
-                "Odysseus in disguise",
-                "Ulysses in disguise",
-              ],
-            },
-          ],
+    forbiddenKnowledge: unresolvedKnowledge.map((policy) => ({
+      id: policy.privateKnowledgeId,
+      patterns: policy.forbiddenPatterns,
+    })),
     forbiddenInferences: [],
   };
   const artifacts = {
@@ -1045,7 +1084,10 @@ export const buildWorldNarrationPipelineArtifacts = ({
     privateValidationMaterial,
     reservedActionDescriptors: reservedCandidates.map((candidate) => ({
       actionId: candidate.actionId,
-      text: `Penelope may ${candidate.suggestedInput}.`,
+      text: `${
+        scenario.actors.find(({ id }) => id === focalId)?.participantLabel ??
+        "The focal character"
+      } may ${candidate.suggestedInput}.`,
     })),
     reservedActionSourceBindings: reservedCandidates.map((candidate) => ({
       actionId: candidate.actionId,
@@ -1113,6 +1155,7 @@ export type WorldSessionNarrationPipelineOutcome =
 
 export const runWorldSessionNarrationPipeline = async ({
   scenario,
+  worldPack,
   session,
   receipt,
   styleProfile,
@@ -1120,18 +1163,20 @@ export const runWorldSessionNarrationPipeline = async ({
   critic,
 }: {
   scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
   session: WorldSimulationSession;
   receipt: WorldTurnReceipt | null;
   styleProfile: PenelopeEnglishStyleProfile;
   renderer: NarrationRenderer;
   critic?: NarrationCritic | null;
 }): Promise<WorldSessionNarrationPipelineOutcome> => {
+  const pack = requireWorldPack({ scenario, worldPack });
   if (receipt?.action.status === "unsupported") {
     return {
       outcome: "no_render",
       committableSession: session,
       committableReceipt: receipt,
-      narration: unsupportedActionNarration(),
+      narration: unsupportedActionNarration(scenario, pack),
       trace: UNSUPPORTED_ACTION_NARRATION_TRACE,
       reason: "unsupported_action",
       rendererCallCount: 0,
@@ -1140,6 +1185,7 @@ export const runWorldSessionNarrationPipeline = async ({
   }
   const artifacts = buildWorldNarrationPipelineArtifacts({
     scenario,
+    worldPack: pack,
     session,
     receipt,
     styleProfile,
@@ -1208,6 +1254,7 @@ export class WorldNarrationError extends Error {
 
 export type WorldSessionProjectionInput = {
   scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
   session: WorldSimulationSession;
   sessionId: string;
   parentCheckpointId: string | null;
@@ -1219,23 +1266,55 @@ export type WorldSessionProjectionInput = {
   trace: NarrationRendererTrace;
 };
 
-const participantEndingSummary = (kind: string): string => {
-  switch (kind) {
-    case "canon_contained":
-      return "The immediate disturbance settles without giving Penelope a final answer.";
-    case "controlled_discovery":
-      return "Penelope reaches a private conclusion while the wider household remains outside it.";
-    case "plan_compromised":
-      return "A visible disturbance reaches the hostile household network and forces a riskier timetable.";
-    case "timeout":
-      return "The night closes with unresolved knowledge and every visible consequence preserved.";
-    default:
-      return "The bounded scene closes on the consequences visible to Penelope.";
-  }
+const presentationForWorldPack = (
+  pack: PenelopeWorldPackV1,
+  availability: "registered" | "session_private",
+) => ({
+  packId: pack.packId,
+  packVersion: pack.packVersion,
+  availability,
+  definitionDigest: pack.definitionDigest,
+  publicTitle: pack.presentation.publicTitle,
+  publicSubtitle: pack.presentation.publicSubtitle,
+  hook: pack.presentation.hook,
+  demoOrder: pack.presentation.demoOrder,
+  sourceEyebrow: pack.presentation.sourceEyebrow,
+  sourceIntroduction: pack.presentation.sourceIntroduction,
+  productThesis: pack.presentation.productThesis,
+  guidedCreatorMove: pack.presentation.guidedCreatorMove,
+});
+
+/**
+ * Registered packs populate the selector, while an imported session pack is
+ * always retained as the active choice even when it is not public registry
+ * material.  The list deliberately exposes only summary data.
+ */
+const availableWorldPacksFor = (pack: PenelopeWorldPackV1) => {
+  const registered = listWorldPacks().map((summary) => ({
+    ...summary,
+    availability: "registered" as const,
+  }));
+  const activeAvailability = isRegisteredWorldPack(pack)
+    ? "registered"
+    : "session_private";
+  const active = presentationForWorldPack(pack, activeAvailability);
+  return [
+    ...registered.filter(({ packId }) => packId !== active.packId),
+    {
+      packId: active.packId,
+      packVersion: active.packVersion,
+      availability: active.availability,
+      publicTitle: active.publicTitle,
+      publicSubtitle: active.publicSubtitle,
+      hook: active.hook,
+      demoOrder: active.demoOrder,
+    },
+  ].sort((left, right) => left.demoOrder - right.demoOrder);
 };
 
 export const buildWorldParticipantView = ({
   scenario,
+  worldPack,
   session,
   sessionId,
   parentCheckpointId,
@@ -1245,6 +1324,7 @@ export const buildWorldParticipantView = ({
   narration,
   trace,
 }: WorldSessionProjectionInput): WorldParticipantSessionView => {
+  const pack = requireWorldPack({ scenario, worldPack });
   const focal = scenario.actors.find(
     ({ id }) => id === scenario.focalParticipantEntityId,
   );
@@ -1252,18 +1332,18 @@ export const buildWorldParticipantView = ({
   const endingRule = session.state.endingId
     ? scenario.endingRules.find(({ id }) => id === session.state.endingId)
     : null;
-  const visibleEvents = safeVisibleEvents({ scenario, receipt });
-  const allEvents = receipt?.events ?? [openingEvent()];
+  const visibleEvents = safeVisibleEvents({ scenario, worldPack: pack, receipt });
+  const allEvents = receipt?.events ?? [openingEvent(scenario, pack)];
   const nextActions =
     session.state.status === "complete"
       ? []
-      : selectedWorldActionCandidates({ scenario, session });
+      : selectedWorldActionCandidates({ scenario, worldPack: pack, session });
   const facts = [
-    ...observableFacts({ scenario, session }).map(({ factId, summary }) => ({
+    ...observableFacts({ scenario, worldPack: pack, session }).map(({ factId, summary }) => ({
       id: factId,
       summary,
     })),
-    ...focalKnowledgeFacts({ scenario, session }).map(({ factId, summary }) => ({
+    ...focalKnowledgeFacts({ scenario, worldPack: pack, session }).map(({ factId, summary }) => ({
       id: factId,
       summary,
     })),
@@ -1273,7 +1353,13 @@ export const buildWorldParticipantView = ({
     parentCheckpointId,
     scenarioId: scenario.id,
     title: scenario.title,
-    participantSummary: PARTICIPANT_SUMMARY,
+    participantSummary: pack.presentation.participantSummary,
+    worldPack: presentationForWorldPack(
+      pack,
+      availableWorldPacksFor(pack).find(({ packId }) => packId === pack.packId)
+        ?.availability ?? "session_private",
+    ),
+    availableWorldPacks: availableWorldPacksFor(pack),
     transport,
     cursor: session.cursor,
     forked,
@@ -1285,7 +1371,9 @@ export const buildWorldParticipantView = ({
       ? {
           id: endingRule.id,
           kind: endingRule.kind,
-          summary: participantEndingSummary(endingRule.kind),
+          summary:
+            pack.renderPolicy.participantEndingTextByKind[endingRule.kind] ??
+            "The bounded scene closes with every resolved consequence preserved.",
         }
       : null,
     focalActor: {
@@ -1304,13 +1392,15 @@ export const buildWorldParticipantView = ({
 
 export const buildWorldCreatorReceipt = ({
   scenario,
+  worldPack,
   session,
   receipt,
   narrationDecisionReceipt = null,
-}: Pick<WorldSessionProjectionInput, "scenario" | "session" | "receipt"> & {
+}: Pick<WorldSessionProjectionInput, "scenario" | "worldPack" | "session" | "receipt"> & {
   narrationDecisionReceipt?: WorldNarrationHumanDecisionReceipt | null;
-}): WorldCreatorReceipt =>
-  WorldCreatorReceiptSchema.parse({
+}): WorldCreatorReceipt => {
+  const pack = requireWorldPack({ scenario, worldPack });
+  return WorldCreatorReceiptSchema.parse({
     actors: scenario.actors.map((actor) => {
       const runtime = session.state.actors.find(
         ({ entityId }) => entityId === actor.id,
@@ -1367,8 +1457,9 @@ export const buildWorldCreatorReceipt = ({
         .map(({ id }) => id)
         .sort(),
     },
+    behindCurtainPremises: behindCurtainPremises({ scenario, worldPack: pack }),
     behindCurtainRisks: behindCurtainRisks({ scenario, receipt }),
-    events: receipt?.events ?? [openingEvent()],
+    events: receipt?.events ?? [openingEvent(scenario, pack)],
     creatorDirections: session.turns.flatMap((turn) =>
       turn.creatorDirection ? [turn.creatorDirection] : [],
     ),
@@ -1389,6 +1480,7 @@ export const buildWorldCreatorReceipt = ({
         }
       : null,
   });
+};
 
 export const buildWorldSessionProjections = (
   input: WorldSessionProjectionInput,

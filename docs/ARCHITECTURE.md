@@ -41,7 +41,9 @@ The story-first surface uses the same authority boundary for a smaller, prose-fo
                                 → scope / actor / choice / echo / closure gates
                                 → commit next scene or fail closed
 
-/world → creator interview: goal, motive, accepted cost
+/world → registered pack selection or creator JSON import
+          → sealed pack ID + version + canonical digest
+          → creator interview: goal, motive, accepted cost
           → world-compatible proposal + canonical execution
           → creator hash confirmation
           → execution
@@ -54,6 +56,7 @@ Dice, items, conditions, and GM rulings are optional producers of the same `Reso
 Pure TypeScript functions own:
 
 - World Pack validation
+- canonical World Pack digesting, session binding, and cross-reference coverage
 - participant-to-character ownership validation and stable intent ordering
 - claim and graph-neighbor retrieval
 - stable scoring and ID tie-breaking
@@ -94,6 +97,12 @@ The Story Workbench Codex CLI adapter is a separate product-generation lane. It 
 The World Workbench uses that same local transport boundary for Book 19 narration after deterministic resolution. A local proof completed four accepted turns across `Plan Compromised` and `Canon Contained`. Two earlier candidates failed the narration gate—an ambiguous pronoun and an impossible place-as-actor sentence—and neither advanced the authoritative world. The final candidates were not manually rewritten and passed delegated English-language QA, but this does not establish a human creator literary verdict or independent serving-model identity.
 
 ## World Pack
+
+The World Workbench uses `PenelopeWorldPackV1`: a strict, portable envelope around provenance, presentation, creator-input policy, identity/hidden-knowledge policy, render policy, and one bounded simulation scenario. Book 19 and Oz are registered implementations. A creator definition omits the digest; the server validates and seals it, then stores the exact pack with its session checkpoint. Runtime routes resolve that sealed pack directly and never infer it from a scenario name.
+
+Imported packs are an MVP interoperability boundary, not a world-building UI. They are kept in process-local server memory for at most 30 minutes, omitted from the public registry, and bound to child checkpoints by pack ID, semantic version, and digest. The participant projection receives only presentation data; creator-input and render-policy bodies remain server-side. The creator-capability endpoint may separately return human-readable hidden premises and risks. This is not account authentication, persistent storage, or a confidentiality guarantee.
+
+The older Table/Red-Sail surface retains its original forensic World Pack contract. It remains supporting evidence and is not used to infer `/world` behavior.
 
 The pack contains layers, sources, entities, claims, events, rules, belief profiles, fixed states, canon profiles, original style profiles, an expansion policy, and replay case IDs.
 
@@ -195,7 +204,7 @@ Minimum node kinds are `entity`, `literal`, `rule`, `proposal`, `snapshot`, `sta
 
 ## Bounded simulation state
 
-The submission implements exactly two deterministic steps. It does not run autonomous agents or long-term memory.
+The supporting Red-Sail simulation implements exactly two deterministic steps. World Workbench packs may declare one through six turns. Neither path runs autonomous agents while the creator is idle or provides long-term memory.
 
 ```text
 SimulationSnapshot(n)
@@ -239,9 +248,9 @@ A blocked draft may be displayed as an untrusted candidate for diagnosis, but it
 
 ## HTTP contract
 
-`POST /api/story/session` returns the registered Scene 1, two real continuation choices, the selected style profile, and an explicit fixture/live transport label. `POST /api/story/turn` accepts only the current validated story session plus a registered A/B choice. A missing or unregistered `choiceId` returns 422; the API never turns it into the first fixture branch. The application builds a provisional causal event, sends only narrator-safe and present-speaker-shareable knowledge to the model, validates structured prose segments, exact allowed next choices, and bounded semantic guards for every registered Red-Sail reserved action, and commits the ledger/session only after every gate passes. C is handled by the World Workbench interview: it gathers goal, motive, and accepted cost; returns `stateChanged: false` for incomplete, ambiguous, or unsupported input; exposes world-compatible canonical execution; then requires creator hash confirmation before execution. HTTP Codex CLI execution requires `PENELOPE_STORY_CODEX_CLI_ENABLED=1`, a bounded high-entropy token compared through SHA-256 digests with `timingSafeEqual`, and a loopback host as defense-in-depth. The token is accepted only in a private header and never enters story JSON. The current full production browser suite passes 38 Chromium desktop/mobile WebKit checks, including the real Story fixture API path and World causal flow.
+`POST /api/story/session` returns the registered Scene 1, two real continuation choices, the selected style profile, and an explicit fixture/live transport label. `POST /api/story/turn` accepts only the current validated story session plus a registered A/B choice. A missing or unregistered `choiceId` returns 422; the API never turns it into the first fixture branch. The application builds a provisional causal event, sends only narrator-safe and present-speaker-shareable knowledge to the model, validates structured prose segments, exact allowed next choices, and bounded semantic guards for every registered Red-Sail reserved action, and commits the ledger/session only after every gate passes. C is handled by the World Workbench interview: it gathers goal, motive, and accepted cost; returns `stateChanged: false` for incomplete, ambiguous, or unsupported input; exposes world-compatible canonical execution; then requires creator hash confirmation before execution. HTTP Codex CLI execution requires `PENELOPE_STORY_CODEX_CLI_ENABLED=1`, a bounded high-entropy token compared through SHA-256 digests with `timingSafeEqual`, and a loopback host as defense-in-depth. The token is accepted only in a private header and never enters story JSON. The current full production browser suite passes 40 Chromium desktop/mobile WebKit checks, including the real Story fixture API path, World causal flow, cross-world selection, and creator-pack import.
 
-`POST /api/world/session` returns the bounded Book 19 opening and its typed world view. `POST /api/world/turn` accepts registered A/B actions or the fully elicited and hash-confirmed C execution; it resolves state and NPC reactions before narration. `POST /api/world/narration-draft` applies creator approval, edit, or rejection to the current candidate. Rejection cannot mutate the typed world, causal receipt, or checkpoint. The browser retains branch endpoints locally for Fork Compare, which compares state and receipts rather than prose similarity. Seven World Playwright checks cover both endings, no C checkpoint before confirmation, NPC movement, pressure, and shared-ancestor comparison.
+`POST /api/world/session` selects a registered pack or accepts one strict creator-pack definition, seals it, and returns its bounded opening and participant-safe world view. `POST /api/world/turn` accepts registered A/B actions or the fully elicited and hash-confirmed C execution; it resolves state and declared NPC reactions before narration. `POST /api/world/narration-draft` applies creator approval, edit, or rejection to the current candidate. Rejection cannot mutate the typed world, causal receipt, or checkpoint. The browser retains session checkpoint references for Fork Compare, which compares state and receipts rather than prose similarity. The portability browser gate switches from Book 19 to Oz, imports a creator-owned JSON definition, continues one turn, and checks for Odyssey leakage in desktop Chromium and mobile WebKit.
 
 `POST /api/runs` accepts one complete validated `CanonOverlay`, the current `SimulationSnapshot`, `styleProfileId`, `taskType`, facilitator brief, and `ParticipantIntent[]`. World Pack version, base state, location, canon profile, and focal characters are derived from the snapshot, scenario, and controlled entities rather than accepted as duplicate request authorities. The public fixture route additionally requires canonical equality with the exact registered red-sail replay stage; a changed brief, intent, draft ID, style, task, overlay, or snapshot is rejected before fixture execution. This prevents a caller from attaching arbitrary prompt prose to a fixed draft and relabeling it as causal output. The response contains character-scoped evidence, a structured draft with intent attribution, hard violations, proposals, a facilitator-facing canon/knowledge graph descriptor, a validated transition candidate, a proposed next snapshot, and a fixture/live model trace.
 

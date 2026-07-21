@@ -1,0 +1,94 @@
+{
+  "type": "UsageReceipt",
+  "schema_version": "1.0",
+  "date": "2026-07-21",
+  "task": "Portable World Pack implementation, adversarial repair, and release evidence audit",
+  "agent": "codex",
+  "model": "GPT-5.6 orchestration with Terra subagents; root serving variant not independently reported",
+  "platform": "Codex Desktop",
+  "project": "Penelope Ontology",
+  "session_id": "portable-world-pack-2026-07-21",
+  "source_return": "_dev/RETURN-portable-world-pack.md",
+  "blocked_by_safeguard": true,
+  "usage_mode": "certified audit mode; stale README writer adapter not used",
+  "route": {
+    "intent": "project-evidence-package",
+    "method": "router",
+    "match": "hit",
+    "entry_point": "skills/package-project-evidence/SKILL.md",
+    "based_on": [
+      "AGENTS.md",
+      "skills/package-project-evidence/SKILL.md"
+    ],
+    "selected_skills": [
+      {
+        "id": "package-project-evidence",
+        "version": "1.0",
+        "source_ref": "skills/package-project-evidence/SKILL.md",
+        "source_sha256": "4dbeba040601cbacf3c70469d3947d77d99cf41509e582e5f34b7b0146336a85",
+        "reason": "Portable product, README, demo, and submission claims needed one repository-backed ledger and a claim-parity gate."
+      }
+    ],
+    "loaded": [
+      {
+        "ref": "skills/package-project-evidence/SKILL.md",
+        "sha256": "4dbeba040601cbacf3c70469d3947d77d99cf41509e582e5f34b7b0146336a85",
+        "role": "entry_point"
+      }
+    ]
+  },
+  "knowledge": {
+    "used": [
+      {
+        "ref": "skills/package-project-evidence/SKILL.md",
+        "effect": "Forced strong portability, privacy, model, originality, and release claims to remain no stronger than code, tests, and hosted evidence."
+      }
+    ],
+    "failed": [],
+    "missing": [
+      {
+        "need": "Certified README write adapter",
+        "impact": "Its dependency manifest was stale, so README wording was audited directly from repository evidence instead of using the writer delegate."
+      }
+    ]
+  },
+  "verification": {
+    "result": "pass",
+    "gate": "pending",
+    "first_pass": false,
+    "retries": 3,
+    "evidence": [
+      {
+        "check": "source-manifest-audit-mode",
+        "result": "pass",
+        "ref": "_dev/RETURN-portable-world-pack.md",
+        "summary": "Certified audit mode passed; stale write dependencies were excluded."
+      },
+      {
+        "check": "portable-world-claim-ledger",
+        "result": "pass",
+        "ref": "docs/PORTABLE-WORLD-PACK-EVIDENCE.md"
+      },
+      {
+        "check": "full-repository-verify",
+        "result": "pass",
+        "ref": "_dev/RETURN-portable-world-pack.md"
+      },
+      {
+        "check": "desktop-mobile-portability-browser",
+        "result": "pass",
+        "ref": "tests/browser/world-pack-portability.spec.ts"
+      }
+    ]
+  },
+  "privacy": {
+    "mode": "metadata_only",
+    "redactions": [
+      "personal_data",
+      "private_path",
+      "raw_prompt",
+      "transcript",
+      "tool_payload"
+    ]
+  }
+}

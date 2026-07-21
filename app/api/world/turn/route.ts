@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import styleProfileJson from "@/_dev/dispatch-2026-07-18/contracts/PENELOPE-ENGLISH-STYLE-PROFILE.json";
 import { createCodexCliNarrationRenderer } from "@/src/adapters/codex-cli/world-narrator";
-import { getOdysseyBook19WorldSimulation } from "@/src/adapters/fixtures/odyssey-world-simulation";
 import {
   fixtureNarrationCritic,
   fixtureNarrationRenderer,
@@ -20,6 +19,7 @@ import {
   existingWorldBranchIds,
   loadWorldCreatorCheckpoint,
   releaseWorldSessionTurn,
+  resolveWorldPackForCheckpoint,
   reserveWorldSessionTurn,
   saveWorldSessionCheckpoint,
 } from "@/src/application/world-session-store";
@@ -80,8 +80,10 @@ export async function POST(request: Request) {
     const creatorAccessToken = request.headers.get(
       WORLD_CREATOR_ACCESS_TOKEN_HEADER,
     );
+    const confirmsCreatorDirection =
+      body.creatorDialogue?.confirmedProposalHash !== undefined;
     if (
-      body.transport === "codex_cli" &&
+      (body.transport === "codex_cli" || confirmsCreatorDirection) &&
       (!creatorAccessToken ||
         !loadWorldCreatorCheckpoint({
           sessionId: body.sessionId,
@@ -92,7 +94,8 @@ export async function POST(request: Request) {
         {
           error: {
             code: "world_creator_access_denied",
-            message: "Private narration proposals require this workbench's creator capability.",
+            message:
+              "Private narration and confirmed creator directions require this workbench's creator capability.",
           },
         },
         { status: 403 },
@@ -152,12 +155,24 @@ export async function POST(request: Request) {
       );
     }
 
-    const scenario = getOdysseyBook19WorldSimulation();
+    const worldPack = resolveWorldPackForCheckpoint(checkpoint);
+    if (!worldPack) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "world_pack_unavailable",
+            message: "The sealed world pack for this checkpoint is unavailable.",
+          },
+        },
+        { status: 409 },
+      );
+    }
+    const scenario = worldPack.scenario;
     let turnInput = body.action;
     let creatorDirection: CreatorWorldDirectionReceipt | null = null;
     if (body.creatorDialogue) {
       const assessment = assessCreatorDirection({
-        scenario,
+        pack: worldPack,
         session: checkpoint.session,
         baseSessionId: checkpoint.sessionId,
         originalAction: body.action,
@@ -196,7 +211,7 @@ export async function POST(request: Request) {
         );
       }
       turnInput = registeredCreatorActionInput({
-        scenario,
+        pack: worldPack,
         actionId: assessment.proposal.registeredActionId,
         canonicalExecution: assessment.proposal.canonicalExecution,
       });
@@ -214,6 +229,7 @@ export async function POST(request: Request) {
     } else {
       const prepared = selectedWorldActionCandidates({
         scenario,
+        worldPack,
         session: checkpoint.session,
       })
         .slice(0, 2)
@@ -263,6 +279,7 @@ export async function POST(request: Request) {
     const critic = liveAdapter ?? fixtureNarrationCritic;
     const narrated = await runWorldSessionNarrationPipeline({
       scenario,
+      worldPack,
       session: result.session,
       receipt: result.receipt,
       styleProfile,
@@ -324,12 +341,14 @@ export async function POST(request: Request) {
       parentCheckpointId: checkpoint.sessionId,
       previousVisibleSceneSummary: buildWorldVisibleSceneMemory({
         scenario,
+        worldPack,
         receipt: narrated.committableReceipt,
       }),
     });
     commitMainlineAdvance = !body.forkBeforeAction;
     const { participantView } = buildWorldSessionProjections({
       scenario,
+      worldPack,
       session: narrated.committableSession,
       sessionId: nextCheckpoint.sessionId,
       parentCheckpointId: checkpoint.sessionId,

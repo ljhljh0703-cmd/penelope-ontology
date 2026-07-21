@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { getOdysseyBook19WorldSimulation } from "@/src/adapters/fixtures/odyssey-world-simulation";
 import {
   finalizeWorldNarrationCreatorDecision,
   WorldNarrationCreatorDecisionError,
@@ -12,7 +11,9 @@ import {
 } from "@/src/application/world-simulation-service";
 import {
   releaseWorldNarrationDraftDecision,
+  loadWorldSessionCheckpoint,
   releaseWorldSessionTurn,
+  resolveWorldPackForCheckpoint,
   saveWorldSessionCheckpoint,
 } from "@/src/application/world-session-store";
 import {
@@ -66,6 +67,32 @@ export async function POST(request: Request) {
     const body = WorldNarrationDraftDecisionApiRequestSchema.parse(
       await request.json(),
     );
+    const baseCheckpoint = loadWorldSessionCheckpoint(
+      body.authority.baseCheckpointId,
+    );
+    if (!baseCheckpoint) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "world_session_not_found",
+            message: "The narration draft's base world checkpoint is missing or expired.",
+          },
+        },
+        { status: 404 },
+      );
+    }
+    const worldPack = resolveWorldPackForCheckpoint(baseCheckpoint);
+    if (!worldPack) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "world_pack_unavailable",
+            message: "The sealed world pack for this checkpoint is unavailable.",
+          },
+        },
+        { status: 409 },
+      );
+    }
     const result = await finalizeWorldNarrationCreatorDecision({
       creatorAccessToken,
       authority: body.authority,
@@ -90,13 +117,14 @@ export async function POST(request: Request) {
       draftId: body.authority.draftId,
       decisionReservationId: result.draftDecisionReservationId,
     };
-    const scenario = getOdysseyBook19WorldSimulation();
+    const scenario = worldPack.scenario;
     const prospectiveSessionId = randomUUID();
     const narration = projectModelNarrationOutputForWorldApi(
       result.modelOutput,
     );
     const { participantView } = buildWorldSessionProjections({
       scenario,
+      worldPack,
       session: result.committableSession,
       sessionId: prospectiveSessionId,
       parentCheckpointId: body.authority.baseCheckpointId,
@@ -119,6 +147,7 @@ export async function POST(request: Request) {
       parentCheckpointId: body.authority.baseCheckpointId,
       previousVisibleSceneSummary: buildWorldVisibleSceneMemory({
         scenario,
+        worldPack,
         receipt: result.committableReceipt,
       }),
       narrationDecisionReceipt: result.decisionReceipt,

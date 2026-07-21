@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getOdysseyBook19WorldSimulation } from "@/src/adapters/fixtures/odyssey-world-simulation";
+import { getOdysseyBook19WorldPack } from "@/src/adapters/world-packs/odyssey-book19";
 import type { CreatorTacitKnowledgeAnswer } from "@/src/contracts/creator-c-dialogue";
 import {
   assessCreatorDirection,
@@ -7,7 +7,8 @@ import {
 } from "@/src/domain/creator-c-dialogue";
 import { createWorldSimulationSession } from "@/src/domain/world-runtime";
 
-const scenario = getOdysseyBook19WorldSimulation();
+const pack = getOdysseyBook19WorldPack();
+const scenario = pack.scenario;
 const session = createWorldSimulationSession({ scenario });
 const baseSessionId = crypto.randomUUID();
 
@@ -30,7 +31,7 @@ describe("creator C tacit-knowledge dialogue", () => {
   it("asks one missing intent question without advancing the world", () => {
     const before = structuredClone(session);
     const result = assessCreatorDirection({
-      scenario,
+      pack,
       session,
       baseSessionId,
       originalAction: "Penelope asks Melantho to leave before she questions the stranger.",
@@ -49,7 +50,7 @@ describe("creator C tacit-knowledge dialogue", () => {
 
   it("does not ask an answered axis again", () => {
     const result = assessCreatorDirection({
-      scenario,
+      pack,
       session,
       baseSessionId,
       originalAction: "Penelope asks Melantho to leave before she questions the stranger.",
@@ -66,7 +67,7 @@ describe("creator C tacit-knowledge dialogue", () => {
 
   it("turns complete tacit knowledge into an inspectable non-suggested action", () => {
     const result = assessCreatorDirection({
-      scenario,
+      pack,
       session,
       baseSessionId,
       originalAction: "Penelope asks Melantho to leave before she questions the stranger.",
@@ -97,15 +98,15 @@ describe("creator C tacit-knowledge dialogue", () => {
   });
 
   it("binds a stable canonical execution instead of the first alias position", () => {
-    const reorderedScenario = structuredClone(scenario);
-    const clearRoom = reorderedScenario.actions.find(
+    const reorderedPack = structuredClone(pack);
+    const clearRoom = reorderedPack.scenario.actions.find(
       ({ id }) => id === "action.penelope.clear_room",
     );
     if (!clearRoom) throw new Error("Missing clear-room action.");
     clearRoom.verbAliases.reverse();
 
     const baseline = assessCreatorDirection({
-      scenario,
+      pack,
       session,
       baseSessionId,
       originalAction: "Penelope asks Melantho to leave before she questions the stranger.",
@@ -113,7 +114,7 @@ describe("creator C tacit-knowledge dialogue", () => {
       forkBeforeAction: false,
     });
     const reordered = assessCreatorDirection({
-      scenario: reorderedScenario,
+      pack: reorderedPack,
       session,
       baseSessionId,
       originalAction: "Penelope asks Melantho to leave before she questions the stranger.",
@@ -133,15 +134,15 @@ describe("creator C tacit-knowledge dialogue", () => {
   });
 
   it("blocks a creator proposal when a registered action has more than one entity target", () => {
-    const ambiguousScenario = structuredClone(scenario);
-    const clearRoom = ambiguousScenario.actions.find(
+    const ambiguousPack = structuredClone(pack);
+    const clearRoom = ambiguousPack.scenario.actions.find(
       ({ id }) => id === "action.penelope.clear_room",
     );
     if (!clearRoom) throw new Error("Missing clear-room action.");
     clearRoom.allowedTargetEntityIds = ["entity.melantho", "entity.odysseus"];
 
     const result = assessCreatorDirection({
-      scenario: ambiguousScenario,
+      pack: ambiguousPack,
       session,
       baseSessionId,
       originalAction: "Penelope asks Melantho to leave before she questions the stranger.",
@@ -155,15 +156,15 @@ describe("creator C tacit-knowledge dialogue", () => {
   });
 
   it("binds the one entity target the creator explicitly names among multiple registered targets", () => {
-    const explicitScenario = structuredClone(scenario);
-    const clearRoom = explicitScenario.actions.find(
+    const explicitPack = structuredClone(pack);
+    const clearRoom = explicitPack.scenario.actions.find(
       ({ id }) => id === "action.penelope.clear_room",
     );
     if (!clearRoom) throw new Error("Missing clear-room action.");
     clearRoom.allowedTargetEntityIds = ["entity.melantho", "entity.odysseus"];
 
     const result = assessCreatorDirection({
-      scenario: explicitScenario,
+      pack: explicitPack,
       session,
       baseSessionId,
       originalAction: "Penelope sends Melantho away to make the interview private.",
@@ -183,17 +184,17 @@ describe("creator C tacit-knowledge dialogue", () => {
   });
 
   it("blocks a creator proposal when a registered action has more than one zone target", () => {
-    const ambiguousScenario = structuredClone(scenario);
-    const clearRoom = ambiguousScenario.actions.find(
+    const ambiguousPack = structuredClone(pack);
+    const clearRoom = ambiguousPack.scenario.actions.find(
       ({ id }) => id === "action.penelope.clear_room",
     );
     if (!clearRoom) throw new Error("Missing clear-room action.");
     clearRoom.targetMode = "zone";
     clearRoom.allowedTargetEntityIds = [];
-    clearRoom.allowedZoneIds = ambiguousScenario.zones.slice(0, 2).map(({ id }) => id);
+    clearRoom.allowedZoneIds = ambiguousPack.scenario.zones.slice(0, 2).map(({ id }) => id);
 
     const result = assessCreatorDirection({
-      scenario: ambiguousScenario,
+      pack: ambiguousPack,
       session,
       baseSessionId,
       originalAction: "Penelope asks Melantho to leave before she questions the stranger.",
@@ -209,7 +210,7 @@ describe("creator C tacit-knowledge dialogue", () => {
   it("executes only the hash-bound canonical authority, not another valid alias", () => {
     expect(() =>
       registeredCreatorActionInput({
-        scenario,
+        pack,
         actionId: "action.penelope.clear_room",
         canonicalExecution: {
           verb: "dismiss melantho",
@@ -222,7 +223,7 @@ describe("creator C tacit-knowledge dialogue", () => {
 
   it("produces the same proposal hash for the same world and creator intent", () => {
     const input = {
-      scenario,
+      pack,
       session,
       baseSessionId,
       originalAction: "Penelope asks Melantho to leave before she questions the stranger.",
@@ -238,7 +239,7 @@ describe("creator C tacit-knowledge dialogue", () => {
 
   it("does not silently turn an NPC-authored move into Penelope's action", () => {
     const result = assessCreatorDirection({
-      scenario,
+      pack,
       session,
       baseSessionId,
       originalAction: "Eurycleia tells Penelope immediately that the stranger is Odysseus.",
@@ -256,7 +257,7 @@ describe("creator C tacit-knowledge dialogue", () => {
 
   it("recognizes public aliases when an NPC is made the acting author", () => {
     const result = assessCreatorDirection({
-      scenario,
+      pack,
       session,
       baseSessionId,
       originalAction: "I want Odysseus to reveal himself to Penelope now.",
@@ -271,7 +272,7 @@ describe("creator C tacit-knowledge dialogue", () => {
 
   it("binds the mainline or IF choice into the proposal hash", () => {
     const shared = {
-      scenario,
+      pack,
       session,
       baseSessionId,
       originalAction: "Penelope asks Melantho to leave before she questions the stranger.",
@@ -305,7 +306,7 @@ describe("creator C tacit-knowledge dialogue", () => {
       },
     ];
     const result = assessCreatorDirection({
-      scenario,
+      pack,
       session,
       baseSessionId,
       originalAction: "Penelope uses a hidden magical mirror to see through the disguise.",

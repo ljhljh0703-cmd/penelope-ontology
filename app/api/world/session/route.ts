@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import styleProfileJson from "@/_dev/dispatch-2026-07-18/contracts/PENELOPE-ENGLISH-STYLE-PROFILE.json";
-import { getOdysseyBook19WorldSimulation } from "@/src/adapters/fixtures/odyssey-world-simulation";
+import {
+  getDefaultWorldPack,
+  getWorldPackById,
+  hasRegisteredWorldPackId,
+} from "@/src/adapters/world-packs/registry";
 import {
   fixtureNarrationCritic,
   fixtureNarrationRenderer,
@@ -20,11 +24,16 @@ import {
   assertStoryTransportAllowed,
 } from "@/src/application/story-live-gate";
 import {
+  MAX_WORLD_SESSION_REQUEST_BYTES,
   projectModelNarrationOutputForWorldApi,
   StartWorldSessionApiRequestSchema,
   WORLD_CREATOR_ACCESS_TOKEN_HEADER,
 } from "@/src/contracts/world-api";
 import { PenelopeEnglishStyleProfileSchema } from "@/src/contracts/world-narrator";
+import {
+  bindSessionToWorldPack,
+  sealPenelopeWorldPack,
+} from "@/src/contracts/penelope-world-pack";
 import { createWorldSimulationSession } from "@/src/domain/world-runtime";
 
 export const runtime = "nodejs";
@@ -48,13 +57,44 @@ const gateError = (error: StoryLiveGateError) => {
 
 export async function POST(request: Request) {
   try {
-    const body = StartWorldSessionApiRequestSchema.parse(await request.json());
+    const rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_WORLD_SESSION_REQUEST_BYTES) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "world_session_request_too_large",
+            message: "The world session request is too large.",
+          },
+        },
+        { status: 413 },
+      );
+    }
+    const body = StartWorldSessionApiRequestSchema.parse(JSON.parse(rawBody));
     assertStoryTransportAllowed({
       transport: body.transport,
       requestUrl: request.url,
       presentedToken: request.headers.get(STORY_LIVE_TOKEN_HEADER),
     });
-    const scenario = getOdysseyBook19WorldSimulation();
+    const creatorWorldPack = body.creatorPackDefinition
+      ? sealPenelopeWorldPack(body.creatorPackDefinition)
+      : null;
+    if (creatorWorldPack && hasRegisteredWorldPackId(creatorWorldPack.packId)) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "world_creator_pack_id_reserved",
+            message: "The creator pack must use an unregistered pack identifier.",
+          },
+        },
+        { status: 409 },
+      );
+    }
+    const worldPack = creatorWorldPack
+      ? creatorWorldPack
+      : body.packId
+        ? getWorldPackById(body.packId)
+        : getDefaultWorldPack();
+    const scenario = worldPack.scenario;
     const instanceId = randomUUID().replace(/-/gu, "").slice(0, 12);
     const session = createWorldSimulationSession({
       scenario,
@@ -68,6 +108,7 @@ export async function POST(request: Request) {
     const critic = fixtureNarrationCritic;
     const narrated = await runWorldSessionNarrationPipeline({
       scenario,
+      worldPack,
       session,
       receipt: null,
       styleProfile,
@@ -94,12 +135,16 @@ export async function POST(request: Request) {
       parentCheckpointId: null,
       previousVisibleSceneSummary: buildWorldVisibleSceneMemory({
         scenario,
+        worldPack,
         receipt: narrated.committableReceipt,
       }),
       creatorAccessToken,
+      worldPackBinding: bindSessionToWorldPack(worldPack),
+      resolvedWorldPack: worldPack,
     });
     const { participantView } = buildWorldSessionProjections({
       scenario,
+      worldPack,
       session: narrated.committableSession,
       sessionId: checkpoint.sessionId,
       parentCheckpointId: null,
@@ -130,7 +175,7 @@ export async function POST(request: Request) {
       );
     }
     return NextResponse.json(
-      { error: { code: "world_session_failed", message: "The Odyssey world session could not be opened." } },
+      { error: { code: "world_session_failed", message: "The selected world session could not be opened." } },
       { status: 500 },
     );
   }

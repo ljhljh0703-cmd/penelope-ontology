@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import styleProfileJson from "@/_dev/dispatch-2026-07-18/contracts/PENELOPE-ENGLISH-STYLE-PROFILE.json";
 import { getOdysseyBook19WorldSimulation } from "@/src/adapters/fixtures/odyssey-world-simulation";
+import { getOdysseyBook19WorldPack } from "@/src/adapters/world-packs/odyssey-book19";
 import {
   finalizeWorldNarrationCreatorDecision,
   WorldNarrationCreatorDecisionError,
@@ -21,6 +22,7 @@ import {
   type WorldNarrationDraftDecisionAuthority,
   type WorldNarrationPendingDraftReceipt,
 } from "@/src/application/world-session-store";
+import { bindSessionToWorldPack } from "@/src/contracts/penelope-world-pack";
 import {
   PenelopeEnglishStyleProfileSchema,
   type ModelNarrationOutput,
@@ -33,6 +35,7 @@ import {
 import type { NarrationRenderer } from "@/src/ports/world-narrator";
 
 const scenario = getOdysseyBook19WorldSimulation();
+const worldPack = getOdysseyBook19WorldPack();
 const styleProfile = PenelopeEnglishStyleProfileSchema.parse(styleProfileJson);
 const CREATOR_TOKEN = "creator-capability-for-review-tests";
 const BASE_CHECKPOINT_ID = "11111111-1111-4111-8111-111111111111";
@@ -112,6 +115,8 @@ const pendingContext = async ({
     parentCheckpointId: null,
     previousVisibleSceneSummary: null,
     creatorAccessToken: CREATOR_TOKEN,
+    worldPackBinding: bindSessionToWorldPack(worldPack),
+    resolvedWorldPack: worldPack,
     nowMs: CREATED_AT_MS,
     idFactory: () => BASE_CHECKPOINT_ID,
   });
@@ -131,6 +136,7 @@ const pendingContext = async ({
   });
   const artifacts = buildWorldNarrationPipelineArtifacts({
     scenario,
+    worldPack,
     session: turn.session,
     receipt: turn.receipt,
     styleProfile,
@@ -138,6 +144,7 @@ const pendingContext = async ({
   const modelOutput = outputFor(text, artifacts);
   const narrated = await runWorldSessionNarrationPipeline({
     scenario,
+    worldPack,
     session: turn.session,
     receipt: turn.receipt,
     styleProfile,

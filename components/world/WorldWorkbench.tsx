@@ -1,6 +1,14 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import styles from "@/components/world/WorldWorkbench.module.css";
 import {
   compareWorldLines,
@@ -41,6 +49,21 @@ type WorldTurnResponse =
   | WorldSessionView
   | WorldPendingNarrationDraft
   | WorldCreatorDialogueResponse;
+
+type StartWorldSessionOptions =
+  | {
+      packId?: string;
+      creatorPackDefinition?: never;
+      signal?: AbortSignal;
+    }
+  | {
+      packId?: never;
+      creatorPackDefinition: unknown;
+      signal?: AbortSignal;
+    };
+
+const MAX_CREATOR_PACK_BYTES = 262_144;
+const SESSION_PRIVATE_PACK_VALUE = "__session_private_pack__";
 
 const isPendingNarrationDraft = (
   value: WorldTurnResponse,
@@ -179,6 +202,7 @@ export function WorldWorkbench() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
   const [pendingDraft, setPendingDraft] =
     useState<WorldPendingNarrationDraft | null>(null);
   const [draftParagraphs, setDraftParagraphs] = useState<
@@ -186,6 +210,7 @@ export function WorldWorkbench() {
   >([]);
   const autoStarted = useRef(false);
   const creatorCapability = useRef<string | null>(null);
+  const importedCreatorPack = useRef<unknown | null>(null);
   const sceneHeadingRef = useRef<HTMLHeadingElement>(null);
 
   const activeCheckpoint = useMemo(
@@ -267,13 +292,24 @@ export function WorldWorkbench() {
   );
 
   const startSession = useCallback(
-    async (nextTransport: WorldTransport, token: string, signal?: AbortSignal) => {
+    async (
+      nextTransport: WorldTransport,
+      token: string,
+      options: StartWorldSessionOptions = {},
+    ) => {
+      const { packId, creatorPackDefinition, signal } = options;
       setLoading(true);
       setError(null);
       try {
         const { data: view, response } = await requestJson<WorldSessionView>(
           "/api/world/session",
-          { transport: nextTransport },
+          {
+            transport: nextTransport,
+            ...(packId ? { packId } : {}),
+            ...(creatorPackDefinition !== undefined
+              ? { creatorPackDefinition }
+              : {}),
+          },
           nextTransport === "codex_cli" ? token : "",
           signal,
         );
@@ -302,9 +338,11 @@ export function WorldWorkbench() {
         setCompareRightId(null);
         setTransport(nextTransport);
         await loadCreatorReceipt(view, capability, signal);
+        return true;
       } catch (caught) {
-        if (caught instanceof DOMException && caught.name === "AbortError") return;
+        if (caught instanceof DOMException && caught.name === "AbortError") return false;
         setError(caught instanceof Error ? caught.message : "The world session could not be opened.");
+        return false;
       } finally {
         if (!signal?.aborted) setLoading(false);
       }
@@ -316,7 +354,7 @@ export function WorldWorkbench() {
     if (autoStarted.current) return;
     autoStarted.current = true;
     const controller = new AbortController();
-    void startSession("fixture", "", controller.signal);
+    void startSession("fixture", "", { signal: controller.signal });
     return () => controller.abort();
   }, [startSession]);
 
@@ -336,7 +374,82 @@ export function WorldWorkbench() {
       setError("Enter the local narration token before starting Codex CLI mode.");
       return;
     }
-    await startSession(transport, liveToken.trim());
+    if (active?.worldPack.availability === "session_private") {
+      if (importedCreatorPack.current === null) {
+        setError("Re-import the creator-owned JSON pack before restarting this private world.");
+        return;
+      }
+      await startSession(transport, liveToken.trim(), {
+        creatorPackDefinition: importedCreatorPack.current,
+      });
+      return;
+    }
+    await startSession(transport, liveToken.trim(), {
+      ...(active ? { packId: active.worldPack.packId } : {}),
+    });
+  };
+
+  const switchWorldPack = async (packId: string) => {
+    if (packId === SESSION_PRIVATE_PACK_VALUE) return;
+    if (transport === "codex_cli" && liveToken.trim().length === 0) {
+      setError("Enter the local narration token before opening a world in Codex CLI mode.");
+      return;
+    }
+    const started = await startSession(transport, liveToken.trim(), { packId });
+    if (started) {
+      importedCreatorPack.current = null;
+      setImportError(null);
+    }
+  };
+
+  const importCreatorPack = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    setImportError(null);
+    if (!file.name.toLowerCase().endsWith(".json")) {
+      setImportError("Choose a .json world-pack file.");
+      input.value = "";
+      return;
+    }
+    if (file.size === 0) {
+      setImportError("The selected JSON file is empty.");
+      input.value = "";
+      return;
+    }
+    if (file.size > MAX_CREATOR_PACK_BYTES) {
+      setImportError(
+        "The entire session-start request must be 262,144 bytes or smaller; choose a smaller pack file.",
+      );
+      input.value = "";
+      return;
+    }
+    if (transport === "codex_cli" && liveToken.trim().length === 0) {
+      setImportError("Enter the local narration token before importing in Codex CLI mode.");
+      input.value = "";
+      return;
+    }
+
+    let definition: unknown;
+    try {
+      definition = JSON.parse(await file.text()) as unknown;
+    } catch {
+      setImportError("This file is not valid JSON.");
+      input.value = "";
+      return;
+    }
+
+    const started = await startSession(transport, liveToken.trim(), {
+      creatorPackDefinition: definition,
+    });
+    if (started) {
+      importedCreatorPack.current = definition;
+      setImportError(null);
+    } else {
+      setImportError("The JSON was read, but it was not accepted as a Penelope world pack.");
+    }
+    input.value = "";
   };
 
   const sendWorldTurnRequest = async (request: WorldTurnRequest) => {
@@ -348,7 +461,9 @@ export function WorldWorkbench() {
         request,
         request.transport === "codex_cli" ? liveToken.trim() : "",
         undefined,
-        request.transport === "codex_cli" && creatorCapability.current
+        (request.transport === "codex_cli" ||
+          request.creatorDialogue?.confirmedProposalHash !== undefined) &&
+        creatorCapability.current
           ? { [WORLD_CREATOR_ACCESS_HEADER]: creatorCapability.current }
           : {},
       );
@@ -459,9 +574,7 @@ export function WorldWorkbench() {
 
   const loadGuidedCreatorMove = () => {
     if (!active || active.status === "complete" || busy) return;
-    setAction(
-      "Penelope asks Melantho to leave before she questions the stranger.",
-    );
+    setAction(active.worldPack.guidedCreatorMove.actionText);
     setSelectedCandidateActionId(null);
     setCreatorDialogue(null);
     setCreatorAnswer("");
@@ -547,8 +660,8 @@ export function WorldWorkbench() {
     return (
       <main id="main-content" className={styles.loading} aria-busy="true">
         <p className={styles.eyebrow}>Penelope Ontology · World-first rehearsal</p>
-        <h1>The Night of the Scar</h1>
-        <p>Opening the source-grounded Ithacan household and assigning each character only what they know.</p>
+        <h1>Opening a world</h1>
+        <p>Loading a bounded world pack and assigning each character only what they can know.</p>
         <span className={styles.loadingMark} aria-hidden="true" />
       </main>
     );
@@ -653,12 +766,65 @@ export function WorldWorkbench() {
           </div>
         </div>
 
+        <div className={styles.worldPackTools}>
+          <label className={styles.worldPackPicker} htmlFor="world-pack-picker">
+            <span>World pack</span>
+            <select
+              id="world-pack-picker"
+              value={
+                active.worldPack.availability === "session_private"
+                  ? SESSION_PRIVATE_PACK_VALUE
+                  : active.worldPack.packId
+              }
+              onChange={(event) => void switchWorldPack(event.target.value)}
+              disabled={busy || loading}
+              data-testid="world-pack-picker"
+            >
+              {active.worldPack.availability === "session_private" ? (
+                <optgroup label="Current creator-owned pack">
+                  <option value={SESSION_PRIVATE_PACK_VALUE}>
+                    {active.worldPack.publicTitle} · Session private
+                  </option>
+                </optgroup>
+              ) : null}
+              <optgroup label="Registered demo packs">
+                {active.availableWorldPacks
+                  .filter(({ availability }) => availability === "registered")
+                  .map((pack) => (
+                    <option key={pack.packId} value={pack.packId}>
+                      {pack.publicTitle} · {pack.publicSubtitle}
+                    </option>
+                  ))}
+              </optgroup>
+            </select>
+          </label>
+          <label className={styles.worldPackImport} htmlFor="creator-pack-json">
+            <span>Import creator pack</span>
+            <input
+              id="creator-pack-json"
+              type="file"
+              accept=".json,application/json"
+              onChange={(event) => void importCreatorPack(event)}
+              disabled={busy || loading}
+              data-testid="world-pack-import"
+            />
+          </label>
+          <p className={styles.worldPackPrivacy}>
+            Creator-owned pack · session-scoped server memory only · not persisted · expires after 30 minutes. Do not upload sensitive or unreleased IP to this hosted demo.
+          </p>
+          {importError ? (
+            <p className={styles.worldPackImportError} role="alert">
+              {importError}
+            </p>
+          ) : null}
+        </div>
+
         <div className={styles.titleGrid}>
           <div>
-            <p className={styles.eyebrow}>A bounded Odyssey simulation · Book 19</p>
+            <p className={styles.eyebrow}>{active.worldPack.sourceEyebrow}</p>
             <h1>
-              The Night
-              <span>of the Scar</span>
+              {active.worldPack.publicTitle}
+              <span>{active.worldPack.publicSubtitle}</span>
             </h1>
           </div>
           <div className={styles.intro}>
@@ -684,25 +850,12 @@ export function WorldWorkbench() {
 
       <section className={styles.thesisStrip} aria-labelledby="product-thesis-heading">
         <div>
-          <p className={styles.eyebrow}>The myth, then the IF</p>
-          <p>
-            Ten years after Troy, Odysseus reaches Ithaca disguised as a stranger.
-            Penelope questions him inside a house occupied by hostile suitors. In
-            Book 19, the nurse Eurycleia recognizes him by a scar while Penelope
-            still lacks certainty.
-          </p>
+          <p className={styles.eyebrow}>Source context</p>
+          <p>{active.worldPack.sourceIntroduction}</p>
         </div>
         <div>
           <p className={styles.eyebrow}>Product thesis</p>
-          <h2 id="product-thesis-heading">
-            Penelope doesn&apos;t continue your sentence.
-            <span>It continues your world.</span>
-          </h2>
-          <p>
-            What if Penelope removes a witness before the washing? Test the idea.
-            The excluded character keeps her own motive, moves offstage, and can
-            return as a consequence—not as a prompt improvisation.
-          </p>
+          <h2 id="product-thesis-heading">{active.worldPack.productThesis}</h2>
           <button
             type="button"
             onClick={loadGuidedCreatorMove}
@@ -711,14 +864,14 @@ export function WorldWorkbench() {
           >
             Load the guided creator move
           </button>
-          <small>Intent → ruling → consequence. The move is filled in and forked; nothing runs until you review and confirm it.</small>
+          <small>{active.worldPack.guidedCreatorMove.helperText}</small>
         </div>
       </section>
 
       <div className={styles.workspace}>
         <aside className={styles.timeline} aria-labelledby="checkpoint-heading">
           <div className={styles.sectionHeading}>
-            <p className={styles.eyebrow}>Ephemeral local checkpoints</p>
+            <p className={styles.eyebrow}>Ephemeral session checkpoints</p>
             <h2 id="checkpoint-heading">World lines</h2>
           </div>
           <ol data-testid="world-checkpoints">
@@ -837,7 +990,7 @@ export function WorldWorkbench() {
                       ))}
                     </ul>
                   ) : (
-                    <strong>No autonomous reaction fired at this checkpoint.</strong>
+                    <strong>No declared reaction fired at this checkpoint.</strong>
                   )}
                 </li>
                 <li>
@@ -912,7 +1065,7 @@ export function WorldWorkbench() {
             </div>
             <p className={styles.sectionLead}>
               Each card is the current simulated state. An NPC may react outside
-              Penelope&apos;s scene, but only through an approved rule and bounded agenda.
+              the focal character&apos;s scene, but only through an approved rule and bounded agenda.
             </p>
             {creatorReceipt ? (
               <div className={styles.npcGrid}>
@@ -924,10 +1077,8 @@ export function WorldWorkbench() {
                     )?.zoneId;
                     const proximityLabel =
                       actor.zoneId === focalZone
-                        ? "In scene"
-                        : actor.zoneId === "zone.inner_corridor"
-                          ? "Within earshot"
-                          : "Offstage";
+                        ? "Same scene"
+                        : "Different zone / offstage";
                     return (
                       <article
                         key={actor.entityId}
@@ -1377,7 +1528,7 @@ export function WorldWorkbench() {
                     }}
                     maxLength={800}
                     rows={4}
-                    placeholder="Describe what Penelope tries. Penelope will ask what you want, why she acts, and what cost you accept before the world moves."
+                    placeholder={`Describe what ${active.focalActor.label} tries. Penelope will ask what they want, why they act, and what cost they accept before the world moves.`}
                     data-testid="world-action"
                     disabled={busy}
                   />
@@ -1594,6 +1745,32 @@ export function WorldWorkbench() {
                       </ol>
                     </section>
                   ) : null}
+
+                  <section
+                    aria-labelledby="behind-curtain-premises-heading"
+                    data-testid="behind-curtain-premises"
+                  >
+                    <h3 id="behind-curtain-premises-heading">The curtain ledger · creator only</h3>
+                    <p>
+                      These concealed premises govern the scene. They stay out of participant prose until a registered event makes them observable.
+                    </p>
+                    <ul className={styles.behindCurtainList}>
+                      {creatorReceipt.behindCurtainPremises.map((premise) => (
+                        <li key={premise.premiseId}>
+                          <span>
+                            {premise.approvalStatus === "source_verified"
+                              ? "Source-grounded"
+                              : "Creator-approved"}
+                          </span>
+                          <strong>{premise.summary}</strong>
+                          <small>Meaning: {premise.meaning}</small>
+                          <small>Grounding: {premise.sourceGrounding}</small>
+                          <small>Withheld because: {premise.whyWithheld}</small>
+                          <code>{premise.premiseId}</code>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
 
                   <section
                     aria-labelledby="behind-curtain-heading"

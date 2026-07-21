@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "The Night of the Scar — Penelope Ontology",
+  title: "Penelope Ontology — Portable Story Worlds",
   description:
-    "Enter a bounded Odyssey world, make a choice as Penelope, and watch private knowledge and NPC agendas move the story.",
+    "Load a bounded story world, make a consequential choice, and watch private knowledge and NPC agendas move the story without breaking its canon.",
 };
 
 export default function WorldLayout({

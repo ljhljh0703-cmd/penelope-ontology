@@ -13,6 +13,16 @@ import {
   WorldSimulationEventSchema,
 } from "@/src/contracts/world-runtime";
 import { CreatorCDialogueRequestSchema } from "@/src/contracts/creator-c-dialogue";
+import { PenelopeWorldPackDefinitionSchema } from "@/src/contracts/penelope-world-pack";
+
+/**
+ * Upper bound for a creator-supplied, session-private world definition.
+ *
+ * This is deliberately a byte limit rather than a character limit. The route
+ * measures the raw request body after it has been read, then rejects oversized
+ * definitions before it parses or retains them as a world session.
+ */
+export const MAX_WORLD_SESSION_REQUEST_BYTES = 262_144;
 
 export const WorldPresentationTransportSchema = z.enum(["fixture", "codex_cli"]);
 export const WORLD_CREATOR_ACCESS_TOKEN_HEADER =
@@ -26,8 +36,54 @@ export const WorldCreatorReceiptApiRequestSchema = z
   .strict();
 
 export const StartWorldSessionApiRequestSchema = z
-  .object({ transport: WorldPresentationTransportSchema })
+  .object({
+    transport: WorldPresentationTransportSchema,
+    packId: IdentifierSchema.optional(),
+    creatorPackDefinition: PenelopeWorldPackDefinitionSchema.optional(),
+  })
+  .strict()
+  .superRefine(({ packId, creatorPackDefinition }, context) => {
+    if (packId && creatorPackDefinition) {
+      context.addIssue({
+        code: "custom",
+        path: ["creatorPackDefinition"],
+        message:
+          "A world session may select a registered pack or import a creator pack, but not both.",
+      });
+    }
+  });
+
+export const WorldPackAvailabilitySchema = z.enum([
+  "registered",
+  "session_private",
+]);
+
+export const WorldPackSummaryViewSchema = z
+  .object({
+    packId: IdentifierSchema,
+    packVersion: z.string().min(1).max(32),
+    availability: WorldPackAvailabilitySchema,
+    publicTitle: z.string().min(1).max(120),
+    publicSubtitle: z.string().min(1).max(180),
+    hook: z.string().min(1).max(800),
+    demoOrder: z.number().int().positive().max(99),
+  })
   .strict();
+
+export const WorldPackPresentationViewSchema =
+  WorldPackSummaryViewSchema.extend({
+    definitionDigest: HashSchema,
+    sourceEyebrow: z.string().min(1).max(120),
+    sourceIntroduction: z.string().min(1).max(800),
+    productThesis: z.string().min(1).max(800),
+    guidedCreatorMove: z
+      .object({
+        actionText: z.string().min(1).max(800),
+        helperText: z.string().min(1).max(300),
+        forkBeforeAction: z.boolean(),
+      })
+      .strict(),
+  }).strict();
 
 export const WorldTurnApiRequestSchema = z
   .object({
@@ -89,6 +145,21 @@ export const WorldBehindCurtainRiskSchema = z
       )
       .min(1)
       .max(12),
+  })
+  .strict();
+
+/**
+ * Creator-capability-only explanation of a premise deliberately withheld from
+ * participant narration. This is never part of WorldParticipantSessionView.
+ */
+export const WorldBehindCurtainPremiseSchema = z
+  .object({
+    premiseId: IdentifierSchema,
+    summary: z.string().min(1).max(600),
+    meaning: z.string().min(1).max(600),
+    approvalStatus: z.enum(["source_verified", "creator_approved"]),
+    sourceGrounding: z.string().min(1).max(600),
+    whyWithheld: z.string().min(1).max(600),
   })
   .strict();
 
@@ -262,6 +333,7 @@ export const WorldCreatorReceiptSchema = z
         creatorReviewRequiredIds: z.array(IdentifierSchema),
       })
       .strict(),
+    behindCurtainPremises: z.array(WorldBehindCurtainPremiseSchema).max(24),
     behindCurtainRisks: z.array(WorldBehindCurtainRiskSchema).max(4),
     events: z.array(WorldSimulationEventSchema),
     creatorDirections: z.array(CreatorWorldDirectionReceiptSchema).max(6),
@@ -293,6 +365,8 @@ export const WorldParticipantSessionViewSchema = z
     scenarioId: IdentifierSchema,
     title: z.string().min(1),
     participantSummary: z.string().min(1),
+    worldPack: WorldPackPresentationViewSchema,
+    availableWorldPacks: z.array(WorldPackSummaryViewSchema).min(1).max(12),
     transport: WorldPresentationTransportSchema,
     cursor: WorldBranchCursorSchema,
     forked: z.boolean(),
@@ -345,6 +419,13 @@ export type StartWorldSessionApiRequest = z.infer<
 export type WorldTurnApiRequest = z.infer<typeof WorldTurnApiRequestSchema>;
 export type WorldParticipantSessionView = z.infer<
   typeof WorldParticipantSessionViewSchema
+>;
+export type WorldPackSummaryView = z.infer<typeof WorldPackSummaryViewSchema>;
+export type WorldPackPresentationView = z.infer<
+  typeof WorldPackPresentationViewSchema
+>;
+export type WorldPackAvailability = z.infer<
+  typeof WorldPackAvailabilitySchema
 >;
 export type WorldCreatorReceipt = z.infer<typeof WorldCreatorReceiptSchema>;
 export type WorldNarrationProjection = z.infer<

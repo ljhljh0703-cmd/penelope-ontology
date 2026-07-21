@@ -8,7 +8,7 @@ For the current status, deadline plan, Go/No-Go gates, and next Codex task bound
 
 ## Product in one sentence
 
-**Penelope Ontology lets a creator change one choice, then traces how the bounded world answers back.**
+**Penelope Ontology lets a creator load a bounded world, change one choice, then trace how that world answers back.**
 
 The primary users are professional GMs, narrative production teams, and game scene or quest designers who need to explore an intervention without losing character knowledge, world facts, creator-owned style, or responsibility for earlier choices. Writers working inside a bounded canon are an adjacent audience, not a separately validated user segment.
 
@@ -25,7 +25,7 @@ source-grounded world state
 → branch ending and replayable checkpoint
 ```
 
-The product hero is `/`—the same World Workbench exposed at `/world`—running **The Night of the Scar**, a bounded one-night simulation from *The Odyssey*, Book 19. The Story Workbench at `/story` and the Table rehearsal at `/table` are supporting surfaces.
+The product hero is `/`—the same World Workbench exposed at `/world`. It defaults to **The Night of the Scar**, a bounded one-night simulation from *The Odyssey*, Book 19, and can switch to **Behind the Green Screen** from *The Wonderful Wizard of Oz*, Chapter XV. It can also import a prepared creator-owned JSON World Pack into temporary session memory. The Story Workbench at `/story` and the Table rehearsal at `/table` are supporting surfaces.
 
 ## The demo in 30 seconds
 
@@ -45,19 +45,21 @@ Penelope waits, observes, and tests before she treats a claim as truth. **Penelo
 
 Implemented and fixture-verified:
 
-- `/world` as the world-first root route: a source-bounded Book 19 simulation with local checkpoints, A/B suggestions, C creator direction, canonical-execution hash confirmation, endings, creator-only risk receipts, and narration review
+- `/world` as the world-first root route: a source-bounded Book 19 simulation with session-scoped checkpoints, A/B suggestions, C creator direction, canonical-execution hash confirmation, endings, creator-only risk receipts, and narration review
+- a sealed, versioned World Pack contract plus two registered public-domain packs with different casts, sources, actions, reactions, hidden knowledge, and endings
+- strict creator-owned JSON import within a 262,144-byte complete session-request limit, server-computed digest, session checkpoint binding, registered-ID collision rejection, and root-fixed 30-minute server-memory retention
 - C interview questions for goal, motive, and accepted cost; incomplete, ambiguous, or unsupported C cannot change world state and is never silently substituted with A or B
 - typed world state, character drives and knowledge boundaries, creator-owned prose profile, scene contracts, resolution envelopes, scoped narration, and deterministic replay
 - Book 19 fixture rules that distinguish source-grounded facts from creator-approved IF rules; Melantho reacts to visible exclusion and disturbance rather than receiving hidden identity knowledge for free
 - narration approval, edit, and rejection flow where prose cannot rewrite resolved events or causal receipts
-- browser-local world-line checkpoints for returning to a shared past and testing a different consequence
-- World Pulse: creator choice, autonomous world response, typed state delta, and renewed story pressure derived from the causal receipt
+- session-scoped world-line checkpoints for returning to a shared past and testing a different consequence
+- World Pulse: creator choice, declared causal world response, typed state delta, and renewed story pressure derived from the causal receipt
 - compact NPC cards for each relevant NPC's position, agenda, and private-knowledge boundary
 - Fork Compare: side-by-side state comparison of two world lines from a shared checkpoint, including knowledge, movement, pressure, rules, risks, and endings
 - a local four-turn Book 19 run through the Codex CLI narration path, requesting `gpt-5.6-terra`: two weak drafts failed closed without changing world state, while four final candidates passed the harness and delegated English-language QA without manual rewriting
 - deterministic retrieval, hard validation, provenance graph, creator decision, hashing, transition, replay, fixture/live evidence separation, and privacy scanning
-- complete clean-worktree verification: evidence regeneration and verification, lint, typecheck, 94 Vitest files with 833 tests, 383-file privacy scan, production build, seven focused World Playwright checks, and 38 production browser checks across desktop Chromium and mobile WebKit, including C dismissal → `Plan Compromised` → return to opening → `Canon Contained` → Fork Compare
-- a public GitHub repository, successful CI, and a credential-free hosted demo whose cache-busted health and behavior match the deployed commit
+- current portable-world verification: evidence regeneration and verification, lint, typecheck, 103 Vitest files with 872 tests, 406-file privacy scan, production build and trace-privacy inspection, and 40 production browser checks across desktop Chromium and mobile WebKit
+- the previous public GitHub release, CI, and credential-free hosted demo passed their exact-SHA gates; this portable-world tree still needs its own commit, CI, deployment, and hosted-smoke recertification
 
 Not verified or released yet:
 
@@ -80,7 +82,7 @@ Open [http://localhost:3000](http://localhost:3000). Fixture mode is the default
 
 | Route | Purpose |
 |---|---|
-| `/` or `/world` | Product demo: Book 19 world simulation, creator C interview, checkpoints, and consequences |
+| `/` or `/world` | Product workbench: Book 19, Oz, or a session-scoped creator pack; creator C interview, checkpoints, and consequences |
 | `/story` | Supporting prepared A/B story-workbench flow |
 | `/table` | Supporting forensic fixture: provenance, canon proposal, graph, and replay |
 
@@ -124,7 +126,7 @@ npm run submission:check:post
 ## Repository map
 
 - `app/`: Story, World, and Table workbenches plus stateless HTTP endpoints
-- `components/world/`: Book 19 world simulation UI
+- `components/world/`: portable World Pack simulation UI
 - `components/story/`: prepared story-workbench surface
 - `components/table/`: forensic workbench and accessible graph view
 - `src/application/`: turn orchestration and frozen replay
@@ -143,3 +145,4 @@ npm run submission:check:post
 - New lore remains a proposal until the creator approves it.
 - No cross-model writing-superiority or productivity-improvement claim is made.
 - Graph views are derived knowledge/canon views; the project does not claim a graph database or formal Semantic Web implementation.
+- Imported definitions use temporary server memory and are not persisted, but the hosted demo is not a confidential manuscript service.

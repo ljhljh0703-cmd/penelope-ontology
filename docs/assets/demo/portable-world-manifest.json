@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "kind": "supplementary_product_gallery",
+  "fixtureOnly": true,
+  "evidenceScope": "local_fixture_ui_capture_not_live_model_or_hosted_deployment_evidence",
+  "visuallyInspected": true,
+  "privacyInspected": true,
+  "files": [
+    {
+      "fileName": "06-book19-world-pack.png",
+      "phase": "portable-world",
+      "caption": "The default Book 19 World Pack in the portable World Workbench.",
+      "path": "docs/assets/demo/06-book19-world-pack.png",
+      "bytes": 359793,
+      "sha256": "b5309f8ffa6098f219c187605e8f2f10dd88b5193b95a056894244b583813a0a"
+    },
+    {
+      "fileName": "07-oz-world-pack.png",
+      "phase": "portable-world",
+      "caption": "The Oz Chapter XV pack replaces the source, cast, and action set on the same workbench.",
+      "path": "docs/assets/demo/07-oz-world-pack.png",
+      "bytes": 353378,
+      "sha256": "af92ed18c44f10a288aaf105bdbbd6e37884de925282710d0757f2f5a563910b"
+    },
+    {
+      "fileName": "08-creator-pack-curtain.png",
+      "phase": "portable-world",
+      "caption": "The Lantern Ledger creator-only curtain ledger explains a hidden premise and its grounding.",
+      "path": "docs/assets/demo/08-creator-pack-curtain.png",
+      "bytes": 116977,
+      "sha256": "1c934bb158bbc5972f7940dd1fcf63301fee337b7ac9664a4ef61e5e4c41132e"
+    }
+  ]
+}

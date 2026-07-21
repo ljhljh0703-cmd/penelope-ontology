@@ -117,6 +117,16 @@ describe("world-first Odyssey API", () => {
         .flatMap(({ knownPremiseIds }) => knownPremiseIds)
         .includes("premise.stranger_identity"),
     ).toBe(true);
+    expect(receipt.behindCurtainPremises).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          premiseId: "premise.stranger_identity",
+          approvalStatus: "source_verified",
+          sourceGrounding: expect.stringContaining("Odyssey"),
+          whyWithheld: expect.stringContaining("concealed fact directly"),
+        }),
+      ]),
+    );
     expect(receipt.ruleReview.sourceGroundedIds).toContain(
       "reaction.eurycleia.recognize_scar",
     );
@@ -222,7 +232,7 @@ describe("world-first Odyssey API", () => {
           answers: creatorAnswers,
           confirmedProposalHash: proposal.proposal.proposalHash,
         },
-      }),
+      }, { [WORLD_CREATOR_ACCESS_TOKEN_HEADER]: creatorAccessToken }),
     );
     const confirmed = WorldParticipantSessionViewSchema.parse(
       await confirmedResponse.json(),
@@ -262,7 +272,7 @@ describe("world-first Odyssey API", () => {
   });
 
   it("fails closed when a creator confirms a proposal with the wrong hash", async () => {
-    const { view: opening } = await startFixture();
+    const { view: opening, creatorAccessToken } = await startFixture();
     const response = await turnWorld(
       request("/api/world/turn", {
         sessionId: opening.sessionId,
@@ -274,7 +284,7 @@ describe("world-first Odyssey API", () => {
           answers: creatorAnswers,
           confirmedProposalHash: "a".repeat(64),
         },
-      }),
+      }, { [WORLD_CREATOR_ACCESS_TOKEN_HEADER]: creatorAccessToken }),
     );
 
     expect(response.status).toBe(409);
@@ -282,6 +292,66 @@ describe("world-first Odyssey API", () => {
       error: { code: "world_creator_proposal_stale" },
     });
     expect(loadWorldSessionCheckpoint(opening.sessionId)?.session.state.turn).toBe(0);
+  });
+
+  it("requires the session creator capability before a fixture C confirmation can mutate the world", async () => {
+    const { view: opening, creatorAccessToken } = await startFixture();
+    const action =
+      "Penelope asks Melantho to leave before she questions the stranger.";
+    const proposalResponse = await turnWorld(
+      request("/api/world/turn", {
+        sessionId: opening.sessionId,
+        expectedStateHash: opening.stateHash,
+        action,
+        forkBeforeAction: false,
+        transport: "fixture",
+        creatorDialogue: { answers: creatorAnswers },
+      }),
+    );
+    const proposal = CreatorCDialogueResponseSchema.parse(
+      await proposalResponse.json(),
+    );
+    if (proposal.kind !== "creator_confirmation") {
+      throw new Error("Expected a creator confirmation proposal.");
+    }
+    const confirmationRequest = {
+      sessionId: opening.sessionId,
+      expectedStateHash: opening.stateHash,
+      action,
+      forkBeforeAction: false,
+      transport: "fixture" as const,
+      creatorDialogue: {
+        answers: creatorAnswers,
+        confirmedProposalHash: proposal.proposal.proposalHash,
+      },
+    };
+
+    const absent = await turnWorld(request("/api/world/turn", confirmationRequest));
+    const wrong = await turnWorld(
+      request("/api/world/turn", confirmationRequest, {
+        [WORLD_CREATOR_ACCESS_TOKEN_HEADER]: "wrong-creator-capability",
+      }),
+    );
+
+    expect(absent.status).toBe(403);
+    await expect(absent.json()).resolves.toMatchObject({
+      error: { code: "world_creator_access_denied" },
+    });
+    expect(wrong.status).toBe(403);
+    await expect(wrong.json()).resolves.toMatchObject({
+      error: { code: "world_creator_access_denied" },
+    });
+    expect(loadWorldSessionCheckpoint(opening.sessionId)?.session.state.turn).toBe(0);
+
+    const allowed = await turnWorld(
+      request("/api/world/turn", confirmationRequest, {
+        [WORLD_CREATOR_ACCESS_TOKEN_HEADER]: creatorAccessToken,
+      }),
+    );
+    const confirmed = WorldParticipantSessionViewSchema.parse(await allowed.json());
+
+    expect(allowed.status).toBe(200);
+    expect(confirmed.turn).toBe(1);
   });
 
   it("preserves a creator's aim but refuses an unsupported magical mechanism", async () => {

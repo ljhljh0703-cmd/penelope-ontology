@@ -1,5 +1,5 @@
 import styleProfileJson from "@/_dev/dispatch-2026-07-18/contracts/PENELOPE-ENGLISH-STYLE-PROFILE.json";
-import { getOdysseyBook19WorldSimulation } from "@/src/adapters/fixtures/odyssey-world-simulation";
+import { getOdysseyBook19WorldPack } from "@/src/adapters/world-packs/odyssey-book19";
 import {
   buildWorldNarrationPipelineArtifacts,
   type WorldNarrationPipelineArtifacts,
@@ -11,6 +11,7 @@ import {
   type PenelopeEnglishStyleProfile,
 } from "@/src/contracts/world-narrator";
 import type { WorldSimulationScenario } from "@/src/contracts/world-simulation";
+import type { PenelopeWorldPackV1 } from "@/src/contracts/penelope-world-pack";
 import type {
   WorldSimulationSession,
   WorldTurnReceipt,
@@ -107,12 +108,14 @@ const rendererRequestFromArtifacts = (
 
 const buildPreparedTurn = ({
   scenario,
+  worldPack,
   beforeSession,
   participantInput,
   turn,
   styleProfile,
 }: {
   scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
   beforeSession: WorldSimulationSession;
   participantInput: string;
   turn: 1 | 2;
@@ -140,6 +143,7 @@ const buildPreparedTurn = ({
   }
   const artifacts = buildWorldNarrationPipelineArtifacts({
     scenario,
+    worldPack,
     session: result.session,
     receipt: result.receipt,
     styleProfile,
@@ -181,15 +185,18 @@ const assertExpectedRun = (run: W5PreparedCaseRun): void => {
 const buildOneCase = ({
   definition,
   scenario,
+  worldPack,
   styleProfile,
 }: {
   definition: W5CaseDefinition;
   scenario: WorldSimulationScenario;
+  worldPack: PenelopeWorldPackV1;
   styleProfile: PenelopeEnglishStyleProfile;
 }): W5PreparedCaseRun => {
   const initialSession = createWorldSimulationSession({ scenario });
   const setupArtifacts = buildWorldNarrationPipelineArtifacts({
     scenario,
+    worldPack,
     session: initialSession,
     receipt: null,
     styleProfile,
@@ -197,6 +204,7 @@ const buildOneCase = ({
   });
   const first = buildPreparedTurn({
     scenario,
+    worldPack,
     beforeSession: initialSession,
     participantInput: definition.inputSequence[0]!,
     turn: 1,
@@ -204,6 +212,7 @@ const buildOneCase = ({
   });
   const second = buildPreparedTurn({
     scenario,
+    worldPack,
     beforeSession: first.session,
     participantInput: definition.inputSequence[1]!,
     turn: 2,
@@ -228,9 +237,11 @@ const buildOneCase = ({
 };
 
 export const buildW5CaseSessions = ({
-  scenario = getOdysseyBook19WorldSimulation(),
+  worldPack = getOdysseyBook19WorldPack(),
+  scenario = worldPack.scenario,
   styleProfile = DEFAULT_W5_STYLE_PROFILE,
 }: {
+  worldPack?: PenelopeWorldPackV1;
   scenario?: WorldSimulationScenario;
   styleProfile?: PenelopeEnglishStyleProfile;
 } = {}): W5PreparedCaseRun[] =>
@@ -238,6 +249,7 @@ export const buildW5CaseSessions = ({
     buildOneCase({
       definition: W5CaseDefinitionSchema.parse(definition),
       scenario: lockedW5Scenario(scenario),
+      worldPack,
       styleProfile: PenelopeEnglishStyleProfileSchema.parse(styleProfile),
     }),
   );

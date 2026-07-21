@@ -1,6 +1,6 @@
 # Judge guide
 
-This project is a fixture-first Work & Productivity web tool for professional GMs, narrative teams, and game scene or quest designers. The public demo is intentionally unable to spend OpenAI credits. It shows the same structured contract, validation, creator decision, transition, and replay path used around the separate controlled GPT-5.6 evidence command.
+This project is a fixture-first Work & Productivity web tool for professional GMs, narrative teams, and game scene or quest designers. The public demo is intentionally unable to spend OpenAI credits. It shows the same portable World Pack, validation, creator decision, transition, and replay path used around the separate controlled GPT-5.6 evidence command.
 
 ## Fastest review path
 
@@ -13,8 +13,10 @@ Open [the public Penelope demo](https://penelope-ontology.vercel.app). No accoun
 5. Return to checkpoint 01. Choose **Order the foot washing**, commit it, then choose **B · Alternate — Contain Eurycleia's recognition** and commit it to reach `Canon Contained`.
 6. Inspect `Fork Compare`. Both lines share the same source checkpoint, but their NPC position, knowledge, pressure, latent risk, and ending now differ.
 7. Open the creator inspector to distinguish source-grounded Book 19 facts from creator-approved IF rules and creator-review-only material.
+8. Use the World Pack selector to open **Behind the Green Screen**. Its Oz cast, hidden premise, action vocabulary, reactions, and endings replace the Book 19 pack without inheriting Odyssey content.
+9. Optionally import [`examples/world-packs/creator-owned-starter.json`](../examples/world-packs/creator-owned-starter.json). **The Lantern Ledger** is strict-schema validated, sealed with a digest, and held in temporary server memory for this session. Do not upload unpublished or sensitive material to the hosted demo.
 
-The public host is fixture-only and cannot spend OpenAI credits. Incomplete, abandoned, ambiguous, or unsupported C input leaves world state unchanged; it is never silently converted into A or B.
+The public host is fixture-only and cannot spend OpenAI credits. Incomplete, abandoned, ambiguous, or unsupported C input leaves world state unchanged; it is never silently converted into A or B. Imported packs are neither persisted nor added to the public registry, but the hosted service is not a confidential manuscript store.
 
 ## Local setup
 
@@ -68,10 +70,10 @@ Codex was used as the engineering partner. The project starts from a familiar sk
 ## Evidence boundary
 
 - Public UI and hosted APIs are fixture-only.
-- The product hero is a bounded Book 19 world simulation; `/table` remains a supporting registered frozen two-intent forensic replay.
+- The product hero is a portable bounded-world workbench. Book 19 is the main causal demonstration, Oz is the cross-world proof, and `/table` remains a supporting registered frozen two-intent forensic replay.
 - Fixture output must not be described as a live GPT-5.6 response.
 - Controlled local narration can request `gpt-5.6-terra` through the authenticated Codex CLI; the public host never exposes that paid path.
 - Raw model prose and response IDs stay out of the public repository.
-- No remote multiplayer room, graph database, embedding store, generalized quest generator, practitioner result, or measured productivity gain is claimed.
+- No conversational pack builder, persistent private world library, remote multiplayer room, graph database, embedding store, generalized quest generator, practitioner result, or measured productivity gain is claimed.
 
 See `artifacts/evidence/manifest.json` for the generated public evidence inventory and `docs/EVIDENCE-LEDGER.md` for claim status.

@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { getOdysseyBook19WorldSimulation } from "@/src/adapters/fixtures/odyssey-world-simulation";
 import { buildWorldCreatorReceipt } from "@/src/application/world-simulation-service";
-import { loadWorldCreatorCheckpoint } from "@/src/application/world-session-store";
+import {
+  loadWorldCreatorCheckpoint,
+  resolveWorldPackForCheckpoint,
+} from "@/src/application/world-session-store";
 import {
   WORLD_CREATOR_ACCESS_TOKEN_HEADER,
   WorldCreatorReceiptApiRequestSchema,
@@ -42,10 +44,23 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-    const scenario = getOdysseyBook19WorldSimulation();
+    const worldPack = resolveWorldPackForCheckpoint(checkpoint);
+    if (!worldPack) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "world_pack_unavailable",
+            message: "The sealed world pack for this checkpoint is unavailable.",
+          },
+        },
+        { status: 409 },
+      );
+    }
+    const scenario = worldPack.scenario;
     return NextResponse.json(
       buildWorldCreatorReceipt({
         scenario,
+        worldPack,
         session: checkpoint.session,
         receipt: checkpoint.session.turns.at(-1) ?? null,
         narrationDecisionReceipt: checkpoint.narrationDecisionReceipt,

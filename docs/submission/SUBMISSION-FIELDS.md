@@ -1,12 +1,12 @@
 # Build Week submission field packet
 
-Status: **product, public repository, CI, and hosted demo verified; video, `/feedback`, and final Devpost submission pending**.
+Status: **portable product tree locally verified; exact release commit, public CI, deployment/hosted smoke, video, `/feedback`, and final Devpost submission pending**.
 
 ## Identity
 
 - **Project name:** Penelope Ontology
 - **Track:** Work & Productivity
-- **Tagline:** A story engine that keeps creators in charge while controlling world logic and consequences.
+- **Tagline:** A portable story simulator that keeps creators in charge while bounded worlds carry choices into consequences.
 - **Primary users:** narrative designers, quest teams, professional game masters, and writers working inside a bounded world
 - **Devpost project to update:** `1329966` / `https://devpost.com/software/narrative-ontology-harness`
 - **Duplicate project to leave untouched:** `1329950` / `Untitled`
@@ -21,7 +21,7 @@ Keep **Penelope Ontology** identical across README, repository UI, Devpost, vide
 | `27946` | Country of Residence | `Korea Republic of` |
 | `27947` | Category | `Work & Productivity` |
 | `27948` | Code repository URL | `https://github.com/ljhljh0703-cmd/penelope-ontology` |
-| `27949` | Judge demo and instructions | `https://penelope-ontology.vercel.app` — no account or API key; load the guided creator move, complete C, and reach `Plan Compromised`. Return to checkpoint 01, commit **Order the foot washing**, then commit **B · Alternate — Contain Eurycleia's recognition** to reach `Canon Contained`; inspect Fork Compare. |
+| `27949` | Judge demo and instructions | `https://penelope-ontology.vercel.app` — no account or API key. In **The Night of the Scar**, load the guided C move and reach `Plan Compromised`; return to checkpoint 01, take the containment route, reach `Canon Contained`, and inspect Fork Compare. Then use the World Pack selector to open **Behind the Green Screen** and verify that its Oz cast, actions, and hidden fact replace the Odyssey pack without leakage. Creator JSON import is available for public-safe prepared packs; do not upload sensitive manuscripts to the hosted demo. |
 | `27950` | `/feedback` Session ID | pending private UUID |
 | `27951` | Plugin/developer-tool instructions | not applicable; Penelope is submitted as a Work & Productivity web app |
 
@@ -43,12 +43,12 @@ The Book 19 World Workbench completed four final narration turns across `Plan Co
 ## Local verification snapshot — 2026-07-21
 
 - `npm run verify`: PASS
-- unit/integration: 94 files, 833 tests PASS
-- World browser: 7/7 PASS on Chromium
-- production browser: 38/38 PASS across Chromium desktop and mobile WebKit
+- unit/integration: 103 files, 872 tests PASS
+- portable-world browser: 2/2 PASS across Chromium desktop and mobile WebKit
+- production browser: 40/40 PASS across Chromium desktop and mobile WebKit
 - evidence verification, ESLint, TypeScript, privacy scan, production build: PASS
 
-These counts, CI, and the hosted exact-SHA smoke are recertified for every final release commit.
+These local counts belong to the portable-world candidate. CI and hosted exact-SHA smoke must be recertified for its final commit; do not reuse the previous release's public status.
 
 ## Copy sources
 

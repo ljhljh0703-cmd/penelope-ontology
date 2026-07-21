@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 
 import { createHash } from "node:crypto";
-import { pathToFileURL } from "node:url";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const REQUEST_TIMEOUT_MS = 10_000;
+const CREATOR_STARTER_PACK_PATH = fileURLToPath(
+  new URL("../examples/world-packs/creator-owned-starter.json", import.meta.url),
+);
+const ODYSSEY_IDENTIFIERS = /Odysseus|Ithaca|Eurycleia|Melantho/u;
+const OZ_IDENTIFIERS = /Dorothy|Toto|Wizard|Emerald|Oz/u;
 
 const fail = (message) => {
   throw new Error(message);
@@ -94,6 +100,40 @@ const expectStatus = (response, expected, label) => {
   }
 };
 
+export const loadCreatorStarterWorldPack = async () =>
+  JSON.parse(await readFile(CREATOR_STARTER_PACK_PATH, "utf8"));
+
+const assertWorldSessionOpening = ({
+  response,
+  payload,
+  label,
+  expectedPackId,
+  expectedAvailability,
+  expectedTitle,
+  forbiddenIdentifiers,
+}) => {
+  if (!response.headers.get("x-penelope-creator-access")) {
+    fail(`${label} is missing the creator capability header.`);
+  }
+  const worldPack = payload?.worldPack;
+  if (
+    !worldPack ||
+    worldPack.packId !== expectedPackId ||
+    worldPack.packVersion !== "1.0.0" ||
+    worldPack.availability !== expectedAvailability ||
+    worldPack.publicTitle !== expectedTitle
+  ) {
+    fail(`${label} does not match the expected portable world-pack identity.`);
+  }
+  // The selector catalog deliberately lists other registered worlds.  Only the
+  // active session projection must remain free of another world's identifiers.
+  const activeSession = { ...payload };
+  delete activeSession.availableWorldPacks;
+  if (forbiddenIdentifiers.test(JSON.stringify(activeSession))) {
+    fail(`${label} leaked identifiers from another registered world.`);
+  }
+};
+
 export const buildRegisteredFixtureRunRequest = (demo) => {
   const registration = demo?.registeredRehearsal;
   if (
@@ -122,13 +162,17 @@ export const buildRegisteredFixtureRunRequest = (demo) => {
   };
 };
 
-export const smokeDeployment = async (baseUrl, expectedSha) => {
+export const smokeDeployment = async (
+  baseUrl,
+  expectedSha,
+  { creatorPackDefinition } = {},
+) => {
   const rootUrl = new URL("./", baseUrl);
   rootUrl.searchParams.set("__smoke_build", expectedSha);
   const rootResponse = await fetchWithTimeout(rootUrl, { cache: "no-store" });
   expectStatus(rootResponse, 200, "Root page");
   const rootHtml = await rootResponse.text();
-  for (const marker of ["Penelope Ontology", "The Night of the Scar"]) {
+  for (const marker of ["Penelope Ontology", "Opening a world"]) {
     if (!rootHtml.includes(marker)) {
       fail(`Root page is missing the ${marker} marker.`);
     }
@@ -164,6 +208,56 @@ export const smokeDeployment = async (baseUrl, expectedSha) => {
   ) {
     fail("Health endpoint does not match the expected build, live-evidence, and fixture core flags.");
   }
+
+  const ozSessionResponse = await fetchWithTimeout(
+    new URL("api/world/session", baseUrl),
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        transport: "fixture",
+        packId: "pack.oz.discovery_of_the_wizard",
+      }),
+    },
+  );
+  expectStatus(ozSessionResponse, 200, "Registered Oz world session");
+  const ozSession = await ozSessionResponse.json();
+  assertWorldSessionOpening({
+    response: ozSessionResponse,
+    payload: ozSession,
+    label: "Registered Oz world session",
+    expectedPackId: "pack.oz.discovery_of_the_wizard",
+    expectedAvailability: "registered",
+    expectedTitle: "Behind the Green Screen",
+    forbiddenIdentifiers: ODYSSEY_IDENTIFIERS,
+  });
+
+  const creatorPack = creatorPackDefinition ?? (await loadCreatorStarterWorldPack());
+  const creatorSessionResponse = await fetchWithTimeout(
+    new URL("api/world/session", baseUrl),
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        transport: "fixture",
+        creatorPackDefinition: creatorPack,
+      }),
+    },
+  );
+  expectStatus(creatorSessionResponse, 200, "Creator world session");
+  const creatorSession = await creatorSessionResponse.json();
+  assertWorldSessionOpening({
+    response: creatorSessionResponse,
+    payload: creatorSession,
+    label: "Creator world session",
+    expectedPackId: "pack.creator_owned.lantern_ledger",
+    expectedAvailability: "session_private",
+    expectedTitle: "The Lantern Ledger",
+    forbiddenIdentifiers: new RegExp(
+      `${ODYSSEY_IDENTIFIERS.source}|${OZ_IDENTIFIERS.source}`,
+      "u",
+    ),
+  });
 
   const demoResponse = await fetchWithTimeout(new URL("api/demo", baseUrl));
   expectStatus(demoResponse, 200, "Demo endpoint");
@@ -309,6 +403,8 @@ export const smokeDeployment = async (baseUrl, expectedSha) => {
       "security-headers",
       "build-identity",
       "health",
+      "registered-world-pack",
+      "creator-world-pack",
       "fixture-demo",
       "approved-overlay-replay",
       "two-step-transition",

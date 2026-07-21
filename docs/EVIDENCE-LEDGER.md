@@ -2,6 +2,8 @@
 
 Evidence states: `verified`, `source-backed`, `fixture-only`, `historical`, `planned`, `target`, `blocked`, `prohibited`.
 
+The portable-world addition has a narrower claim ledger in [`PORTABLE-WORLD-PACK-EVIDENCE.md`](./PORTABLE-WORLD-PACK-EVIDENCE.md). Its exact-commit release claims remain pending until CI, deployment, and hosted smoke are recertified.
+
 | ID | Claim | State | Required proof |
 |---|---|---|---|
 | build-week-registered | Eligible participant registration matches the project identity | verified | authenticated registration check with private identity fields redacted |
@@ -17,7 +19,11 @@ Evidence states: `verified`, `source-backed`, `fixture-only`, `historical`, `pla
 | approved-table-surface | The browser implements a registered frozen two-intent rehearsal with visible lineage, style receipt, knowledge boundary, graph, creator gate, production review packet, and two-step flow | verified | 10 production Playwright checks across desktop and iPhone/WebKit plus fresh candidate/completion visual inspection |
 | story-workbench-runtime | A prepared A/B choice can produce a validated next scene, echo an earlier consequence, and close a three-scene Red-Sail arc without committing invalid prose | verified on current tree | story contracts, scope/resolution/turn/API tests, registered fixture branches, actor/reserved-action checks, and closure invariants |
 | world-c-interview | C collects goal, motive, and accepted cost before showing world-compatible canonical execution; incomplete, ambiguous, and unsupported inputs leave `stateChanged: false` | verified on current tree | `/world` creator-interview contracts, adversarial canonical-authority tests, and browser path; no automatic prepared-branch substitution |
-| production-browser-actual-api | The Story and World workbenches complete their real fixture API flows on desktop and mobile | verified on current tree | the full 38-check Chromium desktop/mobile WebKit suite passes and includes the real Story fixture API path plus the World causal flow |
+| portable-world-pack-runtime | `/world` carries one sealed, versioned pack explicitly rather than inferring story behavior from a scenario ID | verified on current tree | `PenelopeWorldPackV1` schema/digest, explicit service and route call sites, registered Book 19/Oz packs, and same-scenario/different-digest regression tests |
+| creator-world-pack-import | A strict creator-owned JSON definition can run through the same workbench without joining the public registry | verified on current tree | 262,144-byte complete session-request limit, ID-collision rejection, canonical digest, session checkpoint binding, root-fixed 30-minute server-memory expiry, API tests, and desktop/mobile import flow |
+| creator-curtain-ledger | Human-readable hidden premise meaning and grounding are available only through the creator capability projection | verified on current tree | creator receipt/API tests plus participant-projection absence assertions; not account authentication or a confidentiality guarantee |
+| creator-owned-starter | The creator-attested original `The Lantern Ledger` sample seals and reaches a declared ending through the generic runtime | attestation plus runtime verification | creator attestation in `examples/world-packs/creator-owned-starter.json`; dedicated schema/digest/runtime test verifies execution, not literary originality |
+| production-browser-actual-api | The Story and World workbenches complete their real fixture API flows on desktop and mobile | verified on current tree | the full 40-check Chromium desktop/mobile WebKit suite passes and includes the real Story fixture API path, Book 19 causal flow, Oz switch, and creator-owned starter import |
 | dependency-audit | Installed dependency graph has no reported npm vulnerabilities | verified | `npm audit --json`, 2026-07-15, total 0 |
 | core-contracts-locked | The eight demo-critical contract groups are represented and tested | verified | contract and malformed-input suite plus schema/hash fixture audit |
 | retrieval-deterministic | Retrieval order and character views are stable for fixed inputs | verified | repeat-input and character-scope tests |

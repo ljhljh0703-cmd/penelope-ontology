@@ -49,6 +49,10 @@ test("runs a source-bounded Odyssey branch and preserves its parent checkpoint",
   await expect(ruleProvenance).toContainText("Creator-approved · not source canon");
   await expect(ruleProvenance).toContainText("Creator review required");
   await expect(ruleProvenance).toContainText("ending.controlled_discovery");
+  const curtainLedger = page.getByTestId("behind-curtain-premises");
+  await expect(curtainLedger).toContainText("The curtain ledger");
+  await expect(curtainLedger).toContainText("premise.stranger_identity");
+  await expect(curtainLedger).toContainText("Withheld because");
 
   const firstTurnResponsePromise = page.waitForResponse((response) =>
     isWorldResponse(response.url(), "/api/world/turn"),
@@ -106,7 +110,7 @@ test("shows how removing a witness creates an investigator and changes the endin
     "Discover irregular behavior",
   );
   await expect(page.getByTestId("world-npc-card-entity-melantho")).toContainText(
-    "Within earshot",
+    "Different zone / offstage",
   );
   await expect(page.getByTestId("world-compare-left")).toHaveCount(0);
   await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(1);
@@ -152,7 +156,7 @@ test("shows how removing a witness creates an investigator and changes the endin
     "Washing Store",
   );
   await expect(page.getByTestId("world-npc-card-entity-melantho")).toContainText(
-    "Offstage",
+    "Different zone / offstage",
   );
   await expect(page.getByTestId("world-compare-left")).toBeVisible();
 

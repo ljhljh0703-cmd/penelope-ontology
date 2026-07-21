@@ -22,6 +22,13 @@ import {
   type WorldSimulationSession,
   type WorldTurnReceipt,
 } from "@/src/contracts/world-runtime";
+import {
+  PenelopeWorldPackV1Schema,
+  WorldPackSessionBindingSchema,
+  doesSessionBindingMatchWorldPack,
+  type PenelopeWorldPackV1,
+  type WorldPackSessionBinding,
+} from "@/src/contracts/penelope-world-pack";
 import { sha256Canonical } from "@/src/domain/canonical-json";
 
 const MAX_WORLD_SESSION_CHECKPOINTS = 64;
@@ -37,10 +44,18 @@ export type WorldSessionCheckpoint = {
   transport: WorldPresentationTransport;
   previousVisibleSceneSummary: string | null;
   narrationDecisionReceipt: WorldNarrationHumanDecisionReceipt | null;
+  worldPackBinding: WorldPackSessionBinding | null;
   createdAtMs: number;
 };
 
 type StoredWorldSessionCheckpoint = WorldSessionCheckpoint & {
+  /** Server-only sealed definition. Never include this in a checkpoint view. */
+  resolvedWorldPack: PenelopeWorldPackV1;
+  /**
+   * Server-only lease set once by the root checkpoint. Child checkpoints inherit
+   * this timestamp so activity inside a branch cannot extend private retention.
+   */
+  expiresAtMs: number;
   turnInFlight: boolean;
   mainlineAdvanced: boolean;
   creatorAccessTokenHash: string;
@@ -94,6 +109,8 @@ type StoredWorldNarrationPendingDraft = Omit<
   WorldNarrationPendingDraftReceipt,
   "consumed"
 > & {
+  /** Server-only root lease; never included in the draft authority or view. */
+  rootExpiresAtMs: number;
   consumed: boolean;
   decisionReservationId: string | null;
   creatorAccessTokenHash: string;
@@ -134,11 +151,15 @@ const publicCheckpoint = (
   checkpoint: StoredWorldSessionCheckpoint,
 ): WorldSessionCheckpoint => {
   const {
+    resolvedWorldPack,
+    expiresAtMs,
     turnInFlight,
     mainlineAdvanced,
     creatorAccessTokenHash,
     ...view
   } = checkpoint;
+  void resolvedWorldPack;
+  void expiresAtMs;
   void turnInFlight;
   void mainlineAdvanced;
   void creatorAccessTokenHash;
@@ -147,6 +168,14 @@ const publicCheckpoint = (
 
 const hashCreatorAccessToken = (token: string): string =>
   createHash("sha256").update(token, "utf8").digest("hex");
+
+const sameWorldPackBinding = (
+  left: WorldPackSessionBinding,
+  right: WorldPackSessionBinding,
+): boolean =>
+  left.packId === right.packId &&
+  left.packVersion === right.packVersion &&
+  left.definitionDigest === right.definitionDigest;
 
 const sortedUnique = (values: ReadonlyArray<string>): string[] =>
   [...new Set(values)].sort((left, right) => left.localeCompare(right));
@@ -222,6 +251,7 @@ const pendingDraftHashPayload = (
   creatorReviewRuleIds: draft.creatorReviewRuleIds,
   createdAtMs: draft.createdAtMs,
   expiresAtMs: draft.expiresAtMs,
+  rootExpiresAtMs: draft.rootExpiresAtMs,
   creatorAccessTokenHash: draft.creatorAccessTokenHash,
 });
 
@@ -296,9 +326,19 @@ const consumePendingDraft = (draft: StoredWorldNarrationPendingDraft): void => {
   }
 };
 
+const deletePendingDraft = (draft: StoredWorldNarrationPendingDraft): void => {
+  pendingNarrationDrafts.delete(draft.draftId);
+  if (
+    pendingNarrationDraftByBaseCheckpoint.get(draft.baseCheckpointId) ===
+    draft.draftId
+  ) {
+    pendingNarrationDraftByBaseCheckpoint.delete(draft.baseCheckpointId);
+  }
+};
+
 const prune = (nowMs: number): void => {
   for (const [id, checkpoint] of checkpoints) {
-    if (nowMs - checkpoint.createdAtMs > WORLD_SESSION_TTL_MS) checkpoints.delete(id);
+    if (nowMs >= checkpoint.expiresAtMs) checkpoints.delete(id);
   }
   while (checkpoints.size >= MAX_WORLD_SESSION_CHECKPOINTS) {
     const oldest = [...checkpoints.values()].sort(
@@ -307,18 +347,13 @@ const prune = (nowMs: number): void => {
     if (!oldest) break;
     checkpoints.delete(oldest.sessionId);
   }
-  for (const [draftId, draft] of pendingNarrationDrafts) {
+  for (const draft of pendingNarrationDrafts.values()) {
     if (
+      nowMs >= draft.rootExpiresAtMs ||
       nowMs - draft.expiresAtMs >
       WORLD_NARRATION_PENDING_DRAFT_RETENTION_MS
     ) {
-      pendingNarrationDrafts.delete(draftId);
-      if (
-        pendingNarrationDraftByBaseCheckpoint.get(draft.baseCheckpointId) ===
-        draftId
-      ) {
-        pendingNarrationDraftByBaseCheckpoint.delete(draft.baseCheckpointId);
-      }
+      deletePendingDraft(draft);
     }
   }
   while (pendingNarrationDrafts.size >= MAX_WORLD_NARRATION_PENDING_DRAFTS) {
@@ -326,13 +361,7 @@ const prune = (nowMs: number): void => {
       (left, right) => left.createdAtMs - right.createdAtMs,
     )[0];
     if (!oldest) break;
-    pendingNarrationDrafts.delete(oldest.draftId);
-    if (
-      pendingNarrationDraftByBaseCheckpoint.get(oldest.baseCheckpointId) ===
-      oldest.draftId
-    ) {
-      pendingNarrationDraftByBaseCheckpoint.delete(oldest.baseCheckpointId);
-    }
+    deletePendingDraft(oldest);
   }
 };
 
@@ -343,6 +372,8 @@ export const saveWorldSessionCheckpoint = ({
   previousVisibleSceneSummary,
   narrationDecisionReceipt = null,
   narrationDecisionReservation = null,
+  worldPackBinding: worldPackBindingInput,
+  resolvedWorldPack: resolvedWorldPackInput,
   creatorAccessToken,
   nowMs = Date.now(),
   idFactory = randomUUID,
@@ -356,6 +387,13 @@ export const saveWorldSessionCheckpoint = ({
     draftId: string;
     decisionReservationId: string;
   } | null;
+  worldPackBinding?: WorldPackSessionBinding | null;
+  /**
+   * Required with worldPackBinding for a root checkpoint. This sealed value is
+   * retained only in the server store and is intentionally omitted from every
+   * public checkpoint projection.
+   */
+  resolvedWorldPack?: PenelopeWorldPackV1 | null;
   creatorAccessToken?: string;
   nowMs?: number;
   idFactory?: () => string;
@@ -374,6 +412,52 @@ export const saveWorldSessionCheckpoint = ({
   if (parent && parent.transport !== transport) {
     throw new Error("A child world checkpoint must preserve its transport authority.");
   }
+  const requestedWorldPackBinding = worldPackBindingInput
+    ? WorldPackSessionBindingSchema.parse(worldPackBindingInput)
+    : null;
+  const requestedResolvedWorldPack = resolvedWorldPackInput
+    ? PenelopeWorldPackV1Schema.parse(structuredClone(resolvedWorldPackInput))
+    : null;
+  if (Boolean(requestedWorldPackBinding) !== Boolean(requestedResolvedWorldPack)) {
+    throw new Error(
+      "A world checkpoint requires the sealed world pack and its immutable binding together.",
+    );
+  }
+  if (!parent && (!requestedWorldPackBinding || !requestedResolvedWorldPack)) {
+    throw new Error(
+      "A root world checkpoint requires a sealed world pack and its immutable binding.",
+    );
+  }
+  if (
+    parent?.worldPackBinding &&
+    requestedWorldPackBinding &&
+    !sameWorldPackBinding(parent.worldPackBinding, requestedWorldPackBinding)
+  ) {
+    throw new Error("A child world checkpoint cannot switch its bound world pack.");
+  }
+  if (
+    parent?.resolvedWorldPack &&
+    parent.worldPackBinding &&
+    requestedResolvedWorldPack &&
+    !doesSessionBindingMatchWorldPack(
+      parent.worldPackBinding,
+      requestedResolvedWorldPack,
+    )
+  ) {
+    throw new Error("A child world checkpoint cannot switch its sealed world pack.");
+  }
+  const worldPackBinding =
+    parent?.worldPackBinding ?? requestedWorldPackBinding;
+  const resolvedWorldPack =
+    parent?.resolvedWorldPack ?? requestedResolvedWorldPack;
+  if (!worldPackBinding || !resolvedWorldPack) {
+    throw new Error("The world checkpoint is missing its sealed world pack authority.");
+  }
+  if (!doesSessionBindingMatchWorldPack(worldPackBinding, resolvedWorldPack)) {
+    throw new Error(
+      "The world checkpoint binding does not match its sealed world pack digest.",
+    );
+  }
   if (Boolean(narrationDecisionReceipt) !== Boolean(narrationDecisionReservation)) {
     throw new Error(
       "An approved narration checkpoint requires its decision receipt and reservation together.",
@@ -384,6 +468,14 @@ export const saveWorldSessionCheckpoint = ({
   const parsedSession = WorldSimulationSessionSchema.parse(
     structuredClone(session),
   );
+  if (
+    parsedSession.scenarioId !== resolvedWorldPack.scenario.id ||
+    parsedSession.state.scenarioId !== resolvedWorldPack.scenario.id
+  ) {
+    throw new Error(
+      "The world checkpoint session does not match its sealed world pack scenario.",
+    );
+  }
   const parsedNarrationDecisionReceipt = narrationDecisionReceipt
     ? validateNarrationDecisionReceipt({
         receipt: narrationDecisionReceipt,
@@ -435,7 +527,10 @@ export const saveWorldSessionCheckpoint = ({
     transport,
     previousVisibleSceneSummary,
     narrationDecisionReceipt: parsedNarrationDecisionReceipt,
+    worldPackBinding,
+    resolvedWorldPack,
     createdAtMs: nowMs,
+    expiresAtMs: parent?.expiresAtMs ?? nowMs + WORLD_SESSION_TTL_MS,
     turnInFlight: false,
     mainlineAdvanced: false,
     creatorAccessTokenHash:
@@ -475,6 +570,42 @@ export const loadWorldCreatorCheckpoint = ({
     return null;
   }
   return publicCheckpoint(checkpoint);
+};
+
+/**
+ * Server-only pack resolver for a stored checkpoint. It is deliberately not
+ * folded into loadWorldSessionCheckpoint: callers that need the scenario and
+ * rendering rules must opt into this capability, while public checkpoint JSON
+ * remains a binding-only projection.
+ */
+export const resolveWorldPackForCheckpoint = (
+  checkpointOrId: string | Pick<WorldSessionCheckpoint, "sessionId">,
+  nowMs = Date.now(),
+): PenelopeWorldPackV1 | null => {
+  prune(nowMs);
+  const sessionId =
+    typeof checkpointOrId === "string"
+      ? checkpointOrId
+      : checkpointOrId.sessionId;
+  const checkpoint = checkpoints.get(sessionId);
+  if (!checkpoint) return null;
+
+  const pack = PenelopeWorldPackV1Schema.parse(
+    structuredClone(checkpoint.resolvedWorldPack),
+  );
+  if (!checkpoint.worldPackBinding) {
+    throw new Error("The stored world checkpoint is missing its world pack binding.");
+  }
+  if (
+    !doesSessionBindingMatchWorldPack(checkpoint.worldPackBinding, pack) ||
+    checkpoint.session.scenarioId !== pack.scenario.id ||
+    checkpoint.session.state.scenarioId !== pack.scenario.id
+  ) {
+    throw new Error(
+      "The stored world checkpoint no longer matches its sealed world pack authority.",
+    );
+  }
+  return structuredClone(pack);
 };
 
 export type WorldSessionTurnReservation =
@@ -665,7 +796,11 @@ export const createWorldNarrationPendingDraft = ({
     throw new Error("World narration draft identifier collision.");
   }
   const createdAtMs = nowMs;
-  const expiresAtMs = nowMs + WORLD_NARRATION_PENDING_DRAFT_TTL_MS;
+  const rootExpiresAtMs = baseCheckpoint.expiresAtMs;
+  const expiresAtMs = Math.min(
+    nowMs + WORLD_NARRATION_PENDING_DRAFT_TTL_MS,
+    rootExpiresAtMs,
+  );
   const draftWithoutHash = {
     draftId,
     baseCheckpointId,
@@ -680,6 +815,7 @@ export const createWorldNarrationPendingDraft = ({
     creatorReviewRuleIds,
     createdAtMs,
     expiresAtMs,
+    rootExpiresAtMs,
     creatorAccessTokenHash: baseCheckpoint.creatorAccessTokenHash,
   };
   const draft: StoredWorldNarrationPendingDraft = {

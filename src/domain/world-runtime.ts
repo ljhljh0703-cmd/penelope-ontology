@@ -1081,7 +1081,7 @@ export const runWorldSimulationTurn = ({
     summary:
       action.status === "accepted"
         ? actionDefinition?.summary ?? action.reason
-        : "Penelope's attempted intervention finds no answer in the room; no one carries it out, and the moment passes without advantage.",
+        : "The attempted intervention finds no answer in the scene; no one carries it out, and the moment passes without advantage.",
     effects: [],
     visibleToEntityIds: [scenario.focalParticipantEntityId],
   };
