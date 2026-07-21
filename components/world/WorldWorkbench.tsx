@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import styles from "@/components/world/WorldWorkbench.module.css";
+import { FateFrame } from "@/components/world/FateFrame";
 import { WorldForge } from "@/components/world/WorldForge";
 import {
   compareWorldLines,
@@ -32,6 +33,7 @@ import {
   type WorldTransport,
   type WorldTurnRequest,
 } from "@/components/world/api-types";
+import { selectVisualMomentTrigger } from "@/src/domain/visual-moment";
 
 type Checkpoint = {
   sequence: number;
@@ -770,6 +772,12 @@ export function WorldWorkbench() {
           draftParagraphs[index]?.text !== paragraph.text,
       )
     : false;
+  const visualMomentTrigger = selectVisualMomentTrigger({
+    status: active.status,
+    forked: active.forked,
+    turn: active.turn,
+    ending: active.ending,
+  });
 
   return (
     <main id="main-content" className={styles.page}>
@@ -932,6 +940,14 @@ export function WorldWorkbench() {
         </aside>
 
         <div className={styles.storyColumn}>
+          <div
+            className={
+              visualMomentTrigger
+                ? styles.fateStage
+                : styles.fateStageInactive
+            }
+          >
+            <FateFrame view={active} trigger={visualMomentTrigger} />
           <article
             id="world-scene"
             className={styles.scene}
@@ -965,6 +981,7 @@ export function WorldWorkbench() {
               <span>{active.visibleEvents.length} resolved events visible</span>
             </footer>
           </article>
+          </div>
 
           <section
             className={styles.worldPulse}

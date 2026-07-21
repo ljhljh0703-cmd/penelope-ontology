@@ -59,4 +59,16 @@ test("forges two or three sentences into an approved private world and finishes 
   await expect(page.getByTestId("world-pulse")).toContainText(
     worldForgeFixture.recommendedConsequence.value,
   );
+  await expect(page.getByTestId("fate-frame")).toBeVisible();
+  await expect(page.getByTestId("fate-frame-ascii")).toBeVisible();
+  await expect(page.getByTestId("fate-frame-status")).toHaveText("Candidate");
+  await page.getByTestId("fate-frame-approve").click();
+  await expect(page.getByTestId("fate-frame-status")).toHaveText("Approved asset");
+  await expect(page.getByTestId("fate-frame-bound")).toContainText(
+    "Bound to checkpoint 1",
+  );
+  await page.getByTestId("world-checkpoint-1").click();
+  await expect(page.getByTestId("fate-frame")).toHaveCount(0);
+  await page.getByTestId("world-checkpoint-2").click();
+  await expect(page.getByTestId("fate-frame-status")).toHaveText("Approved asset");
 });
