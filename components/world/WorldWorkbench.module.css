@@ -389,6 +389,73 @@
   line-height: 1.4;
 }
 
+.surfaceNav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(1320px, calc(100% - 48px));
+  margin: 54px auto 0;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  gap: 1px;
+}
+
+.surfaceNav button {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  min-height: 78px;
+  padding: 16px 20px;
+  color: var(--ink);
+  background: var(--sheet);
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.surfaceNav button[aria-current="page"] {
+  color: #f7f1e5;
+  background: var(--night-soft);
+  box-shadow: inset 0 -5px 0 #55c77a;
+}
+
+.surfaceNav button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid #d88a66;
+  outline-offset: -3px;
+}
+
+.surfaceNav span {
+  color: var(--copper-dark);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.surfaceNav button[aria-current="page"] span {
+  color: #77db94;
+}
+
+.surfaceNav strong {
+  overflow-wrap: break-word;
+  font-family: "Iowan Old Style", Georgia, serif;
+  font-size: 19px;
+  font-weight: 520;
+  line-height: 1.2;
+}
+
+.codexShell {
+  width: min(1320px, calc(100% - 48px));
+  margin-inline: auto;
+  padding: 28px 0 110px;
+}
+
+.surfaceHidden {
+  display: none;
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(230px, 0.28fr) minmax(0, 1fr);
@@ -2023,6 +2090,16 @@
   .workspace {
     width: min(100% - 28px, 1320px);
     padding-bottom: 72px;
+  }
+
+  .surfaceNav,
+  .codexShell {
+    width: min(100% - 28px, 1320px);
+  }
+
+  .surfaceNav {
+    grid-template-columns: 1fr;
+    margin-top: 36px;
   }
 
   .scene {

@@ -212,6 +212,56 @@ const ODYSSEY_BOOK_19_WORLD_PACK = sealPenelopeWorldPack({
     ],
     creatorMayInspectHiddenState: true,
   },
+  worldCodex: {
+    dramaticQuestion:
+      "Can Penelope identify the stranger without letting the hostile household discover what she knows?",
+    relationships: [
+      {
+        id: "relationship.penelope.odysseus.marriage",
+        subjectEntityId: "entity.penelope",
+        objectEntityId: "entity.odysseus",
+        axisId: "marriage",
+        label: "married to",
+        direction: "mutual",
+        provenance: "source_grounded",
+        summary:
+          "Penelope and Odysseus are spouses, but his disguise keeps that bond from becoming usable knowledge for her at the opening.",
+      },
+      {
+        id: "relationship.eurycleia.odysseus.nurse",
+        subjectEntityId: "entity.eurycleia",
+        objectEntityId: "entity.odysseus",
+        axisId: "raised",
+        label: "raised",
+        direction: "directed",
+        provenance: "source_grounded",
+        summary:
+          "Eurycleia nursed Odysseus and can connect the scar to a memory the other household members do not share.",
+      },
+      {
+        id: "relationship.penelope.eurycleia.household_trust",
+        subjectEntityId: "entity.penelope",
+        objectEntityId: "entity.eurycleia",
+        axisId: "household_trust",
+        label: "entrusts household duties to",
+        direction: "directed",
+        provenance: "source_grounded",
+        summary:
+          "Penelope can direct Eurycleia within the household, while the nurse keeps an independent memory and duty toward Odysseus.",
+      },
+      {
+        id: "relationship.melantho.penelope.hostility",
+        subjectEntityId: "entity.melantho",
+        objectEntityId: "entity.penelope",
+        axisId: "hostility",
+        label: "resents and watches",
+        direction: "directed",
+        provenance: "source_grounded",
+        summary:
+          "Melantho serves in Penelope's household but aligns herself with the suitor faction and treats secrecy as a reason to investigate.",
+      },
+    ],
+  },
   renderPolicy: {
     tense: "present",
     pointOfView: "limited_third",

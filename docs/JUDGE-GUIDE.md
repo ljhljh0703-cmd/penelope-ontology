@@ -6,13 +6,13 @@ This project is a fixture-first Work & Productivity web tool for professional GM
 
 Open [the public Penelope demo](https://penelope-ontology.vercel.app). No account, credentials, or API key is required.
 
-1. Read the Book 19 setup, then inspect `World Pulse` and Melantho's NPC card. Before the first choice, she is within earshot and already wants to discover irregular behavior.
+1. Read the Book 19 setup, then open `World Codex`. Overview establishes the dramatic question; Cast exposes each character's desire, avoidance, position, and private-premise count; Relations shows only edges declared by the sealed World Pack.
 2. Click **Load the guided creator move**, then **Commit this prepared action**. Answer the three creator questions about Penelope's goal, motive, and accepted cost. No checkpoint is spent during this interview.
-3. Review the proposed canonical execution and its visible state-bound receipt. Confirm it. Penelope gains privacy by dismissing Melantho; Melantho moves offstage, begins investigating, and the suspicion clock advances.
+3. Review the proposed canonical execution and its visible state-bound receipt. Confirm it. `The Loom` shows the choice entering the world, then `World Aftermath` reports the receipt-backed movement and pressure change: Penelope gains privacy, Melantho moves offstage, begins investigating, and the suspicion clock advances.
 4. Choose **Order the foot washing**. The branch reaches `Plan Compromised`: removing a witness created an investigator.
 5. Return to checkpoint 01. Choose **Order the foot washing**, commit it, then choose **B · Alternate — Contain Eurycleia's recognition** and commit it to reach `Canon Contained`.
-6. Inspect `Fork Compare`. Both lines share the same source checkpoint, but their NPC position, knowledge, pressure, latent risk, and ending now differ.
-7. Open the creator inspector to distinguish source-grounded Book 19 facts from creator-approved IF rules and creator-review-only material.
+6. Open `World Codex → Branches`, then inspect `Fork Compare`. Both lines share the same source checkpoint, but their NPC position, knowledge, pressure, latent risk, and ending now differ.
+7. Open `World Codex → Plot` and the creator inspector. Plot shows receipt events, inherited clocks, declared ending horizons, and creator-only latent risks; the inspector distinguishes source-grounded Book 19 facts from creator-approved IF rules and creator-review-only material.
 8. Use the World Pack selector to open **Behind the Green Screen**. Its Oz cast, hidden premise, action vocabulary, reactions, and endings replace the Book 19 pack without inheriting Odyssey content.
 9. Optionally import [`examples/world-packs/creator-owned-starter.json`](../examples/world-packs/creator-owned-starter.json). **The Lantern Ledger** is strict-schema validated, sealed with a digest, and held in temporary server memory for this session. Do not upload unpublished or sensitive material to the hosted demo.
 
@@ -74,6 +74,6 @@ Codex was used as the engineering partner. The project starts from a familiar sk
 - Fixture output must not be described as a live GPT-5.6 response.
 - Controlled local narration can request `gpt-5.6-terra` through the authenticated Codex CLI; the public host never exposes that paid path.
 - Raw model prose and response IDs stay out of the public repository.
-- No conversational pack builder, persistent private world library, remote multiplayer room, graph database, embedding store, generalized quest generator, practitioner result, or measured productivity gain is claimed.
+- World Forge can turn a two-to-three-sentence seed plus creator-reviewed facts into one session-private bounded pack. No account-based private world library, remote multiplayer room, graph database, embedding store, generalized quest generator, practitioner result, or measured productivity gain is claimed.
 
 See `artifacts/evidence/manifest.json` for the generated public evidence inventory and `docs/EVIDENCE-LEDGER.md` for claim status.

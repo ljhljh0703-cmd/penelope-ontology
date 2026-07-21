@@ -40,6 +40,12 @@ const receipt = ({
   suspicion?: number;
   events?: WorldEvent[];
 } = {}): WorldCreatorReceipt => ({
+  worldCodex: {
+    scenarioSummary: "A bounded creator world used to test causal state changes.",
+    dramaticQuestion: null,
+    relationships: [],
+    possibleEndings: [],
+  },
   actors: [
     {
       entityId: "entity.eurycleia",

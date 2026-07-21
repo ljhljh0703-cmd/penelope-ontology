@@ -185,6 +185,57 @@ test("shows how removing a witness creates an investigator and changes the endin
   await expect(page.getByTestId("world-provenance")).toContainText("no model call");
 });
 
+test("opens a readable World Codex and shows only receipt-backed consequences", async ({ page }) => {
+  await page.goto("/world");
+  await expect(page.getByTestId("world-scene")).toBeVisible();
+
+  await page.getByTestId("world-surface-codex").click();
+  const codex = page.getByTestId("world-codex");
+  await expect(codex).toBeVisible();
+  await expect(page.getByTestId("world-codex-overview")).toContainText(
+    "Can Penelope identify the stranger",
+  );
+  await expect(page.getByTestId("world-scene")).toBeHidden();
+
+  await page.getByTestId("world-codex-tab-cast").click();
+  await expect(page.getByTestId("world-codex-cast")).toContainText(
+    "Disguised Odysseus",
+  );
+  await expect(page.getByTestId("world-codex-cast")).toContainText("Wants");
+
+  await page.getByTestId("world-codex-tab-relations").click();
+  const relations = page.getByTestId("world-codex-relations");
+  await expect(relations).toContainText("married to");
+  await expect(relations).toContainText(
+    "Penelope does not infer it from prose",
+  );
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await codex.evaluate((element) => element.scrollWidth <= element.clientWidth),
+  ).toBe(true);
+  expect(
+    await relations.evaluate((element) => element.scrollWidth <= element.clientWidth),
+  ).toBe(true);
+
+  await page.getByTestId("world-surface-scene").click();
+  await page.getByTestId("world-candidate-2").click();
+  await page.getByTestId("world-resolve").click();
+  await expect(page.getByTestId("world-loom")).toContainText(
+    "Your choice has entered the world",
+  );
+  await expect(page.getByTestId("world-aftermath")).toContainText(
+    "World Aftermath",
+  );
+  await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(2);
+
+  await page.getByTestId("world-surface-codex").click();
+  await page.getByTestId("world-codex-tab-plot").click();
+  await expect(page.getByTestId("world-codex-plot")).toContainText("old scar");
+  await page.getByTestId("world-codex-tab-branches").click();
+  await expect(page.getByTestId("world-codex-branches").getByRole("button")).toHaveCount(2);
+});
+
 test("elicits a creator's tacit intent before C changes the world", async ({ page }) => {
   await page.goto("/world");
   await expect(page.getByTestId("world-scene")).toBeVisible();

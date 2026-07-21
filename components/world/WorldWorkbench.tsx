@@ -12,9 +12,16 @@ import {
 import styles from "@/components/world/WorldWorkbench.module.css";
 import { FateFrame } from "@/components/world/FateFrame";
 import { WorldForge } from "@/components/world/WorldForge";
+import { WorldCodex } from "@/components/world/WorldCodex";
+import type { WorldCodexCheckpoint } from "@/components/world/world-codex";
+import {
+  CausalTransition,
+  type CausalTransitionState,
+} from "@/components/world/CausalTransition";
 import {
   compareWorldLines,
   deriveWorldPulse,
+  type WorldPulse,
   type WorldPulseCheckpoint,
 } from "@/components/world/world-delta";
 import {
@@ -163,6 +170,28 @@ const movementEffects = (
       .map((effect) => ({ event, effect })),
   );
 
+const loomConsequenceCopy = (
+  pulse: WorldPulse,
+  risks: WorldCreatorReceipt["behindCurtainRisks"],
+): string[] => {
+  const messages = [
+    ...pulse.knowledge.map(({ actorName, summary }) => `${actorName} will remember this. ${summary}`),
+    ...pulse.movements.map(
+      ({ actorName, fromZoneId, toZoneId }) =>
+        `${actorName}'s position changed: ${humanizeId(fromZoneId)} → ${humanizeId(toZoneId)}.`,
+    ),
+    ...pulse.clocks.map(
+      ({ label, beforeValue, afterValue, maxValue }) =>
+        `${label} changed: ${beforeValue} → ${afterValue} / ${maxValue}.`,
+    ),
+    ...risks.map(({ summary }) => `Behind the curtain: ${summary}`),
+    ...(pulse.ending.changed ? [`Fate changed. ${pulse.ending.summary}`] : []),
+  ];
+  return messages.length > 0
+    ? messages.slice(0, 4)
+    : ["The world records the action, but no receipt-backed state field changed."];
+};
+
 const findCommonAncestor = (
   left: WorldPulseCheckpoint,
   right: WorldPulseCheckpoint,
@@ -204,6 +233,8 @@ export function WorldWorkbench() {
   const [compareRightId, setCompareRightId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [surface, setSurface] = useState<"scene" | "codex">("scene");
+  const [loom, setLoom] = useState<CausalTransitionState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [pendingDraft, setPendingDraft] =
@@ -215,6 +246,15 @@ export function WorldWorkbench() {
   const creatorCapability = useRef<string | null>(null);
   const importedCreatorPack = useRef<unknown | null>(null);
   const sceneHeadingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (!loom || !["resolved", "review", "failed"].includes(loom.phase)) return;
+    const timeout = window.setTimeout(
+      () => setLoom(null),
+      loom.phase === "resolved" ? 2_400 : 3_200,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [loom]);
 
   const activeCheckpoint = useMemo(
     () => checkpoints.find(({ view }) => view.sessionId === selectedId) ?? null,
@@ -246,7 +286,7 @@ export function WorldWorkbench() {
               : checkpoint,
           ),
         );
-        return;
+        return null;
       }
 
       try {
@@ -272,8 +312,9 @@ export function WorldWorkbench() {
               : checkpoint,
           ),
         );
+        return data;
       } catch (caught) {
-        if (caught instanceof DOMException && caught.name === "AbortError") return;
+        if (caught instanceof DOMException && caught.name === "AbortError") return null;
         setCheckpoints((current) =>
           current.map((checkpoint) =>
             checkpoint.view.sessionId === view.sessionId
@@ -289,6 +330,7 @@ export function WorldWorkbench() {
               : checkpoint,
           ),
         );
+        return null;
       }
     },
     [],
@@ -473,9 +515,19 @@ export function WorldWorkbench() {
     [liveToken, startSession, transport],
   );
 
-  const sendWorldTurnRequest = async (request: WorldTurnRequest) => {
+  const sendWorldTurnRequest = async (
+    request: WorldTurnRequest,
+    transition?: { choice: string },
+  ) => {
     setBusy(true);
     setError(null);
+    if (transition) {
+      setLoom({
+        phase: "resolving",
+        choice: transition.choice,
+        consequences: [],
+      });
+    }
     try {
       const { data: next } = await requestJson<WorldTurnResponse>(
         "/api/world/turn",
@@ -489,11 +541,21 @@ export function WorldWorkbench() {
           : {},
       );
       if (isCreatorDialogueResponse(next)) {
+        if (transition) setLoom(null);
         setCreatorDialogue(next);
         setCreatorAnswer("");
         return;
       }
       if (isPendingNarrationDraft(next)) {
+        if (transition) {
+          setLoom({
+            phase: "review",
+            choice: transition.choice,
+            consequences: [
+              "The simulation resolved a candidate, but no new checkpoint exists until you approve its narration.",
+            ],
+          });
+        }
         setPendingDraft(next);
         setDraftParagraphs(
           next.narration.paragraphs.map((paragraph) => ({ ...paragraph })),
@@ -521,9 +583,58 @@ export function WorldWorkbench() {
       setCreatorAnswer("");
       setForkBeforeAction(false);
       window.requestAnimationFrame(() => sceneHeadingRef.current?.focus());
-      await loadCreatorReceipt(next, creatorCapability.current);
+      if (transition) {
+        setLoom({
+          phase: "receipt",
+          choice: transition.choice,
+          consequences: [],
+        });
+      }
+      const nextCreatorReceipt = await loadCreatorReceipt(
+        next,
+        creatorCapability.current,
+      );
+      if (transition) {
+        const nextCheckpoint: WorldPulseCheckpoint = {
+          sequence: checkpoints.length + 1,
+          view: next,
+          creatorReceipt: nextCreatorReceipt,
+        };
+        const pulse = nextCreatorReceipt
+          ? deriveWorldPulse(activeCheckpoint, nextCheckpoint)
+          : null;
+        const previousRiskIds = new Set(
+          activeCheckpoint?.creatorReceipt?.behindCurtainRisks.map(
+            ({ riskId }) => riskId,
+          ) ?? [],
+        );
+        const newRisks =
+          nextCreatorReceipt?.behindCurtainRisks.filter(
+            ({ riskId }) => !previousRiskIds.has(riskId),
+          ) ?? [];
+        setLoom({
+          phase: "resolved",
+          choice: transition.choice,
+          consequences: pulse
+            ? loomConsequenceCopy(pulse, newRisks)
+            : [
+                "The checkpoint advanced, but the creator receipt is unavailable. No private consequence is guessed.",
+              ],
+        });
+      }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "The world could not resolve this action.");
+      const message =
+        caught instanceof Error
+          ? caught.message
+          : "The world could not resolve this action.";
+      setError(message);
+      if (transition) {
+        setLoom({
+          phase: "failed",
+          choice: transition.choice,
+          consequences: [message],
+        });
+      }
     } finally {
       setBusy(false);
     }
@@ -542,7 +653,9 @@ export function WorldWorkbench() {
       ...(selectedCandidateActionId === null
         ? { creatorDialogue: { answers: [] } }
         : { preparedActionId: selectedCandidateActionId }),
-    });
+    }, selectedCandidateActionId
+      ? { choice: action.trim() }
+      : undefined);
   };
 
   const submitCreatorAnswer = async (event: FormEvent<HTMLFormElement>) => {
@@ -583,7 +696,7 @@ export function WorldWorkbench() {
         answers: creatorDialogue.answers,
         confirmedProposalHash: creatorDialogue.proposal.proposalHash,
       },
-    });
+    }, { choice: creatorDialogue.proposal.worldCompatibleExecution });
   };
 
   const reviseCreatorDirection = () => {
@@ -778,9 +891,26 @@ export function WorldWorkbench() {
     turn: active.turn,
     ending: active.ending,
   });
+  const codexCheckpoints: WorldCodexCheckpoint[] = comparableCheckpoints.map(
+    (checkpoint) => ({
+      sequence: checkpoint.sequence,
+      view: checkpoint.view,
+      creatorReceipt: checkpoint.creatorReceipt,
+    }),
+  );
+  const activeCodexCheckpoint =
+    codexCheckpoints.find(
+      ({ view }) => view.sessionId === active.sessionId,
+    ) ?? null;
+  const parentCodexCheckpoint = active.parentCheckpointId
+    ? codexCheckpoints.find(
+        ({ view }) => view.sessionId === active.parentCheckpointId,
+      ) ?? null
+    : null;
 
   return (
     <main id="main-content" className={styles.page}>
+      <CausalTransition state={loom} />
       <header className={styles.header}>
         <div className={styles.topline}>
           <a className={styles.brand} href="#world-scene" aria-label="Penelope Ontology world scene">
@@ -900,7 +1030,43 @@ export function WorldWorkbench() {
         </div>
       </section>
 
-      <div className={styles.workspace}>
+      <nav className={styles.surfaceNav} aria-label="Penelope workspace">
+        <button
+          type="button"
+          aria-current={surface === "scene" ? "page" : undefined}
+          onClick={() => setSurface("scene")}
+          data-testid="world-surface-scene"
+        >
+          <span>Scene</span>
+          <strong>Write inside the world</strong>
+        </button>
+        <button
+          type="button"
+          aria-current={surface === "codex" ? "page" : undefined}
+          onClick={() => setSurface("codex")}
+          data-testid="world-surface-codex"
+        >
+          <span>World Codex</span>
+          <strong>Observe what the world remembers</strong>
+        </button>
+      </nav>
+
+      <div
+        className={surface === "codex" ? styles.codexShell : styles.surfaceHidden}
+        aria-hidden={surface !== "codex"}
+      >
+        <WorldCodex
+          active={activeCodexCheckpoint}
+          parent={parentCodexCheckpoint}
+          checkpoints={codexCheckpoints}
+          onSelectCheckpoint={selectCheckpoint}
+        />
+      </div>
+
+      <div
+        className={surface === "scene" ? styles.workspace : styles.surfaceHidden}
+        aria-hidden={surface !== "scene"}
+      >
         <aside className={styles.timeline} aria-labelledby="checkpoint-heading">
           <div className={styles.sectionHeading}>
             <p className={styles.eyebrow}>Ephemeral session checkpoints</p>
@@ -991,7 +1157,7 @@ export function WorldWorkbench() {
             <div className={styles.pulseHeading}>
               <div>
                 <p className={styles.eyebrow}>Creator view · derived from the causal receipt</p>
-                <h2 id="world-pulse-heading">World Pulse</h2>
+                <h2 id="world-pulse-heading" data-testid="world-aftermath">World Aftermath</h2>
               </div>
               <span>{worldPulse ? worldPulse.summary : "Bounded world state"}</span>
             </div>

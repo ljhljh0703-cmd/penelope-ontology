@@ -44,6 +44,70 @@ describe("PenelopeWorldPackV1", () => {
     expect(result.error?.issues.some(({ message }) => message.includes("definitionDigest"))).toBe(true);
   });
 
+  it("binds creator-declared World Codex relationships into the pack digest", () => {
+    const original = sealPenelopeWorldPack(definition());
+    const changed = definition();
+    changed.worldCodex = {
+      dramaticQuestion:
+        "Can Penelope recover the truth without exposing it to the hostile household?",
+      relationships: [
+        {
+          id: "relationship.penelope.odysseus.marriage",
+          subjectEntityId: "entity.penelope",
+          objectEntityId: "entity.odysseus",
+          axisId: "marriage",
+          label: "married to",
+          direction: "mutual",
+          provenance: "source_grounded",
+          summary:
+            "Penelope and Odysseus are spouses, though concealment keeps that bond unconfirmed in this scene.",
+        },
+      ],
+    };
+    const resealed = sealPenelopeWorldPack(changed);
+
+    expect(resealed.definitionDigest).not.toBe(original.definitionDigest);
+    expect(resealed.worldCodex?.relationships).toHaveLength(1);
+  });
+
+  it("rejects World Codex relationships that invent an actor or self-edge", () => {
+    const unknownActor = definition();
+    unknownActor.worldCodex = {
+      dramaticQuestion: null,
+      relationships: [
+        {
+          id: "relationship.penelope.ghost",
+          subjectEntityId: "entity.penelope",
+          objectEntityId: "entity.not_registered",
+          axisId: "suspects",
+          label: "suspects",
+          direction: "directed",
+          provenance: "creator_approved",
+          summary: "A relationship may only connect actors declared by this pack.",
+        },
+      ],
+    };
+    const selfEdge = definition();
+    selfEdge.worldCodex = {
+      dramaticQuestion: null,
+      relationships: [
+        {
+          id: "relationship.penelope.self",
+          subjectEntityId: "entity.penelope",
+          objectEntityId: "entity.penelope",
+          axisId: "trust",
+          label: "trusts",
+          direction: "directed",
+          provenance: "creator_approved",
+          summary: "A relationship edge must connect two different declared actors.",
+        },
+      ],
+    };
+
+    expect(PenelopeWorldPackDefinitionSchema.safeParse(unknownActor).success).toBe(false);
+    expect(PenelopeWorldPackDefinitionSchema.safeParse(selfEdge).success).toBe(false);
+  });
+
   it("rejects policy and creator vocabulary references that do not belong to the scenario", () => {
     const invalid = structuredClone(definition());
     invalid.creatorInput.recommendedActionPolicies = [

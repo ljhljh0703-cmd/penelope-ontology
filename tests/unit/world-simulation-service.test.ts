@@ -298,6 +298,7 @@ describe("world simulation service privacy boundary", () => {
     );
     expect(concealedIdentity).toBeDefined();
     expect(participantJson).not.toContain(concealedIdentity?.summary ?? "");
+    expect(participantJson).not.toContain("worldCodex");
     expect(projections.participantView).not.toHaveProperty("behindCurtainPremises");
     expect(creatorJson).toContain("Disguised Odysseus");
     expect(creatorJson).toContain("premise.stranger_identity");
@@ -305,6 +306,19 @@ describe("world simulation service privacy boundary", () => {
     expect(
       projections.creatorReceipt.ruleReview.creatorApprovedNotSourceCanonIds,
     ).toContain("ending.controlled_discovery");
+    expect(projections.creatorReceipt.worldCodex).toMatchObject({
+      scenarioSummary: scenario.summary,
+      dramaticQuestion: expect.any(String),
+      relationships: expect.arrayContaining([
+        expect.objectContaining({
+          subjectEntityId: "entity.penelope",
+          objectEntityId: "entity.odysseus",
+        }),
+      ]),
+      possibleEndings: expect.arrayContaining([
+        expect.objectContaining({ id: "ending.canon_contained" }),
+      ]),
+    });
     expect(new WorldNarrationError("blocked", "blocked").code).toBe("blocked");
   });
 });

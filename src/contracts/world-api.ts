@@ -13,7 +13,10 @@ import {
   WorldSimulationEventSchema,
 } from "@/src/contracts/world-runtime";
 import { CreatorCDialogueRequestSchema } from "@/src/contracts/creator-c-dialogue";
-import { PenelopeWorldPackDefinitionSchema } from "@/src/contracts/penelope-world-pack";
+import {
+  PenelopeWorldPackDefinitionSchema,
+  WorldCodexRelationshipSchema,
+} from "@/src/contracts/penelope-world-pack";
 
 /**
  * Upper bound for a creator-supplied, session-private world definition.
@@ -319,6 +322,29 @@ export const WorldNarrationDraftDecisionApiRequestSchema = z
 
 export const WorldCreatorReceiptSchema = z
   .object({
+    worldCodex: z
+      .object({
+        scenarioSummary: z.string().trim().min(12).max(800),
+        dramaticQuestion: z.string().trim().min(12).max(800).nullable(),
+        relationships: z.array(WorldCodexRelationshipSchema).max(24),
+        possibleEndings: z
+          .array(
+            z
+              .object({
+                id: IdentifierSchema,
+                kind: IdentifierSchema,
+                summary: z.string().trim().min(12).max(800),
+                provenance: z.enum([
+                  "source_grounded",
+                  "creator_approved",
+                  "creator_review_required",
+                ]),
+              })
+              .strict(),
+          )
+          .max(12),
+      })
+      .strict(),
     actors: z.array(WorldActorStateViewSchema),
     flags: z.array(z.object({ id: IdentifierSchema, value: z.boolean() }).strict()),
     clocks: z.array(

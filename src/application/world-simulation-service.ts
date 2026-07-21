@@ -1401,6 +1401,17 @@ export const buildWorldCreatorReceipt = ({
 }): WorldCreatorReceipt => {
   const pack = requireWorldPack({ scenario, worldPack });
   return WorldCreatorReceiptSchema.parse({
+    worldCodex: {
+      scenarioSummary: scenario.summary,
+      dramaticQuestion: pack.worldCodex?.dramaticQuestion ?? null,
+      relationships: pack.worldCodex?.relationships ?? [],
+      possibleEndings: scenario.endingRules.map((ending) => ({
+        id: ending.id,
+        kind: ending.kind,
+        summary: ending.summary,
+        provenance: ending.provenance.reviewState,
+      })),
+    },
     actors: scenario.actors.map((actor) => {
       const runtime = session.state.actors.find(
         ({ entityId }) => entityId === actor.id,

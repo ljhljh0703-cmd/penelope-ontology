@@ -99,6 +99,26 @@ export const WorldPackPresentationSchema = z
     }
   });
 
+export const WorldCodexRelationshipSchema = z
+  .object({
+    id: IdentifierSchema,
+    subjectEntityId: IdentifierSchema,
+    objectEntityId: IdentifierSchema,
+    axisId: IdentifierSchema,
+    label: z.string().trim().min(2).max(64),
+    direction: z.enum(["directed", "mutual"]),
+    provenance: z.enum(["source_grounded", "creator_approved"]),
+    summary: PackTextSchema,
+  })
+  .strict();
+
+export const WorldCodexDefinitionSchema = z
+  .object({
+    dramaticQuestion: PackTextSchema.nullable(),
+    relationships: z.array(WorldCodexRelationshipSchema).max(24),
+  })
+  .strict();
+
 export const WorldPackActionVocabularySchema = z
   .object({
     actionId: IdentifierSchema,
@@ -257,6 +277,7 @@ const WorldPackBaseSchema = z
     creatorInput: WorldPackCreatorInputSchema,
     identityPolicy: WorldPackIdentityPolicySchema,
     renderPolicy: WorldPackRenderPolicySchema,
+    worldCodex: WorldCodexDefinitionSchema.optional(),
     scenario: WorldSimulationScenarioSchema,
   })
   .strict();
@@ -383,6 +404,57 @@ const validateWorldPackReferences = (
       )
       .map(({ id }) => id),
   );
+
+  const relationshipIds =
+    pack.worldCodex?.relationships.map(({ id }) => id) ?? [];
+  if (new Set(relationshipIds).size !== relationshipIds.length) {
+    context.addIssue({
+      code: "custom",
+      path: ["worldCodex", "relationships"],
+      message: "World Codex relationship identifiers must be unique.",
+    });
+  }
+  const relationshipKeys = new Set<string>();
+  for (const [index, relationship] of (
+    pack.worldCodex?.relationships ?? []
+  ).entries()) {
+    for (const [field, entityId] of [
+      ["subjectEntityId", relationship.subjectEntityId],
+      ["objectEntityId", relationship.objectEntityId],
+    ] as const) {
+      if (!actorIds.has(entityId)) {
+        context.addIssue({
+          code: "custom",
+          path: ["worldCodex", "relationships", index, field],
+          message: `World Codex relationship references an unknown scenario actor: ${entityId}`,
+        });
+      }
+    }
+    if (relationship.subjectEntityId === relationship.objectEntityId) {
+      context.addIssue({
+        code: "custom",
+        path: ["worldCodex", "relationships", index],
+        message: "World Codex relationships must connect two different actors.",
+      });
+    }
+    const endpoints =
+      relationship.direction === "mutual"
+        ? [relationship.subjectEntityId, relationship.objectEntityId].sort()
+        : [relationship.subjectEntityId, relationship.objectEntityId];
+    const relationshipKey = [
+      relationship.direction,
+      relationship.axisId,
+      ...endpoints,
+    ].join("|");
+    if (relationshipKeys.has(relationshipKey)) {
+      context.addIssue({
+        code: "custom",
+        path: ["worldCodex", "relationships", index],
+        message: "World Codex relationships must not repeat the same typed edge.",
+      });
+    }
+    relationshipKeys.add(relationshipKey);
+  }
 
   const requireCoverage = (
     issuePath: (string | number)[],
@@ -675,6 +747,7 @@ const definitionPayload = (pack: z.infer<typeof WorldPackBaseSchema>) => ({
   creatorInput: pack.creatorInput,
   identityPolicy: pack.identityPolicy,
   renderPolicy: pack.renderPolicy,
+  ...(pack.worldCodex ? { worldCodex: pack.worldCodex } : {}),
   scenario: pack.scenario,
 });
 
