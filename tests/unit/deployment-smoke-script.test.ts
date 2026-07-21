@@ -86,7 +86,7 @@ describe("deployment smoke script URL gate", () => {
     const target = await listen(
       createServer((_request, response) => {
         response.writeHead(200, { "content-type": "text/html" });
-        response.end("FIXTURE MODE · NO LIVE CALL");
+        response.end("Penelope Ontology · The Night of the Scar");
       }),
     );
     const redirect = await listen(
@@ -100,6 +100,25 @@ describe("deployment smoke script URL gate", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).not.toContain("DEPLOYMENT_SMOKE_PASS");
     expect(result.stderr).toContain("DEPLOYMENT_SMOKE_FAIL");
+  });
+
+  it("rejects the retired Story Workbench shell markers", async () => {
+    const origin = await listen(
+      createServer((_request, response) => {
+        response.writeHead(200, {
+          "content-type": "text/html",
+          "x-content-type-options": "nosniff",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        });
+        response.end("FIXTURE MODE · NO LIVE CALL");
+      }),
+    );
+
+    const result = await runAsync(origin);
+    expect(result.status).toBe(1);
+    expect(result.stdout).not.toContain("DEPLOYMENT_SMOKE_PASS");
+    expect(result.stderr).toContain("Penelope Ontology");
   });
 
   it("refuses to certify a different deployed build identity", async () => {
@@ -127,7 +146,7 @@ describe("deployment smoke script URL gate", () => {
           "referrer-policy": "strict-origin-when-cross-origin",
           "permissions-policy": "camera=(), microphone=(), geolocation=()",
         });
-        response.end("FIXTURE MODE · NO LIVE CALL");
+        response.end("Penelope Ontology · The Night of the Scar");
       }),
     );
 
@@ -168,7 +187,7 @@ describe("deployment smoke script URL gate", () => {
           "referrer-policy": "strict-origin-when-cross-origin",
           "permissions-policy": "camera=(), microphone=(), geolocation=()",
         });
-        response.end("FIXTURE MODE · NO LIVE CALL");
+        response.end("Penelope Ontology · The Night of the Scar");
       }),
     );
 
@@ -204,7 +223,7 @@ describe("deployment smoke script URL gate", () => {
           "referrer-policy": "strict-origin-when-cross-origin",
           "permissions-policy": "camera=(), microphone=(), geolocation=()",
         });
-        response.end("FIXTURE MODE · NO LIVE CALL");
+        response.end("Penelope Ontology · The Night of the Scar");
       }),
     );
 

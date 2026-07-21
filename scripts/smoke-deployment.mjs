@@ -128,7 +128,7 @@ export const smokeDeployment = async (baseUrl, expectedSha) => {
   const rootResponse = await fetchWithTimeout(rootUrl, { cache: "no-store" });
   expectStatus(rootResponse, 200, "Root page");
   const rootHtml = await rootResponse.text();
-  for (const marker of ["FIXTURE MODE", "NO LIVE CALL"]) {
+  for (const marker of ["Penelope Ontology", "The Night of the Scar"]) {
     if (!rootHtml.includes(marker)) {
       fail(`Root page is missing the ${marker} marker.`);
     }
