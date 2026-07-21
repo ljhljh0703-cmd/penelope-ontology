@@ -52,6 +52,36 @@ describe("Next output trace privacy gate", () => {
     expect(result.stdout).toBe("NEXT_TRACE_PRIVACY_OK manifests=1 files=3\n");
   });
 
+  it("ignores Vercel's derived output bundle while scanning canonical traces", () => {
+    const root = makeRoot();
+    writeTrace(root, ["../../../../../../../package.json"]);
+    const functions = path.join(root, ".next", "output", "functions");
+    mkdirSync(functions, { recursive: true });
+    symlinkSync(
+      path.join(root, ".next", "server"),
+      path.join(functions, "api.func"),
+      "dir",
+    );
+
+    const result = run(root);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe("NEXT_TRACE_PRIVACY_OK manifests=1 files=1\n");
+  });
+
+  it("fails closed when Vercel's derived output root is itself a symlink", () => {
+    const root = makeRoot();
+    writeTrace(root, ["../../../../../../../package.json"]);
+    const external = path.join(root, "external-output");
+    mkdirSync(external);
+    symlinkSync(external, path.join(root, ".next", "output"), "dir");
+
+    const result = run(root);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toBe(
+      "NEXT_TRACE_PRIVACY_ERROR invalid_or_missing_trace\n",
+    );
+  });
+
   it.each([
     "../../../../../../../private-submission/submission-record.json",
     "../../../../../../../artifacts/live/live-run.json",

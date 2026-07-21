@@ -20,14 +20,15 @@ const isPrivateLocator = (value) => {
   );
 };
 
-const walk = (directory, output = []) => {
+const walk = (directory, output = [], ignoredDirectory = null) => {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     const candidate = path.join(directory, entry.name);
     const stat = lstatSync(candidate);
+    if (candidate === ignoredDirectory && entry.isDirectory()) continue;
     if (stat.isSymbolicLink()) {
       throw new Error("next_trace_symlink");
     }
-    if (entry.isDirectory()) walk(candidate, output);
+    if (entry.isDirectory()) walk(candidate, output, ignoredDirectory);
     else if (entry.isFile() && entry.name.endsWith(".nft.json")) output.push(candidate);
   }
   return output;
@@ -44,7 +45,15 @@ export const verifyNextTracePrivacy = (rootInput) => {
   ) {
     throw new Error("next_directory_unsafe");
   }
-  const manifests = walk(nextDirectory).sort();
+  // Vercel's Next adapter creates a derived `.next/output` bundle during
+  // onBuildComplete and may place function symlinks inside it. The canonical
+  // Next dependency traces remain elsewhere under `.next` and are still
+  // required and scanned fail-closed.
+  const manifests = walk(
+    nextDirectory,
+    [],
+    path.join(nextDirectory, "output"),
+  ).sort();
   if (manifests.length === 0) throw new Error("next_trace_missing");
 
   let files = 0;
