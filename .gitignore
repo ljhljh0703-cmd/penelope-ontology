@@ -15,7 +15,7 @@ artifacts/live/
 
 # Internal coordination packets are not public product evidence. Keep the
 # tracked runtime contracts under _dev/dispatch-2026-07-18/contracts/ visible.
-/_dev/FABLE-*.md
+/_dev/EXTERNAL-REVIEW-*.md
 /_dev/dispatch-2026-07-18/D6-*.md
 /_dev/dispatch-2026-07-18/DECISION-*.md
 /_dev/dispatch-2026-07-18/DISPATCH-*.md

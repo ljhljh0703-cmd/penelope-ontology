@@ -66,7 +66,7 @@ The health response must include a boolean `liveEvidenceReadinessRecorded` signa
 
 GPT-5.6 is bounded to structured candidates: prose, claims, actions, proposals, and trace metadata. Deterministic code—not the model—owns identity, knowledge, time, location, source-tradition, canon-expansion, creator-decision, state-transition, and replay checks.
 
-Codex was used as the engineering partner. The project starts from a familiar skepticism: default Codex prose may feel less distinctive than output from writing-first systems such as Fable or Opus. It does not turn that perception into an unsupported benchmark claim or answer it with one favorable paragraph. It turns the concern into an engineering brief. Codex helped encode voice, world knowledge, creator approval, and regression behavior as schemas, fixtures, validators, UI states, adversarial tests, evidence artifacts, and release gates. The creator still owns style, canon, taste, and final judgment.
+Codex was used as the engineering partner. The project starts from a familiar skepticism: default Codex prose can feel generic. It does not turn that perception into an unsupported benchmark claim or answer it with one favorable paragraph. It turns the concern into an engineering brief. Codex helped encode voice, world knowledge, creator approval, and regression behavior as schemas, fixtures, validators, UI states, adversarial tests, evidence artifacts, and release gates. The creator still owns style, canon, taste, and final judgment.
 
 ## Evidence boundary
 

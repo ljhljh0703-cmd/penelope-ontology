@@ -40,4 +40,4 @@ Score each item from 1 (failed) to 5 (strong), then record one concrete sentence
 
 Record the transport, requested model, actual model when independently reported, output hash, whether prose was manually edited, criterion scores, evidence sentences, and verdict. Do not publish raw private prompts, credentials, or unrelated Codex task context.
 
-Historical supporting Story candidate: [`STORY-LIVE-CREATOR-REVIEW.md`](./STORY-LIVE-CREATOR-REVIEW.md). It is superseded as product evidence and retains a pending creator verdict. The current Book 19 World proof is recorded privately; its final candidates passed deterministic and delegated English-language QA, which still does not constitute human creator literary acceptance.
+Historical supporting Story candidate: [`STORY-LIVE-CREATOR-REVIEW.md`](./STORY-LIVE-CREATOR-REVIEW.md). It is superseded as product evidence and retains a pending creator verdict. The current Book 19 World proof is recorded privately; its final candidates passed the deterministic harness, which still does not constitute human creator literary acceptance.

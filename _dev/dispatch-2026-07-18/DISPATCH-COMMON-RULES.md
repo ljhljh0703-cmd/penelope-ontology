@@ -12,7 +12,7 @@ W5 v3와의 권위 충돌(Codex 지적) 해소.
 
 ## 역할과 권한
 
-- Executor: **Codex** (구현 전담). 방향·결정·게이트 = Claude main(PM),
+- Executor: **Codex** (구현 전담). 방향·결정·게이트 = creator(PM),
   품질 최종 판정 = 작가.
 - Codex 세션 모델은 **GPT-5.6로 명시 설정**하고, 세션 종료마다 `/feedback`
   session ID를 gitignored `private-submission/`에 기록한다(D7 승인 경로).
@@ -25,8 +25,8 @@ W5 v3와의 권위 충돌(Codex 지적) 해소.
 `PENELOPE-ENGLISH-STYLE-PROFILE.schema.json` + 인스턴스,
 `PENELOPE-NARRATIVE-OUTPUT.schema.json`(ModelNarrationOutput 루트),
 `PENELOPE-NARRATIVE-PIPELINE-ENVELOPE.schema.json`(envelope 루트),
-`FABLE-NARRATIVE-PREFLIGHT.schema.json`,
-`FABLE-NARRATIVE-AUTHORITY-CONTRACT.json`(**candidate-2.2** — sha256
+`PENELOPE-NARRATIVE-PREFLIGHT.schema.json`,
+`PENELOPE-NARRATIVE-AUTHORITY-CONTRACT.json`(**candidate-2.2** — sha256
 `f96adc89…`, AC/FC/TT 규칙 + severityMatrix 5필드 매핑),
 `schema-behavior-tests.py`(T01–T24) + `VERIFICATION-RECEIPT-2026-07-17.txt`
 + **`VERIFICATION-RECEIPT-2026-07-18-c22.txt`(24/24 — candidate-2.2 정본

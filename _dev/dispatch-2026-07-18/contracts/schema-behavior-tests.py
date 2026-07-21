@@ -1,4 +1,4 @@
-# schema-behavior-tests.py — Fable narrative harness v2 검증 스크립트 (게이트 정정 receipt 동반)
+# schema-behavior-tests.py — Penelope narrative harness v2 검증 스크립트 (게이트 정정 receipt 동반)
 # 실행 의존성: Python >= 3.11 · jsonschema == 4.26.0 · referencing
 # 실행: python3 schema-behavior-tests.py  (같은 폴더에서)
 # 주의: 시스템 기본 `python3`가 위 의존성(jsonschema/referencing)을 갖지 않을 수 있다.
@@ -23,7 +23,7 @@ def check(name, ok, expect=True):
     results.append((status, name))
     print(f"[{status}] {name} (expected={'valid' if expect else 'reject'}, got={'valid' if ok else 'reject'})")
 
-print("# VERIFICATION RECEIPT — fable-narrative-harness-v2")
+print("# VERIFICATION RECEIPT — penelope-narrative-harness-v2")
 print("date:", datetime.date(2026, 7, 18).isoformat(), "| python:", sys.version.split()[0], "| jsonschema:", pkgver("jsonschema"))
 print()
 
@@ -35,8 +35,8 @@ json_files = [
     "PENELOPE-ENGLISH-STYLE-PROFILE.json",
     "PENELOPE-NARRATIVE-OUTPUT.schema.json",
     "PENELOPE-NARRATIVE-PIPELINE-ENVELOPE.schema.json",
-    "FABLE-NARRATIVE-PREFLIGHT.schema.json",
-    "FABLE-NARRATIVE-AUTHORITY-CONTRACT.json",
+    "PENELOPE-NARRATIVE-PREFLIGHT.schema.json",
+    "PENELOPE-NARRATIVE-AUTHORITY-CONTRACT.json",
 ]
 docs = {}
 for f in json_files:
@@ -60,7 +60,7 @@ V_out = Draft202012Validator(docs["PENELOPE-NARRATIVE-OUTPUT.schema.json"], regi
 V_env = Draft202012Validator(docs["PENELOPE-NARRATIVE-PIPELINE-ENVELOPE.schema.json"], registry=registry)
 V_inp = Draft202012Validator(docs["PENELOPE-NARRATIVE-INPUT.schema.json"])
 V_sh  = Draft202012Validator(docs["PENELOPE-SENTENCE-HARNESS.schema.json"])
-V_pf  = Draft202012Validator(docs["FABLE-NARRATIVE-PREFLIGHT.schema.json"])
+V_pf  = Draft202012Validator(docs["PENELOPE-NARRATIVE-PREFLIGHT.schema.json"])
 V_sp  = Draft202012Validator(docs["PENELOPE-ENGLISH-STYLE-PROFILE.schema.json"])
 
 # ---------- 4. instance validation ----------
@@ -210,7 +210,7 @@ print()
 # ---------- 10. T24 contract-consistency (candidate-2.2) ----------
 # 모든 rule 의 severity 는 severityMatrix 에 존재해야 하고,
 # enforcementOwner 는 그 class 의 owners 에 허용되어야 한다. (matrix 검사만 — 문학 품질 무관)
-contract = json.load(open("FABLE-NARRATIVE-AUTHORITY-CONTRACT.json", encoding="utf-8"))
+contract = json.load(open("PENELOPE-NARRATIVE-AUTHORITY-CONTRACT.json", encoding="utf-8"))
 allowed = {cls["class"]: set(cls["owners"]) for cls in contract["severityMatrix"]["classes"]}
 t24_viol = [(r["id"], r["severity"], r["enforcementOwner"]) for r in contract["rules"]
             if r["severity"] not in allowed or r["enforcementOwner"] not in allowed[r["severity"]]]

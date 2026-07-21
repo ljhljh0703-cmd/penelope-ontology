@@ -1,4 +1,4 @@
-<!-- 4층 분리 검수표 — hard fidelity / structural / language heuristics / creator judgment, 하위층의 상위층 승인 금지 (Fable pass 2, CREATOR REVIEW REQUIRED) -->
+<!-- 4층 분리 검수표 — hard fidelity / structural / language heuristics / creator judgment, 하위층의 상위층 승인 금지 (design pass 2, CREATOR REVIEW REQUIRED) -->
 # PENELOPE-NARRATIVE-REVIEW-RUBRIC
 
 Status: `CANDIDATE / CREATOR REVIEW REQUIRED`

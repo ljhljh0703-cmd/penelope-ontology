@@ -402,7 +402,7 @@ export const inspectReleaseClaimLanguage = (
   const measuredPattern =
     /(?:\bmeasur(?:e|ed|ing)\b.{0,120}\b(?:improvement|gain|increase|lift|better|higher|more distinctive)\b|\b\d+(?:\.\d+)?\s*%\b.{0,120}\b(?:improvement|gain|increase|lift|better|higher)\b|\b(?:raised|increased|improved|lifted|strengthened)\b.{0,80}\b(?:style|prose|writing|voice|narrative|distinctiveness|quality|score|rating|rubric)\b|\bimproves?\b.{0,40}\b(?:style|prose|writing|voice|narrative|distinctiveness|quality)\b|\b(?:style|prose|writing|voice|narrative|distinctiveness)(?:\s+quality)?\b.{0,80}\b(?:improved|increased|rose|grew|strengthened|improvement|gain|lift|better|higher|more distinctive)\b|\b(?:made|makes)\b.{0,50}\b(?:style|prose|writing|voice|narrative)\b.{0,30}\b(?:more distinctive|better|stronger|higher)\b|\b(?:style|prose|writing|voice|narrative|score|rating|rubric)(?:\s+quality)?\b.{0,80}\bfrom\s+\d+(?:\.\d+)?\s+to\s+\d+(?:\.\d+)?\b|\b(?:score|rating|rubric)\s+(?:delta|gain)\s*(?:of|=|:)?\s*[+]?(?:\d+(?:\.\d+)?)\b)/i;
   const crossModelPattern =
-    /\b(?:(?:outperform(?:s|ed|ing)?|beats?|beating|superior to)\b.{0,60}?\b(?:models?|writing systems?|Fable|Opus)\b|writes? better than|stronger (?:at|in) (?:prose|writing) than|better (?:prose|writing) than|more distinctive than|(?:closed|narrowed|eliminated)\b.{0,60}?\bgap\b.{0,60}?\b(?:with|to)\s+(?:Fable|Opus)|(?:matches?|rivals?|surpasses?|exceeds?)\s+(?:Fable|Opus)|on par with\s+(?:Fable|Opus))\b/i;
+    /\b(?:(?:outperform(?:s|ed|ing)?|beats?|beating|superior to)\b.{0,60}?\b(?:models?|writing systems?|competing systems?|alternatives?)\b|writes? better than|stronger (?:at|in) (?:prose|writing) than|better (?:prose|writing) than|more distinctive than|(?:closed|narrowed|eliminated)\b.{0,60}?\bgap\b.{0,60}?\b(?:with|to)\s+(?:(?:another|a competing)\s+)?(?:model|system)|(?:matches?|rivals?|surpasses?|exceeds?)\s+(?:(?:another|a competing)\s+)?(?:model|system)|on par with\s+(?:(?:another|a competing)\s+)?(?:model|system))\b/i;
   const gpt56MentionPattern = /\bGPT-5\.6(?:-[A-Za-z0-9._-]+)?\b/i;
   const narrativeContextPattern =
     /\b(?:author(?:ed|ing)?|chapter|compos(?:e|ed|ing)|creat(?:e|ed|ing|ion)|dialogue|draft(?:ed|ing)?|generat(?:e|ed|ing|ion)|opening|output|passage|produc(?:e|ed|ing)|prose|render(?:ed|ing)?|response|scene|story|text|writ(?:e|es|ing|ten)|wrote|narrative)\b/i;
@@ -470,12 +470,12 @@ export const inspectReleaseClaimLanguage = (
     /\b(?:does|did|would|can|could)\s+not\s+(?:independently\s+)?(?:attribute|establish|identify|prove|show)\b/i.test(
       clause,
     );
-  const approvedPerceptionSource = String.raw`\b(?:(?:its default|default Codex|Codex's default) prose may feel less distinctive (?:than|beside)(?: output from)?(?: writing-first systems)?(?: such as)?\s+(?:Fable|Opus)(?:\s*(?:or|and|\/)\s*(?:Fable|Opus))*|writing-first systems may feel more distinctive than generic default Codex prose)\b`;
+  const approvedPerceptionSource = String.raw`\b(?:(?:its default|default Codex|Codex's default|generic default Codex) prose may feel less distinctive (?:than|beside)(?: output from)?\s*(?:a\s+)?writing-first systems?|writing-first systems may feel more distinctive than generic default Codex prose)\b`;
   const stripApprovedPerception = (clause: string): string =>
     clause.replace(new RegExp(approvedPerceptionSource, "gi"), "");
-  const approvedVendorBoundary = (clause: string): boolean =>
+  const approvedComparisonBoundary = (clause: string): boolean =>
     new RegExp(approvedPerceptionSource, "i").test(clause) ||
-    (/\bCodex is a weaker writer than Fable or Opus\b/i.test(clause) &&
+    (/\bCodex is a weaker writer than writing-first systems\b/i.test(clause) &&
       /\bengineering constraint\b/i.test(clause) &&
       /\bnot a benchmark\b/i.test(clause)) ||
     (/\b(?:not|no|never|without|do not|cannot|can't|does not|would not|make no)\b/i.test(
@@ -484,8 +484,13 @@ export const inspectReleaseClaimLanguage = (
       /\b(?:claim|comparison|benchmark|better|beats?|outperform|eclipses|rivals?|superior|superiority|prove|establish|evidence|writer|writing quality)\b/i.test(
         clause,
       ));
-  const unapprovedVendorClaim = clauses.some(
-    (clause) => /\b(?:Fable|Opus)\b/i.test(clause) && !approvedVendorBoundary(clause),
+  const unapprovedComparisonClaim = clauses.some(
+    (clause) =>
+      /\b(?:competing|other|another|writing-first)\s+(?:models?|systems?)\b/i.test(
+        clause,
+      ) &&
+      !approvedComparisonBoundary(clause) &&
+      hasUnnegatedMatch(clause, crossModelPattern),
   );
   const unmeasuredOutcomePattern =
     /\b(?:harness|system|tool|project|style constraints?|Codex|GPT-5\.6)\b.{0,100}\b(?:produced|creates?|delivers?|achieves?|yields?|made|makes?)\b.{0,80}\b(?:more recognizable|more distinctive|better|stronger|higher-quality|improved)\b.{0,40}\b(?:voice|prose|writing|style|narrative)?/i;
@@ -537,7 +542,7 @@ export const inspectReleaseClaimLanguage = (
         hasUnnegatedMatch(clause, unmeasuredOutcomePattern),
     ),
     crossModelSuperiority:
-      unapprovedVendorClaim ||
+      unapprovedComparisonClaim ||
       claimBearingClauses.some((clause) =>
         hasUnnegatedMatch(clause, crossModelPattern),
       ),

@@ -68,4 +68,4 @@ The first final verify attempt correctly stopped on privacy-like test placeholde
 
 - No API key, raw Codex conversation, personal absolute path, or private story asset was added.
 - No push, deployment, or Devpost mutation was performed.
-- Sub-brain remained read-only; no Vault authority or wiki file was changed.
+- The private knowledge base remained read-only; no authority or wiki file was changed.

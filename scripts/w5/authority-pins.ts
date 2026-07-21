@@ -3,9 +3,9 @@ import { lstat, readFile } from "node:fs/promises";
 import path from "node:path";
 
 export const CANDIDATE_2_2_CONTRACT_PATH =
-  "_dev/dispatch-2026-07-18/contracts/FABLE-NARRATIVE-AUTHORITY-CONTRACT.json" as const;
+  "_dev/dispatch-2026-07-18/contracts/PENELOPE-NARRATIVE-AUTHORITY-CONTRACT.json" as const;
 export const CANDIDATE_2_2_CONTRACT_SHA256 =
-  "f96adc8928e7a9e2029182b8915da7c93a8d012fb0884f4bf421a7d68f94adb4" as const;
+  "8824f66ae7456439d955ebd5b174a38702df88c1252799dbb6121964063d902b" as const;
 
 export const verifyCandidate22Pin = async ({
   repoRoot,

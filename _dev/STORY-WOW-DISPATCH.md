@@ -25,9 +25,9 @@ The product is not primarily a dice, item, condition, or GM-rule engine. Those a
 
 ## Research basis
 
-- Vault `wiki/thoughts/narrative-simulation-vision.md`: structured characters become active story material rather than static lore.
-- Vault `wiki/learnings/methods/prompt-pattern-outcome-first.md`: define the felt result and hard constraints instead of over-prescribing the model's process.
-- Vault `wiki/learnings/techniques/emotional-engineering-quests.md`: every scene changes something; delayed consequences must be made visible; remove detail that does not change the story.
+- Internal design note: structured characters become active story material rather than static lore.
+- Internal design note: define the felt result and hard constraints instead of over-prescribing the model's process.
+- Internal design note: every scene changes something; delayed consequences must be made visible; remove detail that does not change the story.
 - Zeta official product material: preserve scene-to-scene momentum, direct input plus suggested continuations, creator-controlled style, and relevance-triggered lore rather than injecting the whole world every turn.
 - OpenAI official guidance: keep production prompts in typed code, place stable instructions/context before dynamic input, use GPT-5.6 Structured Outputs, and evaluate prompt behavior rather than assuming prose quality.
 
@@ -163,7 +163,7 @@ Creator rubric, 1–5:
 - irreversible scene progress;
 - immediate playability.
 
-No Fable/Opus superiority claim. The product may show same-model control versus harnessed output only after its preregistered evidence exists.
+No cross-model superiority claim. The product may show same-model control versus harnessed output only after its preregistered evidence exists.
 
 ## Implementation order
 

@@ -135,5 +135,5 @@ tests, and the portable claim ledger.
 5. update and submit the existing Devpost project, then run post-submit owner
    readback.
 
-No push, deployment, video upload, Devpost mutation, or Vault write was
+No push, deployment, video upload, Devpost mutation, or private knowledge-base write was
 performed in this packet.

@@ -1,4 +1,4 @@
-Codex cannot write? That is the shorthand: Claude writes; Codex builds. But what if the real failure begins before the sentence?
+Codex cannot write? That is the shorthand: Codex builds; it does not write. But what if the real failure begins before the sentence?
 
 AI can produce fluent prose and still forget who knows the secret, erase the cost of a choice, or move every character with the narrator's knowledge.
 

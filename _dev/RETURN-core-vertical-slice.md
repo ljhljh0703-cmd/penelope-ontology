@@ -30,7 +30,7 @@ Public evidence manifest SHA-256: `5d1d725860a45967c83fc3d6b0b20f58f58b483397e76
 
 ## Writing-harness claim boundary
 
-The project treats familiar skepticism about generic default Codex prose as a design constraint, not a benchmark result. Codex served as the engineering partner that translated voice, canon, character knowledge, participant ownership, and world-state change into explicit style, world, evidence, approval, and replay layers. The creator still owns original style, taste, canon, scope, and final judgment. Current evidence proves the implemented mechanism, frozen lineage, deterministic checks, and regressions. It does not prove better prose, a measured style effect, arbitrary-intent generation, productivity gains, users, or model superiority over Fable, Opus, or another system.
+The project treats familiar skepticism about generic default Codex prose as a design constraint, not a benchmark result. Codex served as the engineering partner that translated voice, canon, character knowledge, participant ownership, and world-state change into explicit style, world, evidence, approval, and replay layers. The creator still owns original style, taste, canon, scope, and final judgment. Current evidence proves the implemented mechanism, frozen lineage, deterministic checks, and regressions. It does not prove better prose, a measured style effect, arbitrary-intent generation, productivity gains, users, or cross-model superiority.
 
 ## Verification
 
@@ -42,7 +42,7 @@ The project treats familiar skepticism about generic default Codex prose as a de
 - Next production build: PASS.
 - Production browser: 10/10 PASS across desktop Chromium and mobile WebKit, including frozen inputs, reciprocal lineage, style receipt, knowledge boundary, creator decision, display/semantic separation, exact-overlay replay, failure recovery, and two transitions.
 - Visual inspection: desktop candidate, mobile candidate, and completed desktop flow with the review packet open show no clipped controls, overlap, or fixture/live ambiguity. Five public-safe 1440×900 gallery captures were inspected and bound to `docs/assets/demo/manifest.json` by SHA-256; the release gate also rejects duplicate decoded pixels hidden behind different PNG compression.
-- `git diff --check`: PASS. No raw live prose, API key, personal absolute path, private session ID, Vault content, or private story asset entered the repository.
+- `git diff --check`: PASS. No raw live prose, API key, personal absolute path, private session ID, private knowledge-base content, or private story asset entered the repository.
 
 The verification results above include the CLI debt fixes and health-signal correction and prove the synchronized source tree through evidence, lint, typecheck, tests, privacy, build, and trace privacy. The product-surface browser gate remains 10/10. This tracked RETURN does not self-certify a commit SHA, public CI, hosted deployment, or a live model result.
 
@@ -53,7 +53,7 @@ The exact-SHA clean-copy and deployment-smoke authority is generated only after 
 1. **Real GPT-5.6 evidence:** primary ended in a terminal process failure. Separately approved `retry-1` passed preflight and dispatched once, but the adapter rejected its event stream before accepting any model result, usage, provenance, raw capture, or sanitized evidence. Both authorities are consumed and no `retry-2` exists. Neither transport has a sanitized integration trace, and the four-call style capture does not exist. Fixture, approval, preflight, dispatch, and failure receipts must not be relabeled as a completed live result; CLI evidence must not be relabeled as a Responses API response.
 2. **Arbitrary participant intents:** the live contract accepts them, but the public fixture proves only its registered frozen pair. Reopen the public claim after sanitized live evidence or a separately tested registered-preset contract.
 3. **Public README:** the approved writing pipeline reports `SERVING_STALE`. Refresh its authority hashes before root README generation; do not bypass the gate or draft from memory.
-4. **Portfolio copy:** `portfolio-refiner` refine preflight remains `SERVING_STALE`; no canonical portfolio case-study copy was generated. `juhyeong-voice` was not read or applied.
+4. **Portfolio copy:** no separate portfolio-writing preset was used or claimed.
 5. **External release:** **Penelope Ontology** is name-locked, while public GitHub remote, hosted fixture URL, public CI result, narrated YouTube video, private `/feedback` field, external name parity, and final Devpost submission remain undone.
    The new readiness verifier reports these as stable blocked check IDs and cannot turn their absence into a PASS.
 6. **Evidence limits:** no graph database, embeddings, persistent remote room, long-horizon autonomous simulation, generalized quest generation, practitioner result, or measured productivity improvement exists.
@@ -68,9 +68,9 @@ A diagnostic loop did occur before the retry. Codex spent too long hardening sch
 
 `CLI_RETRY_TERMINAL_NO_LIVE_EVIDENCE`: the bounded fixture product and full local tree are verified. Primary and separately authorized `retry-1` are both terminal and cannot be reused. Retry reached a zero process exit but failed at event-stream compatibility without accepted model evidence. The receipt chain remains private and byte-bound, legacy parsing is compatible without mutation, reviewed command identity is preserved, and no `retry-2` exists. Exact-SHA clean-clone authority is a post-commit ignored record, not a tracked claim. Live-model use, public README/repository/deployment, narrated video, and final Devpost submission remain separate gates, so the Build Week entry is not submission-complete.
 
-## Sub-brain status
+## Private knowledge-base status
 
-Read-only. No Vault wiki, authority document, Progress, Memory, or skill was modified. Project decisions and improvement notes were recorded only in this repository.
+Read-only. No private knowledge-base authority document, progress log, memory file, or skill was modified. Project decisions and improvement notes were recorded only in this repository.
 
 ## Next user action
 

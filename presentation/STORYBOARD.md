@@ -4,7 +4,7 @@ Target: 82 seconds, 1920 × 1080, English narration. This is a presentation film
 
 | Time | Scene | Message | Visual proof |
 |---|---|---|---|
-| 00:00–00:08 | 1 · The shorthand | `CODEX CAN'T WRITE?` is a provocative perception, not a benchmark claim. | Typographic void; `Claude writes. Codex builds.` appears as quoted shorthand. |
+| 00:00–00:08 | 1 · The shorthand | `CODEX CAN'T WRITE?` is a provocative perception, not a benchmark claim. | Typographic void; `Codex builds. It does not write.` appears as quoted shorthand. |
 | 00:08–00:16.5 | 2 · Fluent failure | Better prose cannot repair a world that forgets. | Secret, cost, and character-knowledge receipts detach from an otherwise fluent paragraph. |
 | 00:16.5–00:33 | 3 · Product reveal | Give Codex a world it must obey. | Park Dal-jae operates the choice machine; World Pack → choice → causal world. |
 | 00:33–00:46 | 4 · Causal reversal | Removing a witness creates an investigator. | Book 19 event line: privacy up, Melantho excluded, suspicion up, offstage investigation. |
@@ -15,7 +15,7 @@ Target: 82 seconds, 1920 × 1080, English narration. This is a presentation film
 
 ## Claim guard
 
-- Do not say that Codex beats Claude at prose.
+- Do not claim that Codex is universally better at prose.
 - Do not call the hosted fixture a live GPT-5.6 response.
 - Do not claim a graph database, autonomous society, full-novel simulation, productivity gain, or practitioner adoption.
 - `World Forge` means a creator-approved, bounded five-scene episode—not arbitrary manuscript ingestion.

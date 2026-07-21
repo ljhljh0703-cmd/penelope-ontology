@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import authorityContract from "@/_dev/dispatch-2026-07-18/contracts/FABLE-NARRATIVE-AUTHORITY-CONTRACT.json";
+import authorityContract from "@/_dev/dispatch-2026-07-18/contracts/PENELOPE-NARRATIVE-AUTHORITY-CONTRACT.json";
 import styleProfile from "@/_dev/dispatch-2026-07-18/contracts/PENELOPE-ENGLISH-STYLE-PROFILE.json";
 import {
   ModelNarrationOutputSchema,

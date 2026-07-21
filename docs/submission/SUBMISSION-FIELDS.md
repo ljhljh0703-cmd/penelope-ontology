@@ -1,6 +1,6 @@
 # Build Week submission field packet
 
-Status: **portable product tree, public video, and private `/feedback` record verified; video-link release recertification and final Devpost submission pending**.
+Status: **portable product tree, public video, private `/feedback` record, and Devpost submission verified; exact release evidence remains in the gitignored private record**.
 
 ## Identity
 
@@ -40,17 +40,17 @@ Keep **Penelope Ontology** identical across README, repository UI, Devpost, vide
 
 The current story and world narration lanes request `gpt-5.6-terra`. The frozen W5 comparison remains pinned to `gpt-5.6-sol` as historical evaluation material. The CLI transport does not independently report serving-model identity, and no Responses API trace is claimed.
 
-The Book 19 World Workbench completed four final narration turns across `Plan Compromised` and `Canon Contained`. Two earlier drafts failed closed without mutating world state. Final candidates passed the deterministic harness and delegated English-language QA without manual rewriting; this is not human creator literary acceptance.
+The Book 19 World Workbench completed four final narration turns across `Plan Compromised` and `Canon Contained`. Two earlier drafts failed closed without mutating world state. Final candidates passed the deterministic harness without manual rewriting; no human literary-quality claim is made.
 
-## Local verification snapshot — 2026-07-21
+## Local verification snapshot — 2026-07-22
 
 - `npm run verify`: PASS
-- unit/integration: 103 files, 872 tests PASS
-- portable-world browser: 2/2 PASS across Chromium desktop and mobile WebKit
-- production browser: 40/40 PASS across Chromium desktop and mobile WebKit
+- unit and integration tests: PASS
+- portable-world browser checks: PASS across Chromium desktop and mobile WebKit
+- production browser checks: PASS across Chromium desktop and mobile WebKit
 - evidence verification, ESLint, TypeScript, privacy scan, production build: PASS
 
-These local counts belong to the portable-world candidate. CI and hosted exact-SHA smoke must be recertified for its final commit; do not reuse the previous release's public status.
+Exact test counts, release SHA, CI run, and hosted exact-SHA smoke belong in the ignored release record so this tracked document cannot certify its own future commit.
 
 ## Copy sources
 
@@ -60,9 +60,13 @@ These local counts belong to the portable-world candidate. CI and hosted exact-S
 - Repository entry point: `README.md`
 - Claim authority: `docs/EVIDENCE-LEDGER.md`
 
-## External fields still required
+## Completed external fields
 
-1. Devpost project update, category confirmation, and final submission readback.
+- Devpost project name and Work & Productivity category
+- public repository and credential-free hosted demo
+- public narrated video
+- private `/feedback` session field
+- authenticated **Submitted** status readback
 
 ## Final form gate
 

@@ -98,7 +98,7 @@ World Codex does not summarize or infer from narration.
    Relations remains honestly empty unless the definition supplies edges.
 3. World Codex is a derived typed projection, not a graph database, RDF/OWL
    ontology, persistent creator library, or account-backed collaboration room.
-4. No image asset, presentation video, demo video, push, deployment, or Vault
+4. No image asset, presentation video, demo video, push, deployment, or private knowledge-base
    authority write was performed.
 
 ## Next action

@@ -84,7 +84,7 @@
         "issuer": { "enum": ["creator", "deterministic_runtime"] },
         "issuerAuthorityId": {
           "$ref": "#/$defs/Identifier",
-          "description": "Points to a creator decision receipt or a registered deterministic rule. Fable, Codex, the renderer model, the linter, and any repair executor may not mint, broaden, infer, or backdate a license (AC-LIC-01..04)."
+          "description": "Points to a creator decision receipt or a registered deterministic rule. No model, renderer, linter, or repair executor may mint, broaden, infer, or backdate a license (AC-LIC-01..04)."
         },
         "issuedBeforeGeneration": { "const": true },
         "category": {

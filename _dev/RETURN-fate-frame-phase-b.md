@@ -80,7 +80,7 @@ credits or claiming semantic image-generation quality.
 - Approved visual decisions currently persist in browser component state. A
   durable local export/import package is Phase C.
 - The five-scene episode expansion is Phase D.
-- No push, deployment, video generation, or Vault write was performed.
+- No push, deployment, video generation, or private knowledge-base write was performed.
 
 ## Next recommended action
 

@@ -1,5 +1,5 @@
-<!-- 미기입 프롬프트 템플릿 원본 — 슬롯만 존재, 완성 문장·예문·장면 0 (Fable pass 2, CREATOR REVIEW REQUIRED) -->
-# FABLE-NARRATIVE-PROMPT-FORM
+<!-- 미기입 프롬프트 템플릿 원본 — 슬롯만 존재, 완성 문장·예문·장면 0 (design pass 2, CREATOR REVIEW REQUIRED) -->
+# PENELOPE-NARRATIVE-PROMPT-TEMPLATE
 
 Status: `CANDIDATE / UNFILLED TEMPLATE ONLY / CREATOR REVIEW REQUIRED`
 Date: 2026-07-17
@@ -79,8 +79,8 @@ system vocabulary may appear inside the prose text.
 ```
 
 Slot sources: Layer 1 ← `PENELOPE-NARRATIVE-INPUT.schema.json#modelFacing`;
-Layer 2 ← validated `FABLE-NARRATIVE-PREFLIGHT.schema.json` receipt +
+Layer 2 ← validated `PENELOPE-NARRATIVE-PREFLIGHT.schema.json` receipt +
 `PENELOPE-SENTENCE-HARNESS.schema.json` plan; Layer 3 ←
 `PENELOPE-ENGLISH-STYLE-PROFILE.json` resolved through `styleStateId`, output
 per `PENELOPE-NARRATIVE-OUTPUT.schema.json`. Enforcement and severities:
-`FABLE-NARRATIVE-AUTHORITY-CONTRACT.json`.
+`PENELOPE-NARRATIVE-AUTHORITY-CONTRACT.json`.

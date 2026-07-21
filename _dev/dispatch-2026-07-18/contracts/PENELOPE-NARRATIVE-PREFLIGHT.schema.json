@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "fable-narrative-preflight.schema.json",
+  "$id": "penelope-narrative-preflight.schema.json",
   "title": "PenelopeNarrationPreflightReceipt",
   "description": "Preflight receipt required before any later prose attempt (repair brief section 4). A generation lane may draft only after a receipt validates against this schema AND passes the deterministic subset checks (all cited IDs exist in the paired input envelope). No permissive catch-all fields; every free-text interpretation carries field-level source authority IDs. creatorReviewRequired is structurally true. Status: agent_proposed, CREATOR REVIEW REQUIRED.",
   "type": "object",

@@ -10,7 +10,7 @@ The sale is not “better AI prose.” The sale is **a world that remembers the 
 
 ### 0:00–0:25 · Hook
 
-“People say Claude writes and Codex builds. I started with a different question: what if the weakness is not the sentence, but the world behind it? A fluent paragraph is still broken if the wrong character knows the secret or yesterday's choice has no cost.”
+“People say Codex builds but does not write. I started with a different question: what if the weakness is not the sentence, but the world behind it? A fluent paragraph is still broken if the wrong character knows the secret or yesterday's choice has no cost.”
 
 ### 0:25–0:55 · Define the product
 

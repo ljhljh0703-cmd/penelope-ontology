@@ -418,7 +418,7 @@ describe("submission readiness gate", () => {
   it("separates a perception-led brief from measured or cross-model outcome claims", () => {
     expect(
       inspectReleaseClaimLanguage([
-        "A familiar critique is that default Codex prose may feel less distinctive beside Fable or Opus. This is not a benchmark result.",
+        "A familiar critique is that default Codex prose may feel less distinctive beside writing-first systems. This is not a benchmark result.",
         "The mechanism has no measured prose improvement claim.",
       ]),
     ).toEqual({
@@ -437,15 +437,15 @@ describe("submission readiness gate", () => {
     });
     expect(
       inspectReleaseClaimLanguage([
-        "This is not a benchmark, but it outperforms Fable.",
+        "This is not a benchmark, but it outperforms another writing system.",
         "The style harness raised the human rubric score from 2.1 to 4.3.",
-        "It is stronger at prose than Opus.",
+        "It is stronger at prose than a competing model.",
         "The harness improved prose quality on the fixed probe.",
         "The style constraints made the voice more distinctive.",
         "Prose quality rose from 2.1 to 4.3.",
-        "We closed the prose gap with Opus.",
-        "Codex now matches Fable on narrative voice.",
-        "Codex eclipses Opus for narrative prose.",
+        "We closed the prose gap with another model.",
+        "Codex now matches a competing model on narrative voice.",
+        "Codex eclipses another model for narrative prose.",
         "The harness consistently produced a more recognizable voice.",
       ]),
     ).toEqual({
@@ -455,8 +455,8 @@ describe("submission readiness gate", () => {
     });
     expect(
       inspectReleaseClaimLanguage([
-        "Do not say the system writes better than Fable or Opus.",
-        "A favorable run would not prove that Codex or GPT-5.6 writes better than Fable or Opus.",
+        "Do not say the system writes better than competing models.",
+        "A favorable run would not prove that Codex or GPT-5.6 writes better than another model.",
         "Live AB/BA is not measured, and no style improvement is claimed.",
         "No remote room, graph database, practitioner result, or measured productivity gain is claimed.",
       ]),
@@ -467,7 +467,7 @@ describe("submission readiness gate", () => {
     });
     expect(
       inspectReleaseClaimLanguage([
-        "Default Codex prose may feel less distinctive beside Fable or Opus and this harness now outperforms Opus at narrative prose.",
+        "Default Codex prose may feel less distinctive beside writing-first systems and this harness now outperforms another model at narrative prose.",
       ]),
     ).toEqual({
       liveGpt56NarrativeGeneration: false,
@@ -485,8 +485,8 @@ describe("submission readiness gate", () => {
     });
     expect(
       inspectReleaseClaimLanguage([
-        "Do not claim it outperforms Opus; the released harness outperforms Fable.",
-        "A favorable run would not prove that Codex writes better than Opus; the released harness outperforms Fable.",
+        "Do not claim it outperforms another model; the released harness outperforms a competing system.",
+        "A favorable run would not prove that Codex writes better than another model; the released harness outperforms a competing system.",
         "The harness does not improve prose quality.",
       ]),
     ).toEqual({

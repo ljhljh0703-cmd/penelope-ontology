@@ -30,7 +30,7 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Two chained state transitions and snapshot hashes verified
 - [ ] Real GPT-5.6 use verified
 - [x] User-authorized Story Workbench run generated Scene 2 and Scene 3 consecutively through the ChatGPT-authenticated bundled Codex CLI, requested `gpt-5.6-terra`, passed automated story gates, and completed the session; `actualModel` and `responseId` remain null
-- [x] User-authorized World Workbench run requested `gpt-5.6-terra` through the same local Codex CLI transport and completed four accepted narration turns across both Book 19 branches; two earlier drafts failed closed without state change, serving-model identity remains unknown, and delegated English QA is not creator literary acceptance
+- [x] User-authorized World Workbench run requested `gpt-5.6-terra` through the same local Codex CLI transport and completed four accepted narration turns across both Book 19 branches; two earlier drafts failed closed without state change, serving-model identity remains unknown, and automated acceptance is not creator literary acceptance
 - [ ] Creator verdict recorded for the final unedited live story candidate
 - [x] Separate Codex CLI path requests `gpt-5.6-sol` only through private exact-input review and write-once approval; primary ended in a nonzero process failure, while separately approved `retry-1` passed preflight and dispatched before a terminal event-stream rejection with no accepted live evidence
 - [x] Myth Atlas corrected packaging revision `v1.0.1` with manifest `schemaVersion: "1.0.0"` accepted into `quarantined_private_reference` only; 16 assets / 2,489,820 bytes and reported counts 10/5/6 passed schema and byte integrity, while all candidates remain outside Penelope public evidence and canon
@@ -85,8 +85,8 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 ## Required submission material
 
 - [x] Final project name locked as **Penelope Ontology** in repository UI and submission copy
-- [ ] Devpost page, hosted demo, and final video read back with the exact **Penelope Ontology** name
-- [ ] Devpost final category field confirmed as Work & Productivity
+- [x] Devpost page, hosted demo, and final video read back with the exact **Penelope Ontology** name
+- [x] Devpost final category field confirmed as Work & Productivity
 - [x] Project description finalized
 - [x] Evidence-safe Built-with list prepared; completed Codex CLI story generation is labeled with requested model only, while GPT-5.6 remains excluded from independently verified serving-model claims
 - [x] Public YouTube demo verified at 2:42
@@ -94,7 +94,7 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Private submission record confirms the recording demonstrates the product and explains Codex and GPT-5.6 use
 - [x] Submission description, shot list, and narration are prepared in English
 - [x] Five public-safe 1440×900 fixture gallery images captured with a SHA-256 manifest
-- [ ] Repository URL entered
+- [x] Repository URL entered
 - [x] Setup and sample-data instructions visible from README
 - [x] Core Codex task `/feedback` session ID entered privately
 - [x] Public open-source license visible
@@ -109,18 +109,18 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] Public sanitized fixture evidence written under `artifacts/evidence/`; raw live material remains ignored
 - [x] Local Devpost, README, video, and repository copy derive from the same evidence boundary; public repository and hosted `/api/health` SHA parity are verified per release commit
 - [x] Tracked `CLAIM-CONTRACT.json` keeps the measured-style flag outside the editable private receipt; enabling it activates the AB/BA proof gate
-- [ ] `npm run submission:check` passes on the final public candidate
+- [x] `npm run submission:check` passed for the submitted release; rerun it after any final description or release change
 
 ## Active blockers
 
-1. The current Story and World Workbench lanes completed local Codex CLI generation while requesting `gpt-5.6-terra`, but the transport reports neither `actualModel` nor `responseId`; public copy must keep requested-model and serving-model identity separate. The World run's delegated English QA is not a creator literary verdict. The legacy approval-bound `retry-1` remains a failed dispatch, and the Responses API path remains unused.
-2. The previous public release passed CI and hosted exact-SHA verification; the video-link commit now needs main-branch integration and release recertification before final Devpost readback.
-3. **Penelope Ontology** is name-locked in the repository, hosted product, and public video; Devpost name parity remains open.
-4. Final Devpost field entry, submission, and authenticated readback remain external actions.
+1. The current Story and World Workbench lanes completed local Codex CLI generation while requesting `gpt-5.6-terra`, but the transport reports neither `actualModel` nor `responseId`; public copy must keep requested-model and serving-model identity separate. Automated harness acceptance is not a creator literary verdict. The legacy approval-bound `retry-1` remains a failed dispatch, and the Responses API path remains unused.
+2. Every new public commit still requires CI, deployment, and hosted exact-SHA recertification in the ignored release record.
+3. **Penelope Ontology** is name-locked across the repository, hosted product, public video, and Devpost.
+4. Devpost field entry, submission, and authenticated readback are complete; future edits must preserve field parity.
 5. Practitioner/user productivity evidence does not exist and must not be claimed.
 6. Both legacy CLI evidence authorities are consumed. Primary ended in a terminal process failure. The separately approved `retry-1` passed preflight and dispatched once, then terminally failed on `codex_cli_event_type_unrecognized`. No `retry-2` exists.
 7. Myth Atlas corrected packaging revision `v1.0.1` is quarantined as private reference only after schema and byte-integrity checks across 16 assets totaling 2,489,820 bytes. Its producer-reported ten exact-passage candidates, five `video_reported` items, and six pending items retain creator-review, rights, culture, provenance, video, and pending warnings; no public/canon authorization or World Pack import exists.
-8. The final Story Workbench candidate and Book 19 World candidates passed their declared automated gates, and the World candidates received delegated English QA, but the creator's literary verdict remains pending. Do not convert an automated PASS into a prose-quality or “Codex writes well” claim.
+8. The final Story Workbench candidate and Book 19 World candidates passed their declared automated gates, but the creator's literary verdict remains pending. Do not convert an automated PASS into a prose-quality or “Codex writes well” claim.
 
 ## Final release closure
 
@@ -128,9 +128,9 @@ Official deadline: **2026-07-22 09:00 KST**. Internal submit target: **2026-07-2
 - [x] `AGENTS.md` phase and current-state claims updated
 - [x] Clean/exact-SHA status is fail-closed and recorded only after commit in the ignored release record, preventing this tracked checklist from self-certifying its own SHA
 - [x] Hosted deployment reports the same commit as the public repository
-- [ ] `npm run submission:check:post` passes after Devpost confirmation
-- [ ] Devpost completion is read back through the authenticated owner view or Devpost plugin, with exact name, track, description hash, repository, hosted demo, and video parity; public URL presence alone is not accepted
+- [x] `npm run submission:check:post` passed for the submitted release; rerun it after any final description or release change
+- [x] Devpost completion was read back through the authenticated owner view with exact name, track, repository, hosted demo, video parity, and private feedback presence; a public URL alone was not accepted
 
 Current proof is recorded in `docs/BUILD-WEEK-COMMAND-CENTER.md`, `docs/EVIDENCE-LEDGER.md`, and `artifacts/evidence/manifest.json`; exact per-commit release evidence remains in the ignored private record. `docs/SCAFFOLD-VERIFICATION.md` is the historical Day-0 baseline. Public CI and deployment PASS do not imply serving-model identity, prose quality, or completed submission.
 
-The public Devpost project currently exists at `https://devpost.com/software/narrative-ontology-harness`, but its final submission record is still empty. Rename or confirm its visible title as **Penelope Ontology**, then verify that exact value through the authenticated submission readback.
+The public Devpost project is submitted at `https://devpost.com/software/narrative-ontology-harness` under the visible title **Penelope Ontology**.

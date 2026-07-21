@@ -56,7 +56,7 @@ for (const file of requiredFiles) {
 
 const publicCopy = `${html}\n${deck}\n${pitch}`.toLowerCase();
 for (const forbidden of [
-  "codex beats claude",
+  "codex beats competing models",
   "autonomous society",
   "full-novel simulation",
   "graph database backend",

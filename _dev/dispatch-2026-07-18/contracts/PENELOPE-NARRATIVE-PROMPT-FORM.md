@@ -1,4 +1,4 @@
-<!-- Penelope 내러티브 프롬프트 3층 양식 + 파이프라인 A/B 비교·추천 — 미기입 템플릿, 예문 0 (Fable pass 2, CREATOR REVIEW REQUIRED) -->
+<!-- Penelope 내러티브 프롬프트 3층 양식 + 파이프라인 A/B 비교·추천 — 미기입 템플릿, 예문 0 (design pass 2, CREATOR REVIEW REQUIRED) -->
 # PENELOPE-NARRATIVE-PROMPT-FORM
 
 Status: `CANDIDATE / UNFILLED FORM / NO PROSE / CREATOR REVIEW REQUIRED`
@@ -8,7 +8,7 @@ This document specifies the three-layer prompt structure, its serialization
 rules, and the pipeline shape. It contains no finished sentence of scene
 prose, no dialogue, and no example lines. `{{DOUBLE_BRACES}}` mark slots
 filled at run time from validated artifacts only. The companion
-`FABLE-NARRATIVE-PROMPT-FORM.md` carries the bare unfilled template; this file
+`PENELOPE-NARRATIVE-PROMPT-TEMPLATE.md` carries the bare unfilled template; this file
 is the specification that governs it.
 
 ## 1. Layer architecture
@@ -42,7 +42,7 @@ Contents, in fixed order:
 ### Layer 2 — Resolved scene layer (this scene's contract)
 
 Serialized from: the validated preflight receipt
-(`FABLE-NARRATIVE-PREFLIGHT.schema.json`) and scene plan
+(`PENELOPE-NARRATIVE-PREFLIGHT.schema.json`) and scene plan
 (`PENELOPE-SENTENCE-HARNESS.schema.json`).
 
 1. `{{SCENE_MODE}}` and its completion condition (from the mode registry —

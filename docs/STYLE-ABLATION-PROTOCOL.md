@@ -6,7 +6,7 @@ Status: **protocol verified; live capture not executed**.
 
 Can an explicit creator-owned style bundle make one fixed GPT-5.6 narrative task more controllable than common instructions alone?
 
-This is not a Fable/Opus comparison, a general prose-quality benchmark, a user study, or evidence that Codex is the better writer. Codex's role is to turn tacit writing requirements into an executable harness and an auditable evaluation.
+This is not a cross-model comparison, a general prose-quality benchmark, a user study, or evidence that Codex is the better writer. Codex's role is to turn tacit writing requirements into an executable harness and an auditable evaluation.
 
 ## Preregistered design
 

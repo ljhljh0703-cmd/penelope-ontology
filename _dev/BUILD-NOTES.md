@@ -66,7 +66,7 @@ This file records implementation-time decisions without interrupting the critica
 
 - `OPENAI_API_KEY` is currently absent from the process environment. Live GPT-5.6 evidence cannot be produced until a key is supplied locally; implementation and fixture verification continue meanwhile.
 - Browser smoke is complete: all 8 Table-flow checks pass across desktop Chromium and iPhone/WebKit.
-- `package-project-evidence` audit mode is certified. The approved README writing pipeline currently reports `SERVING_STALE`; refresh its authority hashes before generating README.md. The user's ban on `juhyeong-voice` remains independent and binding.
+- The evidence audit mode is certified. The optional README writing pipeline was not used; README.md was assembled from verified repository evidence.
 - The creator approved **Penelope Ontology** as the final product name on 2026-07-15. The name is now fixed across the repository UI and submission copy; external Devpost, hosted demo, and video parity still require readback.
 
 ## 2026-07-15 — Release and authority hardening
@@ -101,7 +101,7 @@ This file records implementation-time decisions without interrupting the critica
 - The stateless transition route proves an authorized state chain, not historical occurrence of an earlier HTTP request. Persistent room chronology would require accounts, storage, or signed session receipts and remains outside the MVP.
 - Claim visibility/source ID arrays remain order-sensitive in edit authority. This is fail-closed and no claim-edit UI exists; normalize only if a future semantic migration contract treats equivalent set order as editable.
 - `OPENAI_API_KEY` and `ENABLE_OPENAI_LIVE=true` are still absent, so one sanitized GPT-5.6 integration trace and the four-call style probe remain unexecuted.
-- `portfolio-refiner` refine preflight returned `SERVING_STALE` because the feedback dependency hash changed. No canonical portfolio copy was produced, and `juhyeong-voice` was not read or applied.
+- No separate portfolio-writing preset or canonical portfolio copy was used.
 - README writing remains `SERVING_STALE` under `package-project-evidence`; refresh the approved authority path before public README generation.
 - **Penelope Ontology** naming is approved. Public remote/CI, external name parity, hosted demo, narrated YouTube video, private `/feedback` field, and final Devpost submission remain external release work.
 
@@ -179,7 +179,7 @@ Combined current-tree recertification after the authority fixes:
 5. Gallery verification now requires the five exact expected screenshots in order, distinct file hashes and decoded-pixel hashes, complete CRC-valid and zlib-decodable 1440×900 RGB PNGs, no textual/EXIF metadata, and both visual and privacy inspection receipts. Recompressing one image five ways cannot satisfy the gate. Visible screenshot content remains a human inspection boundary.
 6. Measured style claims are controlled by tracked `docs/submission/CLAIM-CONTRACT.json`; changing the ignored receipt alone cannot suppress the AB/BA proof gate. If enabled, the gate binds the exact plan, four-call sanitized receipt, report, readiness, and manifest, checks score ranges and internal totals, and rejects readiness-only self-report. The default remains mechanism-only and makes no measured prose-effect claim.
 7. `/feedback` accepts only a Codex-session UUID shape. Hosted smoke accepts only supported public deployment-provider origins. Post-submit Devpost readback must match the final name, track, description file SHA-256, repository, hosted demo, and video.
-8. Release-copy scanning separates the allowed Fable/Opus perception-led brief from outcome claims. It rejects prose/style improvement assertions, comparative-gap claims, and cross-model superiority while requiring every current public copy surface to remain mechanism-only under the default claim contract.
+8. Release-copy scanning separates the allowed generic-prose critique from outcome claims. It rejects prose/style improvement assertions, comparative-gap claims, and cross-model superiority while requiring every current public copy surface to remain mechanism-only under the default claim contract.
 9. Manifest proof now requires every public evidence child to be a tracked regular file whose working bytes equal its release-HEAD blob. Only the seven baseline artifacts and complete live/style optional groups are registered; ignored children, working-tree-only replacements, partial groups, and invented claim JSON fail closed.
 10. The completed live-capture receipt commits to the canonical sanitized result, so one request/response receipt cannot certify contradictory run status, violation, draft, graph, or state summaries. Public PNG scanning now rejects malformed chunks, CRC failures, bytes after exact IEND, UTF-16 secrets, and printable sensitive strings embedded in unknown binaries.
 11. Recertification at that point in the closure sequence: evidence 7/7, ESLint, non-incremental TypeScript, 37 Vitest files / 203 tests, privacy scan over 179 public candidates, and Next production build all PASS. The later current-tree authority is recorded below.

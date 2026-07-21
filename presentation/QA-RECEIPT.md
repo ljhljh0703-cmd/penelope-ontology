@@ -41,7 +41,7 @@ The single-track warning is accepted for this bounded 8-scene artifact. Splittin
 ## Claim boundary
 
 - `Codex can't write?` is presented as a familiar creator-side perception and a question, not a benchmark result.
-- The presentation does not claim Codex beats Claude.
+- The presentation does not claim universal writing superiority.
 - The hosted fixture is not presented as a live GPT-5.6 result.
 - The product is presented as a bounded causal story simulator, not a graph database, autonomous society, or full-novel simulator.
 - World Forge is described as a creator-approved five-scene episode workflow.

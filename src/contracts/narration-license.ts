@@ -30,7 +30,7 @@ export const NarrationIdentifierSchema = z
   );
 
 /**
- * The style-profile and Fable preflight source schemas deliberately permit
+ * The style-profile and narrative preflight source schemas deliberately permit
  * uppercase identifiers. Keep this boundary separate from the model-facing
  * Penelope identifier contract rather than silently widening it.
  */
@@ -355,7 +355,7 @@ export const PenelopeScenePlanSchema = z
     }
   });
 
-export const FableNarrativeLicensedRenderingDetailSchema = z
+export const PenelopeNarrativeLicensedRenderingDetailSchema = z
   .object({
     licenseId: NarrationAuthorityIdentifierSchema,
     issuer: NarrationLicenseIssuerSchema,
@@ -367,26 +367,26 @@ export const FableNarrativeLicensedRenderingDetailSchema = z
   })
   .strict();
 
-export const FableNarrativeAuthorityTextSchema = z
+export const PenelopeNarrativeAuthorityTextSchema = z
   .object({
     text: z.string().min(1).max(400),
     sourceAuthorityIds: NarrationAuthorityIdentifierArraySchema.min(1),
   })
   .strict();
 
-export const FableNarrativeSceneAuthoritySchema = z
+export const PenelopeNarrativeSceneAuthoritySchema = z
   .object({
     factIds: NarrationAuthorityIdentifierArraySchema,
     eventIds: NarrationAuthorityIdentifierArraySchema,
     actorEntityIds: NarrationAuthorityIdentifierArraySchema.min(1),
     licensedRenderingDetailIds: NarrationAuthorityIdentifierArraySchema,
     licensedRenderingDetails: z
-      .array(FableNarrativeLicensedRenderingDetailSchema)
+      .array(PenelopeNarrativeLicensedRenderingDetailSchema)
       .max(12),
   })
   .strict();
 
-export const FableNarrativeReferenceReceiptSchema = z
+export const PenelopeNarrativeReferenceReceiptSchema = z
   .object({
     status: z.enum(["available", "unavailable"]),
     referenceId: NarrationAuthorityIdentifierSchema,
@@ -423,19 +423,19 @@ export const FableNarrativeReferenceReceiptSchema = z
     }
   });
 
-export const FableNarrativePlainDramaticPlanSchema = z
+export const PenelopeNarrativePlainDramaticPlanSchema = z
   .object({
     focalActorId: NarrationAuthorityIdentifierSchema,
-    immediateWant: FableNarrativeAuthorityTextSchema.optional(),
-    immediateObstacle: FableNarrativeAuthorityTextSchema.optional(),
+    immediateWant: PenelopeNarrativeAuthorityTextSchema.optional(),
+    immediateObstacle: PenelopeNarrativeAuthorityTextSchema.optional(),
     actionSourceEventIds: NarrationAuthorityIdentifierArraySchema,
     reactionSourceEventIds: NarrationAuthorityIdentifierArraySchema,
     changeSourceEventIds: NarrationAuthorityIdentifierArraySchema,
-    changeInPlainTerms: FableNarrativeAuthorityTextSchema.optional(),
+    changeInPlainTerms: PenelopeNarrativeAuthorityTextSchema.optional(),
   })
   .strict();
 
-export const FableNarrativeDialogueAuthoritySchema = z
+export const PenelopeNarrativeDialogueAuthoritySchema = z
   .object({
     mode: z.enum(["none", "licensed"]),
     speakerId: NarrationAuthorityIdentifierSchema.nullable(),
@@ -482,17 +482,17 @@ export const FableNarrativeDialogueAuthoritySchema = z
     }
   });
 
-/** FABLE-NARRATIVE-PREFLIGHT root. */
-export const FableNarrativePreflightSchema = z
+/** PENELOPE-NARRATIVE-PREFLIGHT root. */
+export const PenelopeNarrativePreflightSchema = z
   .object({
     preflightId: NarrationAuthorityIdentifierSchema,
     sceneMode: NarrationSceneModeSchema,
-    sceneAuthority: FableNarrativeSceneAuthoritySchema,
-    referenceReceipt: FableNarrativeReferenceReceiptSchema,
-    plainDramaticPlan: FableNarrativePlainDramaticPlanSchema,
-    dialogueAuthority: FableNarrativeDialogueAuthoritySchema,
+    sceneAuthority: PenelopeNarrativeSceneAuthoritySchema,
+    referenceReceipt: PenelopeNarrativeReferenceReceiptSchema,
+    plainDramaticPlan: PenelopeNarrativePlainDramaticPlanSchema,
+    dialogueAuthority: PenelopeNarrativeDialogueAuthoritySchema,
     additionalDialogueAuthorities: z
-      .array(FableNarrativeDialogueAuthoritySchema)
+      .array(PenelopeNarrativeDialogueAuthoritySchema)
       .max(3)
       .optional(),
     creatorReviewRequired: z.literal(true),
@@ -586,9 +586,9 @@ export const FableNarrativePreflightSchema = z
     }
   });
 
-/** Public contract name of the FABLE-NARRATIVE-PREFLIGHT root schema. */
+/** Public contract name of the PENELOPE-NARRATIVE-PREFLIGHT root schema. */
 export const PenelopeNarrationPreflightReceiptSchema =
-  FableNarrativePreflightSchema;
+  PenelopeNarrativePreflightSchema;
 
 export type NarrationIdentifier = z.infer<typeof NarrationIdentifierSchema>;
 export type NarrationAuthorityIdentifier = z.infer<
@@ -618,26 +618,26 @@ export type PenelopeSentencePlan = z.infer<
   typeof PenelopeSentencePlanSchema
 >;
 export type PenelopeScenePlan = z.infer<typeof PenelopeScenePlanSchema>;
-export type FableNarrativeAuthorityText = z.infer<
-  typeof FableNarrativeAuthorityTextSchema
+export type PenelopeNarrativeAuthorityText = z.infer<
+  typeof PenelopeNarrativeAuthorityTextSchema
 >;
-export type FableNarrativeLicensedRenderingDetail = z.infer<
-  typeof FableNarrativeLicensedRenderingDetailSchema
+export type PenelopeNarrativeLicensedRenderingDetail = z.infer<
+  typeof PenelopeNarrativeLicensedRenderingDetailSchema
 >;
-export type FableNarrativeSceneAuthority = z.infer<
-  typeof FableNarrativeSceneAuthoritySchema
+export type PenelopeNarrativeSceneAuthority = z.infer<
+  typeof PenelopeNarrativeSceneAuthoritySchema
 >;
-export type FableNarrativeReferenceReceipt = z.infer<
-  typeof FableNarrativeReferenceReceiptSchema
+export type PenelopeNarrativeReferenceReceipt = z.infer<
+  typeof PenelopeNarrativeReferenceReceiptSchema
 >;
-export type FableNarrativePlainDramaticPlan = z.infer<
-  typeof FableNarrativePlainDramaticPlanSchema
+export type PenelopeNarrativePlainDramaticPlan = z.infer<
+  typeof PenelopeNarrativePlainDramaticPlanSchema
 >;
-export type FableNarrativeDialogueAuthority = z.infer<
-  typeof FableNarrativeDialogueAuthoritySchema
+export type PenelopeNarrativeDialogueAuthority = z.infer<
+  typeof PenelopeNarrativeDialogueAuthoritySchema
 >;
-export type FableNarrativePreflight = z.infer<
-  typeof FableNarrativePreflightSchema
+export type PenelopeNarrativePreflight = z.infer<
+  typeof PenelopeNarrativePreflightSchema
 >;
 export type PenelopeNarrationPreflightReceipt = z.infer<
   typeof PenelopeNarrationPreflightReceiptSchema

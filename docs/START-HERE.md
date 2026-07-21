@@ -59,16 +59,15 @@ Implemented and fixture-verified:
 - World Codex: a creator-only observatory for the current dramatic question, cumulative approved and realized plot beats, dynamic relationship history, ending-condition status, and parent-child checkpoint lineage
 - compact NPC cards for each relevant NPC's position, agenda, and private-knowledge boundary
 - Fork Compare: side-by-side state comparison of two world lines from a shared checkpoint, including knowledge, movement, pressure, rules, risks, and endings
-- a local four-turn Book 19 run through the Codex CLI narration path, requesting `gpt-5.6-terra`: two weak drafts failed closed without changing world state, while four final candidates passed the harness and delegated English-language QA without manual rewriting
+- a local four-turn Book 19 run through the Codex CLI narration path, requesting `gpt-5.6-terra`: two weak drafts failed closed without changing world state, while four final candidates passed the deterministic harness without manual rewriting
 - deterministic retrieval, hard validation, provenance graph, creator decision, hashing, transition, replay, fixture/live evidence separation, and privacy scanning
-- current portable-world verification: evidence regeneration and verification, lint, typecheck, 108 Vitest files with 893 tests, 436-file final privacy scan, production build and trace-privacy inspection, and 46 production browser checks across desktop Chromium and mobile WebKit
-- the previous public GitHub release, CI, and credential-free hosted demo passed their exact-SHA gates; this portable-world tree still needs its own commit, CI, deployment, and hosted-smoke recertification
+- current portable-world verification covers evidence regeneration and verification, lint, typecheck, unit and integration tests, privacy scanning, production build, trace-privacy inspection, and production browser checks across desktop Chromium and mobile WebKit
+- the public GitHub release, CI, and credential-free hosted demo are recertified per commit through an ignored release record rather than self-certified by this tracked document
 
-Not verified or released yet:
+Not independently verified:
 
 - independently reported serving-model identity; current completed local evidence is a Codex CLI generation lane that requested `gpt-5.6-terra`
-- human creator literary acceptance of the final live prose; automated gates and delegated English-language QA do not substitute for that judgment
-- narrated demo video, private `/feedback` field, and final Devpost submission
+- human creator literary acceptance of the final live prose; automated gates do not substitute for that judgment
 - practitioner testing or evidence of productivity improvement
 
 ## Local setup

@@ -9,7 +9,7 @@ import { inflateSync } from "node:zlib";
 const EXIT_FINDINGS = 1;
 const EXIT_USAGE = 2;
 const OPENAI_KEY = /\bsk-(?:(?:proj|svcacct)-)?[a-z0-9_-]{20,}\b/i;
-const SENSITIVE_ASSIGNMENT = /\b(?:OPENAI|ANTHROPIC|GOOGLE|GEMINI)_API_KEY\b\s*[:=]\s*["']?(\$\{[^}]+\}|[^\s"'#;,}]+)/i;
+const SENSITIVE_ASSIGNMENT = /\b[A-Z][A-Z0-9_]{1,30}_API_KEY\b\s*[:=]\s*["']?(\$\{[^}]+\}|[^\s"'#;,}]+)/;
 const MAC_PERSONAL_PATH = /\/Users\/[a-z0-9._-]+(?:\/[^\s"'`<>]*)?/i;
 const LINUX_PERSONAL_PATH = /\/home\/[a-z0-9._-]+(?:\/[^\s"'`<>]*)?/i;
 const WINDOWS_PERSONAL_PATH = /\b[a-z]:\\{1,2}Users\\{1,2}[^\\\s"'`<>]+(?:\\{1,2}[^\s"'`<>]*)?/i;

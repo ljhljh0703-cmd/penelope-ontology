@@ -23,7 +23,7 @@
       "AGENTS.md",
       "_dev/CORE-BUILD-DISPATCH.md",
       "codex-skills/package-project-evidence/SKILL.md",
-      "sub-brain/skills/package-project-evidence/SKILL.md",
+      "skills/package-project-evidence/SKILL.md",
       "codex-skills/portfolio-refiner/source-manifest.json"
     ],
     "selected_skills": [
@@ -54,7 +54,7 @@
             "role": "source_manifest"
           },
           {
-            "ref": "sub-brain/skills/package-project-evidence/SKILL.md",
+            "ref": "skills/package-project-evidence/SKILL.md",
             "sha256": "4dbeba040601cbacf3c70469d3947d77d99cf41509e582e5f34b7b0146336a85",
             "role": "canonical_source_read_only"
           },

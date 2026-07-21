@@ -73,7 +73,7 @@ World Pack, StyleProfile, SimulationScenario, and initial snapshot loaders
 - GPT-5.6 output is nondeterministic. Determinism claims apply only to retrieval, validation, selected structured-draft processing, graph descriptors, transitions, hashes, and fixture replay.
 - Do not add function calling, PTC, graph DB, embeddings, authentication, remote collaboration, multi-agent runtime, general-purpose editing, persistent agent memory, or long-running autonomous simulation.
 - The public Table UI must load its registered frozen intent bundle. The gated live boundary may accept multiple facilitator-collected intents; neither path is an online room or actual multi-user collaboration.
-- Style profiles are original creator constraints, not living-author imitation. Do not claim that Codex, GPT-5.6, Fable, Opus, or another model is the superior writer without a controlled human evaluation.
+- Style profiles are original creator constraints, not living-author imitation. Do not claim that Codex or GPT-5.6 is a universally superior writer without a controlled human evaluation.
 - Do not create the public README until the implemented Evidence Packet exists and the evidence skill's write-mode preflight passes.
 - Never call fixture output live GPT-5.6 evidence.
 - Never let blocked output, an unauthorized action, or an unapproved/rejected/stale proposal update canon or simulation state.

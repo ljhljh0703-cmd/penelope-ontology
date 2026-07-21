@@ -129,7 +129,7 @@ CLI logs, user paths, credentials, or session identifiers.
 
 The implementation, full regression, production build, privacy scan, and
 desktop/mobile browser flow are verified. The worktree remains intentionally
-uncommitted. No stage, commit, push, deployment, or Vault write was performed.
+uncommitted. No stage, commit, push, deployment, or private knowledge-base write was performed.
 
 Creator review should decide:
 
@@ -147,10 +147,9 @@ described it as coherent/readable is superseded as a quality judgment. The
 world-first runtime evidence remains verified; literary quality does not.
 
 Root-cause repair is intentionally paused before code changes. A document-only
-Fable commission is staged at
-`_dev/FABLE-NARRATIVE-RENDERER-OUTSOURCE-BRIEF.md` to redesign the renderer
+An external prompt-review brief was staged outside the public product tree to redesign the renderer
 contract, fixture prose strategy, and quality checks. The creator has now locked
-its seven pass-1 decisions: Fable designs the reusable form, Codex implements
+its seven pass-1 decisions: the review brief defines the reusable form, Codex implements
 and fills it, scenes require action/reaction/result, dialogue normally carries
 the turn when speech is natural, length targets 80-160 words with a 180-word
 maximum, and the visible fixture remains clearly labeled prepared evidence. Any

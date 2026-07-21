@@ -1,5 +1,5 @@
 {
-  "contractId": "fable-narrative-authority-contract",
+  "contractId": "penelope-narrative-authority-contract",
   "version": "candidate-2.2",
   "status": "agent_proposed",
   "creatorReviewRequired": true,
@@ -235,7 +235,7 @@
     },
     {
       "id": "AC-LIC-03",
-      "statement": "Fable, Codex, the renderer model, the linter, and any repair executor may not mint, broaden, infer, or backdate a license",
+      "statement": "No model, renderer, linter, or repair executor may mint, broaden, infer, or backdate a license",
       "severity": "hard",
       "enforcementOwner": "deterministic_preflight",
       "rationale": "Closes the self-licensing path",
@@ -433,7 +433,7 @@
     },
     {
       "id": "AC-SEV-01",
-      "statement": "Each rule has exactly one severity and one enforcement owner; the severity matrix in FABLE-NARRATIVE-REPAIR-AUDIT.md section 3 is the single authority for previously contradictory cases",
+      "statement": "Each rule has exactly one severity and one enforcement owner; the severity matrix in PENELOPE-NARRATIVE-REPAIR-AUDIT.md section 3 is the single authority for previously contradictory cases",
       "severity": "human",
       "enforcementOwner": "human_review",
       "rationale": "Pass-1 carried duplicate severities for the same token classes",
@@ -487,7 +487,7 @@
     }
   ],
   "severityMatrix": {
-    "authority": "FABLE-NARRATIVE-REPAIR-AUDIT.md section 3",
+    "authority": "PENELOPE-NARRATIVE-REPAIR-AUDIT.md section 3",
     "classes": [
       {
         "class": "hard",
@@ -538,7 +538,7 @@
   "migration_2_2": {
     "approvedBy": "creator",
     "approvedDate": "2026-07-18",
-    "basis": "DISPATCH-CLAUDE-PM-r5.1 Task A — Lane B/C BLOCKED_CONTRACT_AUTHORITY adjudication",
+    "basis": "DISPATCH-CREATOR-PM-r5.1 Task A — Lane B/C BLOCKED_CONTRACT_AUTHORITY adjudication",
     "fieldChanges": [
       {
         "ruleId": "AC-SAMPLE-01",

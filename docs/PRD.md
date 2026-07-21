@@ -80,7 +80,7 @@ Creative quality and fun require human judgment; they are not reduced to a singl
 - multi-agent orchestration
 - second-model soft review
 - living-author imitation or private author-voice training data
-- claims that Codex, GPT-5.6, Fable, Opus, or another model is the superior writer without a controlled same-brief human evaluation
+- claims that Codex or GPT-5.6 is a universally superior writer without a controlled same-brief human evaluation
 - licensed D&D, Call of Cthulhu, or private story assets
 
 ## Style-harness hypothesis
