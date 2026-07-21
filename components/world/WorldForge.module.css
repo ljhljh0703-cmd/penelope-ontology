@@ -1,0 +1,246 @@
+.closed,
+.panel {
+  margin-top: 18px;
+  border: 1px solid rgba(247, 241, 229, 0.28);
+  background:
+    linear-gradient(115deg, rgba(181, 95, 61, 0.15), transparent 45%),
+    rgba(247, 241, 229, 0.055);
+}
+.closed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 18px 20px;
+}
+
+.closed p,
+.panel header p {
+  margin: 0 0 6px;
+  color: rgba(247, 241, 229, 0.56);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.closed h2,
+.panel h2 {
+  max-width: 850px;
+  margin: 0;
+  color: #f7f1e5;
+  font-family: "Iowan Old Style", Georgia, serif;
+  font-size: clamp(18px, 2.1vw, 29px);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.closed button,
+.actions button,
+.panel footer button {
+  padding: 10px 14px;
+  color: #f7f1e5;
+  background: transparent;
+  border: 1px solid rgba(247, 241, 229, 0.42);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.closed button,
+.actions button:last-child {
+  color: #111a1d;
+  background: #f7f1e5;
+  border-color: #f7f1e5;
+}
+
+.closed button:disabled,
+.actions button:disabled {
+  cursor: progress;
+  opacity: 0.45;
+}
+
+.panel {
+  padding: 20px;
+}
+
+.panel > header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(247, 241, 229, 0.18);
+}
+
+.panel > header > span {
+  flex: 0 0 auto;
+  color: #d88a66;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.questionForm {
+  display: grid;
+  gap: 10px;
+  padding-top: 18px;
+}
+
+.questionForm > label {
+  color: #d9d0bd;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.questionForm textarea {
+  width: 100%;
+  min-height: 104px;
+  box-sizing: border-box;
+  padding: 14px;
+  resize: vertical;
+  color: #f7f1e5;
+  background: rgba(17, 26, 29, 0.72);
+  border: 1px solid rgba(247, 241, 229, 0.28);
+  border-radius: 0;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.questionForm textarea:focus-visible,
+.approval input:focus-visible,
+.closed button:focus-visible,
+.actions button:focus-visible,
+.panel footer button:focus-visible {
+  outline: 2px solid #d88a66;
+  outline-offset: 3px;
+}
+
+.questionForm > small,
+.panel footer,
+.review li small {
+  color: rgba(247, 241, 229, 0.48);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.review {
+  padding-top: 18px;
+}
+
+.reviewIntro {
+  max-width: 900px;
+  margin: 0 0 16px;
+  color: rgba(247, 241, 229, 0.72);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.review ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  max-height: 460px;
+  margin: 0;
+  padding: 1px;
+  overflow: auto;
+  background: rgba(247, 241, 229, 0.16);
+  list-style: none;
+}
+
+.review li {
+  padding: 14px;
+  color: #f7f1e5;
+  background: #172226;
+}
+
+.review li > span {
+  color: #d88a66;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.review li p {
+  margin: 7px 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.approval {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  margin-top: 14px;
+  color: #f7f1e5;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.approval input {
+  width: 17px;
+  height: 17px;
+  margin: 1px 0 0;
+  accent-color: #b55f3d;
+}
+
+.error {
+  margin: 14px 0 0;
+  color: #f1b69e;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.panel footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(247, 241, 229, 0.14);
+}
+
+.panel footer button {
+  padding: 4px 0;
+  border: 0;
+}
+
+@media (max-width: 720px) {
+  .closed,
+  .panel > header,
+  .panel footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .review ol {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .actions button {
+    flex: 1;
+  }
+}

@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import styles from "@/components/world/WorldWorkbench.module.css";
+import { WorldForge } from "@/components/world/WorldForge";
 import {
   compareWorldLines,
   deriveWorldPulse,
@@ -452,6 +453,24 @@ export function WorldWorkbench() {
     input.value = "";
   };
 
+  const openForgedWorld = useCallback(
+    async (definition: unknown): Promise<boolean> => {
+      if (transport === "codex_cli" && liveToken.trim().length === 0) {
+        setError("Enter the local narration token before opening a forged world in Codex CLI mode.");
+        return false;
+      }
+      const started = await startSession(transport, liveToken.trim(), {
+        creatorPackDefinition: definition,
+      });
+      if (started) {
+        importedCreatorPack.current = definition;
+        setImportError(null);
+      }
+      return started;
+    },
+    [liveToken, startSession, transport],
+  );
+
   const sendWorldTurnRequest = async (request: WorldTurnRequest) => {
     setBusy(true);
     setError(null);
@@ -765,6 +784,11 @@ export function WorldWorkbench() {
             {active.status === "active" ? "World in motion" : "Branch complete"}
           </div>
         </div>
+
+        <WorldForge
+          disabled={busy || loading}
+          onOpenPack={openForgedWorld}
+        />
 
         <div className={styles.worldPackTools}>
           <label className={styles.worldPackPicker} htmlFor="world-pack-picker">

@@ -1,0 +1,27 @@
+{
+  "format": "penelope_world_forge_draft",
+  "schemaVersion": 1,
+  "draftId": "forge.lantern_ledger.browser_fixture",
+  "approvedOn": "2026-07-21",
+  "seedText": {
+    "value": "A harbor archivist finds a ledger that predicts which beacon will fail. The keeper knows the ledger is accurate, but revealing that fact could expose the rescue route.",
+    "origin": "creator_stated",
+    "approval": "creator_approved"
+  },
+  "title": { "value": "The Last Beacon Ledger", "origin": "creator_stated", "approval": "creator_approved" },
+  "focalCharacterName": { "value": "Elian", "origin": "creator_stated", "approval": "creator_approved" },
+  "counterpartName": { "value": "Mira", "origin": "creator_stated", "approval": "creator_approved" },
+  "locationName": { "value": "North Beacon Archive", "origin": "creator_stated", "approval": "creator_approved" },
+  "immutableFact": { "value": "The ledger can predict a beacon failure, but it cannot change the failure by itself.", "origin": "creator_stated", "approval": "creator_approved" },
+  "focalDesire": { "value": "Elian wants the rescue route before the north beacon loses its final light.", "origin": "creator_stated", "approval": "creator_approved" },
+  "counterpartDesire": { "value": "Mira wants to protect the route from anyone who will treat it as disposable knowledge.", "origin": "creator_stated", "approval": "creator_approved" },
+  "stakes": { "value": "If they fail to agree, the rescue boat will enter the harbor without a working signal.", "origin": "creator_stated", "approval": "creator_approved" },
+  "knowledgeAsymmetry": { "value": "Mira knows the ledger has never made a false prediction, while Elian does not.", "origin": "creator_stated", "approval": "creator_approved" },
+  "forbiddenDevelopment": { "value": "No character may erase the ledger's prediction or create a new beacon without paying a declared cost.", "origin": "creator_stated", "approval": "creator_approved" },
+  "endingCondition": { "value": "The scene ends when Elian earns the route or accepts a different obligation before the light fails.", "origin": "creator_stated", "approval": "creator_approved" },
+  "acceptedCost": { "value": "Elian may owe Mira a future rescue that takes priority over his own assignment.", "origin": "creator_stated", "approval": "creator_approved" },
+  "recommendedAction": { "value": "Offer Mira custody of the ledger", "origin": "creator_stated", "approval": "creator_approved" },
+  "recommendedConsequence": { "value": "Mira shares the rescue route because Elian makes her safeguard part of the agreement.", "origin": "creator_stated", "approval": "creator_approved" },
+  "alternativeAction": { "value": "Seal the ledger and ask for one signal only", "origin": "creator_stated", "approval": "creator_approved" },
+  "alternativeConsequence": { "value": "Mira gives one temporary signal, but Elian leaves without the route and owes her another negotiation.", "origin": "creator_stated", "approval": "creator_approved" }
+}
