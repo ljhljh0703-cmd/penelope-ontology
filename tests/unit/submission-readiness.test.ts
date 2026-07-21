@@ -275,6 +275,12 @@ describe("submission readiness gate", () => {
     expect(hasStructuredProjectNameParity("Narrative Knowledge Harness", surfaces)).toBe(
       true,
     );
+    expect(
+      hasStructuredProjectNameParity("Narrative Knowledge Harness", {
+        ...surfaces,
+        appLayout: 'title: "Narrative Knowledge Harness — Causal World Simulator"',
+      }),
+    ).toBe(true);
     expect(hasStructuredProjectNameParity("AI", surfaces)).toBe(false);
     expect(
       hasStructuredProjectNameParity("Narrative Knowledge Harness", {

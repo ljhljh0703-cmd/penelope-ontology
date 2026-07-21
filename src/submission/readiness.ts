@@ -241,7 +241,7 @@ export const hasStructuredProjectNameParity = (
     captureName(surfaces.readme, /^# ([^\r\n]+)$/m),
     captureName(
       surfaces.appLayout,
-      /title:\s*["']([^"']+) — (?:Story Workbench|Table Rehearsal)["']/,
+      /title:\s*["']([^"']+) — (?:Causal World Simulator|Story Workbench|Table Rehearsal)["']/,
     ),
     captureName(surfaces.devpostDraft, /^Project name: ([^\r\n]+)$/m),
     captureName(

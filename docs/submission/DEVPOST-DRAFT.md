@@ -1,22 +1,24 @@
-# Devpost project description — draft
+# Devpost project description — final
 
 Project name: Penelope Ontology
 
 ## What it is
 
-Penelope Ontology is a creator-governed causal world simulator for narrative designers, quest teams, professional game masters, and writers working inside a bounded canon. It lets a creator change one decision, then follows the effects through character knowledge, competing motives, offstage reactions, and the ending that those conditions earn. The creator owns direction and taste; Penelope controls plausibility, causal consequences, and what the world is allowed to treat as true. It is not a TRPG rules engine or a generic next-paragraph generator.
+Penelope Ontology is a creator-governed causal world simulator for narrative designers, quest teams, professional game masters, and writers working inside a bounded canon. It lets a creator change one decision, then follows the effects through character knowledge, competing motives, offstage reactions, and the ending that those conditions earn. Its harness keeps that bounded world inspectable while the creator owns direction and taste; Penelope controls plausibility, causal consequences, and what the world is allowed to treat as true. It is not a TRPG rules engine or a generic next-paragraph generator.
 
 ## How it works
 
 The World Workbench starts from a bounded world checkpoint, not an empty prompt. A is the recommended route, B is a materially different alternative, and C is the creator's own direction. A/B make recommendation versus alternative explicit, while World Pulse shows the consequence the simulation actually resolves. C asks for the character's goal, motive, and accepted cost, then presents a world-compatible proposal, canonical execution, and visible state-bound receipt for approval. The supporting Story Workbench rehearses prepared A/B prose, but authoritative world state lives in the World Workbench.
 
+Each creator instruction is retained as a typed intent before validation and resolution, so the eventual consequence can be traced back to what the creator actually asked for.
+
 The selected action becomes typed effects, knowledge changes, risks, debts, clocks, and open obligations. The simulation advances the small set of important NPCs from their own local knowledge and agendas. Only knowledge available to the focal character and current world state enters the narration contract. Each dialogue event is licensed to a specific speaker. Creator-only receipts separately expose behind-curtain risks such as a possible overhearer, so warnings do not leak into reader-facing prose as facts.
 
 New lore remains a proposal until creator approval. Deterministic validators own knowledge boundaries, state change, canon promotion, and consequence tracking. The model proposes, the harness constrains and traces, and the creator decides.
 
-## Demo: The Night of the Scar
+## Demo
 
-The demo fixes the world to selected events from *The Odyssey*, Book 19: Odysseus has returned in disguise, Penelope is interviewing him, and Eurycleia is about to discover the scar that reveals him. The interview, washing, recognition, and Penelope's continued uncertainty are source-grounded. Melantho's investigation and the alternate endings are visibly labeled creator-authored IF rules, not Homeric canon. The playable scope is one night, not the whole epic.
+**The Night of the Scar** fixes one scene to selected events from *The Odyssey*, Book 19: Odysseus has returned in disguise, Penelope is interviewing him, and Eurycleia is about to discover the scar that reveals him. The interview, washing, recognition, and Penelope's continued uncertainty are source-grounded. Melantho's investigation and the alternate endings are visibly labeled creator-authored IF rules, not Homeric canon. The playable scope is one night, not the whole epic.
 
 The creator makes an apparently sensible intervention: dismiss Melantho to make the interview private. Penelope asks the creator to state the goal, motive, and accepted cost, then presents the canonical execution for confirmation. Once approved, Melantho leaves the interview—but the exclusion gives her reason to investigate elsewhere in the household. When Eurycleia reacts to the scar, that visible disturbance can become a reportable threat. The branch reaches `Plan Compromised`.
 
