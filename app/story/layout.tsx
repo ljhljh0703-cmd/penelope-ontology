@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "The Red Sail Trilogy — Penelope Ontology",
+  title: "Penelope Ontology — Story Workbench",
   description:
     "Choose how Ithaca answers one uncertain signal, then watch the benefit and cost return across a bounded three-scene story.",
 };

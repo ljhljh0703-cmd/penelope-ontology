@@ -5,6 +5,7 @@ import {
   addDuplicateIssues,
 } from "@/src/contracts/common";
 import { NarrationSpeechActSchema } from "@/src/contracts/narration-license";
+import { DisclosureGeometrySchema } from "@/src/contracts/story-world-control";
 
 export const MAX_WORLD_SIMULATION_TURNS = 6;
 export const MAX_REACTIONS_PER_TURN = 2;
@@ -446,6 +447,18 @@ export const NarrationSpeechDirectiveSchema = z
     speechAct: NarrationSpeechActSchema,
     plainIntent: z.string().trim().min(12).max(300),
     contentBoundary: z.string().trim().min(12).max(400),
+    disclosureGeometry: DisclosureGeometrySchema,
+    deliveryCues: z
+      .array(
+        z
+          .object({
+            id: IdentifierSchema,
+            category: z.enum(["gesture", "movement", "spatial_relation", "sensory_detail"]),
+            contentBoundary: z.string().trim().min(12).max(240),
+          })
+          .strict(),
+      )
+      .max(4),
     creatorApprovalReceiptId: IdentifierSchema,
     creatorDecisionId: IdentifierSchema,
   })
@@ -673,6 +686,29 @@ export const WorldSimulationScenarioSchema = z
         "narration speech speaker",
         context,
       );
+      if (directive.disclosureGeometry.speakerId !== directive.speakerEntityId) {
+        context.addIssue({
+          code: "custom",
+          path: [...path, "disclosureGeometry", "speakerId"],
+          message: "Disclosure geometry must name the narration directive speaker.",
+        });
+      }
+      for (const [field, entityIds] of [
+        ["addresseeIds", directive.disclosureGeometry.addresseeIds],
+        ["lineOfSightIds", directive.disclosureGeometry.lineOfSightIds],
+        ["confirmedHearerIds", directive.disclosureGeometry.confirmedHearerIds],
+        ["potentialHearerIds", directive.disclosureGeometry.potentialHearerIds],
+      ] as const) {
+        for (const [entityIndex, entityId] of entityIds.entries()) {
+          addUnknownReferenceIssue(
+            actorIds,
+            entityId,
+            [...path, "disclosureGeometry", field, entityIndex],
+            "narration disclosure entity",
+            context,
+          );
+        }
+      }
       if (reactionRule.actorEntityId !== directive.speakerEntityId) {
         context.addIssue({
           code: "custom",

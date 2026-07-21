@@ -4,7 +4,6 @@ import type { CampaignEventInput, CampaignLedger } from "@/src/contracts/campaig
 import type { SimulationSnapshot } from "@/src/contracts/simulation";
 import {
   ResolutionEnvelopeSchema,
-  SceneContractSchema,
   StoryModelRequestSchema,
   StoryModelOutcomeSchema,
   StoryScenarioSchema,
@@ -37,7 +36,6 @@ import {
 import {
   advanceStorySpine,
   bindFixtureResolutionToChoice,
-  buildFailForwardResolution,
   validateSceneResolutionContract,
   validateStoryResolution,
 } from "@/src/domain/story-resolution";
@@ -435,45 +433,44 @@ const relevantFixtureTurn = ({
   choice: StoryChoice;
 }) => {
   const sceneNumber = session.currentSceneNumber + 1;
+  const visibleChoices = session.scenes.at(-1)?.suggestedContinuations ?? [];
+  const registeredChoice = visibleChoices.find(
+    ({ choiceId }) => choiceId === choice.choiceId,
+  );
+  const isRegisteredChoice =
+    choice.source === "suggested" &&
+    registeredChoice !== undefined &&
+    sha256Canonical(choice) === sha256Canonical(registeredChoice);
+  if (!isRegisteredChoice) {
+    throw new StoryTurnError(
+      "The submitted choice has no exact registered story branch.",
+    );
+  }
   const pathTurns = scenario.fixtureTurns.filter(
     (turn) =>
       turn.sceneNumber === sceneNumber &&
       samePath(turn.priorChoiceIds, session.selectedChoiceIds),
   );
-  const exact = pathTurns.find((turn) => turn.acceptedChoiceIds.includes(choice.choiceId));
-  if (exact) return { turn: exact, failForward: false };
-  if (choice.source === "suggested") {
-    throw new StoryTurnError(`Visible suggested choice ${choice.choiceId} has no story branch.`);
+  const exact = pathTurns.find((turn) =>
+    turn.acceptedChoiceIds.includes(registeredChoice.choiceId),
+  );
+  if (!exact) {
+    throw new StoryTurnError(
+      "The submitted choice has no exact registered story branch.",
+    );
   }
-  const safe = pathTurns[0];
-  if (!safe) throw new StoryTurnError("No safe continuation exists for this story branch.");
-  return { turn: safe, failForward: true };
+  return { turn: exact };
 };
 
-const failForwardDraft = ({
+const bindDraftToChoice = ({
   draft,
   choice,
 }: {
   draft: ReturnType<typeof StorySceneDraftSchema.parse>;
   choice: StoryChoice;
-}) => {
-  const first = draft.segments[0];
-  if (!first) throw new StoryTurnError("The safe continuation has no prose segment.");
-  const attempted = choice.intent
-    .replace(/\s+/gu, " ")
-    .trim()
-    .split(" ")
-    .slice(0, 12)
-    .join(" ");
-  const prefix = `The attempted course—${attempted}—cannot be completed here. Pressure rises, but the night moves on.`;
-  const segments = [
-    { ...first, text: `${prefix} ${first.text}` },
-    ...draft.segments.slice(1),
-  ];
-  return StorySceneDraftSchema.parse({
+}) =>
+  StorySceneDraftSchema.parse({
     ...draft,
-    segments,
-    prose: segments.map(({ text }) => text).join("\n\n"),
     actionBoundary: {
       ...draft.actionBoundary,
       performedAction: {
@@ -483,30 +480,6 @@ const failForwardDraft = ({
       },
     },
   });
-};
-
-const contractForChoice = ({
-  contract,
-  choice,
-  failForward,
-}: {
-  contract: SceneContract;
-  choice: StoryChoice;
-  failForward: boolean;
-}): SceneContract =>
-  failForward
-    ? SceneContractSchema.parse({
-        ...contract,
-        actionBoundary: {
-          ...contract.actionBoundary,
-          performedAction: {
-            choiceId: choice.choiceId,
-            actionTypeId: choice.actionTypeId,
-            actorEntityId: choice.actorEntityId,
-          },
-        },
-      })
-    : contract;
 
 const assertReservedNextActionSemantics = ({
   prose,
@@ -646,23 +619,15 @@ export const runFixtureStoryTurn = ({
     session: request.session,
     choice: request.choice,
   });
-  const baseResolution = selected.failForward
-    ? buildFailForwardResolution({
-        scenario,
-        choice: request.choice,
-        sceneNumber: selected.turn.sceneNumber,
-        safeResolution: selected.turn.resolution,
-      })
-    : bindFixtureResolutionToChoice(selected.turn.resolution, request.choice);
+  const baseResolution = bindFixtureResolutionToChoice(
+    selected.turn.resolution,
+    request.choice,
+  );
   const resolution = ResolutionEnvelopeSchema.parse({
     ...baseResolution,
     actionTypeId: request.choice.actionTypeId,
   });
-  const contract = contractForChoice({
-    contract: selected.turn.contract,
-    choice: request.choice,
-    failForward: selected.failForward,
-  });
+  const contract = selected.turn.contract;
   const resolutionViolations = validateStoryResolution({ scenario, resolution });
   const contractViolations = validateSceneResolutionContract({
     resolution,
@@ -695,9 +660,10 @@ export const runFixtureStoryTurn = ({
     focalCharacterId: contract.focalCharacterId,
     presentSpeakerIds: contract.presentSpeakerIds,
   });
-  const draft = selected.failForward
-    ? failForwardDraft({ draft: selected.turn.draft, choice: request.choice })
-    : selected.turn.draft;
+  const draft = bindDraftToChoice({
+    draft: selected.turn.draft,
+    choice: request.choice,
+  });
   assertSceneActionBoundary({
     resolution,
     contract,
@@ -725,9 +691,6 @@ export const runFixtureStoryTurn = ({
     selected.turn.sceneNumber === spine.maximumSceneCount &&
     contract.closedThreadIds.includes("thread.red_sail_question") &&
     !spine.mustPayOffObligations.some(({ status }) => status === "open");
-  const branchChoiceId = selected.failForward
-    ? selected.turn.defaultChoiceId
-    : request.choice.choiceId;
   const choiceHistory = [
     ...request.session.choiceHistory,
     {
@@ -736,6 +699,9 @@ export const runFixtureStoryTurn = ({
       intent: request.choice.intent,
       interpretation: resolution.summary,
       source: request.choice.source,
+      ...(request.choice.proposalAssessment
+        ? { proposalAssessment: request.choice.proposalAssessment }
+        : {}),
       sceneNumber: selected.turn.sceneNumber,
       resolutionId: resolution.resolutionId,
     },
@@ -751,7 +717,10 @@ export const runFixtureStoryTurn = ({
     }),
     ledger: prepared.ledger,
     scenes: [...request.session.scenes, scene],
-    selectedChoiceIds: [...request.session.selectedChoiceIds, branchChoiceId],
+    selectedChoiceIds: [
+      ...request.session.selectedChoiceIds,
+      request.choice.choiceId,
+    ],
     choiceHistory,
   });
   return StoryTurnResultSchema.parse({
@@ -809,23 +778,15 @@ export const runStoryTurn = async ({
     session: request.session,
     choice: request.choice,
   });
-  const baseResolution = selected.failForward
-    ? buildFailForwardResolution({
-        scenario,
-        choice: request.choice,
-        sceneNumber: selected.turn.sceneNumber,
-        safeResolution: selected.turn.resolution,
-      })
-    : bindFixtureResolutionToChoice(selected.turn.resolution, request.choice);
+  const baseResolution = bindFixtureResolutionToChoice(
+    selected.turn.resolution,
+    request.choice,
+  );
   const resolution = ResolutionEnvelopeSchema.parse({
     ...baseResolution,
     actionTypeId: request.choice.actionTypeId,
   });
-  const contract = contractForChoice({
-    contract: selected.turn.contract,
-    choice: request.choice,
-    failForward: selected.failForward,
-  });
+  const contract = selected.turn.contract;
   const resolutionViolations = validateStoryResolution({ scenario, resolution });
   const contractViolations = validateSceneResolutionContract({
     resolution,
@@ -870,9 +831,7 @@ export const runStoryTurn = async ({
     knowledgeScope: scope,
     causalContext: prepared.nextNarrativeContext,
     allowedNextChoices,
-    failedReason: selected.failForward
-      ? "The requested action exceeds the registered scene scope and must fail forward."
-      : null,
+    failedReason: null,
   });
   let outcome: StoryModelOutcome;
   try {
@@ -935,9 +894,6 @@ export const runStoryTurn = async ({
     contract,
     draft,
   });
-  const branchChoiceId = selected.failForward
-    ? selected.turn.defaultChoiceId
-    : request.choice.choiceId;
   const choiceHistory = [
     ...request.session.choiceHistory,
     {
@@ -946,6 +902,9 @@ export const runStoryTurn = async ({
       intent: request.choice.intent,
       interpretation: resolution.summary,
       source: request.choice.source,
+      ...(request.choice.proposalAssessment
+        ? { proposalAssessment: request.choice.proposalAssessment }
+        : {}),
       sceneNumber: selected.turn.sceneNumber,
       resolutionId: resolution.resolutionId,
     },
@@ -961,7 +920,10 @@ export const runStoryTurn = async ({
     }),
     ledger: prepared.ledger,
     scenes: [...request.session.scenes, scene],
-    selectedChoiceIds: [...request.session.selectedChoiceIds, branchChoiceId],
+    selectedChoiceIds: [
+      ...request.session.selectedChoiceIds,
+      request.choice.choiceId,
+    ],
     choiceHistory,
   });
   return StoryTurnResultSchema.parse({

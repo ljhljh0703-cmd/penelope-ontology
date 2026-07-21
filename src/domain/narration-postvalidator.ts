@@ -7,6 +7,7 @@ import type {
 } from "@/src/contracts/world-narrator";
 import { countEnglishSceneWords } from "@/src/contracts/world-narrator";
 import { sha256Canonical } from "@/src/domain/canonical-json";
+import { splitNarrationSentences } from "@/src/domain/narration-sentences";
 import type {
   NarrationPreflightResult,
   NarrationRuleFinding,
@@ -305,6 +306,7 @@ const containsVerbatimRun = (
 };
 
 const reorderedRestatementLikely = (candidate: string, source: string): boolean => {
+  if (exactPhraseAppears(candidate, source)) return false;
   const candidateWords = new Set(words(candidate));
   const sourceWords = new Set(words(source));
   if (candidateWords.size < 6 || sourceWords.size < 6) return false;
@@ -312,12 +314,6 @@ const reorderedRestatementLikely = (candidate: string, source: string): boolean 
   const overlap = intersection.length / Math.min(candidateWords.size, sourceWords.size);
   return overlap >= 0.8 && !containsVerbatimRun(candidate, source);
 };
-
-const splitSentences = (text: string): string[] =>
-  text
-    .split(/(?<=[.!?])\s+/u)
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
 
 const PROCESS_PATTERN =
   /\b(?:pipeline|structured output|json schema|system prompt|model output|preflight receipt|post-validator|validator finding|source authority|sentence plan|resolved event id)\b/iu;
@@ -565,7 +561,7 @@ export const validateNarrationPostGeneration = ({
   ).length;
   receiptMismatchCount += modelOutput.readerProse.paragraphs.filter(
     ({ sentencePlanIds, text }) =>
-      splitSentences(text).length !== sentencePlanIds.length,
+      splitNarrationSentences(text).length !== sentencePlanIds.length,
   ).length;
   pushFinding(
     findings,
@@ -1018,7 +1014,7 @@ export const validateNarrationPostGeneration = ({
     inputEnvelope.modelFacing.styleStateId,
   );
   const longSentenceCount = modelOutput.readerProse.paragraphs
-    .flatMap(({ text }) => splitSentences(text))
+    .flatMap(({ text }) => splitNarrationSentences(text))
     .filter((sentence) => countEnglishSceneWords(sentence) > hardMaxWords).length;
   pushFinding(
     findings,

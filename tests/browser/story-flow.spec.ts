@@ -385,7 +385,7 @@ test("story-first workbench carries one choice into cost and a second into payof
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(result) });
   });
 
-  await page.goto("/");
+  await page.goto("/story");
   await expect(page.getByRole("heading", { name: "Choose how the story is written." })).toBeVisible();
   await page.getByTestId("start-story").click();
 
@@ -401,10 +401,16 @@ test("story-first workbench carries one choice into cost and a second into payof
   await expect(whyOpening).toContainText("110–220 English words");
 
   const candidates = page.getByTestId("candidate-choices");
-  expect(await candidates.evaluate((node) => (node as HTMLDetailsElement).open)).toBe(false);
-  await candidates.locator("summary").click();
+  await expect(candidates.getByText("A · Recommended", { exact: true })).toBeVisible();
+  await expect(candidates.getByText("B · Second route", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("open-world-creator-interview")).toHaveAttribute("href", "/world");
+  await expect(page.getByTestId("story-action")).toHaveCount(0);
   await page.getByTestId(`candidate-${quietChoice.choiceId}`).click();
-  await expect(page.getByTestId("story-action")).toHaveValue(quietChoice.intent);
+  await expect(page.getByTestId(`candidate-${quietChoice.choiceId}`)).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByTestId("continue-story")).toBeEnabled();
   await page.getByTestId("continue-story").click();
 
   expect(turnRequests[0]).toMatchObject({
@@ -423,7 +429,6 @@ test("story-first workbench carries one choice into cost and a second into payof
   await expect(whySecond).toContainText(quietChoice.intent);
   await expect(whySecond).toContainText("Deterministic public-safe fixture");
 
-  await page.getByTestId("candidate-choices").locator("summary").click();
   await page.getByTestId(`candidate-${decoyChoice.choiceId}`).click();
   await page.getByTestId("continue-story").click();
 
@@ -446,6 +451,30 @@ test("story-first workbench carries one choice into cost and a second into payof
   expect(hasOverflow).toBe(false);
 });
 
+test("C hands creator direction to the world interview without posting a legacy direct action", async ({
+  page,
+}) => {
+  const requests: unknown[] = [];
+
+  await page.route("**/api/story/session", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(bootstrap()) });
+  });
+  await page.route("**/api/story/turn", async (route) => {
+    requests.push(route.request().postDataJSON());
+    await route.abort();
+  });
+
+  await page.goto("/story");
+  await page.getByTestId("start-story").click();
+
+  await expect(page.getByText("Develop a new move in the creator interview")).toBeVisible();
+  await expect(page.getByText("this rehearsal only executes prepared routes")).toBeVisible();
+  await expect(page.getByTestId("open-world-creator-interview")).toHaveAttribute("href", "/world");
+  await expect(page.getByTestId("story-action")).toHaveCount(0);
+  await expect(page.getByTestId("creator-acknowledgment")).toHaveCount(0);
+  expect(requests).toHaveLength(0);
+});
+
 test("Live Codex selection is explicit and is not labeled LIVE before a completed trace", async ({
   page,
 }) => {
@@ -461,7 +490,7 @@ test("Live Codex selection is explicit and is not labeled LIVE before a complete
     });
   });
 
-  await page.goto("/");
+  await page.goto("/story");
   await expect(page.getByTestId("transport-codex-cli")).toBeEnabled();
   await selectLiveTransport(page);
   await page.getByTestId("start-story").click();
@@ -477,7 +506,7 @@ test("Live Codex selection is explicit and is not labeled LIVE before a complete
 test("completed Codex CLI trace earns the LIVE label", async ({ page }) => {
   const liveTrace: StoryModelTrace = {
     mode: "codex_cli",
-    requestedModel: "gpt-5.6-sol",
+    requestedModel: "gpt-5.6-terra",
     actualModel: null,
     responseId: null,
     inputTokens: null,
@@ -508,16 +537,15 @@ test("completed Codex CLI trace earns the LIVE label", async ({ page }) => {
     });
   });
 
-  await page.goto("/");
+  await page.goto("/story");
   await selectLiveTransport(page);
   await page.getByTestId("start-story").click();
-  await page.getByTestId("candidate-choices").locator("summary").click();
   await page.getByTestId(`candidate-${quietChoice.choiceId}`).click();
   await page.getByTestId("continue-story").click();
 
   await expect(page.getByTestId("story-mode")).toHaveText("LIVE");
   await expect(page.getByTestId("story-product-claim")).toHaveText(
-    "Built with Codex. Written live through Codex · requested gpt-5.6-sol. Remembered by Penelope.",
+    "Built with Codex. Written live through the gated route · requested gpt-5.6-terra; actual model identity unreported. Remembered by Penelope.",
   );
 });
 
@@ -559,10 +587,9 @@ test("failed live turn does not fall back until the creator explicitly requests 
     });
   });
 
-  await page.goto("/");
+  await page.goto("/story");
   await selectLiveTransport(page);
   await page.getByTestId("start-story").click();
-  await page.getByTestId("candidate-choices").locator("summary").click();
   await page.getByTestId(`candidate-${quietChoice.choiceId}`).click();
   await page.getByTestId("continue-story").click();
 
@@ -601,7 +628,7 @@ test("failed Live Codex start stays failed without fixture fallback", async ({ p
     });
   });
 
-  await page.goto("/");
+  await page.goto("/story");
   await selectLiveTransport(page);
   await page.getByTestId("start-story").click();
 

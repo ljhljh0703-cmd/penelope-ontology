@@ -134,7 +134,7 @@ const main = async (): Promise<void> => {
         generatedTurnCount: transport === "codex_cli" ? scenes.length - 1 : 0,
         modelClaim:
           transport === "codex_cli"
-            ? "Codex CLI story run; requested gpt-5.6-sol. Actual serving model is not independently reported by this transport."
+            ? "Codex CLI story run; requested gpt-5.6-terra. Actual serving model is not independently reported by this transport."
             : "Deterministic rehearsal fixture; no live model call is implied.",
         scenes,
       },

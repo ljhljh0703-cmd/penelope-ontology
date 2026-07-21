@@ -204,6 +204,8 @@ describe("narration lint remains flag-only", () => {
 
   it("FC-04 flags a personified abstraction acting volitionally without blocking", () => {
     expectFlagOnly(lintText("Silence wanted the hall to wait."), "FC-04");
+    expectFlagOnly(lintText("The hearth remains beside them."), "FC-04");
+    expectNoRule(lintText("The room remains quiet."), "FC-04");
   });
 
   it("FC-05 flags a surrogate body-part speaker without blocking", () => {
@@ -248,6 +250,12 @@ describe("narration lint remains flag-only", () => {
     );
     expectFlagOnly(
       lintText("She entered the hall alone. At dusk she entered the hall."),
+      "FC-10",
+    );
+    expectFlagOnly(
+      lintText(
+        "Penelope waits beside the hearth and watches the room. Penelope sits beside the hearth, uncertain.",
+      ),
       "FC-10",
     );
     expectNoRule(lintText("She entered the hall. The guard closed the door."), "FC-10");

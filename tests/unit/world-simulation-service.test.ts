@@ -6,6 +6,7 @@ import {
   fixtureNarrationRenderer,
 } from "@/src/adapters/fixtures/world-narrator";
 import {
+  buildWorldCreatorReceipt,
   buildWorldNarrationPipelineArtifacts,
   buildWorldSessionProjections,
   buildWorldVisibleSceneMemory,
@@ -87,6 +88,52 @@ describe("world simulation service privacy boundary", () => {
     ).toContain("premise.stranger_identity");
     expect(after.inputEnvelope.privateValidation.forbiddenKnowledgeIds).toEqual([]);
     expect(after.privateValidationMaterial.forbiddenKnowledge).toEqual([]);
+  });
+
+  it("shows latent disclosure risk to the creator without making it reader-facing canon", () => {
+    const initial = createWorldSimulationSession({ scenario });
+    const recognition = runWorldSimulationTurn({
+      scenario,
+      session: initial,
+      input: "bring the basin",
+    });
+    const disclosure = runWorldSimulationTurn({
+      scenario,
+      session: recognition.session,
+      input: "confront the stranger",
+    });
+    const creatorReceipt = buildWorldCreatorReceipt({
+      scenario,
+      session: disclosure.session,
+      receipt: disclosure.receipt,
+    });
+    const artifacts = buildWorldNarrationPipelineArtifacts({
+      scenario,
+      session: disclosure.session,
+      receipt: disclosure.receipt,
+      styleProfile,
+    });
+
+    expect(creatorReceipt.behindCurtainRisks).toEqual([
+      {
+        riskId:
+          "risk.speech.eurycleia.controlled_disclosure.potential_audience",
+        eventId:
+          "event.turn_2.reaction.reaction.eurycleia.controlled_disclosure",
+        exposureStatus: "latent",
+        summary:
+          "Eurycleia's answer may have reached Melantho. This is a live possibility, not a resolved fact.",
+        potentialHearers: [
+          { entityId: "entity.melantho", label: "Melantho" },
+        ],
+      },
+    ]);
+    expect(JSON.stringify(artifacts.inputEnvelope.modelFacing)).not.toContain(
+      "entity.melantho",
+    );
+    expect(JSON.stringify(artifacts.inputEnvelope.modelFacing)).not.toContain(
+      "potentialHearerIds",
+    );
   });
 
   it("projects validated reader prose separately from the creator receipt", async () => {

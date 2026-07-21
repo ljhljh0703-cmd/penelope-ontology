@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { buildCodexCliEnvironment } from "@/src/adapters/codex-cli/execution-contract";
 import {
+  CODEX_CLI_NARRATION_RENDERER_W5_MODEL,
   createCodexCliNarrationRenderer,
 } from "@/src/adapters/codex-cli/world-narrator";
 import {
@@ -228,6 +229,7 @@ export const runW5CandidateCall = async ({
     env,
     commandResolver: async () => command,
     processRunner: recording.runner,
+    requestedModel: CODEX_CLI_NARRATION_RENDERER_W5_MODEL,
   });
   const result = await runWorldNarrationPipeline({
     artifacts,

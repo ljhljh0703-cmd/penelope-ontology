@@ -135,7 +135,7 @@ describe("story session API", () => {
     expect(third.session.choiceHistory).toHaveLength(2);
   });
 
-  it("keeps an unsupported direct action visible and fails forward", async () => {
+  it("rejects an unsupported direct action without advancing or selecting A", async () => {
     const bootstrap = await (
       await postStorySession(
         jsonRequest("http://127.0.0.1:3210/api/story/session", {
@@ -151,18 +151,21 @@ describe("story session API", () => {
         action,
       }),
     );
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(422);
     const body = await response.json();
-    expect(body.status).toBe("advanced");
-    expect(body.resolution.outcome).toBe("failure_with_progress");
-    expect(body.scene.prose).toContain("Swim alone to the red-sailed ship");
-    expect(body.session.choiceHistory.at(-1)).toMatchObject({
-      intent: action,
-      source: "direct",
+    expect(body).toEqual({
+      error: {
+        code: "story_creator_direction_requires_interview",
+        message:
+          "This rehearsal only executes its prepared routes. Use the World Workbench C interview to develop a creator direction before the world changes.",
+      },
     });
+    expect(body).not.toHaveProperty("session");
+    expect(body).not.toHaveProperty("scene");
+    expect(body).not.toHaveProperty("resolution");
   });
 
-  it("routes a typed public-alarm paraphrase and later harbor sweep to the registered branch", async () => {
+  it("does not infer A or B from choice-less prepared text or a paraphrase", async () => {
     const bootstrap = await (
       await postStorySession(
         jsonRequest("http://127.0.0.1:3210/api/story/session", {
@@ -170,53 +173,22 @@ describe("story session API", () => {
         }),
       )
     ).json();
-    const alarmAction = "Raise the public alarm and assemble the harbor guard.";
-    const alarmResponse = await postStoryTurn(
-      jsonRequest("http://127.0.0.1:3210/api/story/turn", {
-        authority: bootstrap.session,
-        transport: "fixture",
-        action: alarmAction,
-      }),
-    );
-    expect(alarmResponse.status).toBe(200);
-    const alarm = await alarmResponse.json();
-    expect(alarm).toMatchObject({
-      scene: { title: "The Alarm" },
-      session: {
-        selectedChoiceIds: ["choice.ring_public_bell"],
-      },
-    });
-    expect(alarm.session.choiceHistory.at(-1)).toMatchObject({
-      choiceId: "choice.ring_public_bell",
-      intent: alarmAction,
-      source: "direct",
-    });
-
-    const sweepAction = "Sweep the harbor and search the crowd for its contact.";
-    const sweepResponse = await postStoryTurn(
-      jsonRequest("http://127.0.0.1:3210/api/story/turn", {
-        authority: alarm.session,
-        transport: "fixture",
-        action: sweepAction,
-      }),
-    );
-    expect(sweepResponse.status).toBe(200);
-    const sweep = await sweepResponse.json();
-    expect(sweep).toMatchObject({
-      status: "completed",
-      scene: { title: "The Public Price" },
-      session: {
-        selectedChoiceIds: [
-          "choice.ring_public_bell",
-          "choice.sweep_harbor",
-        ],
-      },
-    });
-    expect(sweep.session.choiceHistory.at(-1)).toMatchObject({
-      choiceId: "choice.sweep_harbor",
-      intent: sweepAction,
-      source: "direct",
-    });
+    for (const action of [
+      bootstrap.choices[1].intent,
+      "Raise the public alarm and assemble the harbor guard.",
+    ]) {
+      const response = await postStoryTurn(
+        jsonRequest("http://127.0.0.1:3210/api/story/turn", {
+          authority: bootstrap.session,
+          transport: "fixture",
+          action,
+        }),
+      );
+      expect(response.status).toBe(422);
+      await expect(response.json()).resolves.toMatchObject({
+        error: { code: "story_creator_direction_requires_interview" },
+      });
+    }
   });
 
   it.each([

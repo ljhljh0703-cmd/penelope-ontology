@@ -213,7 +213,11 @@ const preparedSourceCompositionVerified = ({
         return false;
       }
       expectedParts.push(
-        uniqueSourceIds.map((sourceId) => sources.get(sourceId)!).join(" "),
+        [
+          ...new Set(
+            uniqueSourceIds.map((sourceId) => sources.get(sourceId)!),
+          ),
+        ].join(" "),
       );
     }
     return collapseWhitespace(paragraph.text) === collapseWhitespace(expectedParts.join(" "));

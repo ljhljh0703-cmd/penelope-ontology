@@ -1,5 +1,5 @@
-import { StoryWorkbench } from "@/components/story/StoryWorkbench";
+import { WorldWorkbench } from "@/components/world/WorldWorkbench";
 
 export default function Home() {
-  return <StoryWorkbench />;
+  return <WorldWorkbench />;
 }

@@ -354,6 +354,36 @@ describe("deterministic narration post-validator", () => {
     expectHard(input, "AC-DATA-02");
   });
 
+  it("counts dialogue ending in a closing quotation mark as one sentence", () => {
+    const input = basePostInput();
+    setProse(input, "She asks, “Wait?” Light falls across the threshold.");
+    bindCurrentEvidence(input);
+
+    const result = validateNarrationPostGeneration(input);
+
+    expect(
+      ruleFindings(result, "AC-DATA-02").filter(
+        ({ classification, severity }) =>
+          classification === "deterministic" && severity === "hard_fail",
+      ),
+    ).toEqual([]);
+  });
+
+  it("keeps a lower-case dialogue attribution with its quoted sentence", () => {
+    const input = basePostInput();
+    setProse(input, "She waits. “Wait?” she asks the stranger.");
+    bindCurrentEvidence(input);
+
+    const result = validateNarrationPostGeneration(input);
+
+    expect(
+      ruleFindings(result, "AC-DATA-02").filter(
+        ({ classification, severity }) =>
+          classification === "deterministic" && severity === "hard_fail",
+      ),
+    ).toEqual([]);
+  });
+
   it("AC-DATA-02 hard-fails duplicate planReceipt IDs instead of trusting Map collapse", () => {
     const input = basePostInput();
     input.modelOutput.planReceipt = [

@@ -11,7 +11,11 @@ if (!/^[A-Za-z0-9._-]{7,64}$/.test(buildCommitSha)) {
 }
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: process.cwd(),
   poweredByHeader: false,
+  turbopack: {
+    root: process.cwd(),
+  },
   outputFileTracingExcludes: {
     "/*": [
       "./private-submission/**/*",

@@ -1,6 +1,8 @@
-# Penelope Ontology — World-first creator review
+# Penelope Ontology — historical rejected renderer review
 
-Status: implementation candidate; live prose rejected; authored-rule canon pending
+Status: historical rejection record; **not current demo evidence**
+
+> This file preserves the rejected Sol-era opening and the decisions that were open at that time. The current product proof is the Book 19 World Workbench documented in `README.md`, `docs/EVIDENCE-LEDGER.md`, and the gitignored Book 19 Terra review record. Do not use the prose or pending labels below as current acceptance status.
 
 ## What this proof is
 
@@ -16,8 +18,10 @@ checked source and authored world rules
 -> scoped narration draft
 ```
 
-The proof uses original summaries of the public-domain *Odyssey*. The Book 19
-and Book 23 Perseus pages were manually checked on 2026-07-17:
+The proof uses original summaries of the public-domain *Odyssey*. The current
+demo is grounded in selected Book 19 events. Book 23 was checked only as a
+continuity reference during this earlier review; it is not the source frame for
+the playable scene. The Perseus pages were manually checked on 2026-07-17:
 
 - [Odyssey, Book 19](https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0136%3Abook%3D19)
 - [Odyssey, Book 23](https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0136%3Abook%3D23)
@@ -62,7 +66,7 @@ description, and no hidden-plan phrase.
 The runtime, not the narrator, supplied the three next actions: test the
 testimony, order the foot washing, or observe without intervening.
 
-## Creator decisions still required
+## Historical decisions at the time of capture
 
 ### 1. Authored simulation proposals
 

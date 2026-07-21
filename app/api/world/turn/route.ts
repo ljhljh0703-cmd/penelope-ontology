@@ -12,6 +12,7 @@ import {
   buildWorldVisibleSceneMemory,
   buildWorldSessionProjections,
   runWorldSessionNarrationPipeline,
+  selectedWorldActionCandidates,
   WorldNarrationError,
 } from "@/src/application/world-simulation-service";
 import {
@@ -36,10 +37,16 @@ import {
   WorldTurnApiRequestSchema,
 } from "@/src/contracts/world-api";
 import { PenelopeEnglishStyleProfileSchema } from "@/src/contracts/world-narrator";
+import type { CreatorWorldDirectionReceipt } from "@/src/contracts/world-runtime";
 import {
   forkWorldSimulationSession,
+  resolveWorldAction,
   runWorldSimulationTurn,
 } from "@/src/domain/world-runtime";
+import {
+  assessCreatorDirection,
+  registeredCreatorActionInput,
+} from "@/src/domain/creator-c-dialogue";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -146,6 +153,93 @@ export async function POST(request: Request) {
     }
 
     const scenario = getOdysseyBook19WorldSimulation();
+    let turnInput = body.action;
+    let creatorDirection: CreatorWorldDirectionReceipt | null = null;
+    if (body.creatorDialogue) {
+      const assessment = assessCreatorDirection({
+        scenario,
+        session: checkpoint.session,
+        baseSessionId: checkpoint.sessionId,
+        originalAction: body.action,
+        answers: body.creatorDialogue.answers,
+        forkBeforeAction: body.forkBeforeAction,
+      });
+      const confirmedProposalHash =
+        body.creatorDialogue.confirmedProposalHash;
+      if (!confirmedProposalHash) {
+        return NextResponse.json(assessment, {
+          headers: { "cache-control": "no-store" },
+        });
+      }
+      if (assessment.kind !== "creator_confirmation") {
+        return NextResponse.json(
+          {
+            error: {
+              code: "world_creator_direction_not_executable",
+              message:
+                "This creator direction still needs clarification or world support before it can advance the scene.",
+            },
+          },
+          { status: 409 },
+        );
+      }
+      if (assessment.proposal.proposalHash !== confirmedProposalHash) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "world_creator_proposal_stale",
+              message:
+                "The confirmed creator proposal no longer matches this world state or these answers.",
+            },
+          },
+          { status: 409 },
+        );
+      }
+      turnInput = registeredCreatorActionInput({
+        scenario,
+        actionId: assessment.proposal.registeredActionId,
+        canonicalExecution: assessment.proposal.canonicalExecution,
+      });
+      creatorDirection = {
+        source: "creator_c",
+        proposalHash: assessment.proposal.proposalHash,
+        originalAction: assessment.originalAction,
+        desiredOutcome: assessment.proposal.desiredOutcome,
+        characterMotive: assessment.proposal.characterMotive,
+        acceptedCost: assessment.proposal.acceptedCost,
+        registeredActionId: assessment.proposal.registeredActionId,
+        mappingBasis: assessment.proposal.mappingBasis,
+        forkBeforeAction: assessment.proposal.forkBeforeAction,
+      };
+    } else {
+      const prepared = selectedWorldActionCandidates({
+        scenario,
+        session: checkpoint.session,
+      })
+        .slice(0, 2)
+        .find(({ actionId }) => actionId === body.preparedActionId);
+      const resolvedPreparedAction = resolveWorldAction({
+        scenario,
+        input: body.action,
+      });
+      if (
+        !prepared ||
+        resolvedPreparedAction.status !== "accepted" ||
+        resolvedPreparedAction.actionId !== prepared.actionId
+      ) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "world_prepared_action_invalid",
+              message:
+                "The prepared action does not match either route currently offered by this checkpoint.",
+            },
+          },
+          { status: 409 },
+        );
+      }
+      turnInput = prepared.suggestedInput;
+    }
     let authority = checkpoint.session;
     if (body.forkBeforeAction) {
       authority = forkWorldSimulationSession({
@@ -158,7 +252,8 @@ export async function POST(request: Request) {
     const result = runWorldSimulationTurn({
       scenario,
       session: authority,
-      input: body.action,
+      input: turnInput,
+      creatorDirection,
     });
     const liveAdapter =
       checkpoint.transport === "codex_cli"

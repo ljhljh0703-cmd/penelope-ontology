@@ -1,10 +1,12 @@
-# Live story creator review
+# Historical live story creator review
 
-Status: **creator review pending**
+Status: **superseded historical candidate; not current product evidence**
 Manual prose edits: **none**
 Transport: **ChatGPT-authenticated Codex CLI**
 Requested model: **`gpt-5.6-sol`**
 Actual model: **not independently reported (`null`)**
+
+> This file preserves an earlier Red-Sail review candidate and its rejection history. The current product hero is the Book 19 World Workbench. Current requested-model claims and hashes live in `docs/EVIDENCE-LEDGER.md`; do not copy this file's Sol request or output hashes into submission copy.
 
 The output SHA-256 values below are the run trace's recorded hashes of the complete structured messages. This public review packet preserves the unedited prose, not the deleted temporary structured files, so the hashes are not independently recomputable from this Markdown alone.
 

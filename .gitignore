@@ -12,3 +12,15 @@ test-results/
 .DS_Store
 private-submission/
 artifacts/live/
+
+# Internal coordination packets are not public product evidence. Keep the
+# tracked runtime contracts under _dev/dispatch-2026-07-18/contracts/ visible.
+/_dev/FABLE-*.md
+/_dev/dispatch-2026-07-18/D6-*.md
+/_dev/dispatch-2026-07-18/DECISION-*.md
+/_dev/dispatch-2026-07-18/DISPATCH-*.md
+/_dev/dispatch-2026-07-18/PM-*.md
+/_dev/dispatch-2026-07-18/RETURN-*.md
+/_dev/dispatch-2026-07-18/ab-session/
+/_dev/dispatch-2026-07-18/submission-check-stdout.txt
+/_dev/dispatch-2026-07-19/

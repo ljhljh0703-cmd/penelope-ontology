@@ -8,11 +8,14 @@ import {
   IdentifierSchema,
   addDuplicateIssues,
 } from "@/src/contracts/common";
+import {
+  CreatorProposalAssessmentSchema,
+  StoryRouteRiskProfileSchema,
+} from "@/src/contracts/story-world-control";
 
 export const StoryResolutionAuthorityKindSchema = z.enum([
   "user_choice",
-  "gm_ruling",
-  "dice",
+  "system_adjudication",
   "condition",
   "item",
   "world_rule",
@@ -274,9 +277,30 @@ export const StoryChoiceSchema = z
     actorEntityId: IdentifierSchema,
     label: z.string().min(1).max(160),
     intent: z.string().min(1).max(800),
+    routeRationale: z.string().min(1).max(500).optional(),
+    riskProfile: StoryRouteRiskProfileSchema.optional(),
+    proposalAssessment: CreatorProposalAssessmentSchema.optional(),
     source: z.enum(["direct", "suggested"]),
   })
-  .strict();
+  .strict()
+  .superRefine((choice, context) => {
+    if (choice.source === "direct" && !choice.proposalAssessment) {
+      context.addIssue({
+        code: "custom",
+        path: ["proposalAssessment"],
+        message:
+          "A creator-written direction requires Penelope's explicit plausibility adjudication.",
+      });
+    }
+    if (choice.source === "suggested" && choice.proposalAssessment) {
+      context.addIssue({
+        code: "custom",
+        path: ["proposalAssessment"],
+        message:
+          "Prepared A/B routes cannot impersonate a creator-written C adjudication.",
+      });
+    }
+  });
 
 export const StoryChoiceHistoryEntrySchema = z
   .object({
@@ -285,6 +309,7 @@ export const StoryChoiceHistoryEntrySchema = z
     intent: z.string().min(1).max(800),
     interpretation: z.string().min(1).max(800),
     source: z.enum(["direct", "suggested"]),
+    proposalAssessment: CreatorProposalAssessmentSchema.optional(),
     sceneNumber: z.number().int().min(2).max(8),
     resolutionId: IdentifierSchema,
   })
@@ -694,6 +719,19 @@ export const StoryScenarioSchema = z
       context,
     );
     for (const choice of scenario.choices) {
+      if (!choice.routeRationale || !choice.riskProfile) {
+        context.addIssue({
+          code: "custom",
+          path: ["choices"],
+          message: `Suggested scenario choice ${choice.choiceId} requires a rationale and independent risk profile.`,
+        });
+      } else if (choice.riskProfile.level === "unassessed") {
+        context.addIssue({
+          code: "custom",
+          path: ["choices"],
+          message: `Suggested scenario choice ${choice.choiceId} cannot carry unassessed risk.`,
+        });
+      }
       if (!scenario.ontology.actionTypeIds.includes(choice.actionTypeId)) {
         context.addIssue({
           code: "custom",

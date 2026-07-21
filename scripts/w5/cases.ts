@@ -80,6 +80,21 @@ const DEFAULT_W5_STYLE_PROFILE = PenelopeEnglishStyleProfileSchema.parse(
   styleProfileJson,
 );
 
+const lockedW5Scenario = (
+  scenario: WorldSimulationScenario,
+): WorldSimulationScenario => {
+  const locked = structuredClone(scenario);
+  const confrontation = locked.actions.find(
+    ({ id }) => id === "action.penelope.confront_privately",
+  );
+  if (!confrontation) {
+    throw new Error("W5 locked confrontation action is missing.");
+  }
+  confrontation.summary =
+    "Penelope states her strongest inference in private and requires the stranger and Eurycleia to answer the risk it creates.";
+  return locked;
+};
+
 const rendererRequestFromArtifacts = (
   artifacts: WorldNarrationPipelineArtifacts,
 ): NarrationRendererRequest =>
@@ -128,6 +143,7 @@ const buildPreparedTurn = ({
     session: result.session,
     receipt: result.receipt,
     styleProfile,
+    narrationContractMode: "w5_locked_2026_07_18",
   });
   return {
     disposition: "render",
@@ -177,6 +193,7 @@ const buildOneCase = ({
     session: initialSession,
     receipt: null,
     styleProfile,
+    narrationContractMode: "w5_locked_2026_07_18",
   });
   const first = buildPreparedTurn({
     scenario,
@@ -220,7 +237,7 @@ export const buildW5CaseSessions = ({
   W5_CASE_DEFINITIONS.map((definition) =>
     buildOneCase({
       definition: W5CaseDefinitionSchema.parse(definition),
-      scenario: structuredClone(scenario),
+      scenario: lockedW5Scenario(scenario),
       styleProfile: PenelopeEnglishStyleProfileSchema.parse(styleProfile),
     }),
   );

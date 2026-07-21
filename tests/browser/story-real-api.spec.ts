@@ -15,7 +15,7 @@ const isPostTo = (response: { url(): string; request(): { method(): string } }, 
 test("real fixture API carries authority through a complete three-scene story", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/story");
   await expect(
     page.getByRole("heading", { name: "Choose how the story is written." }),
   ).toBeVisible();
@@ -45,7 +45,6 @@ test("real fixture API carries authority through a complete three-scene story", 
   );
   await expect(page.getByTestId("story-error")).toHaveCount(0);
 
-  await page.getByTestId("candidate-choices").locator("summary").click();
   await page.getByTestId(`candidate-${QUIET_CHOICE_ID}`).click();
 
   const costResponsePromise = page.waitForResponse((response) =>
@@ -76,7 +75,6 @@ test("real fixture API carries authority through a complete three-scene story", 
   await expect(page.getByTestId("story-scene-2")).toContainText("The Cost");
   await expect(page.getByTestId("story-error")).toHaveCount(0);
 
-  await page.getByTestId("candidate-choices").locator("summary").click();
   await page.getByTestId(`candidate-${PAYOFF_CHOICE_ID}`).click();
 
   const payoffResponsePromise = page.waitForResponse((response) =>

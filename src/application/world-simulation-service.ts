@@ -50,7 +50,7 @@ const IDENTITY_BEARING_PREMISE_IDS = new Set([
   "premise.eurycleia_loyalty",
 ]);
 
-const selectedActionCandidates = ({
+export const selectedWorldActionCandidates = ({
   scenario,
   session,
 }: {
@@ -227,13 +227,53 @@ const unsupportedActionNarration = (): WorldNarrationProjection =>
 const modelFacingEntityId = (entityId: string): string =>
   entityId === "entity.odysseus" ? "entity.stranger" : entityId;
 
+const behindCurtainRisks = ({
+  scenario,
+  receipt,
+}: {
+  scenario: WorldSimulationScenario;
+  receipt: WorldTurnReceipt | null;
+}) =>
+  (receipt?.events ?? []).flatMap((event) => {
+    if (event.source.kind !== "npc") return [];
+    const reactionRuleId = event.source.reactionRuleId;
+    const directive = scenario.narrationSpeechDirectives.find(
+      (candidate) => candidate.reactionRuleId === reactionRuleId,
+    );
+    if (!directive || directive.disclosureGeometry.potentialHearerIds.length === 0) {
+      return [];
+    }
+    const speaker = scenario.actors.find(
+      ({ id }) => id === directive.speakerEntityId,
+    );
+    const potentialHearers = directive.disclosureGeometry.potentialHearerIds.map(
+      (entityId) => ({
+        entityId,
+        label:
+          scenario.actors.find(({ id }) => id === entityId)?.name ?? entityId,
+      }),
+    );
+    return [
+      {
+        riskId: `risk.${directive.id}.potential_audience`,
+        eventId: event.eventId,
+        exposureStatus: "latent" as const,
+        potentialHearers,
+        summary: `${speaker?.name ?? directive.speakerEntityId}'s answer may have reached ${potentialHearers
+          .map(({ label }) => label)
+          .join(", ")}. This is a live possibility, not a resolved fact.`,
+      },
+    ];
+  });
+
 const REGISTERED_EVENT_RENDER_TEXT: Readonly<Record<string, string>> = {
   "action.opening": "The household gathers around the hearth.",
   "action.penelope.observe": "Penelope waits and watches the room.",
   "action.penelope.test_testimony": "Penelope tests the stranger's account.",
   "action.penelope.order_washing": "Penelope orders Eurycleia to begin.",
   "action.penelope.clear_room": "Penelope clears the nearby servants.",
-  "action.penelope.confront_privately": "Penelope questions the stranger in private.",
+  "action.penelope.confront_privately":
+    "Penelope asks whether the stranger is Odysseus.",
   "action.odysseus.answer_carefully": "The stranger answers Penelope with care.",
   "action.odysseus.contain_recognition": "The stranger checks Eurycleia's alarm.",
   "action.eurycleia.wash_feet": "Eurycleia stops at the old scar.",
@@ -241,6 +281,43 @@ const REGISTERED_EVENT_RENDER_TEXT: Readonly<Record<string, string>> = {
   "action.eurycleia.confirm_privately": "Eurycleia identifies the stranger as Odysseus.",
   "action.melantho.investigate": "Melantho watches the visible disturbance.",
   "action.unsupported": UNSUPPORTED_ACTION_NARRATION_TEXT,
+};
+
+const CURRENT_EVENT_RENDER_TEXT: Readonly<Record<string, string>> = {
+  "action.opening":
+    "Penelope questions the stranger beside the hearth.",
+  "action.penelope.order_washing":
+    "Penelope asks Eurycleia to wash his feet.",
+  "action.penelope.clear_room":
+    "Penelope sends Melantho out of earshot.",
+  "action.odysseus.contain_recognition":
+    "The stranger stops Eurycleia before she speaks.",
+};
+
+const CURRENT_REACTION_RENDER_TEXT: Readonly<Record<string, string>> = {
+  "reaction.eurycleia.recognize_scar":
+    "Eurycleia stops when she sees the scar.",
+  "reaction.odysseus.contain_recognition":
+    "The stranger stops Eurycleia before she speaks.",
+  "reaction.odysseus.answer_testimony":
+    "The stranger answers Penelope with care.",
+  "reaction.eurycleia.controlled_disclosure":
+    "Eurycleia identifies the stranger as Odysseus.",
+  "reaction.melantho.notice_exclusion":
+    "Melantho leaves, but looks back at Penelope.",
+  "reaction.melantho.approach_on_observe":
+    "Melantho draws near and listens.",
+  "reaction.melantho.compromise_plan":
+    "Melantho sees Eurycleia's shock and calls help.",
+};
+
+const CURRENT_TURN_CONSEQUENCE_RENDER_TEXT: Readonly<Record<string, string>> = {
+  "action.penelope.observe":
+    "The pause gives Melantho room to listen.",
+  "action.penelope.test_testimony":
+    "Penelope has evidence, but not certainty.",
+  "action.penelope.clear_room":
+    "Melantho is now outside the interview.",
 };
 
 const REGISTERED_ENDING_RENDER_TEXT: Readonly<Record<string, string>> = {
@@ -254,10 +331,44 @@ const REGISTERED_ENDING_RENDER_TEXT: Readonly<Record<string, string>> = {
     "Night closes; the unresolved consequences remain.",
 };
 
+const CURRENT_ENDING_RENDER_TEXT: Readonly<Record<string, string>> = {
+  "ending.canon_contained":
+    "Eurycleia keeps silent while Penelope remains uncertain.",
+  "ending.controlled_discovery":
+    "Penelope learns the truth in private.",
+  "ending.plan_compromised":
+    "Melantho carries word toward the suitor faction.",
+  "ending.timeout":
+    "Night ends before Penelope reaches an answer.",
+};
+
+const CURRENT_ACTOR_RENDER_TEXT: Readonly<Record<string, string>> = {
+  "entity.penelope": "Penelope sits beside the hearth.",
+  "entity.odysseus": "The stranger sits before her.",
+  "entity.eurycleia": "Eurycleia waits nearby.",
+  "entity.melantho": "Melantho watches from the inner corridor.",
+};
+
 const boundedEventRenderText = (
   event: WorldSimulationEvent,
   scenario: WorldSimulationScenario,
+  narrationContractMode: "current" | "w5_locked_2026_07_18",
 ): string => {
+  if (
+    narrationContractMode === "w5_locked_2026_07_18" &&
+    event.actionId === "action.penelope.confront_privately"
+  ) {
+    return "Penelope questions the stranger in private.";
+  }
+  if (narrationContractMode === "current" && event.source.kind === "npc") {
+    const currentReaction =
+      CURRENT_REACTION_RENDER_TEXT[event.source.reactionRuleId];
+    if (currentReaction) return currentReaction;
+  }
+  if (narrationContractMode === "current") {
+    const current = CURRENT_EVENT_RENDER_TEXT[event.actionId];
+    if (current) return current;
+  }
   const registered = REGISTERED_EVENT_RENDER_TEXT[event.actionId];
   if (registered) return registered;
   if (event.source.kind === "participant") {
@@ -333,11 +444,13 @@ export const buildWorldNarrationPipelineArtifacts = ({
   session,
   receipt,
   styleProfile: styleProfileInput,
+  narrationContractMode = "current",
 }: {
   scenario: WorldSimulationScenario;
   session: WorldSimulationSession;
   receipt: WorldTurnReceipt | null;
   styleProfile: PenelopeEnglishStyleProfile;
+  narrationContractMode?: "current" | "w5_locked_2026_07_18";
 }): WorldNarrationPipelineArtifacts => {
   const styleProfile = PenelopeEnglishStyleProfileSchema.parse(styleProfileInput);
   const sceneMode = narrationSceneMode({ session, receipt });
@@ -347,7 +460,12 @@ export const buildWorldNarrationPipelineArtifacts = ({
   )?.zoneId;
   const zone = scenario.zones.find(({ id }) => id === focalZoneId);
   const zoneFactId = safeFactId("narration_zone", zone?.id ?? "unknown");
-  const zoneRenderText = `${zone?.name ?? "The room"} holds the gathered household.`;
+  const zoneRenderText =
+    narrationContractMode === "current"
+      ? sceneMode === "ending"
+        ? "The interview ends beside the hearth."
+        : "The interview remains beside the hearth."
+      : `${zone?.name ?? "The room"} holds the gathered household.`;
   const presentActorIds = new Set(
     session.state.actors
       .filter(({ zoneId }) => zoneId === focalZoneId)
@@ -360,10 +478,25 @@ export const buildWorldNarrationPipelineArtifacts = ({
       const factId = safeFactId("narration_actor", entityId);
       return {
         entityId,
-        renderDescriptor: `${actor.participantLabel} remains in ${zone?.name ?? "the room"}.`,
+        renderDescriptor:
+          narrationContractMode === "current"
+            ? CURRENT_ACTOR_RENDER_TEXT[actor.id] ??
+              `${actor.participantLabel} remains in ${zone?.name ?? "the room"}.`
+            : `${actor.participantLabel} remains in ${zone?.name ?? "the room"}.`,
         sourceFactIds: [factId],
       };
     });
+  const focalActorFactId =
+    presentActors.find(
+      ({ entityId }) => entityId === modelFacingEntityId(focalId),
+    )?.sourceFactIds[0] ?? zoneFactId;
+  const strangerActorFactId =
+    presentActors.find(({ entityId }) => entityId === "entity.stranger")
+      ?.sourceFactIds[0] ?? focalActorFactId;
+  const turnStopFactId =
+    narrationContractMode === "current" ? focalActorFactId : zoneFactId;
+  const endingStopFactId =
+    narrationContractMode === "current" ? strangerActorFactId : zoneFactId;
   const visibleFacts = [
     { factId: zoneFactId, renderText: zoneRenderText },
     ...presentActors.map(({ entityId, renderDescriptor, sourceFactIds }) => ({
@@ -375,19 +508,26 @@ export const buildWorldNarrationPipelineArtifacts = ({
   const visibleRuntimeEvents = safeVisibleEvents({ scenario, receipt });
   const runtimeResolvedEvents = visibleRuntimeEvents.map((event, index) => ({
     eventId: `event.visible_${index + 1}`,
-    observableText: boundedEventRenderText(event, scenario),
+    observableText: boundedEventRenderText(
+      event,
+      scenario,
+      narrationContractMode,
+    ),
     sourceAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
   }));
   const endingResolvedEvent = session.state.endingId
     ? {
         eventId: "event.ending_consequence",
         observableText:
+          (narrationContractMode === "current"
+            ? CURRENT_ENDING_RENDER_TEXT[session.state.endingId]
+            : undefined) ??
           REGISTERED_ENDING_RENDER_TEXT[session.state.endingId] ??
           "The registered ending leaves its resolved consequence inside the household.",
         sourceAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
       }
     : null;
-  const resolvedEvents = [
+  const baseResolvedEvents = [
     ...runtimeResolvedEvents,
     ...(endingResolvedEvent ? [endingResolvedEvent] : []),
   ];
@@ -422,20 +562,53 @@ export const buildWorldNarrationPipelineArtifacts = ({
           contentBoundary: directive.contentBoundary,
           sourceAuthorityIds: [resolvedEvent.eventId],
         },
+        deliveryLicenses:
+          narrationContractMode === "w5_locked_2026_07_18"
+            ? []
+            : directive.deliveryCues.map((cue) => ({
+                licenseId: `license.${cue.id}`,
+                issuer: "creator" as const,
+                issuerAuthorityId: approvalReceipt.binding.issuerAuthorityId,
+                issuedBeforeGeneration: true as const,
+                category: cue.category,
+                contentBoundary: cue.contentBoundary,
+                sourceAuthorityIds: [resolvedEvent.eventId],
+              })),
       },
     ];
   });
-  if (resolvedSpeech.length > 1) {
-    throw new Error("A bounded scene may expose only one licensed speech event.");
-  }
-  const speech = resolvedSpeech[0] ?? null;
+  const speechLicenses = resolvedSpeech.flatMap((speech) => [
+    speech.license,
+    ...speech.deliveryLicenses,
+  ]);
   const actionEvent =
-    resolvedEvents.find((_, index) => visibleRuntimeEvents[index]?.source.kind === "participant") ??
-    resolvedEvents[0];
+    baseResolvedEvents.find((_, index) => visibleRuntimeEvents[index]?.source.kind === "participant") ??
+    baseResolvedEvents[0];
   const reactionEvent =
-    resolvedEvents.find((_, index) => visibleRuntimeEvents[index]?.source.kind !== "participant") ??
-    resolvedEvents.at(-1);
-  const changeEvent = endingResolvedEvent ?? resolvedEvents.at(-1);
+    baseResolvedEvents.find((_, index) => visibleRuntimeEvents[index]?.source.kind !== "participant") ??
+    baseResolvedEvents.at(-1);
+  const participantActionId = visibleRuntimeEvents.find(
+    ({ source }) => source.kind === "participant",
+  )?.actionId;
+  const turnConsequenceEvent =
+    narrationContractMode === "current" &&
+    sceneMode === "turn" &&
+    reactionEvent?.eventId === baseResolvedEvents.at(-1)?.eventId &&
+    participantActionId
+      ? {
+          eventId: "event.turn_consequence",
+          observableText:
+            CURRENT_TURN_CONSEQUENCE_RENDER_TEXT[participantActionId] ??
+            "The room carries the visible change.",
+          sourceAuthorityIds: [WORLD_NARRATION_RUNTIME_AUTHORITY_ID],
+        }
+      : null;
+  const resolvedEvents = [
+    ...baseResolvedEvents,
+    ...(turnConsequenceEvent ? [turnConsequenceEvent] : []),
+  ];
+  const changeEvent =
+    endingResolvedEvent ?? turnConsequenceEvent ?? baseResolvedEvents.at(-1);
   const actionIds = sceneMode === "turn" && actionEvent ? [actionEvent.eventId] : [];
   const reactionIds =
     sceneMode === "turn" && reactionEvent ? [reactionEvent.eventId] : [];
@@ -447,7 +620,7 @@ export const buildWorldNarrationPipelineArtifacts = ({
   const reservedCandidates =
     session.state.status === "complete"
       ? []
-      : selectedActionCandidates({ scenario, session });
+      : selectedWorldActionCandidates({ scenario, session });
   const inputEnvelope = NarrationInputEnvelopeSchema.parse({
     modelFacing: {
       sceneMode,
@@ -461,7 +634,33 @@ export const buildWorldNarrationPipelineArtifacts = ({
       authorizedReactionEventIds: reactionIds,
       authorizedChangeEventIds: changeIds,
       authorizedAnchors: [],
-      licensedRenderingDetails: speech ? [speech.license] : [],
+      licensedRenderingDetails: speechLicenses,
+      speechDisclosures:
+        narrationContractMode === "current"
+          ? resolvedSpeech.map((speech) => ({
+              eventId: speech.resolvedEvent.eventId,
+              speakerId: modelFacingEntityId(
+                speech.directive.disclosureGeometry.speakerId,
+              ),
+              addresseeIds:
+                speech.directive.disclosureGeometry.addresseeIds.map(
+                  modelFacingEntityId,
+                ),
+              volume: speech.directive.disclosureGeometry.volume,
+              distance: speech.directive.disclosureGeometry.distance,
+              lineOfSightIds:
+                speech.directive.disclosureGeometry.lineOfSightIds.map(
+                  modelFacingEntityId,
+                ),
+              confirmedHearerIds:
+                speech.directive.disclosureGeometry.confirmedHearerIds.map(
+                  modelFacingEntityId,
+                ),
+              deliveryCueLicenseIds: speech.deliveryLicenses.map(
+                ({ licenseId }) => licenseId,
+              ),
+            }))
+          : [],
       styleStateId: narrationStyleStateId({ scenario, session, styleProfile }),
       reservedActionIds: reservedCandidates.map(({ actionId }) => actionId),
     },
@@ -469,6 +668,22 @@ export const buildWorldNarrationPipelineArtifacts = ({
       forbiddenKnowledgeIds: privateKnowledgeIds,
       forbiddenInferenceRuleIds: [],
       creatorOnlyReviewNoteIds: [],
+      latentDisclosureRisks:
+        narrationContractMode === "current"
+          ? behindCurtainRisks({ scenario, receipt }).map((risk) => ({
+              riskId: risk.riskId,
+              eventId:
+                resolvedSpeech.find(
+                  ({ directive }) =>
+                    `risk.${directive.id}.potential_audience` === risk.riskId,
+                )?.resolvedEvent.eventId ?? risk.eventId,
+              potentialHearerIds: risk.potentialHearers.map(({ entityId }) =>
+                modelFacingEntityId(entityId),
+              ),
+              channel: "behind_curtain" as const,
+              exposureStatus: risk.exposureStatus,
+            }))
+          : [],
     },
   });
 
@@ -487,7 +702,7 @@ export const buildWorldNarrationPipelineArtifacts = ({
     plainFunction,
   }: {
     id: string;
-    role: "orientation" | "authorized_action" | "observable_reaction" | "resolved_consequence" | "licensed_dialogue" | "in_world_stop";
+    role: "orientation" | "authorized_action" | "observable_reaction" | "resolved_consequence" | "pressure" | "licensed_dialogue" | "in_world_stop";
     sourceFactIds?: string[];
     sourceEventIds?: string[];
     actorId?: string | null;
@@ -518,11 +733,18 @@ export const buildWorldNarrationPipelineArtifacts = ({
     plainIntentSourceAuthorityIds,
     changesState,
   });
-  const speechPlan = speech
-    ? plan({
-        id: `sentence.${sceneMode}.licensed_dialogue`,
+  const speechPlans = resolvedSpeech.map((speech, index) =>
+    plan({
+        id:
+          narrationContractMode === "w5_locked_2026_07_18" && index === 0
+            ? `sentence.${sceneMode}.licensed_dialogue`
+            : `sentence.${sceneMode}.licensed_dialogue_${index + 1}`,
         role: "licensed_dialogue",
         speakerId: modelFacingEntityId(speech.directive.speakerEntityId),
+        speechEventIds:
+          narrationContractMode === "w5_locked_2026_07_18"
+            ? []
+            : [speech.resolvedEvent.eventId],
         licensedRenderingDetailIds: [speech.license.licenseId],
         plainIntent: speech.directive.plainIntent,
         plainIntentSourceAuthorityIds: [
@@ -530,22 +752,66 @@ export const buildWorldNarrationPipelineArtifacts = ({
           speech.license.licenseId,
         ],
         plainFunction: "Render the creator-approved answer within its stated boundary.",
-      })
-    : null;
+      }),
+  );
+  const deliveryPlans = resolvedSpeech.flatMap((speech, speechIndex) =>
+    speech.deliveryLicenses.map((license, cueIndex) =>
+        plan({
+          id:
+            narrationContractMode === "w5_locked_2026_07_18" &&
+            speechIndex === 0
+              ? `sentence.${sceneMode}.delivery_${cueIndex + 1}`
+              : `sentence.${sceneMode}.delivery_${speechIndex + 1}_${cueIndex + 1}`,
+          role: "pressure",
+          licensedRenderingDetailIds: [license.licenseId],
+          plainFunction: "Render one authorized delivery fact.",
+        }),
+      ),
+  );
+  const speechEventIds = new Set(
+    resolvedSpeech.map(({ resolvedEvent }) => resolvedEvent.eventId),
+  );
+  const endingReactionPlans =
+    sceneMode === "ending"
+      ? runtimeResolvedEvents.flatMap((event, index) => {
+          const source = visibleRuntimeEvents[index];
+          if (
+            !source ||
+            source.source.kind === "participant" ||
+            speechEventIds.has(event.eventId)
+          ) {
+            return [];
+          }
+          return [
+            plan({
+              id: `sentence.ending.pressure_${index + 1}`,
+              role: "pressure",
+              sourceEventIds: [event.eventId],
+              plainFunction: "Render one registered reaction that drives the ending.",
+            }),
+          ];
+        })
+      : [];
+  const setupStopFactId =
+    presentActors.find(({ entityId }) => entityId === "entity.eurycleia")
+      ?.sourceFactIds[0] ??
+    presentActors.find(({ entityId }) => entityId !== focalId)?.sourceFactIds[0] ??
+    zoneFactId;
   const sentencePlans =
     sceneMode === "setup"
       ? [
           plan({
             id: "sentence.setup.orientation",
             role: "orientation",
-            sourceFactIds: [zoneFactId],
-            plainFunction: "Place the focal actor in the registered room.",
+            sourceEventIds: resolvedEvents[0] ? [resolvedEvents[0].eventId] : [],
+            sourceFactIds: resolvedEvents[0] ? [] : [zoneFactId],
+            plainFunction: "Open on the registered interview at the hearth.",
           }),
           plan({
             id: "sentence.setup.stop",
             role: "in_world_stop",
-            sourceFactIds: [presentActors[0]?.sourceFactIds[0] ?? zoneFactId],
-            plainFunction: "Stop on a registered person in the room.",
+            sourceFactIds: [setupStopFactId],
+            plainFunction: "Stop on the stranger seated before Penelope.",
           }),
         ]
       : sceneMode === "turn"
@@ -565,7 +831,8 @@ export const buildWorldNarrationPipelineArtifacts = ({
               changesState: true,
               plainFunction: "Render the registered visible reaction.",
             }),
-            ...(speechPlan ? [speechPlan] : []),
+            ...deliveryPlans,
+            ...speechPlans,
             plan({
               id: "sentence.turn.consequence",
               role: "resolved_consequence",
@@ -576,8 +843,9 @@ export const buildWorldNarrationPipelineArtifacts = ({
             plan({
               id: "sentence.turn.stop",
               role: "in_world_stop",
-              sourceFactIds: [zoneFactId],
-              plainFunction: "Stop inside the registered room.",
+              sourceFactIds: [turnStopFactId],
+              plainFunction:
+                "End with the focal actor still inside the registered scene; never make the place the grammatical subject.",
             }),
           ]
         : [
@@ -588,7 +856,9 @@ export const buildWorldNarrationPipelineArtifacts = ({
               sourceFactIds: resolvedEvents[0] ? [] : [zoneFactId],
               plainFunction: "Place the final resolved beat in view.",
             }),
-            ...(speechPlan ? [speechPlan] : []),
+            ...endingReactionPlans,
+            ...deliveryPlans,
+            ...speechPlans,
             plan({
               id: "sentence.ending.consequence",
               role: "resolved_consequence",
@@ -599,8 +869,9 @@ export const buildWorldNarrationPipelineArtifacts = ({
             plan({
               id: "sentence.ending.stop",
               role: "in_world_stop",
-              sourceFactIds: [zoneFactId],
-              plainFunction: "Close inside the registered world.",
+              sourceFactIds: [endingStopFactId],
+              plainFunction:
+                "Close on the registered stranger still before the focal actor; never repeat the prior consequence or make the place the grammatical subject.",
             }),
           ];
   const scenePlan = PenelopeScenePlanSchema.parse({
@@ -618,8 +889,10 @@ export const buildWorldNarrationPipelineArtifacts = ({
       factIds: visibleFacts.map(({ factId }) => factId),
       eventIds: resolvedEvents.map(({ eventId }) => eventId),
       actorEntityIds: presentActors.map(({ entityId }) => entityId),
-      licensedRenderingDetailIds: speech ? [speech.license.licenseId] : [],
-      licensedRenderingDetails: speech ? [speech.license] : [],
+      licensedRenderingDetailIds: speechLicenses.map(
+        ({ licenseId }) => licenseId,
+      ),
+      licensedRenderingDetails: speechLicenses,
     },
     referenceReceipt: {
       status: "available",
@@ -648,23 +921,23 @@ export const buildWorldNarrationPipelineArtifacts = ({
             },
           }),
     },
-    dialogueAuthority: speech
+    dialogueAuthority: resolvedSpeech[0]
       ? {
           mode: "licensed",
           speakerId: modelFacingEntityId(
-            speech.directive.speakerEntityId,
+            resolvedSpeech[0].directive.speakerEntityId,
           ),
-          speechAct: speech.directive.speechAct,
-          speechEventIds: [speech.resolvedEvent.eventId],
-          speechActLicenseIds: [speech.license.licenseId],
+          speechAct: resolvedSpeech[0].directive.speechAct,
+          speechEventIds: [resolvedSpeech[0].resolvedEvent.eventId],
+          speechActLicenseIds: [resolvedSpeech[0].license.licenseId],
           authorizedContentIds: [
-            speech.resolvedEvent.eventId,
-            speech.license.licenseId,
+            resolvedSpeech[0].resolvedEvent.eventId,
+            resolvedSpeech[0].license.licenseId,
           ],
-          plainIntent: speech.directive.plainIntent,
+          plainIntent: resolvedSpeech[0].directive.plainIntent,
           plainIntentSourceAuthorityIds: [
-            speech.resolvedEvent.eventId,
-            speech.license.licenseId,
+            resolvedSpeech[0].resolvedEvent.eventId,
+            resolvedSpeech[0].license.licenseId,
           ],
         }
       : {
@@ -677,6 +950,30 @@ export const buildWorldNarrationPipelineArtifacts = ({
           plainIntent: null,
           plainIntentSourceAuthorityIds: [],
         },
+    ...(resolvedSpeech.length > 1
+      ? {
+          additionalDialogueAuthorities: resolvedSpeech
+            .slice(1)
+            .map((speech) => ({
+              mode: "licensed" as const,
+              speakerId: modelFacingEntityId(
+                speech.directive.speakerEntityId,
+              ),
+              speechAct: speech.directive.speechAct,
+              speechEventIds: [speech.resolvedEvent.eventId],
+              speechActLicenseIds: [speech.license.licenseId],
+              authorizedContentIds: [
+                speech.resolvedEvent.eventId,
+                speech.license.licenseId,
+              ],
+              plainIntent: speech.directive.plainIntent,
+              plainIntentSourceAuthorityIds: [
+                speech.resolvedEvent.eventId,
+                speech.license.licenseId,
+              ],
+            })),
+        }
+      : {}),
     creatorReviewRequired: true,
   });
   const cameraSafeProvenance = [
@@ -725,14 +1022,10 @@ export const buildWorldNarrationPipelineArtifacts = ({
     preflightReceipt,
     styleProfile,
     authorityRegistry: {
-      typedSpeechEvents: speech
-        ? [
-            {
-              eventId: speech.resolvedEvent.eventId,
-              registeredKind: "speech" as const,
-            },
-          ]
-        : [],
+      typedSpeechEvents: resolvedSpeech.map((speech) => ({
+        eventId: speech.resolvedEvent.eventId,
+        registeredKind: "speech" as const,
+      })),
       creatorAuthorityIds: [
         ...new Set([
           WORLD_NARRATION_CREATOR_AUTHORITY_ID,
@@ -964,7 +1257,7 @@ export const buildWorldParticipantView = ({
   const nextActions =
     session.state.status === "complete"
       ? []
-      : selectedActionCandidates({ scenario, session });
+      : selectedWorldActionCandidates({ scenario, session });
   const facts = [
     ...observableFacts({ scenario, session }).map(({ factId, summary }) => ({
       id: factId,
@@ -1026,8 +1319,11 @@ export const buildWorldCreatorReceipt = ({
         entityId: actor.id,
         creatorName: actor.name,
         participantLabel: actor.participantLabel,
+        simulationRole: actor.simulationRole,
         zoneId: runtime?.zoneId ?? actor.currentZoneId,
         agendaState: runtime?.agendaState ?? actor.agenda.state,
+        agendaDesire: actor.agenda.desire,
+        agendaAvoids: actor.agenda.avoids,
         knownPremiseIds:
           session.state.knowledge.find(({ entityId }) => entityId === actor.id)
             ?.premiseIds ?? [],
@@ -1071,7 +1367,11 @@ export const buildWorldCreatorReceipt = ({
         .map(({ id }) => id)
         .sort(),
     },
+    behindCurtainRisks: behindCurtainRisks({ scenario, receipt }),
     events: receipt?.events ?? [openingEvent()],
+    creatorDirections: session.turns.flatMap((turn) =>
+      turn.creatorDirection ? [turn.creatorDirection] : [],
+    ),
     ledgerHeadHash: session.ledger.cursor.headEntryHash,
     receiptHash: receipt?.receiptHash ?? null,
     narrationDecisionProof: narrationDecisionReceipt

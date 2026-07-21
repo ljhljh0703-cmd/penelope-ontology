@@ -4,6 +4,10 @@ import {
   addDuplicateIssues,
 } from "@/src/contracts/common";
 import {
+  DisclosureDistanceSchema,
+  DisclosureVolumeSchema,
+} from "@/src/contracts/story-world-control";
+import {
   LicensedRenderingDetailSchema,
   NarrationAuthorityIdentifierArraySchema,
   NarrationAuthorityIdentifierSchema,
@@ -119,6 +123,53 @@ export const NarrationAuthorizedAnchorSchema = z
   })
   .strict();
 
+/**
+ * Model-facing delivery facts for an already-authorized speech event.
+ * Potential hearers are deliberately absent: unresolved exposure belongs to
+ * the private creator channel, never reader prose.
+ */
+export const NarrationSpeechDisclosureSchema = z
+  .object({
+    eventId: NarrationIdentifierSchema,
+    speakerId: NarrationIdentifierSchema,
+    addresseeIds: NarrationIdentifierArraySchema.min(1).max(4),
+    volume: DisclosureVolumeSchema,
+    distance: DisclosureDistanceSchema,
+    lineOfSightIds: NarrationIdentifierArraySchema.max(12),
+    confirmedHearerIds: NarrationIdentifierArraySchema.min(1).max(12),
+    deliveryCueLicenseIds: NarrationIdentifierArraySchema.max(4),
+  })
+  .strict()
+  .superRefine((disclosure, context) => {
+    const confirmed = new Set(disclosure.confirmedHearerIds);
+    for (const addresseeId of disclosure.addresseeIds) {
+      if (!confirmed.has(addresseeId)) {
+        context.addIssue({
+          code: "custom",
+          path: ["confirmedHearerIds"],
+          message: `Speech addressee ${addresseeId} must be a confirmed hearer.`,
+        });
+      }
+    }
+    if (confirmed.has(disclosure.speakerId)) {
+      context.addIssue({
+        code: "custom",
+        path: ["speakerId"],
+        message: "The speaker is not recorded as an audience member.",
+      });
+    }
+  });
+
+export const NarrationLatentDisclosureRiskSchema = z
+  .object({
+    riskId: NarrationIdentifierSchema,
+    eventId: NarrationIdentifierSchema,
+    potentialHearerIds: NarrationIdentifierArraySchema.min(1).max(12),
+    channel: z.literal("behind_curtain"),
+    exposureStatus: z.literal("latent"),
+  })
+  .strict();
+
 const ModelFacingNarrationRequestFields = {
   sceneMode: NarrationSceneModeSchema,
   languageProfileId: NarrationIdentifierSchema,
@@ -132,6 +183,7 @@ const ModelFacingNarrationRequestFields = {
   authorizedChangeEventIds: NarrationIdentifierArraySchema,
   authorizedAnchors: z.array(NarrationAuthorizedAnchorSchema).max(12),
   licensedRenderingDetails: z.array(LicensedRenderingDetailSchema).max(12),
+  speechDisclosures: z.array(NarrationSpeechDisclosureSchema).max(4).default([]),
   styleStateId: NarrationIdentifierSchema,
   reservedActionIds: NarrationIdentifierArraySchema,
 } as const;
@@ -184,6 +236,10 @@ export const PrivateNarrationValidationContextSchema = z
     forbiddenKnowledgeIds: NarrationIdentifierArraySchema,
     forbiddenInferenceRuleIds: NarrationIdentifierArraySchema,
     creatorOnlyReviewNoteIds: NarrationIdentifierArraySchema,
+    latentDisclosureRisks: z
+      .array(NarrationLatentDisclosureRiskSchema)
+      .max(4)
+      .default([]),
   })
   .strict();
 
@@ -670,6 +726,12 @@ export type NarrationAuthorizedAnchor = z.infer<
 >;
 export type ModelFacingNarrationRequest = z.infer<
   typeof ModelFacingNarrationRequestSchema
+>;
+export type NarrationSpeechDisclosure = z.infer<
+  typeof NarrationSpeechDisclosureSchema
+>;
+export type NarrationLatentDisclosureRisk = z.infer<
+  typeof NarrationLatentDisclosureRiskSchema
 >;
 export type PrivateNarrationValidationContext = z.infer<
   typeof PrivateNarrationValidationContextSchema

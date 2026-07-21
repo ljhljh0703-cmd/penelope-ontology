@@ -491,10 +491,46 @@ export const FableNarrativePreflightSchema = z
     referenceReceipt: FableNarrativeReferenceReceiptSchema,
     plainDramaticPlan: FableNarrativePlainDramaticPlanSchema,
     dialogueAuthority: FableNarrativeDialogueAuthoritySchema,
+    additionalDialogueAuthorities: z
+      .array(FableNarrativeDialogueAuthoritySchema)
+      .max(3)
+      .optional(),
     creatorReviewRequired: z.literal(true),
   })
   .strict()
   .superRefine((receipt, context) => {
+    const additional = receipt.additionalDialogueAuthorities ?? [];
+    if (additional.some(({ mode }) => mode !== "licensed")) {
+      context.addIssue({
+        code: "custom",
+        path: ["additionalDialogueAuthorities"],
+        message: "Every additional dialogue authority must be licensed.",
+      });
+    }
+    if (receipt.dialogueAuthority.mode === "none" && additional.length > 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["dialogueAuthority"],
+        message:
+          "A scene with additional dialogue authorities requires one licensed primary authority.",
+      });
+    }
+    const licensedAuthorities = [
+      receipt.dialogueAuthority,
+      ...additional,
+    ].filter(({ mode }) => mode === "licensed");
+    addUniqueValueIssues(
+      licensedAuthorities.flatMap(({ speechEventIds }) => speechEventIds),
+      "dialogue authority speech event",
+      context,
+    );
+    addUniqueValueIssues(
+      licensedAuthorities.flatMap(({ speechActLicenseIds }) =>
+        speechActLicenseIds,
+      ),
+      "dialogue authority speech license",
+      context,
+    );
     const plan = receipt.plainDramaticPlan;
     switch (receipt.sceneMode) {
       case "turn":

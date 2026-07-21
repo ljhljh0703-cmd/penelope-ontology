@@ -8,7 +8,6 @@ import {
   type StoryScenario,
   type StorySpine,
 } from "@/src/contracts/story";
-import { sha256Canonical } from "@/src/domain/canonical-json";
 
 export type StoryResolutionViolation = {
   code:
@@ -189,57 +188,20 @@ export const bindFixtureResolutionToChoice = (
     ...resolution,
     choiceId: choice.choiceId,
     authority: {
-      kind: "user_choice",
-      evidenceRefs: [choice.choiceId],
+      kind:
+        choice.source === "direct"
+          ? "system_adjudication"
+          : "user_choice",
+      evidenceRefs: Array.from(
+        new Set([
+          choice.choiceId,
+          ...(choice.proposalAssessment
+            ? [choice.proposalAssessment.matchedChoiceId]
+            : []),
+        ]),
+      ),
     },
   });
-
-/**
- * Unsupported input never becomes new canon and never stalls the story. It
- * pays a bounded pressure cost, then follows the registered safe continuation.
- */
-export const buildFailForwardResolution = ({
-  scenario,
-  choice,
-  sceneNumber,
-  safeResolution,
-}: {
-  scenario: StoryScenario;
-  choice: StoryChoice;
-  sceneNumber: number;
-  safeResolution: ResolutionEnvelope;
-}): ResolutionEnvelope => {
-  const clockId = scenario.ontology.clockIds[0];
-  if (!clockId) {
-    throw new Error("Fail-forward requires one registered pressure clock.");
-  }
-  const penalty: CausalEffect = {
-    effectId: `effect.fail_forward.pressure.${sceneNumber}`,
-    kind: "clock_delta",
-    clockId,
-    delta: 1,
-  };
-  const effects = [...safeResolution.effects, penalty];
-  return ResolutionEnvelopeSchema.parse({
-    ...safeResolution,
-    resolutionId: `resolution.fail_forward.${sha256Canonical({
-      sceneNumber,
-      choiceId: choice.choiceId,
-      intent: choice.intent,
-    }).slice(0, 16)}`,
-    choiceId: choice.choiceId,
-    authority: { kind: "user_choice", evidenceRefs: [choice.choiceId] },
-    outcome: "failure_with_progress",
-    effects,
-    openedDebtEffectIds: effects
-      .filter((effect) => effect.kind === "debt_open")
-      .map(({ effectId }) => effectId),
-    resolvedDebtEffectIds: effects
-      .filter((effect) => effect.kind === "debt_resolve")
-      .map((effect) => effect.debtEffectId),
-    summary: `The attempted action exceeds the current story scope. Pressure rises, but the registered world-safe continuation still changes the scene: ${safeResolution.summary}`,
-  });
-};
 
 export const advanceStorySpine = ({
   spine,

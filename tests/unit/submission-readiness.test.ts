@@ -266,7 +266,7 @@ describe("submission readiness gate", () => {
   it("compares structured project-name fields instead of generic substrings", () => {
     const surfaces = {
       readme: "# Narrative Knowledge Harness\n",
-      appLayout: 'title: "Narrative Knowledge Harness — Table Rehearsal"',
+      appLayout: 'title: "Narrative Knowledge Harness — Story Workbench"',
       devpostDraft: "Project name: Narrative Knowledge Harness\n",
       submissionFields: "- **Project name:** Narrative Knowledge Harness\n",
       videoNarration: "Project name: Narrative Knowledge Harness\n",

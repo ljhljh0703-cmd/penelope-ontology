@@ -3,10 +3,17 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "@/components/world/WorldWorkbench.module.css";
 import {
+  compareWorldLines,
+  deriveWorldPulse,
+  type WorldPulseCheckpoint,
+} from "@/components/world/world-delta";
+import {
   WORLD_CREATOR_ACCESS_HEADER,
   WORLD_LIVE_TOKEN_HEADER,
   type WorldApiError,
   type WorldCreatorReceipt,
+  type WorldCreatorDialogueResponse,
+  type WorldCreatorTacitKnowledgeAnswer,
   type WorldEffect,
   type WorldEvent,
   type WorldNarrationDraftDecisionRequest,
@@ -30,10 +37,26 @@ type JsonResponse<T> = {
   response: Response;
 };
 
+type WorldTurnResponse =
+  | WorldSessionView
+  | WorldPendingNarrationDraft
+  | WorldCreatorDialogueResponse;
+
 const isPendingNarrationDraft = (
-  value: WorldSessionView | WorldPendingNarrationDraft,
+  value: WorldTurnResponse,
 ): value is WorldPendingNarrationDraft =>
   "kind" in value && value.kind === "creator_review";
+
+const isCreatorDialogueResponse = (
+  value: WorldTurnResponse,
+): value is WorldCreatorDialogueResponse =>
+  "kind" in value &&
+  [
+    "creator_clarification",
+    "creator_confirmation",
+    "creator_blocked",
+    "creator_expansion_required",
+  ].includes(value.kind);
 
 const humanizeId = (value: string): string =>
   value
@@ -44,6 +67,9 @@ const humanizeId = (value: string): string =>
 
 const shortHash = (value: string | null): string =>
   value ? `${value.slice(0, 10)}…${value.slice(-6)}` : "None";
+
+const testIdToken = (value: string): string =>
+  value.replace(/[^a-z0-9]+/giu, "-").replace(/^-|-$/gu, "").toLowerCase();
 
 const branchLabel = (view: WorldSessionView): string => {
   if (
@@ -111,13 +137,45 @@ const movementEffects = (
       .map((effect) => ({ event, effect })),
   );
 
+const findCommonAncestor = (
+  left: WorldPulseCheckpoint,
+  right: WorldPulseCheckpoint,
+  checkpoints: ReadonlyArray<Checkpoint>,
+): Checkpoint | null => {
+  const byId = new Map(
+    checkpoints.map((checkpoint) => [checkpoint.view.sessionId, checkpoint]),
+  );
+  const leftAncestors = new Set<string>();
+  let cursor = byId.get(left.view.sessionId);
+  while (cursor) {
+    leftAncestors.add(cursor.view.sessionId);
+    const parentId = cursor.view.parentCheckpointId;
+    cursor = parentId ? byId.get(parentId) : undefined;
+  }
+
+  cursor = byId.get(right.view.sessionId);
+  while (cursor) {
+    if (leftAncestors.has(cursor.view.sessionId)) return cursor;
+    const parentId = cursor.view.parentCheckpointId;
+    cursor = parentId ? byId.get(parentId) : undefined;
+  }
+  return null;
+};
+
 export function WorldWorkbench() {
   const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [transport, setTransport] = useState<WorldTransport>("fixture");
   const [liveToken, setLiveToken] = useState("");
   const [action, setAction] = useState("");
+  const [selectedCandidateActionId, setSelectedCandidateActionId] =
+    useState<string | null>(null);
+  const [creatorDialogue, setCreatorDialogue] =
+    useState<WorldCreatorDialogueResponse | null>(null);
+  const [creatorAnswer, setCreatorAnswer] = useState("");
   const [forkBeforeAction, setForkBeforeAction] = useState(false);
+  const [compareLeftId, setCompareLeftId] = useState<string | null>(null);
+  const [compareRightId, setCompareRightId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -236,7 +294,12 @@ export function WorldWorkbench() {
         setPendingDraft(null);
         setDraftParagraphs([]);
         setAction("");
+        setSelectedCandidateActionId(null);
+        setCreatorDialogue(null);
+        setCreatorAnswer("");
         setForkBeforeAction(false);
+        setCompareLeftId(null);
+        setCompareRightId(null);
         setTransport(nextTransport);
         await loadCreatorReceipt(view, capability, signal);
       } catch (caught) {
@@ -260,6 +323,9 @@ export function WorldWorkbench() {
   const selectCheckpoint = (sessionId: string) => {
     setSelectedId(sessionId);
     setAction("");
+    setSelectedCandidateActionId(null);
+    setCreatorDialogue(null);
+    setCreatorAnswer("");
     setForkBeforeAction(false);
     setError(null);
     window.requestAnimationFrame(() => sceneHeadingRef.current?.focus());
@@ -273,31 +339,24 @@ export function WorldWorkbench() {
     await startSession(transport, liveToken.trim());
   };
 
-  const submitTurn = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!active || active.status === "complete" || action.trim().length === 0) return;
-
+  const sendWorldTurnRequest = async (request: WorldTurnRequest) => {
     setBusy(true);
     setError(null);
-    const request: WorldTurnRequest = {
-      sessionId: active.sessionId,
-      expectedStateHash: active.stateHash,
-      action: action.trim(),
-      forkBeforeAction,
-      transport: active.transport,
-    };
     try {
-      const { data: next } = await requestJson<
-        WorldSessionView | WorldPendingNarrationDraft
-      >(
+      const { data: next } = await requestJson<WorldTurnResponse>(
         "/api/world/turn",
         request,
-        active.transport === "codex_cli" ? liveToken.trim() : "",
+        request.transport === "codex_cli" ? liveToken.trim() : "",
         undefined,
-        active.transport === "codex_cli" && creatorCapability.current
+        request.transport === "codex_cli" && creatorCapability.current
           ? { [WORLD_CREATOR_ACCESS_HEADER]: creatorCapability.current }
           : {},
       );
+      if (isCreatorDialogueResponse(next)) {
+        setCreatorDialogue(next);
+        setCreatorAnswer("");
+        return;
+      }
       if (isPendingNarrationDraft(next)) {
         setPendingDraft(next);
         setDraftParagraphs(
@@ -321,6 +380,9 @@ export function WorldWorkbench() {
       setPendingDraft(null);
       setDraftParagraphs([]);
       setAction("");
+      setSelectedCandidateActionId(null);
+      setCreatorDialogue(null);
+      setCreatorAnswer("");
       setForkBeforeAction(false);
       window.requestAnimationFrame(() => sceneHeadingRef.current?.focus());
       await loadCreatorReceipt(next, creatorCapability.current);
@@ -329,6 +391,88 @@ export function WorldWorkbench() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const submitTurn = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!active || active.status === "complete" || action.trim().length === 0) return;
+
+    await sendWorldTurnRequest({
+      sessionId: active.sessionId,
+      expectedStateHash: active.stateHash,
+      action: action.trim(),
+      forkBeforeAction,
+      transport: active.transport,
+      ...(selectedCandidateActionId === null
+        ? { creatorDialogue: { answers: [] } }
+        : { preparedActionId: selectedCandidateActionId }),
+    });
+  };
+
+  const submitCreatorAnswer = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (
+      !active ||
+      creatorDialogue?.kind !== "creator_clarification" ||
+      creatorAnswer.trim().length < 2
+    ) {
+      return;
+    }
+    const answers: WorldCreatorTacitKnowledgeAnswer[] = [
+      ...creatorDialogue.answers,
+      {
+        questionId: creatorDialogue.question.questionId,
+        answer: creatorAnswer.trim(),
+      },
+    ];
+    await sendWorldTurnRequest({
+      sessionId: active.sessionId,
+      expectedStateHash: active.stateHash,
+      action: creatorDialogue.originalAction,
+      forkBeforeAction,
+      transport: active.transport,
+      creatorDialogue: { answers },
+    });
+  };
+
+  const confirmCreatorProposal = async () => {
+    if (!active || creatorDialogue?.kind !== "creator_confirmation") return;
+    await sendWorldTurnRequest({
+      sessionId: active.sessionId,
+      expectedStateHash: active.stateHash,
+      action: creatorDialogue.originalAction,
+      forkBeforeAction,
+      transport: active.transport,
+      creatorDialogue: {
+        answers: creatorDialogue.answers,
+        confirmedProposalHash: creatorDialogue.proposal.proposalHash,
+      },
+    });
+  };
+
+  const reviseCreatorDirection = () => {
+    setCreatorDialogue(null);
+    setCreatorAnswer("");
+    setSelectedCandidateActionId(null);
+    setError(null);
+  };
+
+  const loadGuidedCreatorMove = () => {
+    if (!active || active.status === "complete" || busy) return;
+    setAction(
+      "Penelope asks Melantho to leave before she questions the stranger.",
+    );
+    setSelectedCandidateActionId(null);
+    setCreatorDialogue(null);
+    setCreatorAnswer("");
+    setForkBeforeAction(true);
+    setError(null);
+    window.requestAnimationFrame(() => {
+      document.getElementById("action-heading")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   };
 
   const decideNarrationDraft = async (
@@ -360,6 +504,9 @@ export function WorldWorkbench() {
         setPendingDraft(null);
         setDraftParagraphs([]);
         setAction("");
+        setSelectedCandidateActionId(null);
+        setCreatorDialogue(null);
+        setCreatorAnswer("");
         setForkBeforeAction(false);
         return;
       }
@@ -379,6 +526,9 @@ export function WorldWorkbench() {
       setPendingDraft(null);
       setDraftParagraphs([]);
       setAction("");
+      setSelectedCandidateActionId(null);
+      setCreatorDialogue(null);
+      setCreatorAnswer("");
       setForkBeforeAction(false);
       window.requestAnimationFrame(() => sceneHeadingRef.current?.focus());
       await loadCreatorReceipt(next, capability);
@@ -418,12 +568,65 @@ export function WorldWorkbench() {
   }
 
   const creatorReceipt = activeCheckpoint?.creatorReceipt ?? null;
+  const parentCheckpoint = active.parentCheckpointId
+    ? checkpoints.find(
+        ({ view }) => view.sessionId === active.parentCheckpointId,
+      ) ?? null
+    : null;
+  const worldPulse =
+    activeCheckpoint && creatorReceipt && parentCheckpoint?.creatorReceipt
+      ? deriveWorldPulse(parentCheckpoint, activeCheckpoint)
+      : null;
+  const participantActions =
+    creatorReceipt?.events.filter(({ source }) => source.kind === "participant") ?? [];
+  const parentRiskIds = new Set(
+    parentCheckpoint?.creatorReceipt?.behindCurtainRisks.map(({ riskId }) => riskId) ?? [],
+  );
+  const newBehindCurtainRisks =
+    creatorReceipt?.behindCurtainRisks.filter(
+      ({ riskId }) => !parentRiskIds.has(riskId),
+    ) ?? [];
+  const comparableCheckpoints = checkpoints.filter(
+    (checkpoint): checkpoint is Checkpoint & { creatorReceipt: WorldCreatorReceipt } =>
+      checkpoint.creatorReceipt !== null,
+  );
+  const terminalCheckpoints = comparableCheckpoints.filter(
+    ({ view }) => view.status === "complete",
+  );
+  const defaultCompareLeft =
+    terminalCheckpoints.length >= 2
+      ? terminalCheckpoints.at(-2) ?? null
+      : comparableCheckpoints[0] ?? null;
+  const defaultCompareRight =
+    terminalCheckpoints.at(-1) ??
+    comparableCheckpoints.find(({ view }) => view.sessionId === active.sessionId) ??
+    comparableCheckpoints.at(-1) ??
+    null;
+  const compareLeft =
+    comparableCheckpoints.find(({ view }) => view.sessionId === compareLeftId) ??
+    defaultCompareLeft;
+  const compareRight =
+    comparableCheckpoints.find(({ view }) => view.sessionId === compareRightId) ??
+    defaultCompareRight;
+  const worldComparison =
+    compareLeft && compareRight
+      ? compareWorldLines(compareLeft, compareRight)
+      : null;
+  const commonAncestor =
+    compareLeft && compareRight
+      ? findCommonAncestor(compareLeft, compareRight, checkpoints)
+      : null;
+  const compareLeftRiskIds = new Set(
+    compareLeft?.creatorReceipt.behindCurtainRisks.map(({ riskId }) => riskId) ?? [],
+  );
+  const comparisonRightOnlyRisks =
+    compareRight?.creatorReceipt.behindCurtainRisks.filter(
+      ({ riskId }) => !compareLeftRiskIds.has(riskId),
+    ) ?? [];
   const movements = creatorReceipt ? movementEffects(creatorReceipt.events) : [];
   const isCreatorEventVisible = (event: WorldEvent): boolean =>
     event.visibleToEntityIds.includes(active.focalActor.entityId);
-  const parentSequence = active.parentCheckpointId
-    ? checkpoints.find(({ view }) => view.sessionId === active.parentCheckpointId)?.sequence ?? null
-    : null;
+  const parentSequence = parentCheckpoint?.sequence ?? null;
   const activePendingDraft =
     pendingDraft?.authority.baseCheckpointId === active.sessionId
       ? pendingDraft
@@ -477,6 +680,39 @@ export function WorldWorkbench() {
       <section className={styles.provenanceStrip} aria-label="Narration provenance">
         <strong>{active.transport === "fixture" ? "Public-safe fixture" : "Local Codex CLI"}</strong>
         <span data-testid="world-provenance">{provenanceCopy(active)}</span>
+      </section>
+
+      <section className={styles.thesisStrip} aria-labelledby="product-thesis-heading">
+        <div>
+          <p className={styles.eyebrow}>The myth, then the IF</p>
+          <p>
+            Ten years after Troy, Odysseus reaches Ithaca disguised as a stranger.
+            Penelope questions him inside a house occupied by hostile suitors. In
+            Book 19, the nurse Eurycleia recognizes him by a scar while Penelope
+            still lacks certainty.
+          </p>
+        </div>
+        <div>
+          <p className={styles.eyebrow}>Product thesis</p>
+          <h2 id="product-thesis-heading">
+            Penelope doesn&apos;t continue your sentence.
+            <span>It continues your world.</span>
+          </h2>
+          <p>
+            What if Penelope removes a witness before the washing? Test the idea.
+            The excluded character keeps her own motive, moves offstage, and can
+            return as a consequence—not as a prompt improvisation.
+          </p>
+          <button
+            type="button"
+            onClick={loadGuidedCreatorMove}
+            disabled={busy || active.status === "complete"}
+            data-testid="world-guided-demo-load"
+          >
+            Load the guided creator move
+          </button>
+          <small>Intent → ruling → consequence. The move is filled in and forked; nothing runs until you review and confirm it.</small>
+        </div>
       </section>
 
       <div className={styles.workspace}>
@@ -552,6 +788,296 @@ export function WorldWorkbench() {
               <span>{active.visibleEvents.length} resolved events visible</span>
             </footer>
           </article>
+
+          <section
+            className={styles.worldPulse}
+            aria-labelledby="world-pulse-heading"
+            data-testid="world-pulse"
+          >
+            <div className={styles.pulseHeading}>
+              <div>
+                <p className={styles.eyebrow}>Creator view · derived from the causal receipt</p>
+                <h2 id="world-pulse-heading">World Pulse</h2>
+              </div>
+              <span>{worldPulse ? worldPulse.summary : "Bounded world state"}</span>
+            </div>
+
+            {!creatorReceipt ? (
+              <p className={styles.pulseLoading}>Loading the creator-visible world state…</p>
+            ) : !worldPulse ? (
+              <div className={styles.pulseBaseline} data-testid="world-pulse-baseline">
+                <strong>The world is armed before the first choice.</strong>
+                <p>
+                  {creatorReceipt.actors.length} actors hold separate knowledge and
+                  agendas. {creatorReceipt.clocks.length} pressure clocks wait at their
+                  verified starting values. No consequence is inferred from the prose.
+                </p>
+              </div>
+            ) : (
+              <ol className={styles.causalChain}>
+                <li data-testid="world-pulse-action">
+                  <span>01 · Creator choice</span>
+                  <strong>
+                    {participantActions[0]?.summary ?? "The selected action resolved."}
+                  </strong>
+                  <small>The participant event is read from the receipt, not reconstructed from narration.</small>
+                </li>
+                <li>
+                  <span>02 · World response</span>
+                  {worldPulse.causalRules.length > 0 ? (
+                    <ul>
+                      {worldPulse.causalRules.map((rule) => (
+                        <li
+                          key={`${rule.ruleId}-${rule.eventId ?? "rule"}`}
+                          data-testid={`world-pulse-event-${testIdToken(rule.eventId ?? rule.ruleId)}`}
+                        >
+                          <strong>{rule.eventSummary ?? humanizeId(rule.ruleId)}</strong>
+                          <small>{rule.label} · {humanizeId(rule.ruleId)}</small>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <strong>No autonomous reaction fired at this checkpoint.</strong>
+                  )}
+                </li>
+                <li>
+                  <span>03 · State change</span>
+                  <div className={styles.deltaGrid}>
+                    {worldPulse.movements.map((movement) => (
+                      <article
+                        key={`${movement.actorId}-${movement.toZoneId}`}
+                        data-testid={`world-pulse-actor-${testIdToken(movement.actorId)}`}
+                      >
+                        <small>{movement.offstage ? "Offstage movement" : "Movement"}</small>
+                        <strong>{movement.actorName}</strong>
+                        <p>{humanizeId(movement.fromZoneId)} → {humanizeId(movement.toZoneId)}</p>
+                      </article>
+                    ))}
+                    {worldPulse.clocks.map((clock) => (
+                      <article
+                        key={clock.clockId}
+                        data-testid={`world-pulse-clock-${testIdToken(clock.clockId)}`}
+                      >
+                        <small>Pressure clock</small>
+                        <strong>{clock.label}</strong>
+                        <p>{clock.beforeValue} → {clock.afterValue} / {clock.maxValue}</p>
+                      </article>
+                    ))}
+                    {worldPulse.knowledge.map((knowledge) => (
+                      <article key={knowledge.actorId}>
+                        <small>Knowledge boundary</small>
+                        <strong>{knowledge.actorName}</strong>
+                        <p>{knowledge.summary}</p>
+                      </article>
+                    ))}
+                    {newBehindCurtainRisks.map((risk) => (
+                      <article
+                        key={risk.riskId}
+                        data-testid={`world-pulse-risk-${testIdToken(risk.riskId)}`}
+                      >
+                        <small>Behind the curtain</small>
+                        <strong>Latent risk</strong>
+                        <p>{risk.summary}</p>
+                      </article>
+                    ))}
+                    {worldPulse.movements.length === 0 &&
+                    worldPulse.clocks.length === 0 &&
+                    worldPulse.knowledge.length === 0 &&
+                    newBehindCurtainRisks.length === 0 ? (
+                      <p className={styles.noDelta}>No creator-visible state field changed.</p>
+                    ) : null}
+                  </div>
+                </li>
+                <li data-testid="world-pulse-ending">
+                  <span>04 · Story pressure</span>
+                  <strong>{worldPulse.ending.summary}</strong>
+                  <small>
+                    {active.ending
+                      ? "This branch is now closed; its siblings remain available."
+                      : "The branch remains open, but the next turn inherits every change above."}
+                  </small>
+                </li>
+              </ol>
+            )}
+          </section>
+
+          <section
+            className={styles.npcMotion}
+            aria-labelledby="npc-motion-heading"
+            data-testid="world-npc-motion"
+          >
+            <div className={styles.sectionHeading}>
+              <p className={styles.eyebrow}>Small cast · independent motives</p>
+              <h2 id="npc-motion-heading">NPCs in motion</h2>
+            </div>
+            <p className={styles.sectionLead}>
+              Each card is the current simulated state. An NPC may react outside
+              Penelope&apos;s scene, but only through an approved rule and bounded agenda.
+            </p>
+            {creatorReceipt ? (
+              <div className={styles.npcGrid}>
+                {creatorReceipt.actors
+                  .filter(({ simulationRole }) => simulationRole === "npc")
+                  .map((actor) => {
+                    const focalZone = creatorReceipt.actors.find(
+                      ({ entityId }) => entityId === active.focalActor.entityId,
+                    )?.zoneId;
+                    const proximityLabel =
+                      actor.zoneId === focalZone
+                        ? "In scene"
+                        : actor.zoneId === "zone.inner_corridor"
+                          ? "Within earshot"
+                          : "Offstage";
+                    return (
+                      <article
+                        key={actor.entityId}
+                        data-testid={`world-npc-card-${testIdToken(actor.entityId)}`}
+                      >
+                        <header>
+                          <div>
+                            <span>{proximityLabel}</span>
+                            <h3>{actor.creatorName}</h3>
+                          </div>
+                          <i data-state={actor.agendaState}>{actor.agendaState}</i>
+                        </header>
+                        <dl>
+                          <div>
+                            <dt>Wants</dt>
+                            <dd>{actor.agendaDesire}</dd>
+                          </div>
+                          <div>
+                            <dt>Avoids</dt>
+                            <dd>{actor.agendaAvoids}</dd>
+                          </div>
+                          <div data-testid={`world-npc-zone-${testIdToken(actor.entityId)}`}>
+                            <dt>Position</dt>
+                            <dd>{humanizeId(actor.zoneId)}</dd>
+                          </div>
+                          <div data-testid={`world-npc-agenda-${testIdToken(actor.entityId)}`}>
+                            <dt>Private knowledge</dt>
+                            <dd>{actor.knownPremiseIds.length} premise{actor.knownPremiseIds.length === 1 ? "" : "s"}</dd>
+                          </div>
+                        </dl>
+                      </article>
+                    );
+                  })}
+              </div>
+            ) : (
+              <p className={styles.pulseLoading}>NPC agendas remain hidden until creator access is verified.</p>
+            )}
+          </section>
+
+          <section
+            className={styles.forkCompare}
+            aria-labelledby="fork-compare-heading"
+            data-testid="world-fork-compare"
+          >
+            <div className={styles.compareHeading}>
+              <div className={styles.sectionHeading}>
+                <p className={styles.eyebrow}>Same world · different responsibility</p>
+                <h2 id="fork-compare-heading">Fork Compare</h2>
+              </div>
+              <p>
+                Compare state, not prose. The tool shows only knowledge, position,
+                pressure, fired rules, latent risks, and endings recorded by each world line.
+              </p>
+            </div>
+
+            {comparableCheckpoints.length >= 2 && compareLeft && compareRight && worldComparison ? (
+              <>
+                <div className={styles.compareControls}>
+                  <label htmlFor="world-compare-left">
+                    Left world line
+                    <select
+                      id="world-compare-left"
+                      value={compareLeft.view.sessionId}
+                      onChange={(event) => setCompareLeftId(event.target.value)}
+                      data-testid="world-compare-left"
+                    >
+                      {comparableCheckpoints.map((checkpoint) => (
+                        <option key={checkpoint.view.sessionId} value={checkpoint.view.sessionId}>
+                          {String(checkpoint.sequence).padStart(2, "0")} · {branchLabel(checkpoint.view)} · {checkpoint.view.ending ? humanizeId(checkpoint.view.ending.kind) : "Open"}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <span aria-hidden="true">versus</span>
+                  <label htmlFor="world-compare-right">
+                    Right world line
+                    <select
+                      id="world-compare-right"
+                      value={compareRight.view.sessionId}
+                      onChange={(event) => setCompareRightId(event.target.value)}
+                      data-testid="world-compare-right"
+                    >
+                      {comparableCheckpoints.map((checkpoint) => (
+                        <option key={checkpoint.view.sessionId} value={checkpoint.view.sessionId}>
+                          {String(checkpoint.sequence).padStart(2, "0")} · {branchLabel(checkpoint.view)} · {checkpoint.view.ending ? humanizeId(checkpoint.view.ending.kind) : "Open"}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <p
+                  className={styles.commonAncestor}
+                  data-testid="world-compare-common-ancestor"
+                >
+                  {commonAncestor
+                    ? `Shared source checkpoint ${String(commonAncestor.sequence).padStart(2, "0")} · ${branchLabel(commonAncestor.view)}`
+                    : worldComparison.summary}
+                </p>
+
+                <div className={styles.compareSummary}>
+                  <article>
+                    <span>Left</span>
+                    <strong>{compareLeft.view.ending ? humanizeId(compareLeft.view.ending.kind) : "World still open"}</strong>
+                    <small>Checkpoint {String(compareLeft.sequence).padStart(2, "0")} · {branchLabel(compareLeft.view)}</small>
+                  </article>
+                  <article>
+                    <span>Right</span>
+                    <strong>{compareRight.view.ending ? humanizeId(compareRight.view.ending.kind) : "World still open"}</strong>
+                    <small>Checkpoint {String(compareRight.sequence).padStart(2, "0")} · {branchLabel(compareRight.view)}</small>
+                  </article>
+                </div>
+
+                <div className={styles.compareDeltas}>
+                  {worldComparison.knowledge.map((delta) => (
+                    <article key={`knowledge-${delta.actorId}`} data-testid="world-compare-delta-knowledge">
+                      <span>Knowledge</span><strong>{delta.summary}</strong>
+                    </article>
+                  ))}
+                  {worldComparison.movements.map((delta) => (
+                    <article key={`movement-${delta.actorId}`} data-testid="world-compare-delta-position">
+                      <span>Position</span><strong>{delta.summary}</strong>
+                    </article>
+                  ))}
+                  {worldComparison.clocks.map((delta) => (
+                    <article key={delta.clockId} data-testid={`world-compare-delta-${testIdToken(delta.clockId)}`}>
+                      <span>Pressure</span><strong>{delta.summary}</strong>
+                    </article>
+                  ))}
+                  {worldComparison.causalRules.map((delta) => (
+                    <article key={delta.ruleId} data-testid="world-compare-delta-rule">
+                      <span>Rule</span><strong>{delta.summary}</strong>
+                    </article>
+                  ))}
+                  {comparisonRightOnlyRisks.map((risk) => (
+                    <article key={risk.riskId} data-testid="world-compare-delta-risk">
+                      <span>Latent risk on right</span><strong>{risk.summary}</strong>
+                    </article>
+                  ))}
+                  <article data-testid="world-compare-delta-ending">
+                    <span>Ending</span><strong>{worldComparison.ending.summary}</strong>
+                  </article>
+                </div>
+              </>
+            ) : (
+              <p className={styles.pulseLoading}>
+                Create an IF branch to compare outcomes. The opening world remains untouched until a consequence is confirmed.
+              </p>
+            )}
+          </section>
 
           {activePendingDraft ? (
             <section
@@ -649,61 +1175,246 @@ export function WorldWorkbench() {
               </div>
 
               <div className={styles.candidates} aria-label="Suggested actions">
-                {active.nextActions.map((candidate, index) => (
+                {active.nextActions.slice(0, 2).map((candidate, index) => (
                   <button
                     key={candidate.actionId}
                     type="button"
-                    onClick={() => setAction(candidate.suggestedInput)}
+                    onClick={() => {
+                      setAction(candidate.suggestedInput);
+                      setSelectedCandidateActionId(candidate.actionId);
+                      setCreatorDialogue(null);
+                      setCreatorAnswer("");
+                      setError(null);
+                    }}
+                    aria-pressed={selectedCandidateActionId === candidate.actionId}
+                    disabled={busy}
                     data-testid={`world-candidate-${index + 1}`}
                   >
-                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <span>{index === 0 ? "A · Recommended" : "B · Alternate"}</span>
                     <strong>{candidate.label}</strong>
                     <small>{candidate.suggestedInput}</small>
                   </button>
                 ))}
               </div>
 
-              <form onSubmit={(event) => void submitTurn(event)}>
-                <label htmlFor="world-action">Write an action in your own words</label>
-                <textarea
-                  id="world-action"
-                  value={action}
-                  onChange={(event) => setAction(event.target.value)}
-                  maxLength={800}
-                  rows={4}
-                  placeholder="Question the testimony, change who is present, wait and observe, or try another grounded action…"
-                  data-testid="world-action"
-                  disabled={busy}
-                />
-                <div className={styles.actionMeta}>
-                  <label className={styles.forkControl} htmlFor="world-fork">
-                    <input
-                      id="world-fork"
-                      type="checkbox"
-                      checked={forkBeforeAction}
-                      onChange={(event) => setForkBeforeAction(event.target.checked)}
-                      disabled={busy}
-                      data-testid="world-fork"
-                    />
-                    <span>
-                      <strong>Fork this action as an IF</strong>
-                      <small>
-                        The current checkpoint remains intact. This action opens a child world line from it.
-                      </small>
-                    </span>
-                  </label>
-                  <span>{action.length}/800</span>
-                </div>
-                {error ? <p className={styles.error} role="alert">{error}</p> : null}
-                <button
-                  className={styles.resolveButton}
-                  type="submit"
-                  disabled={busy || action.trim().length === 0}
-                  data-testid="world-resolve"
+              {creatorDialogue?.kind === "creator_clarification" ? (
+                <section
+                  className={styles.creatorDialogue}
+                  data-testid="world-creator-dialogue"
+                  aria-labelledby="creator-question-heading"
                 >
-                  {busy ? "Resolving player, NPC, and world effects…" : "Commit action to this world line"}
-                </button>
-              </form>
+                  <p className={styles.eyebrow}>
+                    C · Creator interview · {creatorDialogue.progress.answered + 1}/{creatorDialogue.progress.total}
+                  </p>
+                  <h3 id="creator-question-heading">{creatorDialogue.question.prompt}</h3>
+                  <p>{creatorDialogue.question.whyItMatters}</p>
+                  <form onSubmit={(event) => void submitCreatorAnswer(event)}>
+                    <label htmlFor="world-creator-answer">Your answer</label>
+                    <textarea
+                      id="world-creator-answer"
+                      value={creatorAnswer}
+                      onChange={(event) => setCreatorAnswer(event.target.value)}
+                      maxLength={600}
+                      rows={3}
+                      disabled={busy}
+                      data-testid="world-creator-answer"
+                    />
+                    <div className={styles.creatorDialogueActions}>
+                      <button
+                        type="button"
+                        onClick={reviseCreatorDirection}
+                        disabled={busy}
+                      >
+                        Revise the original direction
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={busy || creatorAnswer.trim().length < 2}
+                        data-testid="world-creator-answer-submit"
+                      >
+                        {busy ? "Listening…" : "Continue"}
+                      </button>
+                    </div>
+                  </form>
+                </section>
+              ) : creatorDialogue?.kind === "creator_confirmation" ? (
+                <section
+                  className={styles.creatorDialogue}
+                  data-testid="world-creator-confirmation"
+                  aria-labelledby="creator-confirmation-heading"
+                >
+                  <p className={styles.eyebrow}>C · Intent recovered · world ruling ready</p>
+                  <h3 id="creator-confirmation-heading">A cause the world can carry</h3>
+                  <p className={styles.creatorPraise}>{creatorDialogue.praise}</p>
+                  <dl className={styles.creatorProposal}>
+                    <div>
+                      <dt>What you proposed</dt>
+                      <dd>{creatorDialogue.originalAction}</dd>
+                    </div>
+                    <div>
+                      <dt>Your intent</dt>
+                      <dd>{creatorDialogue.proposal.preservedIntent}</dd>
+                    </div>
+                    <div>
+                      <dt>World-compatible action</dt>
+                      <dd>
+                        <strong>{creatorDialogue.proposal.label}</strong>
+                        {creatorDialogue.proposal.worldCompatibleExecution}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Why the character acts</dt>
+                      <dd>{creatorDialogue.proposal.characterMotive}</dd>
+                    </div>
+                    <div>
+                      <dt>Accepted cost</dt>
+                      <dd>{creatorDialogue.proposal.acceptedCost}</dd>
+                    </div>
+                    <div>
+                      <dt>World ruling</dt>
+                      <dd>{creatorDialogue.proposal.worldMeaning}</dd>
+                    </div>
+                    <div>
+                      <dt>Ruling basis</dt>
+                      <dd>
+                        <details className={styles.rulingBasis}>
+                          <summary>Show the mapping evidence</summary>
+                          <p>{creatorDialogue.proposal.mappingBasis.join(" ")}</p>
+                        </details>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Execution line</dt>
+                      <dd>
+                        {creatorDialogue.proposal.forkBeforeAction
+                          ? "A new IF branch; the current checkpoint remains intact."
+                          : "The current mainline; this checkpoint will advance after approval."}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>State-bound receipt</dt>
+                      <dd>
+                        <code data-testid="world-creator-proposal-hash">
+                          {creatorDialogue.proposal.proposalHash.slice(0, 12)}…
+                        </code>{" "}
+                        This receipt changes if the proposed execution changes.
+                      </dd>
+                    </div>
+                  </dl>
+                  {error ? <p className={styles.error} role="alert">{error}</p> : null}
+                  <div className={styles.creatorDialogueActions}>
+                    <button type="button" onClick={reviseCreatorDirection} disabled={busy}>
+                      Revise
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void confirmCreatorProposal()}
+                      disabled={busy}
+                      data-testid="world-creator-confirm"
+                    >
+                      {busy ? "Resolving consequences…" : "Proceed with this consequence"}
+                    </button>
+                  </div>
+                </section>
+              ) : creatorDialogue ? (
+                <section
+                  className={styles.creatorDialogue}
+                  data-testid="world-creator-boundary"
+                  aria-labelledby="creator-boundary-heading"
+                >
+                  <p className={styles.eyebrow}>
+                    C · {creatorDialogue.kind === "creator_expansion_required" ? "World expansion needed" : "Actor boundary"}
+                  </p>
+                  <h3 id="creator-boundary-heading">The intention survives; the unsupported mechanism does not.</h3>
+                  <dl className={styles.creatorProposal}>
+                    <div>
+                      <dt>Your intent</dt>
+                      <dd>{creatorDialogue.preservedIntent}</dd>
+                    </div>
+                    <div>
+                      <dt>Current boundary</dt>
+                      <dd>
+                        {creatorDialogue.kind === "creator_expansion_required"
+                          ? creatorDialogue.missingWorldSupport
+                          : creatorDialogue.boundary}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Question to continue</dt>
+                      <dd>{creatorDialogue.nextQuestion}</dd>
+                    </div>
+                  </dl>
+                  {creatorDialogue.alternatives.length > 0 ? (
+                    <div className={styles.creatorAlternatives}>
+                      <h4>Actions already supported by this world</h4>
+                      <ul>
+                        {creatorDialogue.alternatives.map((alternative) => (
+                          <li key={alternative.registeredActionId}>
+                            <strong>{alternative.label}</strong>
+                            <span>{alternative.why}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  <div className={styles.creatorDialogueActions}>
+                    <button type="button" onClick={reviseCreatorDirection} disabled={busy}>
+                      Revise my direction
+                    </button>
+                  </div>
+                </section>
+              ) : (
+                <form onSubmit={(event) => void submitTurn(event)}>
+                  <label htmlFor="world-action">C · Shape another direction</label>
+                  <textarea
+                    id="world-action"
+                    value={action}
+                    onChange={(event) => {
+                      setAction(event.target.value);
+                      setSelectedCandidateActionId(null);
+                      setCreatorDialogue(null);
+                      setCreatorAnswer("");
+                    }}
+                    maxLength={800}
+                    rows={4}
+                    placeholder="Describe what Penelope tries. Penelope will ask what you want, why she acts, and what cost you accept before the world moves."
+                    data-testid="world-action"
+                    disabled={busy}
+                  />
+                  <div className={styles.actionMeta}>
+                    <label className={styles.forkControl} htmlFor="world-fork">
+                      <input
+                        id="world-fork"
+                        type="checkbox"
+                        checked={forkBeforeAction}
+                        onChange={(event) => setForkBeforeAction(event.target.checked)}
+                        disabled={busy}
+                        data-testid="world-fork"
+                      />
+                      <span>
+                        <strong>Fork this action as an IF</strong>
+                        <small>
+                          The current checkpoint remains intact. This action opens a child world line from it.
+                        </small>
+                      </span>
+                    </label>
+                    <span>{action.length}/800</span>
+                  </div>
+                  {error ? <p className={styles.error} role="alert">{error}</p> : null}
+                  <button
+                    className={styles.resolveButton}
+                    type="submit"
+                    disabled={busy || action.trim().length === 0}
+                    data-testid="world-resolve"
+                  >
+                    {busy
+                      ? "Listening for intent…"
+                      : selectedCandidateActionId
+                        ? "Commit this prepared action"
+                        : "Let Penelope ask what you mean"}
+                  </button>
+                </form>
+              )}
             </section>
           )}
 
@@ -855,6 +1566,65 @@ export function WorldWorkbench() {
                         · receipt <code>{shortHash(creatorReceipt.narrationDecisionProof.receiptHash)}</code>
                       </p>
                     ) : null}
+                  </section>
+
+                  {creatorReceipt.creatorDirections.length > 0 ? (
+                    <section
+                      aria-labelledby="creator-direction-audit-heading"
+                      data-testid="creator-direction-audit"
+                    >
+                      <h3 id="creator-direction-audit-heading">Creator C receipts</h3>
+                      <p>
+                        Private proof that a committed world action came from an
+                        explicitly reviewed creator direction, not a hidden prepared route.
+                      </p>
+                      <ol className={styles.eventAudit}>
+                        {creatorReceipt.creatorDirections.map((direction) => (
+                          <li key={direction.proposalHash}>
+                            <span>
+                              {direction.forkBeforeAction ? "Creator C · IF" : "Creator C · mainline"}
+                            </span>
+                            <strong>{direction.originalAction}</strong>
+                            <small>
+                              Mapped to {direction.registeredActionId} · accepted cost: {direction.acceptedCost}
+                            </small>
+                            <code>{shortHash(direction.proposalHash)}</code>
+                          </li>
+                        ))}
+                      </ol>
+                    </section>
+                  ) : null}
+
+                  <section
+                    aria-labelledby="behind-curtain-heading"
+                    data-testid="behind-curtain-risks"
+                  >
+                    <h3 id="behind-curtain-heading">Behind the curtain</h3>
+                    <p>
+                      Unresolved risks the creator can use later. They are not
+                      reader-facing facts and do not become canon until a later
+                      event resolves them.
+                    </p>
+                    {creatorReceipt.behindCurtainRisks.length > 0 ? (
+                      <ul className={styles.behindCurtainList}>
+                        {creatorReceipt.behindCurtainRisks.map((risk) => (
+                          <li key={risk.riskId}>
+                            <span>Latent</span>
+                            <strong>{risk.summary}</strong>
+                            <small>
+                              Potential audience: {risk.potentialHearers
+                                .map(({ label }) => label)
+                                .join(" · ")}
+                            </small>
+                            <code>{risk.riskId}</code>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className={styles.emptyState}>
+                        No unresolved disclosure risk is waiting behind this scene.
+                      </p>
+                    )}
                   </section>
 
                   <section aria-labelledby="movement-heading">

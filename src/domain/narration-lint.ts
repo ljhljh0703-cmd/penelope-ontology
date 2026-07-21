@@ -4,6 +4,7 @@ import type {
   PenelopeScenePlan,
 } from "@/src/contracts/world-narrator";
 import type { NarrationRuleFinding } from "@/src/domain/narration-preflight";
+import { splitNarrationSentences } from "@/src/domain/narration-sentences";
 
 export const NARRATION_LINT_RULE_IDS = [
   "FC-01",
@@ -75,11 +76,30 @@ const tokenize = (text: string): string[] =>
     .split(/\s+/u)
     .filter(Boolean);
 
-const splitSentences = (text: string): string[] =>
-  text
-    .split(/(?<=[.!?])\s+|\n+/u)
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
+const MIRRORED_ANCHOR_STOPWORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "at",
+  "beside",
+  "by",
+  "from",
+  "in",
+  "near",
+  "of",
+  "on",
+  "the",
+  "to",
+  "while",
+  "with",
+]);
+
+const salientSentenceAnchors = (sentence: string): Set<string> =>
+  new Set(
+    tokenize(sentence).filter(
+      (token) => token.length > 2 && !MIRRORED_ANCHOR_STOPWORDS.has(token),
+    ),
+  );
 
 const median = (values: ReadonlyArray<number>): number => {
   if (values.length === 0) return 0;
@@ -106,7 +126,7 @@ export const measureNarrationStyle = (
 ): NarrationStyleMetrics => {
   const texts = modelOutput.readerProse.paragraphs.map(({ text }) => text);
   const prose = texts.join("\n");
-  const sentences = texts.flatMap(splitSentences);
+  const sentences = texts.flatMap(splitNarrationSentences);
   const sentenceWords = sentences.map((sentence) => tokenize(sentence).length);
   const wordCount = tokenize(prose).length;
   const abstractNounCount = countMatches(prose, ABSTRACT_NOUN_PATTERN);
@@ -202,7 +222,9 @@ export const lintNarration = ({
   const paragraphs = modelOutput.readerProse.paragraphs;
   const prose = paragraphs.map(({ text }) => text).join("\n\n");
   const normalized = normalizeText(prose);
-  const sentences = paragraphs.flatMap(({ text }) => splitSentences(text));
+  const sentences = paragraphs.flatMap(({ text }) =>
+    splitNarrationSentences(text),
+  );
   const roleByPlanId = new Map(
     scenePlan.sentencePlans.map(({ sentencePlanId, role }) => [
       sentencePlanId,
@@ -251,7 +273,7 @@ export const lintNarration = ({
       );
       return (
         !hasConcreteBinding &&
-        splitSentences(paragraph.text).some((sentence) =>
+        splitNarrationSentences(paragraph.text).some((sentence) =>
           /^(?:everyone|no one|all people|one must|the truth|life|fate)\b.*\b(?:always|never|must|is)\b/iu.test(
             sentence,
           ),
@@ -277,7 +299,7 @@ export const lintNarration = ({
     findings,
     "FC-04",
     sentences.filter((sentence) =>
-      /^(?:silence|fear|fate|destiny|history|truth|justice|memory|the city|the night)\b[^.!?]{0,50}\b(?:wanted|decided|refused|watched|waited|remembered|knew|demanded|whispered)\b/iu.test(
+      /^(?:(?:silence|fear|fate|destiny|history|truth|justice|memory|the city|the night)\b[^.!?]{0,50}\b(?:wanted|decided|refused|watched|waited|remembered|knew|demanded|whispered)\b|(?:the\s+)?(?:hearth|room|hall|corridor|palace|house|store)\b[^.!?]{0,30}\b(?:remains?|stays?)\s+(?:beside|before|behind|near|with)\b)/iu.test(
         sentence,
       ),
     ).length,
@@ -349,6 +371,17 @@ export const lintNarration = ({
     firstTokens.length >= 4 &&
     lastTokens.length >= 4 &&
     firstTokens.slice(0, 4).join(" ") === lastTokens.slice(-4).join(" ");
+  const firstAnchors = salientSentenceAnchors(firstSentence);
+  const lastAnchors = salientSentenceAnchors(lastSentence);
+  const mirroredAnchorCount = [...firstAnchors].filter((token) =>
+    lastAnchors.has(token),
+  ).length;
+  const mirroredAnchorOverlap =
+    sentences.length > 1 &&
+    mirroredAnchorCount >= 2 &&
+    mirroredAnchorCount /
+      Math.max(1, Math.min(firstAnchors.size, lastAnchors.size)) >=
+      0.4;
   const roleSequence = scenePlan.sentencePlans.map(({ role }) => role);
   const mirroredRoleAssembly =
     roleSequence.length >= 4 &&
@@ -360,7 +393,10 @@ export const lintNarration = ({
       /\b(?:thus|therefore|in the end|this meant that|the lesson was|and so it was settled|everything had come full circle)\b/iu.test(
         sentence,
       ),
-    ).length + Number(mirroredSentence || mirroredRoleAssembly),
+    ).length +
+      Number(
+        mirroredSentence || mirroredAnchorOverlap || mirroredRoleAssembly,
+      ),
   );
 
   const endingMode = styleProfile.levers.endingMode.value[scenePlan.sceneMode];

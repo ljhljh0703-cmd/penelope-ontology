@@ -32,15 +32,39 @@ import {
 import { canonicalJson } from "@/src/domain/canonical-json";
 import type { StoryModel } from "@/src/ports/story-model";
 
-export const CODEX_CLI_STORY_REQUESTED_MODEL = "gpt-5.6-sol" as const;
+export const CODEX_CLI_STORY_REQUESTED_MODEL = "gpt-5.6-terra" as const;
 
-export const CODEX_CLI_STORY_OUTPUT_SCHEMA = z.toJSONSchema(
-  StorySceneDraftSchema,
-  {
-    target: "draft-07",
-    reused: "inline",
-  },
-);
+type MutableJsonSchemaObject = {
+  properties?: Record<string, unknown>;
+  required?: string[];
+};
+
+const strictStoryOutputSchema = () => {
+  const schema = structuredClone(
+    z.toJSONSchema(StorySceneDraftSchema, {
+      target: "draft-07",
+      reused: "inline",
+    }),
+  );
+  const root = schema as MutableJsonSchemaObject;
+  const continuations = root.properties?.suggestedContinuations as
+    | { items?: MutableJsonSchemaObject }
+    | undefined;
+  const choice = continuations?.items;
+  if (!choice?.properties) {
+    throw new Error("The story output schema is missing continuation authority.");
+  }
+
+  // The renderer returns prepared A/B routes only. Creator-authored C
+  // adjudication happens before generation and is never delegated back to the
+  // model. Narrowing this surface also keeps the Responses schema fully strict.
+  delete choice.properties.proposalAssessment;
+  choice.properties.source = { type: "string", const: "suggested" };
+  choice.required = Object.keys(choice.properties);
+  return schema;
+};
+
+export const CODEX_CLI_STORY_OUTPUT_SCHEMA = strictStoryOutputSchema();
 
 export type CodexCliStoryCommandResolver = (
   env: NodeJS.ProcessEnv,

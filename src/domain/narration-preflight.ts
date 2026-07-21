@@ -270,6 +270,14 @@ const collectPublicIds = (request: ModelFacingNarrationRequest): Set<string> =>
       license.issuerAuthorityId,
       ...license.sourceAuthorityIds,
     ]),
+    ...request.speechDisclosures.flatMap((disclosure) => [
+      disclosure.eventId,
+      disclosure.speakerId,
+      ...disclosure.addresseeIds,
+      ...disclosure.lineOfSightIds,
+      ...disclosure.confirmedHearerIds,
+      ...disclosure.deliveryCueLicenseIds,
+    ]),
   ]);
 
 const expectedModeRule = (
@@ -296,6 +304,10 @@ export const runNarrationPreflight = ({
 }: NarrationPreflightInput): NarrationPreflightResult => {
   const findings: NarrationRuleFinding<NarrationPreflightRuleId>[] = [];
   const request = inputEnvelope.modelFacing;
+  const receiptDialogueAuthorities = [
+    preflightReceipt.dialogueAuthority,
+    ...(preflightReceipt.additionalDialogueAuthorities ?? []),
+  ];
   const resolvedEventIds = asSet(
     request.resolvedEvents.map(({ eventId }) => eventId),
   );
@@ -363,8 +375,24 @@ export const runNarrationPreflight = ({
     "AC-DLG-01",
     duplicateCount(
       authorityRegistry.typedSpeechEvents.map(({ eventId }) => eventId),
-    ),
+    ) + duplicateCount(request.speechDisclosures.map(({ eventId }) => eventId)),
   );
+
+  for (const disclosure of request.speechDisclosures) {
+    pushFinding(
+      findings,
+      "AC-DLG-01",
+      countUnknown([disclosure.eventId], typedSpeechEventIds) +
+        Number(!actorIds.has(disclosure.speakerId)) +
+        countUnknown(disclosure.addresseeIds, actorIds) +
+        countUnknown(disclosure.lineOfSightIds, actorIds) +
+        countUnknown(disclosure.confirmedHearerIds, actorIds) +
+        countUnknown(
+          disclosure.deliveryCueLicenseIds,
+          new Set(licenseById.keys()),
+        ),
+    );
+  }
 
   pushFinding(
     findings,
@@ -529,13 +557,13 @@ export const runNarrationPreflight = ({
     ...(preflightReceipt.plainDramaticPlan.immediateWant?.sourceAuthorityIds ?? []),
     ...(preflightReceipt.plainDramaticPlan.immediateObstacle?.sourceAuthorityIds ?? []),
     ...(preflightReceipt.plainDramaticPlan.changeInPlainTerms?.sourceAuthorityIds ?? []),
-    ...(preflightReceipt.dialogueAuthority.speakerId === null
-      ? []
-      : [preflightReceipt.dialogueAuthority.speakerId]),
-    ...preflightReceipt.dialogueAuthority.speechEventIds,
-    ...preflightReceipt.dialogueAuthority.speechActLicenseIds,
-    ...preflightReceipt.dialogueAuthority.authorizedContentIds,
-    ...preflightReceipt.dialogueAuthority.plainIntentSourceAuthorityIds,
+    ...receiptDialogueAuthorities.flatMap((authority) => [
+      ...(authority.speakerId === null ? [] : [authority.speakerId]),
+      ...authority.speechEventIds,
+      ...authority.speechActLicenseIds,
+      ...authority.authorizedContentIds,
+      ...authority.plainIntentSourceAuthorityIds,
+    ]),
   ];
   const allPublicIds = asSet([...publicIds, ...scenePlanIds, ...receiptIds]);
   pushFinding(
@@ -717,8 +745,8 @@ export const runNarrationPreflight = ({
       countUnknown([...receiptAuthorityLicenseIds], new Set(licenseById.keys())),
   );
 
-  const dialogueAuthority = receipt.dialogueAuthority;
-  if (dialogueAuthority.mode === "licensed") {
+  for (const dialogueAuthority of receiptDialogueAuthorities) {
+    if (dialogueAuthority.mode !== "licensed") continue;
     const speechLicenseIds = dialogueAuthority.speechActLicenseIds.filter(
       (licenseId) => licenseById.get(licenseId)?.category === "speech_act",
     );

@@ -332,7 +332,7 @@ describe("story turn runtime", () => {
     );
   });
 
-  it("fails arbitrary input forward without stalling or breaking the prose budget", async () => {
+  it("rejects a fabricated direct choice instead of executing the first fixture branch", async () => {
     const bundle = await loadRedSailStoryBundle();
     const bootstrap = createFixtureStorySession(bundle);
     const direct: StoryChoice = {
@@ -342,32 +342,60 @@ describe("story turn runtime", () => {
       label: "Board the ship",
       intent:
         "Leave the palace immediately cross the reef alone board the red sailed ship seize its captain search every cabin and return before the bell can ring while refusing any guard escort or safer intermediate test",
+      proposalAssessment: {
+        decision: "approved",
+        basis: "registered_story_fit",
+        matchedChoiceId: "choice.keep_quiet_watch",
+        rationale:
+          "Penelope approves the attempt without granting the desired result.",
+        riskProfile: {
+          level: "high",
+          summary: "The attempt exceeds the prepared causal route.",
+          possibleCosts: ["causal pressure"],
+        },
+      },
       source: "direct",
     };
-    const result = runFixtureStoryTurn({
-      ...bundle,
-      request: { session: bootstrap.session, choice: direct },
-    });
+    expect(() =>
+      runFixtureStoryTurn({
+        ...bundle,
+        request: { session: bootstrap.session, choice: direct },
+      }),
+    ).toThrowError("The submitted choice has no exact registered story branch.");
+  });
 
-    expect(result.status).toBe("advanced");
-    expect(result.resolution.outcome).toBe("failure_with_progress");
-    expect(result.resolution.actionTypeId).toBe(direct.actionTypeId);
-    expect(result.scene.actionBoundary.performedAction).toEqual({
-      choiceId: direct.choiceId,
-      actionTypeId: direct.actionTypeId,
-      actorEntityId: direct.actorEntityId,
-    });
-    expect(result.scene.prose).toContain("cannot be completed here");
-    expect(result.scene.prose.trim().split(/\s+/u).length).toBeLessThanOrEqual(
-      220,
-    );
-    expect(result.session.choiceHistory.at(-1)).toMatchObject({
-      choiceId: direct.choiceId,
-      intent: direct.intent,
-    });
-    expect(result.session.selectedChoiceIds.at(-1)).toBe(
+  it("rejects an internal direct choice even when its text and matched ID copy A", async () => {
+    const bundle = await loadRedSailStoryBundle();
+    const bootstrap = createFixtureStorySession(bundle);
+    const prepared = choiceById(
+      bootstrap.choices,
       "choice.keep_quiet_watch",
     );
+    const disguisedDirect: StoryChoice = {
+      ...prepared,
+      source: "direct",
+      proposalAssessment: {
+        decision: "approved",
+        basis: "registered_story_fit",
+        matchedChoiceId: prepared.choiceId,
+        rationale: "This payload tries to relabel A as a creator direction.",
+        riskProfile: prepared.riskProfile ?? {
+          level: "unassessed",
+          summary: "No route risk was registered.",
+          possibleCosts: [],
+        },
+      },
+    };
+
+    expect(() =>
+      runFixtureStoryTurn({
+        ...bundle,
+        request: {
+          session: bootstrap.session,
+          choice: disguisedDirect,
+        },
+      }),
+    ).toThrowError("The submitted choice has no exact registered story branch.");
   });
 
   it("rejects a fabricated suggested choice instead of inventing a branch", async () => {

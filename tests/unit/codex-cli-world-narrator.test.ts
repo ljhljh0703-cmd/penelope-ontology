@@ -226,6 +226,9 @@ describe("Codex CLI narration renderer", () => {
       expect(prompt).toContain('"reservedParticipantActionsExist":true');
       expect(prompt).toContain('"sceneMode":"setup"');
       expect(prompt).toContain('"effectiveLeverValues"');
+      expect(prompt).toContain(
+        "Do not copy camera-safe fact or event sentences verbatim",
+      );
       expect(invocation.env.OPENAI_API_KEY).toBeUndefined();
       expect(invocation.env.CODEX_API_KEY).toBeUndefined();
       expect(await readdir(invocation.cwd)).toEqual([]);

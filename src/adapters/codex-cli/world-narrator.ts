@@ -35,6 +35,8 @@ import type {
 } from "@/src/ports/world-narrator";
 
 export const CODEX_CLI_NARRATION_RENDERER_REQUESTED_MODEL =
+  "gpt-5.6-terra" as const;
+export const CODEX_CLI_NARRATION_RENDERER_W5_MODEL =
   "gpt-5.6-sol" as const;
 export const CODEX_CLI_NARRATION_RENDERER_ADAPTER_ID =
   "narration_renderer_codex_cli_v2" as const;
@@ -58,6 +60,7 @@ export type CodexCliNarrationRendererOptions = {
   timeoutMs?: number;
   outputLimitBytes?: number;
   tempRoot?: string;
+  requestedModel?: string;
 };
 
 const SCENE_MODE_COMPLETION: Record<
@@ -149,7 +152,7 @@ const rendererPromptLayers = (request: NarrationRendererRequest): string => {
     "Render one scene from an already-resolved world. Treat every record as a constraint, never as prose to copy. Do not invent or alter an event, motive, emotion, relationship, identity, prop, spatial relation, knowledge, or speech act. Reserved participant actions may not be performed, previewed, or referenced. Record IDs are for planReceipt only and must never appear in reader prose.",
     `INVARIANT_RECORDS_JSON:\n${canonicalJson(invariantRecords)}`,
     "=== LAYER 2 : RESOLVED SCENE AND PLAN ===",
-    "Realize every sentence plan once, within its exact bindings. An empty authority list means that beat is not authorized. Dialogue is correct only when the supplied dialogue authority is licensed; otherwise silence is correct.",
+    "Realize every sentence plan once, within its exact bindings. An empty authority list means that beat is not authorized. Dialogue is correct only when the supplied dialogue authority is licensed; otherwise silence is correct. Do not copy camera-safe fact or event sentences verbatim: preserve their facts but change the syntax. Licensed dialogue may repeat only the words allowed by its content boundary.",
     `RESOLVED_SCENE_JSON:\n${canonicalJson(resolvedScene)}`,
     "=== LAYER 3 : RENDERING STYLE AND OUTPUT ===",
     "Use the effective English levers only for expression; they never change facts. Distribution targets are advisory and ceilings are limits. Return exactly ModelNarrationOutput: planReceipt plus readerProse. Do not add an envelope, audit, validation finding, evidence receipt, or state mutation. No schema field name, record ID, or system vocabulary may appear in reader prose.",
@@ -181,9 +184,11 @@ export const buildCodexCliNarrationCriticPrompt = (
 export const buildCodexCliNarrationRendererArgs = ({
   schemaPath,
   outputPath,
+  requestedModel = CODEX_CLI_NARRATION_RENDERER_REQUESTED_MODEL,
 }: {
   schemaPath: string;
   outputPath: string;
+  requestedModel?: string;
 }): string[] => [
   "exec",
   "--ephemeral",
@@ -193,7 +198,7 @@ export const buildCodexCliNarrationRendererArgs = ({
   "--sandbox",
   "read-only",
   "--model",
-  CODEX_CLI_NARRATION_RENDERER_REQUESTED_MODEL,
+  requestedModel,
   "--output-schema",
   schemaPath,
   "--output-last-message",
@@ -229,6 +234,7 @@ const executeRendererInTemporaryWorkspace = async ({
   runner,
   timeoutMs,
   outputLimitBytes,
+  requestedModel,
 }: {
   prompt: string;
   root: string;
@@ -237,6 +243,7 @@ const executeRendererInTemporaryWorkspace = async ({
   runner: CodexCliProcessRunner;
   timeoutMs: number;
   outputLimitBytes: number;
+  requestedModel: string;
 }): Promise<NarrationRendererOutcome> => {
   const workspace = path.join(root, "workspace");
   const ioDirectory = path.join(root, "io");
@@ -252,7 +259,11 @@ const executeRendererInTemporaryWorkspace = async ({
 
   const invocation: CodexCliProcessInvocation = {
     command,
-    args: buildCodexCliNarrationRendererArgs({ schemaPath, outputPath }),
+    args: buildCodexCliNarrationRendererArgs({
+      schemaPath,
+      outputPath,
+      requestedModel,
+    }),
     cwd: workspace,
     stdin: prompt,
     env: buildCodexCliEnvironment(env),
@@ -384,6 +395,9 @@ export const createCodexCliNarrationRenderer = (
         runner: options.processRunner ?? runCodexCliProcess,
         timeoutMs,
         outputLimitBytes,
+        requestedModel:
+          options.requestedModel ??
+          CODEX_CLI_NARRATION_RENDERER_REQUESTED_MODEL,
       });
     } catch {
       outcome = rendererRejected(

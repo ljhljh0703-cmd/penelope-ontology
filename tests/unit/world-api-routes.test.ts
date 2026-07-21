@@ -11,6 +11,10 @@ import {
   WorldCreatorReceiptSchema,
   WorldParticipantSessionViewSchema,
 } from "@/src/contracts/world-api";
+import {
+  CreatorCDialogueResponseSchema,
+  type CreatorTacitKnowledgeAnswer,
+} from "@/src/contracts/creator-c-dialogue";
 
 const request = (
   path: string,
@@ -34,6 +38,21 @@ const startFixture = async () => {
       response.headers.get(WORLD_CREATOR_ACCESS_TOKEN_HEADER) ?? "",
   };
 };
+
+const creatorAnswers: CreatorTacitKnowledgeAnswer[] = [
+  {
+    questionId: "desired_outcome",
+    answer: "Keep the interview private while Penelope tests the stranger.",
+  },
+  {
+    questionId: "character_motive",
+    answer: "Penelope suspects the household is listening and needs room to judge safely.",
+  },
+  {
+    questionId: "accepted_cost",
+    answer: "Melantho may feel excluded and become more suspicious.",
+  },
+];
 
 describe("world-first Odyssey API", () => {
   beforeEach(() => resetWorldSessionStoreForTests());
@@ -115,6 +134,193 @@ describe("world-first Odyssey API", () => {
     ).toEqual([]);
   });
 
+  it("elicits creator tacit knowledge without consuming a checkpoint turn", async () => {
+    const { view: opening } = await startFixture();
+    const before = loadWorldSessionCheckpoint(opening.sessionId);
+    const clarificationResponse = await turnWorld(
+      request("/api/world/turn", {
+        sessionId: opening.sessionId,
+        expectedStateHash: opening.stateHash,
+        action: "Penelope asks Melantho to leave before she questions the stranger.",
+        forkBeforeAction: false,
+        transport: "fixture",
+        creatorDialogue: { answers: [] },
+      }),
+    );
+    const clarification = CreatorCDialogueResponseSchema.parse(
+      await clarificationResponse.json(),
+    );
+    const after = loadWorldSessionCheckpoint(opening.sessionId);
+
+    expect(clarificationResponse.status).toBe(200);
+    expect(clarification).toMatchObject({
+      kind: "creator_clarification",
+      baseSessionId: opening.sessionId,
+      baseStateHash: opening.stateHash,
+      stateChanged: false,
+      question: { questionId: "desired_outcome" },
+    });
+    expect(after?.session.state).toEqual(before?.session.state);
+    expect(after?.session.turns).toEqual([]);
+
+    const ordinaryTurn = await turnWorld(
+      request("/api/world/turn", {
+        sessionId: opening.sessionId,
+        expectedStateHash: opening.stateHash,
+        action: "bring the basin",
+        preparedActionId: "action.penelope.order_washing",
+        forkBeforeAction: false,
+        transport: "fixture",
+      }),
+    );
+    expect(ordinaryTurn.status).toBe(200);
+  });
+
+  it("executes only the world action disclosed in a confirmed creator proposal", async () => {
+    const { view: opening, creatorAccessToken } = await startFixture();
+    const action =
+      "Penelope asks Melantho to leave before she questions the stranger.";
+    const proposalResponse = await turnWorld(
+      request("/api/world/turn", {
+        sessionId: opening.sessionId,
+        expectedStateHash: opening.stateHash,
+        action,
+        forkBeforeAction: false,
+        transport: "fixture",
+        creatorDialogue: { answers: creatorAnswers },
+      }),
+    );
+    const proposal = CreatorCDialogueResponseSchema.parse(
+      await proposalResponse.json(),
+    );
+
+    expect(proposal).toMatchObject({
+      kind: "creator_confirmation",
+      stateChanged: false,
+      proposal: {
+        registeredActionId: "action.penelope.clear_room",
+        canonicalExecution: {
+          verb: "clear the room",
+          targetEntityId: "entity.melantho",
+          targetZoneId: null,
+        },
+      },
+    });
+    expect(loadWorldSessionCheckpoint(opening.sessionId)?.session.state.turn).toBe(0);
+    if (proposal.kind !== "creator_confirmation") {
+      throw new Error("Expected a creator confirmation proposal.");
+    }
+
+    const confirmedResponse = await turnWorld(
+      request("/api/world/turn", {
+        sessionId: opening.sessionId,
+        expectedStateHash: opening.stateHash,
+        action,
+        forkBeforeAction: false,
+        transport: "fixture",
+        creatorDialogue: {
+          answers: creatorAnswers,
+          confirmedProposalHash: proposal.proposal.proposalHash,
+        },
+      }),
+    );
+    const confirmed = WorldParticipantSessionViewSchema.parse(
+      await confirmedResponse.json(),
+    );
+    const checkpoint = loadWorldSessionCheckpoint(confirmed.sessionId);
+
+    expect(confirmedResponse.status).toBe(200);
+    expect(confirmed.turn).toBe(1);
+    expect(checkpoint?.session.turns.at(-1)?.action.actionId).toBe(
+      "action.penelope.clear_room",
+    );
+    expect(checkpoint?.session.turns.at(-1)?.creatorDirection).toMatchObject({
+      source: "creator_c",
+      proposalHash: proposal.proposal.proposalHash,
+      originalAction: action,
+      registeredActionId: "action.penelope.clear_room",
+      acceptedCost: creatorAnswers[2]?.answer,
+      forkBeforeAction: false,
+    });
+    expect(JSON.stringify(confirmed)).not.toContain(creatorAnswers[1]?.answer);
+    const creatorResponse = await inspectWorld(
+      request(
+        "/api/world/creator",
+        {
+          sessionId: confirmed.sessionId,
+          expectedStateHash: confirmed.stateHash,
+        },
+        { [WORLD_CREATOR_ACCESS_TOKEN_HEADER]: creatorAccessToken },
+      ),
+    );
+    const creatorReceipt = WorldCreatorReceiptSchema.parse(
+      await creatorResponse.json(),
+    );
+    expect(creatorReceipt.creatorDirections).toEqual([
+      checkpoint?.session.turns.at(-1)?.creatorDirection,
+    ]);
+  });
+
+  it("fails closed when a creator confirms a proposal with the wrong hash", async () => {
+    const { view: opening } = await startFixture();
+    const response = await turnWorld(
+      request("/api/world/turn", {
+        sessionId: opening.sessionId,
+        expectedStateHash: opening.stateHash,
+        action: "Penelope asks Melantho to leave before she questions the stranger.",
+        forkBeforeAction: false,
+        transport: "fixture",
+        creatorDialogue: {
+          answers: creatorAnswers,
+          confirmedProposalHash: "a".repeat(64),
+        },
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: "world_creator_proposal_stale" },
+    });
+    expect(loadWorldSessionCheckpoint(opening.sessionId)?.session.state.turn).toBe(0);
+  });
+
+  it("preserves a creator's aim but refuses an unsupported magical mechanism", async () => {
+    const { view: opening } = await startFixture();
+    const answers: CreatorTacitKnowledgeAnswer[] = [
+      {
+        questionId: "desired_outcome",
+        answer: "Give Penelope certainty without relying on the stranger's words.",
+      },
+      {
+        questionId: "character_motive",
+        answer: "She cannot risk trusting a practiced liar while the suitors control the hall.",
+      },
+      {
+        questionId: "accepted_cost",
+        answer: "Using the proof may expose her suspicion to the household.",
+      },
+    ];
+    const response = await turnWorld(
+      request("/api/world/turn", {
+        sessionId: opening.sessionId,
+        expectedStateHash: opening.stateHash,
+        action: "Penelope uses a hidden magical mirror to see through the disguise.",
+        forkBeforeAction: false,
+        transport: "fixture",
+        creatorDialogue: { answers },
+      }),
+    );
+    const result = CreatorCDialogueResponseSchema.parse(await response.json());
+
+    expect(response.status).toBe(200);
+    expect(result).toMatchObject({
+      kind: "creator_expansion_required",
+      preservedIntent: answers[0]?.answer,
+      stateChanged: false,
+    });
+    expect(loadWorldSessionCheckpoint(opening.sessionId)?.session.state.turn).toBe(0);
+  });
+
   it("keeps a parent checkpoint while a creator forks a controlled IF ending", async () => {
     const { view: opening } = await startFixture();
     const recognitionResponse = await turnWorld(
@@ -122,6 +328,7 @@ describe("world-first Odyssey API", () => {
         sessionId: opening.sessionId,
         expectedStateHash: opening.stateHash,
         action: "Please bring the basin for Eurycleia.",
+        preparedActionId: "action.penelope.order_washing",
         forkBeforeAction: false,
         transport: "fixture",
       }),
@@ -139,6 +346,7 @@ describe("world-first Odyssey API", () => {
         sessionId: recognition.sessionId,
         expectedStateHash: recognition.stateHash,
         action: "Confront the stranger and ask Eurycleia to answer privately.",
+        preparedActionId: "action.penelope.confront_privately",
         forkBeforeAction: true,
         transport: "fixture",
       }),
@@ -156,6 +364,7 @@ describe("world-first Odyssey API", () => {
         sessionId: recognition.sessionId,
         expectedStateHash: recognition.stateHash,
         action: "Observe without intervening.",
+        preparedActionId: "action.penelope.observe",
         forkBeforeAction: false,
         transport: "fixture",
       }),
@@ -167,9 +376,8 @@ describe("world-first Odyssey API", () => {
     expect(canon.stateHash).not.toBe(controlled.stateHash);
   });
 
-  it("turns an impossible intervention into a no-gain beat and continues to an ending", async () => {
+  it("rejects an arbitrary direct action that has neither prepared nor C authority", async () => {
     const { view: opening } = await startFixture();
-    const openingCheckpoint = loadWorldSessionCheckpoint(opening.sessionId);
     const impossibleResponse = await turnWorld(
       request("/api/world/turn", {
         sessionId: opening.sessionId,
@@ -179,56 +387,31 @@ describe("world-first Odyssey API", () => {
         transport: "fixture",
       }),
     );
-    const impossible = WorldParticipantSessionViewSchema.parse(
-      await impossibleResponse.json(),
-    );
-
-    expect(impossibleResponse.status).toBe(200);
-    expect(impossible).toMatchObject({
-      turn: 1,
-      status: "active",
-      narratorTrace: {
-        provenance: "fixture",
-        adapterId: "world.unsupported_no_render.v1",
-      },
+    expect(impossibleResponse.status).toBe(400);
+    await expect(impossibleResponse.json()).resolves.toMatchObject({
+      error: { code: "world_turn_request_invalid" },
     });
-    expect(impossible.narration.prose).toContain(
-      "nothing shifts in her favor",
-    );
-    expect(impossible.visibleEvents[0]?.summary).not.toMatch(
-      /unsupported|registered world action/iu,
-    );
-    const impossibleCheckpoint = loadWorldSessionCheckpoint(
-      impossible.sessionId,
-    );
-    expect(impossibleCheckpoint?.session.turns.at(-1)?.action.status).toBe(
-      "unsupported",
-    );
-    expect(impossibleCheckpoint?.session.state.flags).toEqual(
-      openingCheckpoint?.session.state.flags,
-    );
-    expect(impossibleCheckpoint?.session.state.clocks).toEqual(
-      openingCheckpoint?.session.state.clocks,
-    );
+    expect(loadWorldSessionCheckpoint(opening.sessionId)?.session.state.turn).toBe(0);
+  });
 
-    const recoveredResponse = await turnWorld(
+  it("rejects a hidden registered action disguised as a prepared A or B route", async () => {
+    const { view: opening } = await startFixture();
+    const response = await turnWorld(
       request("/api/world/turn", {
-        sessionId: impossible.sessionId,
-        expectedStateHash: impossible.stateHash,
-        action: "bring the basin",
+        sessionId: opening.sessionId,
+        expectedStateHash: opening.stateHash,
+        action: "dismiss Melantho",
+        preparedActionId: "action.penelope.clear_room",
         forkBeforeAction: false,
         transport: "fixture",
       }),
     );
-    const recovered = WorldParticipantSessionViewSchema.parse(
-      await recoveredResponse.json(),
-    );
-    expect(recoveredResponse.status).toBe(200);
-    expect(recovered).toMatchObject({
-      turn: 2,
-      status: "complete",
-      ending: { id: "ending.canon_contained" },
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: "world_prepared_action_invalid" },
     });
+    expect(loadWorldSessionCheckpoint(opening.sessionId)?.session.state.turn).toBe(0);
   });
 
   it("rejects missing and stale checkpoint authority", async () => {
@@ -238,6 +421,7 @@ describe("world-first Odyssey API", () => {
         sessionId: opening.sessionId,
         expectedStateHash: "a".repeat(64),
         action: "wait",
+        preparedActionId: "action.penelope.observe",
         forkBeforeAction: false,
         transport: "fixture",
       }),
@@ -247,6 +431,7 @@ describe("world-first Odyssey API", () => {
         sessionId: crypto.randomUUID(),
         expectedStateHash: opening.stateHash,
         action: "wait",
+        preparedActionId: "action.penelope.observe",
         forkBeforeAction: false,
         transport: "fixture",
       }),
@@ -262,6 +447,7 @@ describe("world-first Odyssey API", () => {
       sessionId: opening.sessionId,
       expectedStateHash: opening.stateHash,
       action: "bring the basin",
+      preparedActionId: "action.penelope.order_washing",
       forkBeforeAction: false,
       transport: "fixture" as const,
     };
@@ -291,13 +477,15 @@ describe("world-first Odyssey API", () => {
       turnWorld(
         request("/api/world/turn", {
           ...base,
-          action: "bring the basin",
+          action: "Please bring the basin for Eurycleia.",
+          preparedActionId: "action.penelope.order_washing",
         }),
       ),
       turnWorld(
         request("/api/world/turn", {
           ...base,
-          action: "dismiss Melantho",
+          action: "wash his feet Eurycleia",
+          preparedActionId: "action.penelope.order_washing",
         }),
       ),
     ]);

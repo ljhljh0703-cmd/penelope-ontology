@@ -1,47 +1,48 @@
-# Demo narration — release-gated script
+# Demo narration — final recording script
 
-Target: 2:40–2:55 at a calm 130–140 words per minute, including UI pauses. Record in English. The current script describes the gated adapter without claiming a completed live call.
+Target: 2:25–2:35 at a calm pace, leaving at least 25 seconds before the limit. Record in English with the product visible throughout.
 
 Project name: Penelope Ontology
 
 ## Script
 
-**0:00–0:18 — Problem**
+**0:00–0:15 — Hook**
 
-Fluent AI prose can still create expensive narrative rework. It can flatten a house style, reveal knowledge a character should not have, or make invented connective lore sound canonical. Penelope Ontology is a rehearsal workbench for professional game masters and narrative teams.
+Odysseus has returned to Ithaca in disguise. In Book Nineteen, his old nurse is about to recognize a scar on his leg. Penelope does not know who he is. What happens if the creator changes just one choice?
 
-**0:18–0:43 — Intent and style**
+**0:15–0:35 — The world before the choice**
 
-The public demo loads two registered participant intents and keeps people, controlled characters, and generated speakers distinct. The fixture is frozen, so it never pretends to react to arbitrary prompt prose. A creator-owned style profile uses stable IDs, making voice an inspectable production input.
+This is Penelope Ontology: a bounded causal world simulator for creators. The scene starts with four people who know different things and want different things. I can inspect the world state, but the prose only receives what the focal character can honestly perceive.
 
-**0:43–1:06 — Knowledge and model boundary**
+**0:35–1:00 — Creator direction C**
 
-The World Pack separates public facts, uncertain beliefs, narrator-only knowledge, source traditions, and creator rules. This table shows that the narrator sees Ogygia, Penelope does not, and her belief about Odysseus remains uncertain. The fixture returns a structured candidate through the contract used by the gated GPT-5.6 adapter.
+I choose C and ask Penelope to send Melantho away before the interview. The system does not quietly turn that into a prepared option. It asks what Penelope is trying to gain, why she acts now, and what cost she accepts. I confirm the resulting world-compatible execution.
 
-**1:06–1:31 — Validation and proposal**
+**1:00–1:24 — World reaction**
 
-Both intents authorize a playable line and remain visible in the lineage receipt. Deterministic validators check speakers, evidence, time, location, knowledge, and unsupported expansion. The style receipt checks the word bound but leaves voice and cadence to creator review. Because the red-sail signal is new lore, the workflow stops.
+Melantho leaves the interview, but exclusion is itself a visible event. World Pulse shows her movement, the rise in pressure, and the rule that fired. Her NPC card still shows a separate agenda and private knowledge boundary. When Eurycleia reacts to the scar, Melantho can treat that disturbance as evidence worth reporting. I did not just remove a witness. I created an investigator.
 
-**1:31–1:57 — Creator gate and state**
+**1:24–1:48 — Fork and consequence**
 
-Only after I accept or edit does the overlay advance from version zero to one. Editing can improve display wording, never the rule's locked meaning. Approval is not a simulation step. Two registered transitions then move the harbor watch from idle, to watching, to signal seen.
+This branch ends Plan Compromised. I return to the same checkpoint and take the containment route: Eurycleia recognizes Odysseus, he contains the reaction, and that world line reaches Canon Contained. Fork Compare shows what changed between them: knowledge, position, pressure, fired rules, latent risk, and ending. The difference is not a rewritten paragraph. It is a changed chain of consequence.
 
-**1:57–2:20 — Replay**
+**1:48–2:04 — Creator authority**
 
-The approved overlay reruns four safety controls against its exact hash. Hector stays dead, Penelope still cannot receive hidden knowledge, and conflicting Helen traditions still require a decision. The final packet gathers lineage, evidence, canon delta, state, conflict, and replay for human handoff—not production-readiness evidence.
+Behind-the-curtain receipts show unresolved risks without leaking them into the scene as facts. A rejected narration changes neither world state nor checkpoint. The typed world remains authoritative.
 
-**2:20–2:46 — Codex and the writing constraint**
+**2:04–2:28 — Codex and GPT-5.6**
 
-A familiar critique is that Codex can engineer, but its default prose may feel less distinctive beside writing-first systems such as Fable or Opus. I did not answer with one cherry-picked paragraph. I made that the product brief: move voice and world coherence out of model personality and into a creator-owned contract. Codex helped implement that contract as schemas, validators, adversarial tests, UI states, and evidence. The gated GPT-5.6 adapter is built to propose inside the harness; the creator keeps taste and final judgment.
+I defined the story problem, causal rules, writing judgment, and product scope. Codex converted them into contracts, validators, UI, adversarial tests, and release evidence. On the live local path, two weak drafts were rejected without changing the world; four final candidates passed the harness unchanged. The lane requested GPT-5.6 Terra through Codex CLI, though the transport did not report the serving model. Deterministic code owns validation, canon, and state change.
 
-**2:46–2:55 — Close**
+**2:28–2:36 — Close**
 
-Penelope refuses to mistake a signal for proof. Penelope Ontology refuses to mistake a generated draft for canon.
+Penelope Ontology lets creators fork the world, not just the paragraph.
 
 ## Recording gate
 
-- Replace no sentence with a live-result claim until `artifacts/evidence/live-readiness.json` is verified.
-- Show the visible `FIXTURE MODE · NO LIVE CALL` badge whenever the public workbench is on screen.
-- When mentioning GPT-5.6, show the sanitized evidence card or adapter boundary; never relabel fixture prose.
-- Do not show keys, raw traces, private paths, private Codex conversations, or the `/feedback` ID.
-- If the final read exceeds three minutes, shorten pauses or remove the second sentence in the Replay section; do not speed-read.
+- Keep the final cut below three minutes and upload it to YouTube as public or unlisted.
+- Show `/world` first; `/table` is supporting evidence, not the product hero.
+- Keep fixture and Codex-lane labels visible and accurate.
+- Do not claim independently reported serving-model identity or a Responses API trace.
+- Do not show keys, tokens, raw private traces, local paths, private Codex conversations, or the `/feedback` ID.
+- Reopen the final YouTube link in a private browser window before submission.

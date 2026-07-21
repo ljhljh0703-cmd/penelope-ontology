@@ -1,18 +1,17 @@
 import {
-  StoryChoiceSchema,
   type StoryChoice,
   type StoryScenario,
   type StorySession,
   type StoryStyleProfile,
 } from "@/src/contracts/story";
 import { sha256Canonical } from "@/src/domain/canonical-json";
-import { findRegisteredStoryIntent } from "@/src/domain/story-intent";
 
 export type StoryPresentationFailureCode =
   | "story_session_complete"
   | "story_session_authority_mismatch"
   | "story_choice_unavailable"
-  | "story_choice_text_changed";
+  | "story_choice_text_changed"
+  | "story_creator_direction_requires_interview";
 
 export class StoryPresentationError extends Error {
   constructor(readonly code: StoryPresentationFailureCode) {
@@ -46,29 +45,9 @@ export const resolvePresentedStoryChoice = ({
     return registered;
   }
 
-  const registeredIntent = findRegisteredStoryIntent({
-    action,
-    candidates: suggestions,
-  });
-  if (registeredIntent) {
-    return StoryChoiceSchema.parse({
-      ...registeredIntent,
-      intent: action,
-      source: "direct",
-    });
-  }
-
-  return StoryChoiceSchema.parse({
-    choiceId: `choice.direct.${sha256Canonical({
-      sessionHash: session.sessionHash,
-      action,
-    }).slice(0, 20)}`,
-    actionTypeId: "action.direct_attempt",
-    actorEntityId: suggestions[0]?.actorEntityId ?? session.focalEntityId,
-    label: "Direct action",
-    intent: action,
-    source: "direct",
-  });
+  throw new StoryPresentationError(
+    "story_creator_direction_requires_interview",
+  );
 };
 
 const storySpineAuthorityView = (

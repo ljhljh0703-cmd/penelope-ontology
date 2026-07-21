@@ -141,6 +141,8 @@ export async function POST(request: Request) {
           "The selected choice is not available in the current scene.",
         story_choice_text_changed:
           "The selected choice text does not match its registered scene authority.",
+        story_creator_direction_requires_interview:
+          "This rehearsal only executes its prepared routes. Use the World Workbench C interview to develop a creator direction before the world changes.",
       } satisfies Record<typeof error.code, string>;
       return NextResponse.json(
         {
@@ -154,7 +156,9 @@ export async function POST(request: Request) {
             error.code === "story_session_complete" ||
             error.code === "story_session_authority_mismatch"
               ? 409
-              : 400,
+              : error.code === "story_creator_direction_requires_interview"
+                ? 422
+                : 400,
         },
       );
     }

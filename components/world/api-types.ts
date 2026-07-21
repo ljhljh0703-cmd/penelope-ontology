@@ -8,6 +8,10 @@ import type {
   WorldNarrationDraftView,
 } from "@/src/contracts/world-api";
 import type { z } from "zod";
+import type {
+  CreatorCDialogueResponse,
+  CreatorTacitKnowledgeAnswer,
+} from "@/src/contracts/creator-c-dialogue";
 
 export const WORLD_LIVE_TOKEN_HEADER = "x-penelope-story-token" as const;
 export const WORLD_CREATOR_ACCESS_HEADER = "x-penelope-creator-access" as const;
@@ -16,6 +20,8 @@ export type WorldSessionView = WorldParticipantSessionView;
 export type WorldCreatorReceipt = z.infer<typeof WorldCreatorReceiptSchema>;
 export type WorldTransport = WorldPresentationTransport;
 export type WorldTurnRequest = WorldTurnApiRequest;
+export type WorldCreatorDialogueResponse = CreatorCDialogueResponse;
+export type WorldCreatorTacitKnowledgeAnswer = CreatorTacitKnowledgeAnswer;
 export type WorldPendingNarrationDraft = WorldNarrationDraftView;
 export type WorldNarrationDraftDecisionRequest =
   WorldNarrationDraftDecisionApiRequest;

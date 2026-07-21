@@ -175,6 +175,7 @@ const sceneToView = ({
   whatChanged,
   trace,
   inheritedAction,
+  proposalAssessment,
   allowedClaimIds,
   source,
 }: {
@@ -183,6 +184,7 @@ const sceneToView = ({
   whatChanged: CausalEffect[];
   trace: StoryModelTrace | null;
   inheritedAction?: string;
+  proposalAssessment?: StorySceneView["proposalAssessment"];
   allowedClaimIds?: string[];
   source: "opening" | "turn";
 }): StorySceneView => ({
@@ -195,6 +197,7 @@ const sceneToView = ({
   echoedEffectIds: scene.echoedEffectIds,
   whatChanged: whatChanged.map(effectToView),
   ...(inheritedAction ? { inheritedChoice: inheritedAction } : {}),
+  ...(proposalAssessment ? { proposalAssessment } : {}),
   causalSummary: scene.resolution.summary,
   claimRefs: Array.from(
     new Set([
@@ -255,6 +258,24 @@ function SceneCard({ scene, styleProfile, isNewest, headingRef }: SceneCardProps
           <p key={`${scene.id}-paragraph-${index}`}>{paragraph}</p>
         ))}
       </div>
+
+      {scene.proposalAssessment ? (
+        <aside
+          className={styles.penelopeRuling}
+          data-decision={scene.proposalAssessment.decision}
+          data-testid={`penelope-ruling-${scene.number}`}
+        >
+          <div>
+            <span>Penelope ruling</span>
+            <strong>Prepared route recognized</strong>
+          </div>
+          <p>{scene.proposalAssessment.rationale}</p>
+          <small>
+            Risk · {humanizeId(scene.proposalAssessment.riskProfile.level)} ·{" "}
+            {scene.proposalAssessment.riskProfile.summary}
+          </small>
+        </aside>
+      ) : null}
 
       <p className={styles.pressure} data-testid={`scene-pressure-${scene.number}`}>
         <span>Forward pressure</span>
@@ -349,10 +370,8 @@ function SceneCard({ scene, styleProfile, isNewest, headingRef }: SceneCardProps
 type ChoicePanelProps = {
   sceneNumber: number;
   choices: StoryChoice[];
-  value: string;
   selectedChoiceId: string | null;
   busy: boolean;
-  onChange: (value: string) => void;
   onSelectChoice: (choice: StoryChoice) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
@@ -360,10 +379,8 @@ type ChoicePanelProps = {
 function ChoicePanel({
   sceneNumber,
   choices,
-  value,
   selectedChoiceId,
   busy,
-  onChange,
   onSelectChoice,
   onSubmit,
 }: ChoicePanelProps) {
@@ -379,50 +396,75 @@ function ChoicePanel({
         <p>Your action changes the causal story state. Penelope carries its benefit and cost forward.</p>
       </div>
 
+      <section className={styles.candidateDrawer} data-testid="candidate-choices" aria-labelledby="guided-routes-heading">
+        <div className={styles.candidateHeader}>
+          <div>
+            <p className={styles.eyebrow}>Guided routes</p>
+            <h3 id="guided-routes-heading">Choose a prepared direction</h3>
+          </div>
+          <span>The scenario orders these by recommendation priority.</span>
+        </div>
+        <div className={styles.choiceGrid}>
+          {choices.map((choice, index) => {
+            const route = index === 0
+              ? { letter: "A", role: "Recommended", action: "Use the recommended route" }
+              : { letter: "B", role: "Second route", action: "Use the alternative route" };
+            return (
+              <button
+                key={choice.choiceId}
+                type="button"
+                className={selectedChoiceId === choice.choiceId ? styles.choiceSelected : styles.choiceCard}
+                aria-pressed={selectedChoiceId === choice.choiceId}
+                onClick={() => onSelectChoice(choice)}
+                disabled={busy}
+                data-testid={`candidate-${choice.choiceId}`}
+              >
+                <span className={styles.choiceRank}>{route.letter} · {route.role}</span>
+                <strong>{choice.label}</strong>
+                <p>{choice.intent}</p>
+                {choice.routeRationale ? (
+                  <p className={styles.choiceRationale}>{choice.routeRationale}</p>
+                ) : null}
+                {choice.riskProfile ? (
+                  <div className={styles.choiceRisk} data-risk-level={choice.riskProfile.level}>
+                    <span>Risk · {humanizeId(choice.riskProfile.level)}</span>
+                    <p>{choice.riskProfile.summary}</p>
+                    {choice.riskProfile.possibleCosts.length > 0 ? (
+                      <small>Possible cost: {choice.riskProfile.possibleCosts.join(" · ")}</small>
+                    ) : null}
+                  </div>
+                ) : null}
+                <small>{route.action} →</small>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <aside className={styles.creatorHandoff} aria-labelledby="creator-handoff-heading">
+        <p className={styles.eyebrow}>C · Creator direction</p>
+        <h3 id="creator-handoff-heading">Develop a new move in the creator interview</h3>
+        <p>
+          Use the World Workbench when the direction needs intent, motive, or a new world fact.
+          It asks before changing the world; this rehearsal only executes prepared routes.
+        </p>
+        <Link href="/world" className={styles.creatorHandoffLink} data-testid="open-world-creator-interview">
+          Open creator interview <span aria-hidden="true">→</span>
+        </Link>
+      </aside>
+
       <form onSubmit={onSubmit} className={styles.actionForm}>
-        <label htmlFor="story-action">Write the action directly</label>
-        <textarea
-          id="story-action"
-          data-testid="story-action"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder="Keep the watch quiet. Telemachus goes to the harbor without ringing the public bell."
-          rows={4}
-          maxLength={600}
-          required
-          disabled={busy}
-        />
         <div className={styles.formFooter}>
-          <span>{value.length}/600</span>
-          <button type="submit" disabled={busy || value.trim().length < 3} data-testid="continue-story">
+          <span>
+            {selectedChoiceId
+              ? "Prepared route selected"
+              : "Select A or B to continue this rehearsal"}
+          </span>
+          <button type="submit" disabled={busy || !selectedChoiceId} data-testid="continue-story">
             {busy ? "Carrying the consequence…" : `Continue to ${destination}`}
           </button>
         </div>
       </form>
-
-      <details className={styles.candidateDrawer} data-testid="candidate-choices">
-        <summary>
-          <span>Need a direction?</span>
-          <span>{choices.length} story-aware choices</span>
-        </summary>
-        <div className={styles.choiceGrid}>
-          {choices.map((choice) => (
-            <button
-              key={choice.choiceId}
-              type="button"
-              className={selectedChoiceId === choice.choiceId ? styles.choiceSelected : styles.choiceCard}
-              aria-pressed={selectedChoiceId === choice.choiceId}
-              onClick={() => onSelectChoice(choice)}
-              disabled={busy}
-              data-testid={`candidate-${choice.choiceId}`}
-            >
-              <strong>{choice.label}</strong>
-              <span>{choice.intent}</span>
-              <small>Use this direction →</small>
-            </button>
-          ))}
-        </div>
-      </details>
     </section>
   );
 }
@@ -529,11 +571,6 @@ export function StoryWorkbench() {
     setAction(choice.intent);
   };
 
-  const updateAction = (value: string) => {
-    setSelectedChoiceId(null);
-    setAction(value);
-  };
-
   const submitTurn = async (request: StoryTurnApiRequest) => {
     setBusy(true);
     setError(null);
@@ -553,6 +590,8 @@ export function StoryWorkbench() {
         whatChanged: result.whatChanged,
         trace: result.trace,
         inheritedAction: request.action,
+        proposalAssessment:
+          result.session.choiceHistory?.at(-1)?.proposalAssessment,
         allowedClaimIds: result.scopeReceipt.allowedClaimIds,
         source: "turn",
       });
@@ -581,7 +620,7 @@ export function StoryWorkbench() {
 
   const continueStory = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!authority || isComplete || action.trim().length < 3) return;
+    if (!authority || isComplete || !selectedChoiceId || action.trim().length < 3) return;
 
     const request: StoryTurnApiRequest = {
       authority,
@@ -773,10 +812,8 @@ export function StoryWorkbench() {
             key={currentScene.id}
             sceneNumber={currentScene.number}
             choices={choices}
-            value={action}
             selectedChoiceId={selectedChoiceId}
             busy={busy}
-            onChange={updateAction}
             onSelectChoice={selectChoice}
             onSubmit={continueStory}
           />

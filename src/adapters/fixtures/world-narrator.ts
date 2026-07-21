@@ -67,6 +67,12 @@ const authorizedSourceIds = (
     ...request.preflightReceipt.sceneAuthority.licensedRenderingDetailIds,
     ...request.preflightReceipt.dialogueAuthority.speechEventIds,
     ...request.preflightReceipt.dialogueAuthority.speechActLicenseIds,
+    ...(request.preflightReceipt.additionalDialogueAuthorities ?? []).flatMap(
+      (authority) => [
+        ...authority.speechEventIds,
+        ...authority.speechActLicenseIds,
+      ],
+    ),
   ]);
 
 const renderPreparedFixture = (
@@ -106,9 +112,11 @@ const renderPreparedFixture = (
       };
     }
 
-    const text = [...new Set(sourceIds)]
-      .map((sourceId) => sourceText.get(sourceId)!)
-      .join(" ");
+    const text = [
+      ...new Set(
+        [...new Set(sourceIds)].map((sourceId) => sourceText.get(sourceId)!),
+      ),
+    ].join(" ");
     renderedPlans.push({ plan, text });
   }
 

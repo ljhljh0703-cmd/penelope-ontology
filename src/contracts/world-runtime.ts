@@ -116,6 +116,20 @@ export const WorldSimulationEventSchema = z
   })
   .strict();
 
+export const CreatorWorldDirectionReceiptSchema = z
+  .object({
+    source: z.literal("creator_c"),
+    proposalHash: HashSchema,
+    originalAction: z.string().trim().min(1).max(800),
+    desiredOutcome: z.string().trim().min(2).max(600),
+    characterMotive: z.string().trim().min(2).max(600),
+    acceptedCost: z.string().trim().min(2).max(600),
+    registeredActionId: IdentifierSchema,
+    mappingBasis: z.array(z.string().trim().min(2).max(160)).min(1).max(6),
+    forkBeforeAction: z.boolean(),
+  })
+  .strict();
+
 const WorldTurnReceiptFields = {
   turnId: IdentifierSchema,
   branchId: IdentifierSchema,
@@ -123,6 +137,7 @@ const WorldTurnReceiptFields = {
   beforeStateHash: HashSchema,
   afterStateHash: HashSchema,
   action: ResolvedWorldActionSchema,
+  creatorDirection: CreatorWorldDirectionReceiptSchema.nullable().default(null),
   events: z.array(WorldSimulationEventSchema).min(1).max(3),
   firedReactionRuleIds: z.array(IdentifierSchema).max(2),
   endingId: IdentifierSchema.nullable(),
@@ -170,6 +185,9 @@ export type WorldSimulationStatePayload = z.infer<
 export type WorldSimulationState = z.infer<typeof WorldSimulationStateSchema>;
 export type ResolvedWorldAction = z.infer<typeof ResolvedWorldActionSchema>;
 export type WorldSimulationEvent = z.infer<typeof WorldSimulationEventSchema>;
+export type CreatorWorldDirectionReceipt = z.infer<
+  typeof CreatorWorldDirectionReceiptSchema
+>;
 export type WorldTurnReceiptPayload = z.infer<typeof WorldTurnReceiptPayloadSchema>;
 export type WorldTurnReceipt = z.infer<typeof WorldTurnReceiptSchema>;
 export type WorldBranchCursor = z.infer<typeof WorldBranchCursorSchema>;

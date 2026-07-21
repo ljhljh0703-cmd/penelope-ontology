@@ -168,37 +168,32 @@ describe("story presentation choice authority", () => {
     );
   });
 
-  it("creates distinct bounded direct choices for distinct inputs", () => {
-    const session = makeSession();
-    const first = resolvePresentedStoryChoice({
-      session,
-      action: "Hide the lamp beneath the western wall.",
-    });
-    const second = resolvePresentedStoryChoice({
-      session,
-      action: "Send Eurycleia to question the lookout.",
-    });
-    expect(first.source).toBe("direct");
-    expect(first.actorEntityId).toBe("penelope");
-    expect(first.choiceId).not.toBe(second.choiceId);
-    expect(first.intent).not.toBe(second.intent);
+  it("rejects an unregistered creator direction instead of mapping it to the first route", () => {
+    expect(() =>
+      resolvePresentedStoryChoice({
+        session: makeSession(),
+        action: "Send Eurycleia to question the lookout.",
+      }),
+    ).toThrowError(
+      expect.objectContaining<Partial<StoryPresentationError>>({
+        code: "story_creator_direction_requires_interview",
+      }),
+    );
   });
 
-  it.each([
-    ["Keep watch", "choice.keep_watch"],
-    ["Keep the bell silent.", "choice.keep_watch"],
-  ])(
-    "routes a manually typed exact candidate %s to its registered branch",
-    (action, expectedChoiceId) => {
-      const choice = resolvePresentedStoryChoice({
-        session: makeSession(),
-        action,
-      });
-      expect(choice).toMatchObject({
-        choiceId: expectedChoiceId,
-        intent: action,
-        source: "direct",
-      });
+  it.each(["Keep watch", "Keep the bell silent."])(
+    "requires an explicit A/B choice ID even when typed text matches %s",
+    (action) => {
+      expect(() =>
+        resolvePresentedStoryChoice({
+          session: makeSession(),
+          action,
+        }),
+      ).toThrowError(
+        expect.objectContaining<Partial<StoryPresentationError>>({
+          code: "story_creator_direction_requires_interview",
+        }),
+      );
     },
   );
 
@@ -245,20 +240,21 @@ describe("story presentation choice authority", () => {
   ];
 
   it.each([
-    [openingChoices[0]!.label, "choice.keep_quiet_watch"],
-    [openingChoices[1]!.intent, "choice.ring_public_bell"],
+    openingChoices[0]!.label,
+    openingChoices[1]!.intent,
   ])(
-    "routes real registered candidate text %s without requiring its button ID",
-    (action, expectedChoiceId) => {
-      const choice = resolvePresentedStoryChoice({
-        session: makeSession(openingChoices),
-        action,
-      });
-      expect(choice).toMatchObject({
-        choiceId: expectedChoiceId,
-        intent: action,
-        source: "direct",
-      });
+    "does not infer a prepared route from button text alone: %s",
+    (action) => {
+      expect(() =>
+        resolvePresentedStoryChoice({
+          session: makeSession(openingChoices),
+          action,
+        }),
+      ).toThrowError(
+        expect.objectContaining<Partial<StoryPresentationError>>({
+          code: "story_creator_direction_requires_interview",
+        }),
+      );
     },
   );
 
@@ -266,70 +262,62 @@ describe("story presentation choice authority", () => {
     [
       "Keep this watch secret and leave the bell silent.",
       openingChoices,
-      "choice.keep_quiet_watch",
-      "choice.ring_public_bell",
     ],
     [
       "Don't ring the bell; hide a lamp by the western wall and observe.",
       openingChoices,
-      "choice.keep_quiet_watch",
-      "choice.ring_public_bell",
     ],
     [
       "Sound the harbor bell and assemble every guard.",
       openingChoices,
-      "choice.ring_public_bell",
-      "choice.keep_quiet_watch",
     ],
     [
       "Raise the public alarm so the whole island knows.",
       openingChoices,
-      "choice.ring_public_bell",
-      "choice.keep_quiet_watch",
     ],
     [
       "Shift the decoy lamp to the east gate and see who answers.",
       continuationChoices,
-      "choice.move_decoy_lamp",
-      "choice.sweep_harbor",
     ],
     [
       "Carry the covered lamp east to expose the watcher.",
       continuationChoices,
-      "choice.move_decoy_lamp",
-      "choice.sweep_harbor",
     ],
     [
       "Sweep the harbor with the assembled guard and search the crowd.",
       continuationChoices,
-      "choice.sweep_harbor",
-      "choice.move_decoy_lamp",
     ],
     [
       "Drive the ship away, then clear the waterfront for its contact.",
       continuationChoices,
-      "choice.sweep_harbor",
-      "choice.move_decoy_lamp",
     ],
   ])(
-    "routes bounded paraphrase %s without inverting it",
-    (action, choices, expectedChoiceId, forbiddenChoiceId) => {
-      const choice = resolvePresentedStoryChoice({
-        session: makeSession(choices),
-        action,
-      });
-      expect(choice.choiceId).toBe(expectedChoiceId);
-      expect(choice.choiceId).not.toBe(forbiddenChoiceId);
-      expect(choice).toMatchObject({ intent: action, source: "direct" });
+    "never infers A or B from a choice-less paraphrase: %s",
+    (action, choices) => {
+      expect(() =>
+        resolvePresentedStoryChoice({
+          session: makeSession(choices),
+          action,
+        }),
+      ).toThrowError(
+        expect.objectContaining<Partial<StoryPresentationError>>({
+          code: "story_creator_direction_requires_interview",
+        }),
+      );
     },
   );
 
   it("keeps contradictory intent out of either registered branch", () => {
-    const choice = resolvePresentedStoryChoice({
-      session: makeSession(openingChoices),
-      action: "Do not ring the bell, but sound the public alarm now.",
-    });
-    expect(choice.choiceId).toMatch(/^choice\.direct\./u);
+    expect(() =>
+      resolvePresentedStoryChoice({
+        session: makeSession(openingChoices),
+        action: "Do not ring the bell, but sound the public alarm now.",
+      }),
+    ).toThrowError(
+      expect.objectContaining<Partial<StoryPresentationError>>({
+        code: "story_creator_direction_requires_interview",
+      }),
+    );
   });
 
   it("marks prose viewpoint as creator-reviewed rather than deterministic", () => {

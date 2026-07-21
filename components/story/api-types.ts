@@ -11,6 +11,7 @@ import type {
   StorySessionBootstrap,
   StoryTurnResult,
 } from "@/src/contracts/story";
+import type { CreatorProposalAssessment } from "@/src/contracts/story-world-control";
 
 export const STORY_LIVE_TOKEN_HEADER = "x-penelope-story-token" as const;
 
@@ -59,6 +60,7 @@ export type StorySceneView = {
   echoedEffectIds: string[];
   whatChanged: StoryChangeView[];
   inheritedChoice?: string;
+  proposalAssessment?: CreatorProposalAssessment;
   causalSummary: string;
   claimRefs: string[];
   effectRefs: string[];

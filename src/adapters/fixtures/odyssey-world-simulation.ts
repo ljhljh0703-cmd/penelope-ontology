@@ -296,7 +296,13 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
         id: "action.penelope.observe",
         label: "Observe without intervening",
         summary: "Penelope waits through the next exchange and studies who reacts before she commits to a conclusion.",
-        verbAliases: ["observe", "wait", "watch silently"],
+        verbAliases: [
+          "observe",
+          "wait",
+          "watch silently",
+          "do nothing",
+          "hold position",
+        ],
         actorMode: "participant",
         allowedActorEntityIds: ["entity.penelope"],
         targetMode: "none",
@@ -347,7 +353,7 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
       {
         id: "action.penelope.confront_privately",
         label: "Confront the stranger privately",
-        summary: "Penelope states her strongest inference in private and requires the stranger and Eurycleia to answer the risk it creates.",
+        summary: "Penelope asks whether the stranger is Odysseus and requires Eurycleia to answer what the scar revealed.",
         verbAliases: ["confront", "ask his identity", "name odysseus"],
         actorMode: "participant",
         allowedActorEntityIds: ["entity.penelope"],
@@ -488,7 +494,7 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
       {
         binding: {
           receiptId: "receipt.d6.night_of_the_scar",
-          subjectFingerprint: "f9b966d395a6d5c103d97770005ed3f285155debb5fba1adb3b4419192aaeade",
+          subjectFingerprint: "17641afc2f7bfca472742908c863e836cbfe4d0012582268ac1f4755c679a161",
           issuer: "creator",
           issuerAuthorityId: "creator.penelope_ontology",
         },
@@ -508,7 +514,7 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
       trustedReceipts: [
         {
           receiptId: "receipt.d6.night_of_the_scar",
-          subjectFingerprint: "f9b966d395a6d5c103d97770005ed3f285155debb5fba1adb3b4419192aaeade",
+          subjectFingerprint: "17641afc2f7bfca472742908c863e836cbfe4d0012582268ac1f4755c679a161",
           issuer: "creator",
           issuerAuthorityId: "creator.penelope_ontology",
           payloadFingerprint: "afcfc9377e97fc1a80a54aa10a8ed163704360e4f9d035f0b4b55fca86542858",
@@ -749,6 +755,32 @@ export const ODYSSEY_BOOK_19_WORLD_SIMULATION =
           "Confirm only to Penelope that the stranger is Odysseus; add no plan, history, motive, prediction, or promise.",
         contentBoundary:
           "Eurycleia identifies the stranger as Odysseus.",
+        disclosureGeometry: {
+          speakerId: "entity.eurycleia",
+          addresseeIds: ["entity.penelope"],
+          volume: "low",
+          distance: "near",
+          lineOfSightIds: ["entity.penelope", "entity.odysseus"],
+          confirmedHearerIds: ["entity.penelope", "entity.odysseus"],
+          potentialHearerIds: ["entity.melantho"],
+        },
+        deliveryCues: [
+          {
+            id: "cue.eurycleia.lean_toward_penelope",
+            category: "movement",
+            contentBoundary: "Eurycleia leans toward Penelope before speaking.",
+          },
+          {
+            id: "cue.eurycleia.lower_voice",
+            category: "sensory_detail",
+            contentBoundary: "Eurycleia speaks in a low voice.",
+          },
+          {
+            id: "cue.odysseus.confirmed_hearer",
+            category: "spatial_relation",
+            contentBoundary: "The nearby stranger hears Eurycleia's answer.",
+          },
+        ],
         creatorApprovalReceiptId: "receipt.d6.night_of_the_scar",
         creatorDecisionId: "decision.d6-4",
       },

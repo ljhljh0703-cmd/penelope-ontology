@@ -38,7 +38,8 @@ test("runs a source-bounded Odyssey branch and preserves its parent checkpoint",
   await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(1);
   await expect(page.getByRole("button", { name: /Test the stranger's testimony/u })).toBeVisible();
   await expect(page.getByRole("button", { name: /Order the foot washing/u })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Observe without intervening/u })).toBeVisible();
+  await expect(page.getByText("C · Shape another direction")).toBeVisible();
+  await expect(page.getByLabel("Suggested actions").getByRole("button")).toHaveCount(2);
   await expect(page.getByTestId("world-scene")).not.toContainText("Disguised Odysseus");
   expect(await page.getByTestId("world-prose").locator("p").count()).toBeGreaterThan(0);
 
@@ -73,6 +74,15 @@ test("runs a source-bounded Odyssey branch and preserves its parent checkpoint",
   await page.getByTestId("world-resolve").click();
 
   await expect(page.getByTestId("world-ending")).toContainText("Controlled Discovery");
+  await expect(page.getByTestId("behind-curtain-risks")).toContainText(
+    "Eurycleia's answer may have reached Melantho",
+  );
+  await expect(page.getByTestId("behind-curtain-risks")).toContainText(
+    "not reader-facing facts",
+  );
+  await expect(page.getByTestId("world-scene")).not.toContainText(
+    "Melantho may have heard",
+  );
   await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(3);
 
   await page.getByTestId("world-checkpoint-2").click();
@@ -84,6 +94,178 @@ test("runs a source-bounded Odyssey branch and preserves its parent checkpoint",
   await expect(page.getByTestId("world-ending")).toContainText("Canon Contained");
   await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(4);
   await expect(page.getByTestId("world-checkpoint-3")).toBeVisible();
+});
+
+test("shows how removing a witness creates an investigator and changes the ending", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: /continues your world/iu })).toBeVisible();
+  await expect(page.getByTestId("world-pulse-baseline")).toContainText(
+    "The world is armed before the first choice",
+  );
+  await expect(page.getByTestId("world-npc-card-entity-melantho")).toContainText(
+    "Discover irregular behavior",
+  );
+  await expect(page.getByTestId("world-npc-card-entity-melantho")).toContainText(
+    "Within earshot",
+  );
+  await expect(page.getByTestId("world-compare-left")).toHaveCount(0);
+  await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(1);
+
+  await page.getByTestId("world-guided-demo-load").click();
+  await expect(page.getByTestId("world-action")).toHaveValue(
+    "Penelope asks Melantho to leave before she questions the stranger.",
+  );
+  await expect(page.getByTestId("world-fork")).toBeChecked();
+  await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(1);
+  await page.getByTestId("world-resolve").click();
+
+  await page.getByTestId("world-creator-answer").fill(
+    "Keep the interview private while Penelope tests the stranger.",
+  );
+  await page.getByTestId("world-creator-answer-submit").click();
+  await page.getByTestId("world-creator-answer").fill(
+    "Penelope suspects the household is listening and needs room to judge safely.",
+  );
+  await page.getByTestId("world-creator-answer-submit").click();
+  await page.getByTestId("world-creator-answer").fill(
+    "Melantho may feel excluded and become more suspicious.",
+  );
+  await page.getByTestId("world-creator-answer-submit").click();
+
+  await expect(page.getByTestId("world-creator-confirmation")).toContainText(
+    "Dismiss a witness",
+  );
+  await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(1);
+  await page.getByTestId("world-creator-confirm").click();
+
+  await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(2);
+  await expect(page.getByTestId("world-pulse-action")).toContainText(
+    "Penelope sends Melantho away",
+  );
+  await expect(page.getByTestId("world-pulse-actor-entity-melantho")).toContainText(
+    "Washing Store",
+  );
+  await expect(page.getByTestId("world-pulse-clock-clock-suitor-suspicion")).toContainText(
+    "0 → 1 / 4",
+  );
+  await expect(page.getByTestId("world-npc-zone-entity-melantho")).toContainText(
+    "Washing Store",
+  );
+  await expect(page.getByTestId("world-npc-card-entity-melantho")).toContainText(
+    "Offstage",
+  );
+  await expect(page.getByTestId("world-compare-left")).toBeVisible();
+
+  await page.getByRole("button", { name: /Order the foot washing/iu }).click();
+  await page.getByTestId("world-resolve").click();
+  await expect(page.getByTestId("world-ending")).toContainText("Plan Compromised");
+  await expect(page.getByTestId("world-npc-agenda-entity-melantho")).toContainText(
+    "2 premises",
+  );
+
+  await page.getByTestId("world-checkpoint-1").click();
+  await page.getByRole("button", { name: /Order the foot washing/iu }).click();
+  await page.getByTestId("world-resolve").click();
+  await page.getByTestId("world-candidate-2").click();
+  await page.getByTestId("world-resolve").click();
+  await expect(page.getByTestId("world-ending")).toContainText("Canon Contained");
+
+  const comparison = page.getByTestId("world-fork-compare");
+  await expect(comparison).toContainText("Plan Compromised");
+  await expect(comparison).toContainText("Canon Contained");
+  await expect(page.getByTestId("world-compare-common-ancestor")).toContainText(
+    "Shared source checkpoint 01",
+  );
+  await expect(page.getByTestId("world-compare-delta-clock-identity-exposure")).toBeVisible();
+  await expect(page.getByTestId("world-compare-delta-position")).toContainText("Melantho");
+  await expect(page.getByTestId("world-provenance")).toContainText("no model call");
+});
+
+test("elicits a creator's tacit intent before C changes the world", async ({ page }) => {
+  await page.goto("/world");
+  await expect(page.getByTestId("world-scene")).toBeVisible();
+  await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(1);
+
+  await page.getByTestId("world-action").fill(
+    "Penelope asks Melantho to leave before she questions the stranger.",
+  );
+  await page.getByTestId("world-resolve").click();
+
+  const dialogue = page.getByTestId("world-creator-dialogue");
+  await expect(dialogue).toContainText(
+    "If this works, what should Penelope gain, protect, or change?",
+  );
+  await expect(page.getByText(/Checkpoint 1 · Turn 0 of 6/u)).toBeVisible();
+  await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(1);
+
+  await page.getByTestId("world-creator-answer").fill(
+    "Keep the interview private while Penelope tests the stranger.",
+  );
+  await page.getByTestId("world-creator-answer-submit").click();
+  await expect(dialogue).toContainText(
+    "Why does Penelope choose this now",
+  );
+
+  await page.getByTestId("world-creator-answer").fill(
+    "Penelope suspects the household is listening and needs room to judge safely.",
+  );
+  await page.getByTestId("world-creator-answer-submit").click();
+  await expect(dialogue).toContainText(
+    "What consequence is Penelope willing to risk",
+  );
+
+  await page.getByTestId("world-creator-answer").fill(
+    "Melantho may feel excluded and become more suspicious.",
+  );
+  await page.getByTestId("world-creator-answer-submit").click();
+
+  const confirmation = page.getByTestId("world-creator-confirmation");
+  await expect(confirmation).toContainText("Dismiss a witness");
+  await expect(confirmation).toContainText(
+    "buying privacy by creating a visible exclusion",
+  );
+  await expect(confirmation).toContainText(
+    "Melantho may feel excluded and become more suspicious.",
+  );
+  await expect(page.getByTestId("world-creator-proposal-hash")).toHaveText(
+    /^[a-f0-9]{12}…$/u,
+  );
+  await expect(page.getByText(/Checkpoint 1 · Turn 0 of 6/u)).toBeVisible();
+  await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(1);
+
+  await page.getByTestId("world-creator-confirm").click();
+
+  await expect(page.getByText(/Checkpoint 2 · Turn 1 of 6/u)).toBeVisible();
+  await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(2);
+  await expect(page.getByTestId("world-scene")).toContainText("Melantho");
+  await page.getByText("Open creator inspector").click();
+  await expect(page.getByTestId("creator-direction-audit")).toContainText(
+    "Penelope asks Melantho to leave before she questions the stranger.",
+  );
+  await expect(page.getByTestId("creator-direction-audit")).toContainText(
+    "action.penelope.clear_room",
+  );
+});
+
+test("lets a creator abandon an unfinished C interview without spending a turn", async ({ page }) => {
+  await page.goto("/world");
+  await expect(page.getByTestId("world-scene")).toBeVisible();
+
+  await page.getByTestId("world-action").fill(
+    "Penelope tests the stranger without asking him directly.",
+  );
+  await page.getByTestId("world-resolve").click();
+  const dialogue = page.getByTestId("world-creator-dialogue");
+  await expect(dialogue).toBeVisible();
+  await expect(page.getByText(/Checkpoint 1 · Turn 0 of 6/u)).toBeVisible();
+
+  await dialogue.getByRole("button", { name: "Revise the original direction" }).click();
+
+  await expect(page.getByTestId("world-action")).toHaveValue(
+    "Penelope tests the stranger without asking him directly.",
+  );
+  await expect(page.getByText(/Checkpoint 1 · Turn 0 of 6/u)).toBeVisible();
+  await expect(page.getByTestId("world-checkpoints").getByRole("button")).toHaveCount(1);
 });
 
 test("exposes the local Codex token only as a restart credential control", async ({ page }) => {

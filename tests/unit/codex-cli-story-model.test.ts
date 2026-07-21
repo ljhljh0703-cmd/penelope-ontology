@@ -8,6 +8,7 @@ import {
   CODEX_CLI_COMMAND_ENV,
 } from "@/src/adapters/codex-cli/command";
 import {
+  CODEX_CLI_STORY_OUTPUT_SCHEMA,
   CODEX_CLI_STORY_REQUESTED_MODEL,
   buildCodexCliStoryArgs,
   createCodexCliStoryModel,
@@ -101,6 +102,29 @@ const argumentPath = (
 };
 
 describe("Codex CLI story model", () => {
+  it("keeps creator-authored C adjudication outside the strict renderer schema", () => {
+    const root = CODEX_CLI_STORY_OUTPUT_SCHEMA as unknown as {
+      properties: {
+        suggestedContinuations: {
+          items: {
+            properties: Record<string, unknown>;
+            required: string[];
+          };
+        };
+      };
+    };
+    const continuation = root.properties.suggestedContinuations.items;
+
+    expect(continuation.properties).not.toHaveProperty("proposalAssessment");
+    expect(continuation.properties.source).toEqual({
+      type: "string",
+      const: "suggested",
+    });
+    expect(new Set(continuation.required)).toEqual(
+      new Set(Object.keys(continuation.properties)),
+    );
+  });
+
   it("uses the bundled ChatGPT CLI, safe scoped input, and output-last-message without JSONL parsing", async () => {
     const tempRoot = await makeTemporaryRoot();
     const finalMessage = JSON.stringify(draft);

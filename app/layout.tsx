@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "The Red Sail Trilogy — Penelope Ontology",
+  title: "Penelope Ontology — Causal World Simulator",
   description:
-    "A creator-owned story harness that carries choices through character, world state, consequence, and payoff.",
+    "A creator workbench that carries every choice through character agendas, offstage reactions, world state, consequence, and payoff.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

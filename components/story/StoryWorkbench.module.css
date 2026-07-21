@@ -402,6 +402,36 @@
   line-height: 0.78;
 }
 
+.penelopeRuling {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 28px;
+  padding: 16px 18px;
+  background: rgba(199, 151, 74, 0.1);
+  border-left: 4px solid var(--story-gold);
+}
+
+.penelopeRuling > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.penelopeRuling span,
+.penelopeRuling small {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.penelopeRuling p,
+.penelopeRuling small {
+  margin: 0;
+  line-height: 1.45;
+}
+
 .pressure {
   display: grid;
   grid-template-columns: 135px 1fr;
@@ -741,33 +771,50 @@
 .actionForm {
   display: grid;
   margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid rgba(248, 242, 232, 0.25);
 }
 
-.actionForm label {
-  margin-bottom: 9px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.creatorHandoff {
+  display: grid;
+  gap: 10px;
+  margin-top: 32px;
+  padding: 22px;
+  color: #f8f2e8;
+  border: 1px solid rgba(248, 242, 232, 0.28);
+  background: rgba(248, 242, 232, 0.05);
 }
 
-.actionForm textarea {
-  width: 100%;
-  min-height: 142px;
-  resize: vertical;
-  padding: 20px;
-  color: var(--story-ink);
-  background: #fffdf8;
-  border: 0;
-  border-radius: 0;
+.creatorHandoff h3,
+.creatorHandoff p {
+  margin: 0;
+}
+
+.creatorHandoff h3 {
   font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-  font-size: 20px;
-  line-height: 1.5;
+  font-size: 24px;
+  font-weight: 500;
 }
 
-.actionForm textarea::placeholder {
-  color: #8d887f;
+.creatorHandoff > p:not(.eyebrow) {
+  max-width: 680px;
+  color: rgba(248, 242, 232, 0.68);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.creatorHandoffLink {
+  justify-self: start;
+  padding: 10px 13px;
+  color: var(--story-night);
+  background: var(--story-sage);
+  font-size: 12px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.creatorHandoffLink:hover {
+  transform: translateY(-2px);
 }
 
 .formFooter {
@@ -796,6 +843,7 @@
 }
 
 .formFooter button:hover:not(:disabled),
+.creatorHandoffLink:hover,
 .ending button:hover:not(:disabled),
 .loading button:hover:not(:disabled) {
   transform: translateY(-2px);
@@ -809,19 +857,31 @@
 }
 
 .candidateDrawer {
-  margin-top: 26px;
-  border-top: 1px solid rgba(248, 242, 232, 0.25);
+  margin-top: 32px;
 }
 
-.candidateDrawer > summary {
-  color: rgba(248, 242, 232, 0.86);
+.candidateHeader {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 14px;
 }
 
-.candidateDrawer > summary span:nth-child(2) {
-  margin-left: auto;
+.candidateHeader h3 {
+  margin: 6px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 23px;
+  font-weight: 500;
+}
+
+.candidateHeader > span {
+  max-width: 300px;
   color: rgba(248, 242, 232, 0.5);
   font-size: 10px;
   font-weight: 650;
+  line-height: 1.45;
+  text-align: right;
 }
 
 .choiceGrid {
@@ -834,7 +894,7 @@
 .choiceCard,
 .choiceSelected {
   display: grid;
-  min-height: 150px;
+  min-height: 190px;
   padding: 18px;
   color: #f8f2e8;
   text-align: left;
@@ -860,12 +920,49 @@
   font-size: 16px;
 }
 
-.choiceCard span,
-.choiceSelected span {
+.choiceCard .choiceRank,
+.choiceSelected .choiceRank {
+  align-self: start;
+  margin: 0 0 14px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.choiceCard p,
+.choiceSelected p {
   align-self: center;
   margin-top: 9px;
   font-size: 12px;
   line-height: 1.45;
+}
+
+.choiceRationale {
+  color: var(--story-muted);
+  font-size: 0.88rem;
+}
+
+.choiceRisk {
+  display: grid;
+  gap: 0.3rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+}
+
+.choiceRisk > span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.choiceCard .choiceRisk > p,
+.choiceSelected .choiceRisk > p,
+.choiceCard .choiceRisk > small,
+.choiceSelected .choiceRisk > small {
+  margin: 0;
 }
 
 .choiceCard small,
@@ -1061,7 +1158,7 @@
   }
 
   .summaryHint,
-  .candidateDrawer > summary span:nth-child(2) {
+  .candidateHeader > span {
     display: none;
   }
 
@@ -1091,6 +1188,10 @@
     padding: 28px 20px;
   }
 
+  .candidateHeader {
+    align-items: start;
+  }
+
   .formFooter {
     align-items: stretch;
     flex-direction: column;
@@ -1103,12 +1204,14 @@
 
 @media (prefers-reduced-motion: reduce) {
   .formFooter button,
+  .creatorHandoffLink,
   .ending button,
   .loading button {
     transition: none;
   }
 
   .formFooter button:hover:not(:disabled),
+  .creatorHandoffLink:hover,
   .ending button:hover:not(:disabled),
   .loading button:hover:not(:disabled) {
     transform: none;

@@ -19,6 +19,8 @@ import {
   WorldSimulationStateSchema,
   WorldTurnReceiptPayloadSchema,
   WorldTurnReceiptSchema,
+  CreatorWorldDirectionReceiptSchema,
+  type CreatorWorldDirectionReceipt,
   type ResolvedWorldAction,
   type WorldActionCandidate,
   type WorldSimulationEvent,
@@ -1039,10 +1041,12 @@ export const runWorldSimulationTurn = ({
   scenario,
   session,
   input,
+  creatorDirection: creatorDirectionInput = null,
 }: {
   scenario: WorldSimulationScenario;
   session: WorldSimulationSession;
   input: string;
+  creatorDirection?: CreatorWorldDirectionReceipt | null;
 }): { session: WorldSimulationSession; receipt: WorldTurnReceipt } => {
   if (!hasValidWorldSimulationSession(session, scenario)) {
     throw new Error("World simulation authority is invalid or targets another scenario.");
@@ -1054,6 +1058,18 @@ export const runWorldSimulationTurn = ({
   const turn = session.state.turn + 1;
   const activeRuleIds = activeWorldSimulationRuleIds(scenario);
   const action = resolveWorldAction({ scenario, input });
+  const creatorDirection = creatorDirectionInput
+    ? CreatorWorldDirectionReceiptSchema.parse(creatorDirectionInput)
+    : null;
+  if (
+    creatorDirection &&
+    (action.status !== "accepted" ||
+      creatorDirection.registeredActionId !== action.actionId)
+  ) {
+    throw new Error(
+      "The creator direction receipt does not match the registered world action.",
+    );
+  }
   const actionDefinition =
     action.status === "accepted"
       ? scenario.actions.find(({ id }) => id === action.actionId)
@@ -1193,6 +1209,7 @@ export const runWorldSimulationTurn = ({
     beforeStateHash: session.state.stateHash,
     afterStateHash: workingState.stateHash,
     action,
+    creatorDirection,
     events,
     firedReactionRuleIds: [...selectedRuleIds].sort(compareIds),
     endingId: ending?.id ?? null,

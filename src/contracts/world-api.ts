@@ -7,10 +7,12 @@ import {
 } from "@/src/contracts/world-narrator";
 import { NarrationAuthorityIdentifierSchema } from "@/src/contracts/narration-license";
 import {
+  CreatorWorldDirectionReceiptSchema,
   WorldActionCandidateSchema,
   WorldBranchCursorSchema,
   WorldSimulationEventSchema,
 } from "@/src/contracts/world-runtime";
+import { CreatorCDialogueRequestSchema } from "@/src/contracts/creator-c-dialogue";
 
 export const WorldPresentationTransportSchema = z.enum(["fixture", "codex_cli"]);
 export const WORLD_CREATOR_ACCESS_TOKEN_HEADER =
@@ -34,8 +36,19 @@ export const WorldTurnApiRequestSchema = z
     action: z.string().trim().min(1).max(800),
     forkBeforeAction: z.boolean(),
     transport: WorldPresentationTransportSchema,
+    preparedActionId: IdentifierSchema.optional(),
+    creatorDialogue: CreatorCDialogueRequestSchema.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine(({ preparedActionId, creatorDialogue }, context) => {
+    if (Boolean(preparedActionId) === Boolean(creatorDialogue)) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "A world turn must contain exactly one prepared action authority or creator-dialogue authority.",
+      });
+    }
+  });
 
 export const WorldVisibleFactSchema = z
   .object({ id: IdentifierSchema, summary: z.string().min(1) })
@@ -50,9 +63,32 @@ export const WorldActorStateViewSchema = z
     entityId: IdentifierSchema,
     creatorName: z.string().min(1),
     participantLabel: z.string().min(1),
+    simulationRole: z.enum(["focal_participant", "npc"]),
     zoneId: IdentifierSchema,
     agendaState: z.enum(["active", "blocked", "satisfied"]),
+    agendaDesire: z.string().min(1).max(500),
+    agendaAvoids: z.string().min(1).max(500),
     knownPremiseIds: z.array(IdentifierSchema),
+  })
+  .strict();
+
+export const WorldBehindCurtainRiskSchema = z
+  .object({
+    riskId: IdentifierSchema,
+    eventId: IdentifierSchema,
+    exposureStatus: z.literal("latent"),
+    summary: z.string().min(1).max(500),
+    potentialHearers: z
+      .array(
+        z
+          .object({
+            entityId: IdentifierSchema,
+            label: z.string().min(1).max(160),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(12),
   })
   .strict();
 
@@ -226,7 +262,9 @@ export const WorldCreatorReceiptSchema = z
         creatorReviewRequiredIds: z.array(IdentifierSchema),
       })
       .strict(),
+    behindCurtainRisks: z.array(WorldBehindCurtainRiskSchema).max(4),
     events: z.array(WorldSimulationEventSchema),
+    creatorDirections: z.array(CreatorWorldDirectionReceiptSchema).max(6),
     ledgerHeadHash: HashSchema.nullable(),
     receiptHash: HashSchema.nullable(),
     narrationDecisionProof: z

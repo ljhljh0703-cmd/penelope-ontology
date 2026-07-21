@@ -158,6 +158,15 @@ describe("Odyssey Book 19 world simulation", () => {
         reactionRuleId: "reaction.eurycleia.controlled_disclosure",
         speakerEntityId: "entity.eurycleia",
         speechAct: "answer",
+        disclosureGeometry: {
+          speakerId: "entity.eurycleia",
+          addresseeIds: ["entity.penelope"],
+          volume: "low",
+          distance: "near",
+          lineOfSightIds: ["entity.penelope", "entity.odysseus"],
+          confirmedHearerIds: ["entity.penelope", "entity.odysseus"],
+          potentialHearerIds: ["entity.melantho"],
+        },
         creatorApprovalReceiptId: "receipt.d6.night_of_the_scar",
         creatorDecisionId: "decision.d6-4",
       }),
@@ -395,6 +404,43 @@ describe("Odyssey Book 19 world simulation", () => {
     expect(
       session.state.clocks.find(({ id }) => id === "clock.suitor_suspicion")
         ?.value,
+    ).toBe(1);
+  });
+
+  it("advances an active NPC agenda when the participant deliberately does nothing", () => {
+    const scenario = getOdysseyBook19WorldSimulation();
+    const initial = createWorldSimulationSession({ scenario });
+    const { session, receipt } = runWorldSimulationTurn({
+      scenario,
+      session: initial,
+      input: "do nothing",
+    });
+
+    expect(receipt.action).toMatchObject({
+      status: "accepted",
+      actionId: "action.penelope.observe",
+    });
+    expect(receipt.firedReactionRuleIds).toContain(
+      "reaction.melantho.approach_on_observe",
+    );
+    expect(
+      receipt.events.find(
+        ({ source }) =>
+          source.kind === "npc" && source.actorEntityId === "entity.melantho",
+      ),
+    ).toMatchObject({
+      actionId: "action.melantho.investigate",
+      visibleToEntityIds: ["entity.penelope"],
+    });
+    expect(
+      session.state.actors.find(
+        ({ entityId }) => entityId === "entity.melantho",
+      )?.zoneId,
+    ).toBe("zone.great_hall_hearth");
+    expect(
+      session.state.clocks.find(
+        ({ id }) => id === "clock.suitor_suspicion",
+      )?.value,
     ).toBe(1);
   });
 
