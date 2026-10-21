@@ -3,7 +3,7 @@
 > 선택 하나가 들어오면 인물마다 아는 것, 동기, 위험, 관계, 결말을 먼저 계산하고 문장은 그 뒤에 쓰는 이야기 세계 엔진.
 > A story-world engine that resolves knowledge, motives, risks, relationships, and endings before any prose is written.
 >
-> 작품 페이지: https://ljhljh0703-cmd.github.io/penelope/ · 라이브 데모: https://penelope-ontology.vercel.app (계정·API 키 없음)
+> 작품 페이지: https://ljhljh0703-cmd.github.io/penelope-ontology/portfolio/ · 라이브 데모: https://penelope-ontology.vercel.app (계정·API 키 없음)
 
 **실행** (Node.js 22.x)
 

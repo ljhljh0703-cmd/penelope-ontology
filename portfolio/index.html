@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Penelope Ontology | 이주형</title>
+<meta name="description" content="선택 하나에 세계 속 인물이 모두 반응하는 이야기 생성 엔진. 인물의 반응, 새로 알게 된 것, 대가, 결말을 먼저 계산하고 문장은 그 뒤에 씁니다. 이야기가 무너지는 네 조건은 가드레일로 막습니다. 자동 시험 893개 통과.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/wanted-sans@1.0.3/fonts/webfonts/variable/split/WantedSansVariable.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap">
+<link rel="stylesheet" href="case/case-paper.css">
+<link rel="stylesheet" href="case/case-easy.css">
+<style>
+/* 이 페이지에만: 그림 없는 첫 화면 · 무너지는 조건 카드 · 나란히 놓는 두 목록 */
+.cp-hero.solo{grid-template-columns:minmax(0,1fr)}
+.cp-hero.solo .cp-lead{max-width:46em}
+.pen-rules .cp-card h4{font-size:17px;margin:0 0 8px}
+.pen-rules .cp-card p+p{margin-top:8px}
+.pen-rules .cp-card .ex{font-size:13.5px;color:var(--muted)}
+.pen-rules .cp-card .ex b{color:var(--ink);font-weight:800;margin-right:4px}
+.pen-pair .cp-list li{font-size:14.5px}
+</style>
+</head>
+<body class="cp" data-ink="blue">
+<a class="cp-skip" href="#top">본문으로</a>
+<nav class="cp-nav" aria-label="작품 탐색"><div class="cp-shell">
+<a class="cp-back" href="../../" data-portfolio-back="13-penelope">작품 모음으로</a>
+<div class="cp-links"><a class="opt" href="#flow">작동 흐름</a><a href="#ripple">선택의 파장</a><a href="#rules">가드레일</a><a class="opt" href="#result">결과</a><a href="#deep-read">자세히 읽기</a><button type="button" class="easy-open" data-easy-open aria-haspopup="dialog" aria-controls="easy">쉽게 읽기</button></div>
+</div></nav>
+
+<main class="cp-shell" id="top">
+<header class="cp-hero">
+<div>
+<p class="cp-kicker"><b>Penelope Ontology</b>이야기 생성 엔진 · 개인 작업 · 2026.07</p>
+<h1 class="cp-h1">선택 하나에 세계 속 인물이<br>모두 움직이는 <b>이야기 생성 엔진</b></h1>
+<p class="cp-lead">사용자가 고른 선택이 다음 대사 한 줄만 바꾸고 끝나면 이야기는 금방 납작해집니다. Penelope Ontology는 선택 하나가 들어오면 세계 속 인물 모두가 그 결과를 받게 합니다. 누가 무엇을 새로 알게 됐는지, 누가 의심을 품고 움직이기 시작했는지, 어떤 대가가 다음 장면까지 남는지를 먼저 계산하고, AI는 그 결과를 문장으로 씁니다. 이야기가 무너지는 네 조건은 가드레일로 걸어 두어서, 매끄럽지만 설정을 깨는 문장은 세계에 들어오지 못합니다.</p>
+<p class="cp-result"><strong>자동 시험 893개 모두 통과</strong><span>선택의 결과가 인물 반응·지식·결말로 이어지는지, 가드레일이 지켜지는지 확인 · 108개 파일 · 2026-10-21 직접 실행</span></p>
+<dl class="cp-who">
+<div><dt>내가 정한 것</dt><dd>선택 하나가 세계 속 인물 모두에게 번지게 하는 원칙, 이야기가 무너지는 네 조건(가드레일), 세계를 통제하는 규칙, 문장 판단 기준, 최종 범위</dd></div>
+<div><dt>AI가 짠 것</dt><dd>그 판단을 옮긴 규칙 코드, 화면, 자동 시험, 배포 전 검사 (Codex 구현)</dd></div>
+<div><dt>내가 확인한 것</dt><dd>데모 장면 문장을 직접 읽고 고르거나 고침, 제품 범위 승인(2026-07-15)</dd></div>
+</dl>
+<p class="cp-meta"><b>이주형</b>장편소설을 낸 작가 · OpenAI Build Week 제출(Work &amp; Productivity 부문) · TypeScript · Next.js · Vercel · MIT 라이선스로 공개</p>
+<div class="cp-actions">
+<button type="button" class="easy-hero" data-easy-open aria-haspopup="dialog" aria-controls="easy"><span class="easy-hero-k">처음이라면</span>카드 5장으로 쉽게 읽기</button>
+<a class="cp-btn primary" href="https://penelope-ontology.vercel.app" target="_blank" rel="noopener">라이브 데모 열기</a>
+<a class="cp-btn" href="https://youtu.be/5oiEzLk8LWY" target="_blank" rel="noopener">영상 보기 (2분 42초)</a>
+<a class="cp-btn" href="https://github.com/ljhljh0703-cmd/penelope-ontology" target="_blank" rel="noopener">GitHub 저장소</a>
+</div>
+</div>
+<figure class="cp-sticker"><img src="case/sticker-penelope.webp" alt="" width="720" height="713"></figure>
+</header>
+
+<section class="cp-section" id="flow" aria-labelledby="flow-h">
+<div class="cp-head"><h2 id="flow-h">선택 하나가 이야기가 되기까지</h2><p>세계가 먼저 움직이고 문장은 나중에</p></div>
+<ol class="cp-steps">
+<li><h3>세계 불러오기</h3><p>이야기 세계 하나를 설정표로 불러옵니다. 인물마다 아는 것과 모르는 것이 따로 적혀 있습니다.</p></li>
+<li><h3>선택하기</h3><p>창작자가 추천(A), 대안(B), 직접 방향(C) 가운데 하나를 고릅니다. C를 고르면 인물의 목표, 동기, 감수할 대가를 먼저 묻습니다.</p></li>
+<li><h3>세계가 먼저 움직임<span class="tag">내가 정한 규칙</span></h3><p>미리 정한 규칙이 행동의 결과와 대가, 장면 안팎 인물의 반응, 결말 조건을 계산합니다. 이 단계에는 AI 문장이 끼어들지 않습니다.</p></li>
+<li><h3>문장과 창작자 판정</h3><p>AI는 인물이 볼 수 있는 범위만 받아 문장 후보를 씁니다. 가드레일에 걸린 후보는 세계를 바꾸지 못하고, 통과한 후보는 창작자가 받아들이거나 고치거나 버립니다.</p></li>
+</ol>
+</section>
+
+<section class="cp-section" id="ripple" aria-labelledby="ripple-h">
+<div class="cp-head"><h2 id="ripple-h">선택이 모두에게 닿는 모습</h2><p>오디세이아 19권 데모 · 실제 시험</p></div>
+<div class="cp-grid2 pen-rules">
+<div class="cp-card"><span class="k">파장 1</span><h4>장면 밖 인물도 반응합니다</h4><p>비밀을 지키려고 하녀 멜란토를 방에서 내보내면 멜란토는 나갑니다. 그런데 쫓겨난 이유를 캐려고 장면 밖에서 조사를 시작하고, 의심 수치도 함께 오릅니다. 목격자를 치웠더니 조사자가 생깁니다.</p><p class="ex"><b>시험</b>인물의 반응을 그 선택에서 이어진 사건으로 기록함.</p></div>
+<div class="cp-card"><span class="k">파장 2</span><h4>가만히 있어도 인물은 움직입니다</h4><p>주인공이 아무것도 하지 않고 기다리면 다른 인물이 자기 목표를 한 걸음 진행합니다. 사용자가 멈춰 있어도 세계는 멈추지 않습니다.</p><p class="ex"><b>시험</b>주인공이 기다리면 다른 인물의 목표가 진행됨. 목표를 이미 이룬 인물에게는 반응을 더 만들지 않음.</p></div>
+<div class="cp-card"><span class="k">파장 3</span><h4>반응이 새 지식을 만듭니다</h4><p>인물이 처음부터 아는 것과 다른 인물의 반응을 보고 새로 알게 된 것을 따로 기록합니다. 다음 장면에서 인물은 그때까지 알게 된 만큼만 말하고 행동합니다.</p><p class="ex"><b>시험</b>처음 아는 것과 반응으로 알게 된 것을 나눠 기록함.</p></div>
+<div class="cp-card"><span class="k">파장 4</span><h4>같은 지점에서 다른 결말로</h4><p>같은 저장 지점으로 돌아가 멜란토 대신 유모 에우리클레이아의 반응을 막으면, 같은 과거에서 「정체 지킴」 결말로 갑니다. 두 갈래는 인물의 위치, 아는 것, 위험, 결말이 어떻게 달라졌는지로 비교합니다.</p><p class="ex"><b>시험</b>같은 지점에서 갈라진 두 결과를 상태 차이로 비교함. 정해 둔 결말 네 개에 모두 닿을 수 있음.</p></div>
+</div>
+<p class="cp-note">인물 반응은 세계 설정표에 미리 적어 둔 인과 규칙으로 계산합니다. 사용자가 자리를 비운 동안에도 인물들이 스스로 살아가는 기능은 아직 없습니다. 장면의 문장과 화면은 미리 준비한 결과입니다.</p>
+</section>
+
+<section class="cp-section" id="rules" aria-labelledby="rules-h">
+<div class="cp-head"><h2 id="rules-h">가드레일: 이야기가 무너지는 네 조건</h2><p>내가 정한 조건 · 엔진이 막는 방법 · 실제 시험</p></div>
+<div class="cp-grid2 pen-rules">
+<div class="cp-card"><span class="k">조건 1</span><h4>비밀이 엉뚱한 인물에게 샌다</h4><p>인물마다 아는 것을 따로 두고, 문장을 쓸 때는 그 인물이 알 수 있는 것만 넘깁니다.</p><p class="ex"><b>시험</b>페넬로페에게 오디세우스가 오기기아섬에 있다는 사실을 넘기지 않음. 유모 에우리클레이아가 흉터를 알아본 일은 겉으로 드러날 때까지 비밀로 둠.</p></div>
+<div class="cp-card"><span class="k">조건 2</span><h4>과거 선택의 대가가 지워진다</h4><p>선택이 남긴 결과를 기록해 다음 장면으로 넘깁니다. 같은 행동이라도 세계 상태가 다르면 결과가 달라집니다.</p><p class="ex"><b>시험</b>앞선 선택의 결과가 다음 장면의 맥락에 실림. 같은 대면이 상태에 따라 다른 결과를 냄.</p></div>
+<div class="cp-card"><span class="k">조건 3</span><h4>없던 설정이 갑자기 생긴다</h4><p>근거 없는 설정은 세계에 넣지 않고, 세계를 넓힐지 창작자에게 묻습니다.</p><p class="ex"><b>시험</b>이미 죽어 그 자리에 없는 헥토르를 살아 있는 인물로 쓴 초안을 막음. 「숨은 마법 거울로 변장을 꿰뚫는다」는 제안은 세계를 바꾸지 않고 목표만 남겨 둠.</p></div>
+<div class="cp-card"><span class="k">조건 4</span><h4>모든 인물이 서술자처럼 움직인다</h4><p>서술자가 아는 사실과 그 인물이 보고 들을 수 있는 사실을 나눕니다.</p><p class="ex"><b>시험</b>인물이 확신할 수 없는 일을 서술자가 보고하듯 단정하는 문장을 막음. 장면에 없는 인물의 대사를 거부함.</p></div>
+</div>
+<p class="cp-note">시험 예시는 저장소의 자동 시험 이름을 우리말로 옮긴 것입니다. 오디세이아 장면은 공개 저작물을 직접 요약한 것입니다.</p>
+</section>
+
+<section class="cp-section" id="story" aria-labelledby="story-h">
+<div class="cp-head"><h2 id="story-h">세계를 먼저 계산하게 바꾼 과정</h2><p>다음 문단부터 쓰던 방식 → 세계를 먼저 계산하는 방식</p></div>
+<ol class="cp-story">
+<li><span class="k">문제</span><p>흔한 AI 이야기 도구는 다음 문단을 바로 씁니다. 문장은 유창해도 누가 무엇을 아는지, 어떤 대가가 남았는지는 쉽게 잊습니다.</p><span class="cp-ghost" aria-hidden="true">다음 문단부터</span></li>
+<li><span class="k">판단</span><p>세계의 설정(지식, 동기, 위험, 관계, 결말)과 표현(문장)을 나눴습니다. 선택이 들어오면 세계 상태가 먼저 움직이고, 문장은 그 결과만 받습니다.</p></li>
+<li><span class="k">검증</span><p>네 조건이 지켜지는지 자동 시험으로 확인하고, 조건을 어긴 초안을 일부러 넣어 막히는지도 봅니다. 지금 저장소의 시험 893개가 모두 통과합니다.</p></li>
+<li class="last"><span class="k">결과</span><p>계정이나 API 키 없이 열리는 공개 데모에서 오디세이아 19권, 오즈, 창작자가 만든 세계가 같은 엔진으로 돌아갑니다.</p></li>
+</ol>
+</section>
+
+<section class="cp-section" id="result" aria-labelledby="result-h">
+<div class="cp-head"><h2 id="result-h">숫자로 본 결과</h2><p>2026-10-21 <code class="cp-code">npx vitest run</code>으로 직접 실행</p></div>
+<div class="cp-stats">
+<div><b>893개</b><span>자동 시험 모두 통과 (108개 파일, 실패 0)</span></div>
+<div><b>21개</b><span>창작자 판정을 지키는 시험 (직접 방향 묻기 13 + 문장 검토 8)</span></div>
+<div><b>7개</b><span>인물별로 아는 것을 나누는 시험 (지식 범위 5 + 인물별 자료 찾기 2)</span></div>
+<div><b>4개</b><span>오디세이아 19권 세계에 정해 둔 결말 (정체 지킴 · 통제된 발견 · 계획 노출 · 시간 초과)</span></div>
+</div>
+<p class="cp-note">공개 데모와 영상의 문장은 미리 준비해 둔 결과이고, 공개 데모는 AI 모델을 부르지 않습니다. 자동 시험은 규칙이 지켜지는지를 보고, 문장의 문학적 품질은 따로 평가하지 않았습니다.</p>
+</section>
+
+<section class="cp-section" id="fit" aria-labelledby="fit-h">
+<div class="cp-head"><h2 id="fit-h">캐릭터 챗과 AI 스토리 서비스에 붙인다면</h2><p>이 엔진이 맡을 수 있는 일</p></div>
+<div class="cp-grid2 pen-rules">
+<div class="cp-card"><span class="k">캐릭터 챗</span><h4>인물이 자기가 아는 만큼만 말합니다</h4><p>대화 속 선택이 관계와 의심 같은 상태로 남아서, 대화가 길어져도 앞서 생긴 대가가 사라지지 않습니다.</p></div>
+<div class="cp-card"><span class="k">인터랙티브 스토리</span><h4>선택마다 세계가 갈라집니다</h4><p>사용자의 선택이 정해 둔 결말 조건으로 이어지고, 같은 지점에서 고른 다른 선택과 나란히 비교할 수 있습니다.</p></div>
+<div class="cp-card"><span class="k">세계관 운영</span><h4>설정 밖 전개는 허락받고 들어옵니다</h4><p>근거 없는 설정은 창작자가 승인할 때만 세계에 들어옵니다. World Forge로 두세 문장 설정에서 다섯 장면짜리 이야기를 만듭니다.</p></div>
+</div>
+<p class="cp-note">실제 서비스에 붙여 사용자 반응을 잰 적은 아직 없습니다.</p>
+</section>
+
+<section class="cp-section" id="deep-read" aria-labelledby="deep-h">
+<div class="cp-head"><h2 id="deep-h">궁금한 부분을 더 자세히</h2><button type="button" class="cp-expand" data-expand-all>모두 펼치기</button></div>
+
+<details class="cp-detail" id="writer"><summary><div><b>소설을 쓰던 눈으로 정한 규칙</b><span>출간 이력과 정한 규칙</span></div></summary>
+<div class="cp-body">
+<div class="cp-grid2 pen-pair">
+<div class="cp-card"><span class="k">출간</span>
+<ul class="cp-list"><li>장편소설 「초파리」 (핌, 2024) · 집필 5년</li><li>동화에세이 「별로 간 소년」 (풍경놀이터, 2021)</li><li>동화 「선글라스」 외 4편 (풍경놀이터, 2022)</li></ul></div>
+<div class="cp-card"><span class="k">이 엔진에 정한 규칙</span>
+<ul class="cp-list"><li>인물은 자기가 아는 것만 말하고 행동한다</li><li>선택의 대가는 다음 장면까지 남는다</li><li>근거 없는 설정은 창작자가 허락할 때만 들어온다</li><li>서술자가 아는 것과 인물이 보는 것을 나눈다</li><li>문장의 최종 판정은 창작자가 한다</li></ul></div>
+</div>
+</div></details>
+
+<details class="cp-detail" id="scene"><summary><div><b>한 장면으로 보기: 오디세이아 19권</b><span>목격자를 내보내면 조사자가 생김</span></div></summary>
+<div class="cp-body">
+<p>공개 데모는 오디세이아 19권의 밤 장면에서 시작합니다. 오디세우스는 변장한 채 돌아와 있고, 유모 에우리클레이아는 그의 다리 흉터를 알아보려 하고, 하녀 멜란토는 근처에서 약점을 찾고 있습니다.</p>
+<p>창작자가 비밀을 지키려고 멜란토를 방 밖으로 내보내면 멜란토는 나갑니다. 대신 장면 밖에서 조사를 시작하고 의심 수치가 올라가, 그대로 두면 「계획 노출」 결말로 갈 수 있습니다. 같은 지점으로 돌아가 에우리클레이아의 반응을 막으면, 같은 과거에서 「정체 지킴」 결말로 갑니다.</p>
+<p>두 갈래는 인물의 위치, 아는 것, 위험, 결말이 어떻게 달라졌는지로 비교합니다. 이 장면의 문장과 화면은 미리 준비한 결과입니다.</p>
+</div></details>
+
+<details class="cp-detail" id="knowledge"><summary><div><b>인물마다 아는 것이 다르게</b><span>시험 7개 + 문장 검사</span></div></summary>
+<div class="cp-body">
+<p>세계 설정표에는 사실마다 누가 알고 있는지가 적혀 있습니다. 문장을 쓰기 전에 장면에 있는 인물이 알 수 있는 사실만 골라 넘기고, 다 쓴 문장에서도 숨겨야 할 표현이 그대로 나오면 막습니다.</p>
+<p>인물별 지식 범위 시험 5개는 페넬로페와 같은 장면의 인물에게 오기기아섬 이야기가 새지 않는지, 서술자처럼 단정하는 문장과 장면에 없는 인물의 대사를 막는지 확인합니다. 인물별 자료 찾기 시험 2개는 같은 입력에 늘 같은 자료가 나오고 숨긴 사실은 나오지 않는지 확인합니다.</p>
+</div></details>
+
+<details class="cp-detail" id="creator"><summary><div><b>최종 판정은 창작자가</b><span>시험 21개</span></div></summary>
+<div class="cp-body">
+<p>창작자는 매 선택에서 추천(A), 대안(B), 직접 방향(C)을 고릅니다. C를 고르면 엔진이 인물의 목표, 동기, 감수할 대가를 한 번에 하나씩 묻고, 답이 모자라거나 모호하거나 세계에 근거가 없으면 세계를 바꾸지 않습니다. C가 A나 B로 몰래 바뀌는 일도 없습니다. 직접 방향을 지키는 시험이 13개입니다.</p>
+<p>문장 후보가 나오면 창작자가 받아들이거나, 고치거나, 버립니다. 버리면 저장 지점이 바뀌지 않고, 고치더라도 이미 계산된 사건은 다시 쓰지 않습니다. 문장 검토를 지키는 시험이 8개입니다.</p>
+</div></details>
+
+<details class="cp-detail" id="forge"><summary><div><b>세계를 직접 만드는 World Forge</b><span>두세 문장 → 24개 승인 → 다섯 장면</span></div></summary>
+<div class="cp-body">
+<p>두세 문장짜리 설정을 넣으면 엔진이 제목, 두 인물, 장소, 바뀌지 않는 사실, 서로 다른 목표, 숨긴 지식, 금지할 전개, 결말 조건 같은 항목 24개를 하나씩 묻고, 창작자가 모두 승인하면 다섯 장면짜리 이야기 하나를 만듭니다.</p>
+<p>세계는 정해 둔 관계 하나와 두 갈래 전략, 숨긴 지식, 대가, 결말 조건을 갖춥니다. 창작자가 직접 올린 세계는 공개 목록에 올라가지 않고, 서버 메모리에서 30분 뒤 지워집니다. 아직 공개하지 않은 원고는 공개 데모 대신 자기 컴퓨터에서 실행하라고 안내합니다.</p>
+</div></details>
+
+<details class="cp-detail" id="boundary"><summary><div><b>아직 모르는 것과 주장하지 않는 것</b><span>준비된 결과와 실제 생성 구분</span></div></summary>
+<div class="cp-body">
+<p>공개 데모, 화면, 영상에 나오는 문장은 모두 미리 준비한 결과입니다. 공개 데모는 AI 모델을 부르지 못하게 막혀 있습니다.</p>
+<p>제 컴퓨터에서 gpt-5.6-terra로 문장을 만든 실행이 있습니다. 네 턴짜리 실행에서 가드레일이 문장 후보 두 개(모호한 대명사를 쓴 문장, 화로를 행동하는 주어로 쓴 문장)를 막고 세계 상태를 그대로 두었고, 그 뒤 후보 네 개는 검사를 통과했습니다.</p>
+<p>OpenAI 도구가 맡은 일은 Codex 구현, 대회 제출용 피드백 기록, 로컬 실행의 문장 생성(gpt-5.6-terra)입니다. 이야기의 저작과 최종 판정은 창작자에게 있습니다.</p>
+<p>생성 문장의 문학적 품질, 실무자가 실제로 쓰는지, 작업 시간이 줄었는지는 아직 재지 않았습니다. 세계 설정표 하나가 다루는 범위는 장면 몇 개 분량의 정해진 이야기입니다.</p>
+</div></details>
+
+<details class="cp-detail" id="tech"><summary><div><b>기술과 저장소 구성</b><span>실행 · 시험 · 폴더</span></div></summary>
+<div class="cp-body">
+<p>TypeScript, Next.js 16, React 19로 만들었고 입력 형식은 Zod로 검사합니다. 시험은 Vitest와 Playwright, 배포는 Vercel입니다.</p>
+<p>직접 실행: <code class="cp-code">npm ci</code> 다음 <code class="cp-code">npm run dev</code>. 시험: <code class="cp-code">npx vitest run</code>. API 키 없이 돌아갑니다.</p>
+<p>규칙과 세계 계산은 <code class="cp-code">src/domain</code>, 선택 처리와 World Forge는 <code class="cp-code">src/application</code>, 화면은 <code class="cp-code">components/world</code>, 시험은 <code class="cp-code">tests</code>에 있습니다.</p>
+</div></details>
+</section>
+
+<footer class="cp-foot"><a href="../../" data-portfolio-back="13-penelope">← 작품 모음으로</a><a href="mailto:ljhljh0703@gmail.com">ljhljh0703@gmail.com</a><span>Penelope Ontology · 이주형</span></footer>
+</main>
+
+<dialog class="easy" id="easy" aria-labelledby="easy-title">
+<div class="easy-scraps" aria-hidden="true"><span class="ez-hex h1"></span><span class="ez-hex h2"></span><span class="ez-hex h3"></span><img class="ez-tape t1" src="case/tape.webp" alt=""><img class="ez-tape t2" src="case/tape.webp" alt=""></div>
+<div class="easy-top"><button type="button" class="easy-close" data-easy-close>원래대로 읽기</button><span class="easy-who">이주형 · Penelope Ontology</span></div>
+<header class="easy-head">
+<div>
+<h2 id="easy-title" class="ez-h"><span class="ez-strip">선택 하나에</span><br><span class="ez-strip accent">모두가</span><span class="ez-strip">움직인다</span></h2>
+<p class="ez-lede">선택 하나가 들어오면 세계 속 인물 모두가 그 결과를 받습니다. 누가 알게 됐는지, 누가 움직이기 시작했는지, 어떤 대가가 남는지를 먼저 계산하고 문장은 그 뒤에 쓰는 이야기 생성 엔진입니다.</p>
+<div class="ez-play"><a class="ez-btn main" href="https://penelope-ontology.vercel.app" target="_blank" rel="noopener">라이브 데모 열기</a></div>
+</div>
+<figure class="ez-obj"><img src="case/sticker-penelope.webp" alt="" width="720" height="713"></figure>
+</header>
+<div class="ez-grid">
+<section class="ez-card wide" style="--tilt:-.6deg"><span class="ez-tag">01 작동 흐름</span>
+<ol class="ez-flow"><li>세계 불러오기</li><li>A · B · C 선택</li><li class="mine">세계가 먼저 움직임<b>내 규칙</b></li><li>문장 후보 → 창작자 판정</li></ol>
+<p class="ez-small">버린 문장은 세계를 바꾸지 않습니다.</p></section>
+<section class="ez-card kraft" style="--tilt:.8deg"><span class="ez-tag">02 선택의 파장</span>
+<ul class="ez-list"><li>쫓겨난 인물이 장면 밖에서 조사</li><li>기다리면 다른 인물이 목표를 진행</li><li>반응을 본 인물이 새로 알게 됨</li><li>같은 지점에서 다른 결말</li></ul></section>
+<section class="ez-card accent" style="--tilt:-.9deg"><span class="ez-tag">03 가드레일</span>
+<ul class="ez-list"><li>비밀은 아는 인물에게만</li><li>선택의 대가는 남는다</li><li>없던 설정은 허락받고</li><li>인물은 서술자처럼 알 수 없다</li></ul></section>
+<section class="ez-card wide" style="--tilt:.4deg"><span class="ez-tag">04 결과</span><span class="ez-stamp">893</span>
+<p class="ez-band">자동 시험 <b>893개</b> 모두 통과</p>
+<p class="ez-small">108개 파일 · 2026-10-21 직접 실행 · 창작자 판정 시험 21개 · 인물별 지식 시험 7개</p></section>
+<section class="ez-card wide ez-row" style="--tilt:-.5deg"><span class="ez-tag">05 한 장면</span>
+<p>오디세이아 19권에서 비밀을 지키려고 하녀 멜란토를 내보내면, 멜란토는 장면 밖에서 조사를 시작합니다. 목격자를 치웠더니 조사자가 생깁니다. (공개 데모의 준비된 결과)</p></section>
+</div>
+<div class="easy-foot"><p>공개 데모와 영상의 문장은 미리 준비한 결과입니다.</p><button type="button" class="ez-btn" data-easy-close>원래대로 읽기</button></div>
+</dialog>
+<script src="case/case-easy.js"></script>
+</body></html>
