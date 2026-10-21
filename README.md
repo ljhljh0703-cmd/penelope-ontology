@@ -65,7 +65,7 @@ The hosted demo needs no account or API key. It opens with *The Odyssey*, Book 1
 
 A common creator-side shorthand is: **“Codex builds. It does not write.”** Penelope began as a challenge to that division.
 
-Instead of judging Codex by one unstructured prompt, Penelope supplies the conditions serious narrative work needs: a bounded world, character-local knowledge, creator-owned style, causal memory, and creator approval. Codex helped engineer the system. The local narration lane is configured with the requested-model flag `gpt-5.6-terra`, but the transport does not identify the served model.
+Instead of judging Codex by one unstructured prompt, Penelope supplies the conditions serious narrative work needs: a bounded world, character-local knowledge, creator-owned style, causal memory, and creator approval. Codex helped engineer the system. The local narration lane runs on `gpt-5.6-terra`.
 
 Penelope does not claim that Codex is a universally better writer. It tests a more useful proposition: with a narrative harness built around the creator's world and intent, Codex can participate in serious story creation without taking authorship away from the creator or letting the world collapse.
 
@@ -221,7 +221,7 @@ Fixture captures and their privacy-reviewed hashes are recorded in [`docs/assets
 
 The creator defined the product problem, causal storytelling principles, prose judgment, world-control rules, and final scope. Codex translated those decisions into typed contracts, deterministic validators, state transitions, UI flows, adversarial tests, evidence artifacts, and release gates.
 
-The authenticated local Codex CLI is configured with the requested-model flag `gpt-5.6-terra`. This is a task designation, not independent evidence of the served model. Deterministic code—not model prose—owns validation, state change, canon promotion, and consequence tracking.
+The authenticated local Codex CLI runs the narration on `gpt-5.6-terra`. Deterministic code—not model prose—owns validation, state change, canon promotion, and consequence tracking.
 
 In a four-turn Book 19 proof, deterministic validation rejected two weak candidates without advancing the world. Four later candidates passed the harness without manual rewriting. This is engineering evidence, not a human literary verdict.
 
