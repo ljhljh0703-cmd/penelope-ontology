@@ -1,7 +1,7 @@
 # Penelope Ontology
 
-> 선택 하나가 들어오면 인물마다 아는 것, 동기, 위험, 관계, 결말을 먼저 계산하고 문장은 그 뒤에 쓰는 이야기 세계 엔진.
-> A story-world engine that resolves knowledge, motives, risks, relationships, and endings before any prose is written.
+> 선택 하나에 세계 속 인물이 모두 움직이는 이야기 생성 엔진. 장면 밖 인물의 반응, 새로 알게 된 것, 대가, 결말을 먼저 계산하고 문장은 그 뒤에 쓰며, 이야기가 무너지는 네 조건은 가드레일로 막습니다.
+> A story generation engine where one choice moves every character in the world: reactions, knowledge, costs, and endings are resolved first, prose comes after, and four story-breaking conditions are blocked as guardrails.
 >
 > 작품 페이지: https://ljhljh0703-cmd.github.io/penelope-ontology/portfolio/ · 라이브 데모: https://penelope-ontology.vercel.app (계정·API 키 없음)
 
