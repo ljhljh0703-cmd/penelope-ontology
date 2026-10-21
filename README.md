@@ -1,5 +1,46 @@
 # Penelope Ontology
 
+> 선택 하나가 들어오면 인물마다 아는 것, 동기, 위험, 관계, 결말을 먼저 계산하고 문장은 그 뒤에 쓰는 이야기 세계 엔진.
+> A story-world engine that resolves knowledge, motives, risks, relationships, and endings before any prose is written.
+>
+> 작품 페이지: https://ljhljh0703-cmd.github.io/penelope/ · 라이브 데모: https://penelope-ontology.vercel.app (계정·API 키 없음)
+
+**실행** (Node.js 22.x)
+
+```sh
+npm ci
+npm run dev      # http://localhost:3000 · 기본은 준비된 결과(fixture) 모드, API 키 필요 없음
+```
+
+**시험**
+
+```sh
+npx vitest run   # = npm test
+```
+
+2026-10-21 컨테이너에서 돌린 결과: `npm ci` 후 `npx vitest run` 시험 파일 108개 · 시험 893개 통과(실패 0). 브라우저 시험(`npm run test:browser:production`)은 이번에 돌리지 않았다.
+
+**구조**
+
+```
+app/                 화면(World·Story·Table)과 HTTP 경로
+components/world/    창작자용 세계 화면
+src/domain/          세계 계산·검사 규칙(결정된 규칙)
+src/application/     선택 처리, World Forge, 문장 검토, 다시 돌리기
+src/contracts/       이야기·세계·창작자 선택·모델 경계의 형식
+src/adapters/        오디세이아 19권·오즈 세계, Codex CLI 연결
+tests/               단위·계약·API·개인정보·브라우저 시험
+docs/                설계·근거·심사자 안내 문서
+```
+
+**누가 무엇을**
+
+- 내가 정한 것: 풀 문제(이야기가 무너지는 조건), 인과로 이야기를 움직이는 원칙, 문장 판단, 세계 통제 규칙, 최종 범위 (이주형)
+- AI가 짠 것: 코드 작성, AI 코딩 도구(Codex)와 함께. 규칙 코드·화면·시험·배포 전 검사
+- 내가 확인한 것: 제품 범위 승인(2026-07-15, `docs/MVP-SCOPE.md`)과 대회 제출 (이주형)
+
+---
+
 **Most AI story tools generate the next paragraph. Penelope simulates what must be true before that paragraph can exist.**
 
 [![Live demo](https://img.shields.io/badge/Live_demo-Open_Penelope-192126?style=flat-square)](https://penelope-ontology.vercel.app)
