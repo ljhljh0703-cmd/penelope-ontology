@@ -126,7 +126,7 @@ nav.cp-nav{position:sticky;top:0;z-index:30;background:rgba(238,230,214,.95);bac
 .cp-detail[open]>summary::after{content:"－"}
 .cp-body{padding:4px 0 32px}
 .cp-body h4{margin:22px 0 8px;font-size:16px}
-.cp-body p{margin:0 0 10px;font-size:15px;color:var(--muted)}
+.cp-body p{margin:0 0 10px;max-width:58em;font-size:15px;color:var(--muted)}
 .cp-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .cp-card{background:var(--slip-2);border:1px solid var(--line);padding:16px 18px}
 .cp-card h4{margin:0 0 6px}
